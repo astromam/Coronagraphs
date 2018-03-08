@@ -13,7 +13,7 @@ Created on Wed Mar  7 21:57:28 2018
 import numpy as np
 #import pylab as pl
 #from astropy.io import fits
-from .utils import besselJ0
+from .utils import besselJ0, sft, isft, uniform_disk
 import json
 
 #%%
@@ -42,12 +42,24 @@ def get_default_params_DZPM1d():
            'ome1':-2.340, 'ome2':2.051, 'beta':-0.236,
            'gFPM':68.82312456985547})
     return tmp
+
+def get_default_params_APLC2d():
+    tmp = get_default_params_coronagraph()
+    tmp.update({'rMask':2.8,
+                'nPup':60, 'nFPM':25,
+                'nImg2d':44, 'Fmax2d':22,
+                'ctr':True, 'ctr2':False})
+    return tmp
     
 fname_coronagraph = 'obs={PupilObs}_ls={LyotStopObs}\
 _IWA={rho0}_OWA={rho1}_C={cDarkHole:02d}\
 _nPup={nPup:04d}_nImg={nImg}_Fmax={Fmax}\
 _bw={bw}_nlam={nlam:02d}'
 
+#%%
+# =============================================================================
+# Coronagraph class
+# =============================================================================
 class Coronagraph(object):
         
     default_params = get_default_params_coronagraph()
@@ -76,7 +88,7 @@ class Coronagraph(object):
         self.Pupil      = (self.r>self.PupilObs)*1.0
         # Lyot stop 
         self.LyotStop   = (self.r>self.LyotStopObs)*1.0
-
+        
         # Final image plane coordinate
         self.xi  = np.arange(self.nImg+1)*self.Fmax/self.nImg
         # final image plane coordinate weighted with wavelength
@@ -91,6 +103,25 @@ class Coronagraph(object):
         # Hankel kernel (including wavelength variation)
         self.hankel_kernel_all = besselJ0(
                 np.pi/self.R*self.xii[:,:,None]*self.r[None,None,:])
+
+        # clear Pupil
+        self.ClearPupil2d = uniform_disk(self.nPup, self.nPup/2., ctr=self.ctr)
+        # Telescope aperture
+        self.Pupil2d      = uniform_disk(self.nPup, self.nPup/2., ctr=self.ctr)\
+        - uniform_disk(self.nPup, self.PupilObs*self.nPup/2., ctr=self.ctr)
+        # Focal plane mask
+        self.mask2d       = uniform_disk(self.nFPM, self.nFPM/2., ctr=self.ctr)
+        # Lyot stop 
+        self.LyotStop2d   = uniform_disk(self.nPup, self.nPup/2., ctr=self.ctr)\
+        - uniform_disk(self.nPup, self.LyotStopObs*self.nPup/2., ctr=self.ctr)
+
+        # Final image plane coordinate
+        self.xi2d     = (np.arange(self.nImg2d//2))* self.Fmax2d/self.nImg2d
+        self.xi2d_ctr = (np.arange(self.nImg2d//2)+1/2)* self.Fmax2d/self.nImg2d
+
+        # identity matrix for the apodization
+        self.Apod2d_t = np.identity(self.nPup**2)
+
         
 #%%        
     def save_params(self, fname):
@@ -211,8 +242,105 @@ class Coronagraph(object):
         corono_field_t_re = corono_field_t.real
         corono_field_t_im = corono_field_t.imag
         return corono_field_t_re, corono_field_t_im 
+
+#%%
+    # direct signal in intensity
+    def compute_direct_intensity_2d(self,Apod2d,poly=True):
+        
+        direct_field_2d = self.compute_direct_field_2d(Apod2d)
+        
+        if poly:
+            return np.sum(np.abs(direct_field_2d)**2,0)
+        else:
+            return np.abs(direct_field_2d)**2
+
+#%%
+    # coronagraphic signal in intensity
+    def compute_corono_intensity_2d(self,Apod2d,poly=True):
+        
+        corono_field_2d = self.compute_corono_field_2d(Apod2d)
+        
+        if poly:
+            return np.sum(np.abs(corono_field_2d)**2,0)
+        else:
+            print('Warning: No normalization for multiple lambda!')
+            return np.abs(corono_field_2d)**2
+
+#%%
+    def compute_direct_field_2d_vec(self,Apod2d):
+        test = self.compute_direct_field_2d(Apod2d)
+        test_re = np.reshape(test.real, (self.nlam, self.nImg2d**2))
+        test_im = np.reshape(test.imag, (self.nlam, self.nImg2d**2))
+        return test_re, test_im
+
+#%%
+    def compute_corono_field_2d_vec(self,Apod2d):
+        test = self.compute_corono_field_2d(Apod2d)
+        test_re = np.reshape(test.real, (self.nlam, self.nImg2d**2))
+        test_im = np.reshape(test.imag, (self.nlam, self.nImg2d**2))
+        return test_re, test_im
+
+#%%
+    # generation of the direct response matrix
+    def prop_direct_matrix_2d(self):
+        direct_field_t_re = np.zeros((self.nPup**2, self.nlam, self.nImg2d**2))
+        direct_field_t_im = np.zeros((self.nPup**2, self.nlam, self.nImg2d**2))
+        print('generating direct response matrix')
+        for i in np.arange(self.nPup**2):
+            Apod2d = np.reshape(self.Apod2d_t[i], (self.nPup,self.nPup))  
+            direct_field_t_re[i],direct_field_t_im[i] = self.compute_direct_field_2d_vec(Apod2d)
+        return direct_field_t_re, direct_field_t_im    
+
+#%%
+    # generation of the coronagraphic response matrix        
+    def prop_corono_matrix_2d(self):
+        corono_field_t_re = np.zeros((self.nPup**2, self.nlam, self.nImg2d**2))
+        corono_field_t_im = np.zeros((self.nPup**2, self.nlam, self.nImg2d**2))
+        print('generating corono response matrix')
+        for i in np.arange(self.nPup**2):
+            Apod2d = np.reshape(self.Apod2d_t[i], (self.nPup,self.nPup))  
+            corono_field_t_re[i], corono_field_t_im[i] = self.compute_corono_field_2d_vec(Apod2d)
+        return corono_field_t_re, corono_field_t_im 
+
+#%%
+    def generate_area(self,):
+        ''' --------------------------------------------------------------
+        Compute the list of points with a given area in the final image plane 
+        of the coronagraph. The area is defined by an annulus with minimum and maximum 
+        angular separation from the star.
+    
+        Parameters:
+        ---------- 
+    
+        - mD      : spatial frequency range in the final image plane D in lam0/D
+        - nImg2d    : linear number of points in the final image plane D
+        - sep_min : minimum angular separation from the star for the area 
+        - sep_max : maximum angular separation from the star for the area
+    
+        Output:
+        ----------
+    
+        - res    : 2D array with 1 and 0 for points inside and outside the area in the 
+        coronagraphic image
+    
+        -------------------------------------------------------------- '''
+        val = 0
+        if self.ctr is True:
+            val = 1/2
+        # array of angular distances in the final image plane
+        xx,yy  = np.meshgrid(np.arange(self.nImg2d)-self.nImg2d/2+val, np.arange(self.nImg2d)-self.nImg2d/2+val)
+        mydist = (self.Fmax2d/self.nImg2d)*np.hypot(yy,xx)
+    
+        # array with 1 and 0 for points inside and outside the area in the coronagraphic image
+        #res    = np.zeros_like(mydist)
+        #res[(mydist <= self.rho1)*(mydist >= self.rho0)] = 1.0
+        res = (mydist <= self.rho1)*(mydist >= self.rho0)
+        return res, mydist[res]
     
 #%%
+# =============================================================================
+# APLC 1d class
+# =============================================================================
 class APLC1d(Coronagraph):
     
     default_params = get_default_params_APLC1d()
@@ -274,15 +402,18 @@ class APLC1d(Coronagraph):
         
         return self.lam0/self.lam_t[:,None]*np.pi\
             *corono_field_tmp*self.R/self.nPup
-     
+            
 #%%
+# =============================================================================
+# class DZPM 1d     
+# =============================================================================
 class DZPM1d(Coronagraph):
     
     default_params = get_default_params_DZPM1d()    
 
     def __init__(self, **kwargs):
         '''
-        to be discussed with Remi F.
+        to be written
         '''
         super().__init__(**kwargs)
         
@@ -377,3 +508,97 @@ class DZPM1d(Coronagraph):
             corono_field_tmp[i,:] = self.hankel_kernel_all[i,:,:].dot(lyot_field[i,:])
         
         return self.lam0/self.lam_t[:,None]*np.pi*corono_field_tmp*self.R/self.nPup
+    
+#%%
+# =============================================================================
+# APLC 2d class        
+# =============================================================================
+class APLC2d(Coronagraph):
+
+    default_params = get_default_params_APLC2d()
+
+    def __init__(self, **kwargs):
+        '''
+        to be written
+        '''
+        super().__init__(**kwargs)
+        
+        # mask size at a given wavelength for SFT
+        self.mB_t  = 2.*self.rMask*(self.lam0/self.lam_t)
+        self.mD_t  = self.Fmax2d*(self.lam0/self.lam_t)
+        
+#%%
+    # direct propagation (no focal plane mask)
+    def compute_direct_field_2d(self,Apod2d):
+        ''' --------------------------------------------------------------
+        Compute the coronagraph electric field for a classical Lyot coronagraph
+        with four planes (A: entrance pupil, B: intermediate focal plane, 
+        C: relayed pupil before stop, L: relayed pupil after stop, D: final image plane).
+        Resolution element are given in lam0/D where lam0 and D denote the central wavelength
+        and the telescope diameter
+    
+        Parameters:
+        ---------- 
+    
+        - aperture: 2D array for the telescope aperture
+        - lyotstop: 2D array for the Lyot stop
+        - mB      : spatial frequency range within the focal plane mask in plane B in lam0/D
+        - nMask   : number of points across the diameter for the focal plane mask
+        - mD      : spatial frequency range in the final image plane D in lam0/D
+        - nImg2d    : linear number of points in the final image plane D
+        - lam     : wavelength value in central wavelengths unit lam0
+        - opd     : opd map for an observed object at a given angular separation from the star
+    
+        Output:
+        ----------
+    
+        - field_D: coronagraph electric field in the final image plane at wavelength lam0
+    
+        -------------------------------------------------------------- '''    
+
+        field_A    = Apod2d*self.Pupil2d
+        field_L    = field_A*self.LyotStop2d 
+        field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), dtype='complex128')
+        for i in range(self.nlam):
+            field_Dtmp[i] = sft(field_L, self.nImg2d, self.mD_t[i], ctr=self.ctr2)         
+    
+        return field_Dtmp
+ 
+#%%
+    def compute_corono_field_2d(self,Apod2d):
+        ''' --------------------------------------------------------------
+        Compute the coronagraph electric field for a classical Lyot coronagraph
+        with four planes (A: entrance pupil, B: intermediate focal plane, 
+        C: relayed pupil before stop, L: relayed pupil after stop, D: final image plane).
+        Resolution element are given in lam0/D where lam0 and D denote the central wavelength
+        and the telescope diameter
+    
+        Parameters:
+        ---------- 
+    
+        - aperture: 2D array for the telescope aperture
+        - lyotstop: 2D array for the Lyot stop
+        - mB      : spatial frequency range within the focal plane mask in plane B in lam0/D
+        - nMask   : number of points across the diameter for the focal plane mask
+        - mD      : spatial frequency range in the final image plane D in lam0/D
+        - nImg2d    : linear number of points in the final image plane D
+        - lam     : wavelength value in central wavelengths unit lam0
+        - opd     : opd map for an observed object at a given angular separation from the star
+    
+        Output:
+        ----------
+    
+        - field_D: coronagraph electric field in the final image plane at wavelength lam0
+    
+        -------------------------------------------------------------- '''        
+
+        field_A    = Apod2d*self.Pupil2d    
+        field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), dtype='complex128')
+        for i in range(self.nlam):
+            field_B       = self.mask2d*sft(field_A, self.nFPM, self.mB_t[i], ctr=self.ctr)
+            field_C       = field_A - isft(field_B, self.nPup, self.mB_t[i], ctr=self.ctr)
+            field_L       = field_C*self.LyotStop2d
+            field_Dtmp[i] = sft(field_L, self.nImg2d, self.mD_t[i], ctr=self.ctr2)
+
+        return field_Dtmp   
+     
