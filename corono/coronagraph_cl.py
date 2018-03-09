@@ -22,7 +22,7 @@ import json
 '''
 def get_default_params_coronagraph():
     tmp = {'PupilObs':0.14,'LyotStopObs':0.28,
-           'rho0':5,'rho1':10,'cDarkHole':8,
+           'rho0':5,'rho1':10,
            'nPup':500,'nImg':200,'Fmax':25,
            'nImg2d':44, 'Fmax2d':22,
            'bw':0.2,'lam0':1.0,'nlam':5, 
@@ -53,7 +53,7 @@ def get_default_params_APLC2d():
     return tmp
     
 fname_coronagraph = 'obs={PupilObs}_ls={LyotStopObs}\
-_IWA={rho0}_OWA={rho1}_C={cDarkHole:02d}\
+_IWA={rho0}_OWA={rho1}\
 _nPup={nPup:04d}_nImg={nImg}_Fmax={Fmax}\
 _bw={bw}_nlam={nlam:02d}'
 

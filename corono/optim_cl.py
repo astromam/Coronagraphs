@@ -10,14 +10,19 @@ Created on Fri Mar  9 11:36:39 2018
 import numpy as np
 from corono import coronagraph_cl as cg
 
+def get_default_params_matrix_pb():
+    tmp = {'cDarkHole':8,'tau':0.2}
+    return tmp
+
 #%%
 class MatrixProblem(object):
 
-    def __init__(self,corono=cg.APLC1d(),model_type='maxtau',
-                **kwargs):
+    default_params = get_default_params_matrix_pb()
     
-        self.model_type = model_type
-        self.corono     = corono
+    def __init__(self,corono=cg.APLC1d(),**kwargs):
+    
+        self.params  = kwargs
+        self.corono  = corono
         
         self.dz      = (self.corono.xi >= self.corono.rho0) & (self.corono.xi <= self.corono.rho1)
         self.aaa     = np.arange(self.corono.nImg+1) 
@@ -37,36 +42,57 @@ class MatrixProblem(object):
         self.TR = np.sum(2.*np.pi*self.corono.Pupil*np.linspace(0.5,self.corono.nPup+0.5,num=self.corono.nPup)/(2.*self.corono.nPup)**2) 
 
 #%%
-class MaxTau(MatrixProblem):
+    def compute_matrices(self):
+        print('Warning: ')
 
-    def __init__(self, **kwargs):
+#%%
+    def __contains__(self, item):
         '''
         to be written
-        '''      
+        '''
+        return item in self.params
+    
+#%%     
+    def __getattr__(self, name):
+        '''
+        to be written
+        '''
+        return self.params[name]
+
+
+#%%
+class MaxTau(MatrixProblem):
+
+#    default_params = get_default_params_matrix_pb()
+    
+    def __init__(self, corono=cg.APLC1d(), **kwargs):
         super().__init__(**kwargs)
     
     def compute_matrices(self):
-        corono_field_t2 = np.reshape(self.corono_field_t_re[:,:,self.idx_dz], (self.aplc.nPup, self.aplc.nlam*self.ndz))
+        corono_field_t_re2 = np.reshape(self.corono_field_t_re[:,:,self.idx_dz], (self.corono.nPup, self.corono.nlam*self.ndz))
 
-        direct_field_t2 = np.zeros_like(corono_field_t2)
-        for j in range(self.aplc.nlam*self.ndz):
-            direct_field_t2[:,j] = self.direct_field_t[:,(self.aplc.nlam-1)//2,0]
+        direct_field_t_re2 = np.zeros_like(corono_field_t_re2)
+        for j in range(self.corono.nlam*self.ndz):
+            direct_field_t_re2[:,j] = self.direct_field_t_re[:,(self.corono.nlam-1)//2,0]
         
-        A0  =  corono_field_t2 - 10**(-self.aplc.cDarkHole/2)/np.sqrt(2.)*direct_field_t2
-        A1  = -corono_field_t2 - 10**(-self.aplc.cDarkHole/2)/np.sqrt(2.)*direct_field_t2
-        A2  = -np.identity(self.aplc.nPup)
-        A3  =  np.identity(self.aplc.nPup)
+        A0  =  corono_field_t_re2 - 10**(-self.cDarkHole/2)/np.sqrt(2.)*direct_field_t_re2
+        A1  = -corono_field_t_re2 - 10**(-self.cDarkHole/2)/np.sqrt(2.)*direct_field_t_re2
+        A2  = -np.identity(self.corono.nPup)
+        A3  =  np.identity(self.corono.nPup)
     
-        b0  = np.zeros((self.aplc.nlam*self.ndz))
-        b1  = np.zeros((self.aplc.nlam*self.ndz))
-        b2  = np.zeros(self.aplc.nPup)
-        b3  = np.ones(self.aplc.nPup)
+        b0  = np.zeros((self.corono.nlam*self.ndz))
+        b1  = np.zeros((self.corono.nlam*self.ndz))
+        b2  = np.zeros(self.corono.nPup)
+        b3  = np.ones(self.corono.nPup)
     
         self.A = np.concatenate((A0,A1,A2,A3), axis=1)
         self.b = np.concatenate((b0,b1,b2,b3))
-        self.c = - 2.*np.pi*(np.arange(self.aplc.nPup)+0.5)/(2.*self.aplc.nPup)**2/self.TR
+        self.c = - 2.*np.pi*(np.arange(self.corono.nPup)+0.5)/(2.*self.corono.nPup)**2/self.TR
         
         return self.A, self.b, self.c
 
 #%% 
-class 
+#class 
+corono0 = cg.APLC1d()
+max_tau_pb = MaxTau()
+A, b, c = max_tau_pb.compute_matrices()
