@@ -16,7 +16,7 @@ def get_default_params_matrix_pb():
     return tmp
 
 #%%
-class MatrixProblem(object):
+class ProblemMatrix(object):
 
     default_params = get_default_params_matrix_pb()
 
@@ -86,7 +86,7 @@ class MatrixProblem(object):
         f.close()              
         
 #%%
-class MaxTau(MatrixProblem):
+class MaxTau(ProblemMatrix):
 
     def __init__(self, corono=cg.APLC1d(), **kwargs):
         super().__init__(**kwargs)
@@ -118,7 +118,7 @@ class MaxTau(MatrixProblem):
         return self.A, self.b, self.c
 
 #%%
-class MaxContrastL1(MatrixProblem):
+class MaxContrastL1(ProblemMatrix):
         
     def __init__(self, corono=cg.APLC1d(), **kwargs):
         super().__init__(**kwargs)
