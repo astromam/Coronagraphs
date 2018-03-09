@@ -15,10 +15,6 @@ def get_default_params_matrix_pb():
     tmp = {'cDarkHole':8,'tau':0.2}
     return tmp
 
-def get_default_params_maxtau_pb():
-    tmp = get_default_params_matrix_pb()
-    return tmp
-
 #%%
 class MatrixProblem(object):
 
@@ -92,8 +88,6 @@ class MatrixProblem(object):
 #%%
 class MaxTau(MatrixProblem):
 
-    default_params = get_default_params_maxtau_pb()
-    
     def __init__(self, corono=cg.APLC1d(), **kwargs):
         super().__init__(**kwargs)
     
