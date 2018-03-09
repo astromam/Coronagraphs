@@ -144,8 +144,10 @@ class Coronagraph(object):
         load params from fname using JSON (JavaScript Object Notation)
         ----
         '''
+        
         f=open(fname,'r')
-        self.params=json.loads(f.read())
+        params=json.loads(f.read())
+        self.__init__(**params)
         f.close()
         
 #%%        
