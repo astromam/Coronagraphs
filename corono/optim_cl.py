@@ -117,3 +117,43 @@ class MaxTau(MatrixProblem):
         
         return self.A, self.b, self.c
 
+#%%
+class MaxContrastL1(MatrixProblem):
+        
+    def __init__(self, corono=cg.APLC1d(), **kwargs):
+        super().__init__(**kwargs)
+    
+    def compute_matrices(self):
+                       
+        corono_field_t1_re = np.reshape(self.corono_field_t_re[:,:,self.idx_dz], (self.corono.nPup, self.corono.nlam*self.ndz))        
+        corono_field_t2_re = corono_field_t1_re[self.idx_pup,:]
+        
+        I0 = np.identity(self.ndz)
+        I1 = np.hstack([I0 for k in range(self.corono.nlam)])
+        
+        A0  = np.concatenate(( corono_field_t2_re, -I1), axis=0)
+        A1  = np.concatenate((-corono_field_t2_re, -I1), axis=0)
+        A2  = np.concatenate((-np.identity(self.npp), 
+                              np.zeros((self.ndz, self.npp))), axis=0)
+        A3  = np.concatenate(( np.identity(self.npp), 
+                              np.zeros((self.ndz, self.npp))), axis=0)
+        A4  = np.concatenate((np.zeros((self.npp, self.ndz)), -I0), axis=0)
+        A5  = np.concatenate((- 2.*np.pi*(np.arange(self.corono.nPup)[self.idx_pup]+0.5)*self.corono.Pupil[self.idx_pup]/(2.*self.corono.nPup)**2/self.TR, 
+                                  np.zeros(self.ndz)))
+        
+        b0  = np.zeros((self.corono.nlam*self.ndz))
+        b1  = np.zeros((self.corono.nlam*self.ndz))
+        b2  = np.zeros(self.npp)
+        b3  = np.ones(self.npp)
+        b4  = np.zeros(self.ndz)
+        b5  = [-self.tau]
+        
+        self.A = np.concatenate((A0,A1,A2,A3,A4,A5[:,None]), axis=1)
+        self.b = np.concatenate((b0,b1,b2,b3,b4,b5))
+        
+        self.c = np.concatenate((np.zeros(self.npp),
+                            2.*np.pi*np.array(self.idx_dz)*(self.corono.Fmax/self.corono.nImg)**2), axis=0)    
+    
+        return self.A, self.b, self.c
+
+#%%

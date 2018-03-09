@@ -13,8 +13,9 @@ from corono import optim_cl as op
 #%% 
 #class 
 corono0 = cg.APLC1d()
-max_tau_pb = op.MaxTau()
-A, b, c = max_tau_pb.compute_matrices()
+#problem = op.MaxTau()
+problem = op.MaxContrastL1()
+A, b, c = problem.compute_matrices()
 
 pl.figure(1)
 pl.clf()
