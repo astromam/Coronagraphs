@@ -8,20 +8,29 @@ Created on Fri Mar  9 11:36:39 2018
 
 #%% Initialization problem
 import numpy as np
+import json
 from corono import coronagraph_cl as cg
+import pylab as pl
 
 def get_default_params_matrix_pb():
     tmp = {'cDarkHole':8,'tau':0.2}
+    return tmp
+
+def get_default_params_maxtau_pb():
+    tmp = get_default_params_matrix_pb()
     return tmp
 
 #%%
 class MatrixProblem(object):
 
     default_params = get_default_params_matrix_pb()
+
     
     def __init__(self,corono=cg.APLC1d(),**kwargs):
     
         self.params  = kwargs
+        self.check_params()
+        
         self.corono  = corono
         
         self.dz      = (self.corono.xi >= self.corono.rho0) & (self.corono.xi <= self.corono.rho1)
@@ -41,9 +50,9 @@ class MatrixProblem(object):
         
         self.TR = np.sum(2.*np.pi*self.corono.Pupil*np.linspace(0.5,self.corono.nPup+0.5,num=self.corono.nPup)/(2.*self.corono.nPup)**2) 
 
-#%%
+#%%    
     def compute_matrices(self):
-        print('Warning: ')
+        print('Warning: virtual fct - no A, b and c matrices will be computed')
 
 #%%
     def __contains__(self, item):
@@ -59,11 +68,31 @@ class MatrixProblem(object):
         '''
         return self.params[name]
 
-
+#%%        
+    def check_params(self):
+        '''
+        to be written
+        '''        
+        for key in self.default_params:
+            if not key in self.params:
+                self.params[key] = self.default_params[key]
+  
+#%%    
+    def load_params(self, fname):
+        '''
+        load params from fname using JSON (JavaScript Object Notation)
+        ----
+        '''
+        
+        f=open(fname,'r')
+        params=json.loads(f.read())
+        self.__init__(**params)
+        f.close()              
+        
 #%%
 class MaxTau(MatrixProblem):
 
-#    default_params = get_default_params_matrix_pb()
+    default_params = get_default_params_maxtau_pb()
     
     def __init__(self, corono=cg.APLC1d(), **kwargs):
         super().__init__(**kwargs)
@@ -91,8 +120,3 @@ class MaxTau(MatrixProblem):
         
         return self.A, self.b, self.c
 
-#%% 
-#class 
-corono0 = cg.APLC1d()
-max_tau_pb = MaxTau()
-A, b, c = max_tau_pb.compute_matrices()

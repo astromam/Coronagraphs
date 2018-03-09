@@ -23,7 +23,7 @@ import json
 def get_default_params_coronagraph():
     tmp = {'PupilObs':0.14,'LyotStopObs':0.28,
            'rho0':5,'rho1':10,
-           'nPup':500,'nImg':200,'Fmax':25,
+           'nPup':200,'nImg':200,'Fmax':25,
            'nImg2d':44, 'Fmax2d':22,
            'bw':0.2,'lam0':1.0,'nlam':5, 
            'R':1,
@@ -34,7 +34,7 @@ def get_default_params_coronagraph():
 
 def get_default_params_APLC1d():
     tmp = get_default_params_coronagraph()
-    tmp.update({'rMask':2.8,'nFPM':100})
+    tmp.update({'rMask':2.8,'nFPM':50})
     return tmp
 
 def get_default_params_DZPM1d():
@@ -48,7 +48,7 @@ def get_default_params_DZPM1d():
 def get_default_params_APLC2d():
     tmp = get_default_params_coronagraph()
     tmp.update({'rMask':2.8,
-                'nPup':60, 'nFPM':25
+                'nPup':50, 'nFPM':25
                 })
     return tmp
     
