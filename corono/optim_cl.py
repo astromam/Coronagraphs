@@ -9,6 +9,7 @@ Created on Fri Mar  9 11:36:39 2018
 #%% Initialization problem
 import numpy as np
 import json
+import gurobipy as gb
 from corono import coronagraph_cl as cg
 
 def get_default_params_matrix_pb():
@@ -132,6 +133,22 @@ class MaxTau(ProblemMatrix):
         
         return self.A, self.b, self.c
 
+    def compute_gurobi_model(self):
+        
+        nA = np.shape(self.A)[1]
+
+        # Create a new model               
+        m = gb.Model("LP max tau new")
+        # Create variables
+        ApodTmp = m.addVars(self.npp, lb=0.0, ub=1.0, name="ApodTmp")
+        # Set objective
+        m.setObjective(gb.quicksum((self.c[i]*ApodTmp[i] for i in range(self.npp))), gb.GRB.MINIMIZE)
+        # Add constraint:                
+        m.addConstrs((gb.quicksum((ApodTmp[i]*self.A[i,j] for i in range(self.npp) if self.A[i,j])) <=  self.b[j] for j in range(nA)), "cpos")
+        
+        m.update()
+        return m
+ 
 
 #%%
 class MaxContrast(ProblemMatrix):
