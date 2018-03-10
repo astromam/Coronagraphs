@@ -14,11 +14,13 @@ from corono import optim_cl as op
 #class 
 corono0 = cg.APLC1d()
 #problem = op.MaxTau()
-problem = op.MaxContrastL1()
+#problem = op.MaxContrastL1()
+#problem = op.MaxContrastLinf()
+problem = op.MaxContrast(Lnorm='Linf')
 A, b, c = problem.compute_matrices()
 
 pl.figure(1)
 pl.clf()
-pl.imshow(A)
+pl.imshow(abs(A)**0.25)
 
 pl.show()
