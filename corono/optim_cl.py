@@ -199,4 +199,24 @@ class MaxContrast(ProblemMatrix):
         
         return self.A, self.b, self.c
 
+    def compute_gurobi_model(self):
+        
+        nn = np.shape(self.A)[1]
+        # Create a new model  
+        m = gb.Model("LP max C new")
+        
+        if self.Lnorm == 'Linf':
+            self.neps = 1
+        else:
+            self.neps = self.ndz
+        # Create variables
+        ApodEpsTmp = m.addVars(self.npp + self.neps, lb=0.0, name="ApodTmp")        
+        # Set objective
+        m.setObjective(gb.quicksum((self.c[i+self.npp]*ApodEpsTmp[i+self.npp] for i in range(self.neps))), gb.GRB.MINIMIZE)
+        # Add constraint:
+        m.addConstrs((gb.quicksum((ApodEpsTmp[i]*self.A[i,j] for i in range(self.npp + self.neps))) <=  self.b[j] for j in np.arange(nn)), "cpos")
+        
+        m.update()
+        return m   
+
 #%%
