@@ -57,6 +57,10 @@ class ProblemMatrix(object):
                 self.corono_field_t_re[:,:,self.idx_dz], 
                 (self.corono.nPup, self.corono.nlam*self.ndz))[self.idx_pup,:]
         
+        self.A = None
+        self.b = None
+        self.c = None
+        
         self.TR = np.sum(2.*np.pi*self.corono.Pupil *np.linspace(
                 0.5,self.corono.nPup+0.5,num=self.corono.nPup)\
                 /(2.*self.corono.nPup)**2) 
@@ -135,18 +139,23 @@ class MaxTau(ProblemMatrix):
 
     def compute_gurobi_model(self):
         
-        nA = np.shape(self.A)[1]
-
-        # Create a new model               
-        m = gb.Model("LP max tau new")
-        # Create variables
-        ApodTmp = m.addVars(self.npp, lb=0.0, ub=1.0, name="ApodTmp")
-        # Set objective
-        m.setObjective(gb.quicksum((self.c[i]*ApodTmp[i] for i in range(self.npp))), gb.GRB.MINIMIZE)
-        # Add constraint:                
-        m.addConstrs((gb.quicksum((ApodTmp[i]*self.A[i,j] for i in range(self.npp) if self.A[i,j])) <=  self.b[j] for j in range(nA)), "cpos")
+        if self.A & self.b & self.c is not None:
+            nA = np.shape(self.A)[1]
         
-        m.update()
+            # Create a new model               
+            m = gb.Model("LP max tau new")
+            # Create variables
+            ApodTmp = m.addVars(self.npp, lb=0.0, ub=1.0, name="ApodTmp")
+            # Set objective
+            m.setObjective(gb.quicksum((self.c[i]*ApodTmp[i] 
+                    for i in range(self.npp))), gb.GRB.MINIMIZE)
+            # Add constraint:                
+            m.addConstrs((gb.quicksum((ApodTmp[i]*self.A[i,j] 
+                    for i in range(self.npp) if self.A[i,j])) <=  self.b[j] 
+                    for j in range(nA)), "cpos")
+            m.update()           
+        else:
+            raise ValueError('Be careful: A or b or c is not defined')
         return m
  
 
@@ -201,22 +210,29 @@ class MaxContrast(ProblemMatrix):
 
     def compute_gurobi_model(self):
         
-        nn = np.shape(self.A)[1]
-        # Create a new model  
-        m = gb.Model("LP max C new")
-        
-        if self.Lnorm == 'Linf':
-            self.neps = 1
+        if self.A & self.b & self.c is not None:        
+            nn = np.shape(self.A)[1]
+            # Create a new model  
+            m = gb.Model("LP max C new")
+            
+            if self.Lnorm == 'Linf':
+                self.neps = 1
+            else:
+                self.neps = self.ndz
+            # Create variables
+            ApodEpsTmp = m.addVars(self.npp + self.neps, lb=0.0, name="ApodTmp")        
+            # Set objective
+            m.setObjective(gb.quicksum((self.c[i+self.npp]*ApodEpsTmp[i+self.npp] 
+                    for i in range(self.neps))), gb.GRB.MINIMIZE)
+            # Add constraint:
+            m.addConstrs((gb.quicksum((ApodEpsTmp[i]*self.A[i,j] 
+                    for i in range(self.npp + self.neps))) <=  self.b[j] 
+                    for j in np.arange(nn)), "cpos")
+            
+            m.update()
         else:
-            self.neps = self.ndz
-        # Create variables
-        ApodEpsTmp = m.addVars(self.npp + self.neps, lb=0.0, name="ApodTmp")        
-        # Set objective
-        m.setObjective(gb.quicksum((self.c[i+self.npp]*ApodEpsTmp[i+self.npp] for i in range(self.neps))), gb.GRB.MINIMIZE)
-        # Add constraint:
-        m.addConstrs((gb.quicksum((ApodEpsTmp[i]*self.A[i,j] for i in range(self.npp + self.neps))) <=  self.b[j] for j in np.arange(nn)), "cpos")
-        
-        m.update()
+            raise ValueError('Be careful: A or b or c is not defined')
+            
         return m   
 
 #%%
