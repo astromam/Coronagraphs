@@ -21,6 +21,65 @@ import json
 ### Coronagraph class
 '''
 def get_default_params_coronagraph():
+    '''
+    default parameters for the Coronagraph class:
+        
+    ----
+    input:
+        - PupilObs: float
+            Pupil central obstruction size in pupil diameter
+            
+        - LyotStopObs: float
+            Lyot stop central obstruction size in pupil diameter
+            
+        - rho0: float
+            inner edge of the coronagraphic image search area
+            
+        - rho1: float
+            outer edge of the coronagraphic image search area
+            
+        - nPup: integer
+            Pupil sampling
+            
+        - nImg: integer
+            Final image plane sampling
+            
+        - Fmax: float
+            Maximum spatial frequency in the image plane
+            
+        - nImg2d: integer
+            Final image plane sampling for 2D simulations
+            
+        - Fmax2d: float
+            Maximum spatial frequency in the image plane for 2D simulations
+
+        - lam0: float
+            central wavelength 
+
+        - bw: float 
+            spectral bandwidth in fraction of lam0 unit            
+        
+        - nlam: integer 
+            spectral sampling
+  
+        - R: float 
+            unitary radius of the pupil
+            
+        - fdir: string
+            directory
+            
+        - ctr: Truth value
+            work with pixel centered arrays if True
+            
+        - ctr2: Truth value
+            work with pixel centered arrays if True           
+            
+    ----
+    output:
+        - tmp: list
+            return a list with all the default values
+            
+    '''
     tmp = {'PupilObs':0.14,'LyotStopObs':0.28,
            'rho0':5,'rho1':10,
            'nPup':200,'nImg':200,'Fmax':25,
@@ -33,11 +92,63 @@ def get_default_params_coronagraph():
     return tmp
 
 def get_default_params_APLC1d():
+    '''
+    default parameters for the APLC1d class:
+    ----
+    input:
+        - rMask: float
+            focal plane mask radius in lam0/D
+            
+        - nFPM: integer
+            mask sampling
+            
+    ----
+    output:
+        - tmp: list
+            return a list with all the default values of the Coronagraph class
+            and the APLC1d class
+    
+    '''
     tmp = get_default_params_coronagraph()
     tmp.update({'rMask':2.8,'nFPM':50})
     return tmp
 
 def get_default_params_DZPM1d():
+    '''
+    default parameters for the DZPM1d class:
+    ----
+    input:
+        - rMask1: float
+            inner part of the focal plane mask radius in lam0/D
+            
+        - rMask2: float
+            outer part of the focal plane mask radius in lam0/D    
+            
+        - OPDx1: float
+            optical path difference for the inner part of the focal plane mask
+            
+        - OPDx2: float
+            optical path difference for the outer part of the focal plane mask
+            
+        - ome1: float
+            second order term for a polynomial amplitude apodization
+            
+        - ome2: float
+            forth order term for a polynomial amplitude apodization
+            
+        - beta: float
+            coefficient in lam0 related to a defocus term applied to the mask
+            
+        - gFPM: float
+            mask sampling            
+            
+    ----
+    output:
+        - tmp: list
+            return a list with all the default values of the Coronagraph class
+            and the APLC1d class
+    
+    '''   
     tmp = get_default_params_coronagraph()
     tmp.update({'rMask1':0.875/2, 'rMask2':1.453/2.,
            'OPDx1':0.309, 'OPDx2':0.672,
@@ -46,6 +157,25 @@ def get_default_params_DZPM1d():
     return tmp
 
 def get_default_params_APLC2d():
+    '''
+    default parameters for the APLC2d class:
+    ----
+    input:
+        - rMask: float
+            focal plane mask radius in lam0/D
+        
+        - nPup: integer
+            Pupil sampling 
+        
+        - nFPM: integer
+            mask sampling
+            
+    ----
+    output:
+        - tmp: list
+            return a list with all the default values of the Coronagraph class
+            and the APLC2d class
+    '''    
     tmp = get_default_params_coronagraph()
     tmp.update({'rMask':2.8,
                 'nPup':50, 'nFPM':25
@@ -208,9 +338,8 @@ class Coronagraph(object):
         '''
         method to save params in fname using JSON (JavaScript Object Notation)
         ----
-        
-        - input:
-            fname: string
+        input:
+            - fname: string
                 filename in which parameters are to be written
         
         '''
@@ -223,9 +352,8 @@ class Coronagraph(object):
         '''
         method to load params from fname using JSON (JavaScript Object Notation)
         ----
-        
-        - input:
-            fname: string
+        input:
+            - fname: string
                 filename in which parameters are to be load
                 
         '''
@@ -249,9 +377,8 @@ class Coronagraph(object):
         '''
         method to define filename with a given varname
         ----
-        
-        - input:
-            varname: string
+        input:
+            - varname: string
                 filename in which...
                 
         '''
@@ -280,7 +407,8 @@ class Coronagraph(object):
         
         ----
         output:
-            print all the values in the object params
+            - res
+                print all the values in the object params
             
         '''
         res=''
@@ -295,12 +423,13 @@ class Coronagraph(object):
             
         ----
         input: 
-            item: 
+            - item: 
                 parameter in params
         
         ----       
         output:
-            value of the requested parameter
+            - item:
+                value of the requested parameter
             
         '''
         return item in self.params
@@ -312,7 +441,7 @@ class Coronagraph(object):
         
         ----
         input: 
-            name: string
+            - name: string
                 name of the requested parameters
                 
         ----
@@ -329,10 +458,10 @@ class Coronagraph(object):
         
         ----
         input:
-            Apod: 1D array
+            - Apod: 1D array
                 Entrance pupil apodization
             
-            poly: thuth value, True by default
+            - poly: thuth value, True by default
                 parameter to compute broadband image or monochromatic images
                 at all the wavelengths
                 
@@ -355,10 +484,10 @@ class Coronagraph(object):
         
         ----
         input:
-            Apod: 1D array
+            - Apod: 1D array
                 Entrance pupil apodization
                 
-            poly: truth value, True by default
+            - poly: truth value, True by default
                 parameter to compute broadband image or monochromatic images
                 at all the wavelengths
                 
@@ -422,10 +551,10 @@ class Coronagraph(object):
         
         ----
         input:
-            Apod2d: 2D array
+            - Apod2d: 2D array
                 Entrance pupil apodization
             
-            poly: thuth value, True by default
+            - poly: thuth value, True by default
                 parameter to compute broadband image or monochromatic images
                 at all the wavelengths
                 
@@ -449,10 +578,10 @@ class Coronagraph(object):
         
         ----
         input:
-            Apod2d: 2D array
+            - Apod2d: 2D array
                 Entrance pupil apodization
                 
-            poly: truth value, True by default
+            - poly: truth value, True by default
                 parameter to compute broadband image or monochromatic images
                 at all the wavelengths
                 
@@ -476,7 +605,7 @@ class Coronagraph(object):
         
         ----
         input:
-            Apod2d: 2D array
+            - Apod2d: 2D array
                 Entrance pupil apodization
                 
         ----
@@ -497,7 +626,7 @@ class Coronagraph(object):
         
         ----
         input:
-            Apod2d: 2D array
+            - Apod2d: 2D array
                 Entrance pupil apodization
                 
         ----
@@ -561,16 +690,21 @@ class Coronagraph(object):
         Parameters:
         ---------- 
     
-        - mD      : spatial frequency range in the final image plane D in lam0/D
-        - nImg2d    : linear number of points in the final image plane D
-        - sep_min : minimum angular separation from the star for the area 
-        - sep_max : maximum angular separation from the star for the area
+            - mD: float
+                spatial frequency range in the final image plane D in lam0/D
+            - nImg2d: integer
+                linear number of points in the final image plane D
+            - sep_min : float
+                minimum angular separation from the star for the area 
+            - sep_max : float
+                maximum angular separation from the star for the area
     
         Output:
         ----------
     
-        - res    : 2D array with 1 and 0 for points inside and outside the area in the 
-        coronagraphic image
+            - res    : 2D array
+                2D array with 1 and 0 for points inside and outside the area in the 
+                coronagraphic image
     
         -------------------------------------------------------------- '''
         val = 0
@@ -601,25 +735,25 @@ class APLC1d(Coronagraph):
         ------
         attributes:
         
-            rMask_t: array
+            - rMask_t: array
                 focal plane mask radius scaled with wavelength
                 
-            nFPM_t: array
+            - nFPM_t: array
                 mask sampling at a given wavelength
                 
-            nFPM_max: float
+            - nFPM_max: float
                 maximum mask sampling over all the wavelengths
                 
-            mask_lam: array
+            - mask_lam: array
                 focal plane mask in lam/D unit
                 
-            xi_FPM_lam: array
+            - xi_FPM_lam: array
                 focal plane mask coordinate in lam/D
                 
-            hankel_kernel_FPM_all: array
+            - hankel_kernel_FPM_all: array
                 hankel kernel for the focal plane mask at all the wavelengths
                 
-            hankel_kernel_iFPM_all: array
+            - hankel_kernel_iFPM_all: array
                 inverse hankel transform for the focal plane mask at all the 
                 wavelengths
 
@@ -651,7 +785,7 @@ class APLC1d(Coronagraph):
         
         ----
         input:
-            Apod: 1D array
+            - Apod: 1D array
                 Entrance pupil apodization
                 
         ----
@@ -670,7 +804,7 @@ class APLC1d(Coronagraph):
         
         ----
         input:
-            Apod: 1D array
+            - Apod: 1D array
                 Entrance pupil apodization
                 
         ----
@@ -715,75 +849,75 @@ class DZPM1d(Coronagraph):
         ------
         attributes:
         
-            OPD1: float
+            - OPD1: float
                 optical path difference for the inner part of the mask
                 
-            OPD2: float
+            - OPD2: float
                 optical path difference for the outer part of the mask
                 
-            phi1_t: array
+            - phi1_t: array
                 phase shift induced by the inner part of the mask at all the 
                 wavelengths
 
-            phi2_t: array
+            - phi2_t: array
                 phase shift induced by the outer part of the mask at all the 
                 wavelengths
             
-            eps1_t: array
+            - eps1_t: array
                 phasor induced by the inner part of the mask at all the 
                 wavelengths
 
-            eps2_t: array
+            - eps2_t: array
                 phasor induced by the outer part of the mask at all the 
                 wavelengths
             
-            rMask1_t: array
+            - rMask1_t: array
                 focal plane mask inner part radius scaled with wavelength
                 
-            rMask2_t: array
+            - rMask2_t: array
                 focal plane mask outer part radius scaled with wavelength
                 
-            nFPM1_t: array
+            - nFPM1_t: array
                 inner mask sampling at a given wavelength
             
-            nFPM2_t: array
+            - nFPM2_t: array
                 inner mask sampling at a given wavelength
             
-            nFPM1_max: float
+            - nFPM1_max: float
                 maximum inner mask sampling over all the wavelengths
                 
-            nFPM2_max: float
+            - nFPM2_max: float
                 maximum inner mask sampling over all the wavelengths
             
-            mask1_lam: array
+            - mask1_lam: array
                 inner focal plane mask in lam/D unit
             
-            mask2_lam: array
+            - mask2_lam: array
                 outer focal plane mask in lam/D unit
             
-            xi_FPM1_lam: array
+            - xi_FPM1_lam: array
                 inner focal plane mask coordinate in lam/D
             
-            xi_FPM2_lam: array
+            - xi_FPM2_lam: array
                 outer focal plane mask coordinate in lam/D       
      
-            hankel_kernel_FPM1_all: array
+            - hankel_kernel_FPM1_all: array
                 hankel kernel for the inner focal plane mask
                 at all the wavelengths
             
-            hankel_kernel_FPM2_all: array
+            - hankel_kernel_FPM2_all: array
                 hankel kernel for the outer focal plane mask
                 at all the wavelengths
             
-            hankel_kernel_iFPM1_all: array
+            - hankel_kernel_iFPM1_all: array
                 inverse hankel transform for the inner focal plane mask
                 at all the wavelengths
                 
-            hankel_kernel_iFPM2_all: array
+            - hankel_kernel_iFPM2_all: array
                 inverse hankel transform for the outer focal plane mask
                 at all the wavelengths
                 
-            Apod_w: array
+            - Apod_w: array
                 complex apodization at all the wavelengths
 
         '''
@@ -841,7 +975,7 @@ class DZPM1d(Coronagraph):
         
         ----
         input:
-            Apod: 1D array
+            - Apod: 1D array
                 Entrance pupil apodization
                 
         ----
@@ -866,7 +1000,7 @@ class DZPM1d(Coronagraph):
         
         ----
         input:
-            Apod: 1D array
+            - Apod: 1D array
                 Entrance pupil apodization
                 
         ----
@@ -923,11 +1057,11 @@ class APLC2d(Coronagraph):
         ------
         attributes:
         
-            mB_t: array
+            - mB_t: array
                 spatial frequency range within the focal plane mask 
                 in plane B in lam/D at all the wavelengths
                
-            mD_t: array
+            - mD_t: array
                 spatial frequency range in the final image plane D in lam/D at 
                 all the wavelengths
                 
@@ -953,15 +1087,15 @@ class APLC2d(Coronagraph):
         Parameters:
         ---------- 
     
-        - Apod2d: 2D array 
-            Entrance pupil apodization
+            - Apod2d: 2D array 
+                Entrance pupil apodization
             
         Output:
         ----------
     
-        - field_Dtmp: 3D array
-            direct electric field in the final image plane at 
-            all the wavelengths
+            - field_Dtmp: 3D array
+                direct electric field in the final image plane at 
+                all the wavelengths
     
         -------------------------------------------------------------- '''    
 
@@ -988,15 +1122,15 @@ class APLC2d(Coronagraph):
         Parameters:
         ---------- 
     
-        - Apod2d: 2D array 
-            Entrance pupil apodization
+            - Apod2d: 2D array 
+                Entrance pupil apodization
             
         Output:
         ----------
     
-        - field_Dtmp: 3D array
-            coronagraphic electric field in the final image plane at 
-            all the wavelengths
+            - field_Dtmp: 3D array
+                coronagraphic electric field in the final image plane at 
+                all the wavelengths
             
         -------------------------------------------------------------- '''        
 
@@ -1013,4 +1147,6 @@ class APLC2d(Coronagraph):
                       ctr=self.ctr2)
 
         return field_Dtmp   
+
+#%%
      
