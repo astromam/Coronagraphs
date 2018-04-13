@@ -13,10 +13,48 @@ import gurobipy as gb
 from corono import coronagraph_cl as cg
 
 def get_default_params_matrix_pb():
+    '''
+    default parameters for the optimization problem matrix
+       
+    Parameters:
+    ----------
+    - cDarkHole: float
+        contrast goal in log scale inside the search area in the 
+        coronagraphic image
+    
+    - tau: float
+        integrated amplitude transmission goal in fraction of the pupil 
+        amplitude transmission
+    
+    Returns:    
+    ----------
+    - tmp: dict
+        dictionnary of parameters with their default values
+        
+    '''
     tmp = {'cDarkHole':8,'tau':0.2}
     return tmp
 
 def get_default_params_MaxContrast_pb():
+    '''
+    default parameters for the Max contrast optimization problem
+    
+    Parameters:
+    ---------- 
+    - tmp: dict
+        dictionary from the get_default_matrix_pb
+        
+    - Lnorm: string
+        L-norm for the optimization problem ('Linf': L-infinite norm, 
+        'L1': L1-norm)
+            
+    Returns:    
+    ----------
+    - tmp: dict
+        updated dictionary
+        
+    '''
+    
     tmp = get_default_params_matrix_pb()
     tmp.update({'Lnorm':'L1'})
     return tmp
