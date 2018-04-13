@@ -207,8 +207,8 @@ class Coronagraph(object):
         attributes:
         ----------
             
-        - params: list
-            list of parameters for the Coronagraph class
+        - params: dict
+            dictionary of parameters for the Coronagraph class
             
         - check_params():
             
