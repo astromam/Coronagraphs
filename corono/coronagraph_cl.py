@@ -906,7 +906,7 @@ class DZPM1d(Coronagraph):
     def __init__(self, **kwargs):
         """
         __init__ : method
-            build the constructor for the DZPM1d class
+            Constructor for the DZPM1d class
         
         Attributes:
         ----------      

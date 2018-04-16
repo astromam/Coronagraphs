@@ -397,24 +397,20 @@ class MaxTau(ProblemMatrix):
             print('computing matrices')
             self.compute_matrices()
             
-            nA = np.shape(self.A)[1]
-        
-            # Create a new model               
-            self.m = gb.Model("LP max tau new")
-            # Create variables
-            ApodTmp = self.m.addVars(self.npp, lb=0.0, ub=1.0, name="ApodTmp")
-            # Set objective
-            self.m.setObjective(gb.quicksum((self.c[i]*ApodTmp[i] 
-                    for i in range(self.npp))), gb.GRB.MINIMIZE)
-            # Add constraint:                
-            self.m.addConstrs((gb.quicksum((ApodTmp[i]*self.A[i,j] 
-                    for i in range(self.npp) if self.A[i,j])) <=  self.b[j] 
-                    for j in range(nA)), "cpos")
-            self.m.update()           
-        else:
-            raise ValueError('Be careful: A or b or c is not defined')
-        return self.m
- 
+        nA = np.shape(self.A)[1]
+    
+        # Create a new model               
+        self.m = gb.Model("LP max tau new")
+        # Create variables
+        ApodTmp = self.m.addVars(self.npp, lb=0.0, ub=1.0, name="ApodTmp")
+        # Set objective
+        self.m.setObjective(gb.quicksum((self.c[i]*ApodTmp[i] 
+                for i in range(self.npp))), gb.GRB.MINIMIZE)
+        # Add constraint:                
+        self.m.addConstrs((gb.quicksum((ApodTmp[i]*self.A[i,j] 
+                for i in range(self.npp) if self.A[i,j])) <=  self.b[j] 
+                for j in range(nA)), "cpos")
+        self.m.update()            
 
 #%%
 """
