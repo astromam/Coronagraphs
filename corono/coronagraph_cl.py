@@ -10,7 +10,7 @@ Class for different types of coronagraphs
 
 #%%
 """
-initialization
+Initialization
 """
 import numpy as np
 #import pylab as pl
@@ -20,12 +20,12 @@ import json
 
 #%% 
 """
-default parameters
+Default parameters
 """
 #%%
-def get_default_params_coronagraph():
+def get_default_params_Coronagraph():
     """
-    Default parameters for the Coronagraph class:
+    Gets the default parameters for the Coronagraph class.
         
     Parameters
     ---------- 
@@ -97,7 +97,7 @@ def get_default_params_coronagraph():
 #%%
 def get_default_params_APLC1d():
     """
-    Default parameters for the APLC1d coronagraph class:
+    Gets the default parameters for the APLC1d Coronagraph subclass.
         
     Parameters
     ---------- 
@@ -114,14 +114,14 @@ def get_default_params_APLC1d():
         Coronagraph and the APLC1d class
     
     """
-    tmp = get_default_params_coronagraph()
+    tmp = get_default_params_Coronagraph()
     tmp.update({'rMask':2.8,'nFPM':50})
     return tmp
 
 #%%
 def get_default_params_DZPM1d():
     """
-    Default parameters for the DZPM1d coronagraph class:
+    Gets the default parameters for the DZPM1d Coronagraph subclass.
         
     Parameters
     ---------- 
@@ -156,7 +156,7 @@ def get_default_params_DZPM1d():
         Coronagraph and the APLC1d class
     
     """   
-    tmp = get_default_params_coronagraph()
+    tmp = get_default_params_Coronagraph()
     tmp.update({'rMask1':0.875/2, 'rMask2':1.453/2.,
            'OPDx1':0.309, 'OPDx2':0.672,
            'ome1':-2.340, 'ome2':2.051, 'beta':-0.236,
@@ -166,7 +166,7 @@ def get_default_params_DZPM1d():
 #%%
 def get_default_params_APLC2d():
     """
-    Default parameters for the APLC2d coronagraph class:
+    Gets the default parameters for the APLC2d Coronagraph subclass.
         
     Parameters
     ---------- 
@@ -186,7 +186,7 @@ def get_default_params_APLC2d():
         Coronagraph and the APLC2d class
         
     """    
-    tmp = get_default_params_coronagraph()
+    tmp = get_default_params_Coronagraph()
     tmp.update({'rMask':2.8,
                 'nPup':50, 'nFPM':25
                 })
@@ -207,19 +207,18 @@ Coronagraph class
 """
 class Coronagraph(object):
     """
-    Coronagraph class
+    Defines the class for coronagraphs
     """    
-    default_params = get_default_params_coronagraph()
+    default_params = get_default_params_Coronagraph()
     fname_format   = fname_coronagraph
 #%%
     def __init__(self, **kwargs):
         """
         __init__ : method
-            build the constructor for the Coronagraph class
+            builds the constructor for the Coronagraph class.
         
         Attributes:
-        ----------
-            
+        ----------            
         params : dict
             dictionary of parameters for the Coronagraph class
             
@@ -353,7 +352,7 @@ class Coronagraph(object):
 #%%        
     def save_params(self, fname):
         """
-        Method to save params in fname using JSON (JavaScript Object Notation)
+        Saves params in fname using JavaScript Object Notation (JSON).
         
         Parameters
         ---------- 
@@ -368,7 +367,7 @@ class Coronagraph(object):
 #%%    
     def load_params(self, fname):
         """
-        Method to load params from fname using JSON (JavaScript Object Notation)
+        Loads params from fname using JavaScript Object Notation (JSON).
         
         Parameters
         ---------- 
@@ -385,8 +384,11 @@ class Coronagraph(object):
 #%%        
     def get_filename(self):
         """
-        Method to obtain params from the params list
-        ----
+        Gets params from the params list.
+        
+        Returns
+        -------
+        params from the list
                 
         """
         return self.fname_format.format(**self.params)
@@ -394,12 +396,16 @@ class Coronagraph(object):
 #%%    
     def get_cache(self,varname):
         """
-        Method to define filename with a given varname
+        Sets filename with a given varname.
         
         Parameters
         ---------- 
         varname : string
             filename in which...
+            
+        Returns
+        ---------
+        
                 
         """
         try:
@@ -410,9 +416,11 @@ class Coronagraph(object):
 #%%        
     def check_params(self):
         """
-        Method to set default value to the parameters that have not been 
+        Sets default values to the parameters that have not been set
         by the user.
-        ----
+        
+        Returns
+        -------
                
         """        
         for key in self.default_params:
@@ -422,7 +430,7 @@ class Coronagraph(object):
 #%%
     def __repr__(self):        
         """
-        Reserved method to print the official string representation of all 
+        Prints the official string representation of all 
         the values in the params object.
         
         Returns    
@@ -439,7 +447,7 @@ class Coronagraph(object):
 #%%
     def __contains__(self, item):
         """
-        Reserved method to request the value of an item in the params object.
+        Requests the value of an item in the params object.
             
         Parameters
         ----------  
@@ -457,7 +465,7 @@ class Coronagraph(object):
 #%%     
     def __getattr__(self, name):
         """
-        Reserved method to get the attribute of a key in the params object.
+        Gets the attribute of a key in the params object.
         
         Parameters
         ----------  
@@ -474,7 +482,7 @@ class Coronagraph(object):
 #%% direct signal in intensity
     def compute_direct_intensity_1d(self,Apod,poly=True):
         """
-        Compute the intensity of the direct image for 1D problem
+        Computes the intensity of the direct image for 1D problem.
         
         Parameters
         ---------- 
@@ -500,7 +508,7 @@ class Coronagraph(object):
 #%% coronagraphic signal in intensity
     def compute_corono_intensity_1d(self,Apod,poly=True):
         """
-        Compute the intensity of the coronagraphic image for 1D problem
+        Computes the intensity of the coronagraphic image for 1D problem.
         
         Parameters
         ---------- 
@@ -527,8 +535,8 @@ class Coronagraph(object):
 #%% generation of the direct response matrix
     def prop_direct_matrix(self,):
         """
-        Compute the response matrix of the direct image for all the points in
-        the pupil for 1D problem
+        Computes the response matrix of the direct image for all the points in
+        the pupil for 1D problem.
                 
         Returns    
         ----------
@@ -547,8 +555,8 @@ class Coronagraph(object):
 #%% generation of the coronagraphic response matrix        
     def prop_corono_matrix(self,):
         """
-        Compute the response matrix of the coronagraphic image for all the 
-        points in the pupil for 1D problem
+        Computes the response matrix of the coronagraphic image for all the 
+        points in the pupil for 1D problem.
                 
         Returns    
         ----------
@@ -567,7 +575,7 @@ class Coronagraph(object):
 #%% direct signal in intensity
     def compute_direct_intensity_2d(self,Apod2d,poly=True):
         """
-        Compute the intensity of the direct image for 2D problem
+        Computes the intensity of the direct image for 2D problem.
         
         Parameters
         ---------- 
@@ -593,7 +601,7 @@ class Coronagraph(object):
 #%% coronagraphic signal in intensity
     def compute_corono_intensity_2d(self,Apod2d,poly=True):
         """
-        Compute the intensity of the coronagraphic image for 2D problem
+        Computes the intensity of the coronagraphic image for 2D problem.
         
         Parameters
         ---------- 
@@ -620,8 +628,8 @@ class Coronagraph(object):
 #%%
     def compute_direct_field_2d_vec(self,Apod2d):
         """
-        Compute the electric field of the direct image 
-        for vectorized 2D problem
+        Computes the electric field of the direct image 
+        for vectorized 2D problem.
         
         Parameters
         ---------- 
@@ -641,8 +649,8 @@ class Coronagraph(object):
 #%%
     def compute_corono_field_2d_vec(self,Apod2d):
         """
-        Compute the electric field of the coronagraphic image 
-        for vectorized 2D problem
+        Computes the electric field of the coronagraphic image 
+        for vectorized 2D problem.
         
         Parameters
         ---------- 
@@ -662,8 +670,8 @@ class Coronagraph(object):
 #%% generation of the direct response matrix
     def prop_direct_matrix_2d(self):
         """
-        Compute the response matrix of the direct image for all the points in
-        the pupil for vectorized 2D problem
+        Computes the response matrix of the direct image for all the points in
+        the pupil for vectorized 2D problem.
                 
         Returns    
         ----------
@@ -682,8 +690,8 @@ class Coronagraph(object):
 #%% generation of the coronagraphic response matrix        
     def prop_corono_matrix_2d(self):
         """
-        Compute the response matrix of the coronagraphic image for all the 
-        points in the pupil for vectorized 2D problem
+        Computes the response matrix of the coronagraphic image for all the 
+        points in the pupil for vectorized 2D problem.
                 
         Returns    
         ----------
@@ -701,9 +709,9 @@ class Coronagraph(object):
 #%%
     def generate_area(self,):
         """
-        Compute the list of points with a given area in the final image plane 
-        of the coronagraph. The area is defined by an annulus with minimum and maximum 
-        angular separation from the star.
+        Computes the list of points with a given area in the final image plane 
+        of the coronagraph. The area is defined by an annulus with minimum and 
+        maximum angular separation from the star.
     
         Parameters
         ----------     
@@ -744,7 +752,10 @@ class Coronagraph(object):
 APLC 1d class
 """
 class APLC1d(Coronagraph):
-    
+    """
+    Defines the Coronagraph subclass for the Apodized Pupil Lyot Coronagraph
+    for one-dimension geometry.
+    """
     default_params = get_default_params_APLC1d()
     
     def __init__(self, **kwargs):
@@ -799,8 +810,8 @@ class APLC1d(Coronagraph):
 #%% # direct propagation (no focal plane mask)
     def compute_direct_field_1d(self,Apod):
         """
-        Compute the electric field of the direct image with APLC
-        for 1D problem
+        Computes the electric field of the direct image with APLC
+        for 1D problem.
         
         Parameters
         ---------- 
@@ -818,8 +829,8 @@ class APLC1d(Coronagraph):
 #%% # propagation through coronagraph (with focal plane mask)
     def compute_corono_field_1d(self,Apod):
         """
-        Compute the electric field of the coronagraphic image with APLC
-        for 1D problem
+        Computes the electric field of the coronagraphic image with APLC
+        for 1D problem.
         
         Parameters
         ---------- 
@@ -858,7 +869,10 @@ class APLC1d(Coronagraph):
 class DZPM 1d     
 """
 class DZPM1d(Coronagraph):
-    
+    """
+    Defines the Coronagraph subclass for the Dual Zone Phase Mask Coronagraph
+    for one-dimension geometry.
+    """    
     default_params = get_default_params_DZPM1d()    
 
     def __init__(self, **kwargs):
@@ -988,8 +1002,8 @@ class DZPM1d(Coronagraph):
 #%% direct propagation (no focal plane mask)
     def compute_direct_field_1d(self,Apod):
         """
-        Compute the electric field of the direct image with DZPM
-        for 1D problem
+        Computes the electric field of the direct image with DZPM
+        for 1D problem.
         
         Parameters
         ---------- 
@@ -1012,8 +1026,8 @@ class DZPM1d(Coronagraph):
 #%% propagation through coronagraph (with focal plane mask)
     def compute_corono_field_1d(self,Apod):
         """
-        Compute the electric field of the coronagraphic image with DZPM
-        for 1D problem
+        Computes the electric field of the coronagraphic image with DZPM
+        for 1D problem.
         
         Parameters
         ---------- 
@@ -1061,16 +1075,19 @@ class DZPM1d(Coronagraph):
     
 #%% 
 """
-APLC 2d class        
+APLC 2d Coronagraph subclass        
 """
 class APLC2d(Coronagraph):
-
+    """
+    Defines the Coronagraph subclass for the Apodized Pupil Lyot Coronagraph
+    for two-dimension geometry.
+    """
     default_params = get_default_params_APLC2d()
 
     def __init__(self, **kwargs):
         """
         __init__ : method
-            build the constructor for the APLC2d class
+            builds the constructor for the APLC2d class.
         
         Attributes:
         ----------        
@@ -1093,12 +1110,12 @@ class APLC2d(Coronagraph):
 #%% direct propagation (no focal plane mask)
     def compute_direct_field_2d(self,Apod2d):
         """ 
-        Compute the coronagraph electric field for a classical Lyot coronagraph
+        Computes the coronagraph electric field for a classical Lyot coronagraph
         with four planes (A: entrance pupil, B: intermediate focal plane, 
         C: relayed pupil before stop, L: relayed pupil after stop, 
         D: final image plane).
         Resolution element are given in lam0/D where lam0 and D denote 
-        the central and the telescope diameter
+        the central and the telescope diameter.
     
         Parameters
         ----------     
@@ -1126,12 +1143,12 @@ class APLC2d(Coronagraph):
 #%%
     def compute_corono_field_2d(self,Apod2d):
         """
-        Compute the coronagraph electric field for a classical Lyot coronagraph
+        Computes the coronagraph electric field for a classical Lyot coronagraph
         with four planes (A: entrance pupil, B: intermediate focal plane, 
         C: relayed pupil before stop, L: relayed pupil after stop, 
         D: final image plane).
         Resolution element are given in lam0/D where lam0 and D denote 
-        the central and the telescope diameter
+        the central and the telescope diameter.
     
         Parameters
         ---------- 

@@ -19,7 +19,7 @@ Default parameters
 #%%
 def get_default_params_ProblemMatrix():
     """
-    Default parameters for the optimization problem matrix
+    Gets the default parameters for the optimization problem matrix.
        
     Parameters
     ----------
@@ -43,7 +43,7 @@ def get_default_params_ProblemMatrix():
 #%%
 def get_default_params_MaxContrastProblemMatrix():
     """
-    Default parameters for the Max contrast optimization problem
+    Gets the default parameters for the Max contrast optimization problem.
     
     Parameters
     ---------- 
@@ -70,7 +70,9 @@ def get_default_params_MaxContrastProblemMatrix():
 Problem Matrix class
 """
 class ProblemMatrix(object):
-    
+    """
+    Defines the class for Matrix of optimization problem
+    """
     default_params = get_default_params_ProblemMatrix()
   
     def __init__(self,corono=cg.APLC1d(),**kwargs):
@@ -187,14 +189,14 @@ class ProblemMatrix(object):
 #%%    
     def compute_matrices(self):
         """
-        Virtual function for the matrix computation
+        Virtual function for the matrix computation.
         """
         print('Warning: virtual fct - no A, b and c matrices will be computed')
 
 #%%
     def __contains__(self, item):
         """
-        Method to check params for a given item
+        Checks params for a given item.
         
         Parameters
         ----------
@@ -211,7 +213,7 @@ class ProblemMatrix(object):
 #%%     
     def __getattr__(self, name):
         """
-        Method to check the attribute for the params
+        Checks the attribute for the params.
         
         Parameters
         ----------
@@ -228,7 +230,7 @@ class ProblemMatrix(object):
 #%%        
     def check_params(self):
         """
-        Method to check the params
+        Check the params.
         
         Return:
         ----------
@@ -242,8 +244,8 @@ class ProblemMatrix(object):
 #%%    
     def load_params(self, fname):
         """
-        Load the params from a given filename 
-        using JSON (JavaScript Object Notation)
+        Loads the params from a given filename 
+        using JavaScript Object Notation (JSON).
         
         Parameters
         ----------
@@ -260,7 +262,7 @@ class ProblemMatrix(object):
 #%%        
     def solve_model(self):
         """
-        Solving of the optimization problem for the model using gurobi
+        Solves the optimization problem for the model using the gurobi solver.
         """
         try:
             
@@ -294,7 +296,10 @@ class ProblemMatrix(object):
 MaxTau ProblemMatrix subclass
 """
 class MaxTau(ProblemMatrix):
-
+    """
+    Defines the ProblemMatrix subclass for the optimization problem that 
+    maximizes the apodizer transmission for a given contrast in the search area.
+    """
     def __init__(self, corono=cg.APLC1d(), **kwargs):
         """
         Constructor for the Matrix problem with the coronagraph object
@@ -304,9 +309,9 @@ class MaxTau(ProblemMatrix):
 #%%        
     def compute_matrices(self):
         """
-        Compute the matrices for the optimization problem that consists in 
+        Computes the matrices for the optimization problem that consists in 
         maximizing the apodizer transmission for a set contrast in a given 
-        search area in the coronagraphic image
+        search area in the coronagraphic image.
         
         Parameters
         -----------        
@@ -360,7 +365,7 @@ class MaxTau(ProblemMatrix):
 #%%
     def compute_gurobi_model(self):
         """
-        Generation of the gurobi solver model for the MaxTau problem
+        Generates the gurobi solver model for the MaxTau problem.
         
         Parameters 
         -----------
@@ -401,21 +406,26 @@ class MaxTau(ProblemMatrix):
 MaxContrast ProblemMatrix subclass
 """
 class MaxContrast(ProblemMatrix):
-
+    """
+    Defines the ProblemMatrix subclass for the optimization problem that 
+    maximizes the contrast in a given search area for a given integrated 
+    apodizer transmission.
+    """
     default_params = get_default_params_MaxContrastProblemMatrix()
     
     def __init__(self, corono=cg.APLC1d(), **kwargs):
         """
-        Constructor for the Matrix problem with the coronagraph object
+        builds the constructor for the Matrix problem with 
+        the coronagraph object
         """
         super().__init__(**kwargs)
 
 #%%    
     def compute_matrices(self):
         """
-        Compute the matrices for the optimization problem that consists in 
+        Computes the matrices for the optimization problem that consists in 
         maximizing the contrast in a given search area in the coronagraphic 
-        image for a set integrated apodizer transmission
+        image for a set integrated apodizer transmission.
 
         Parameters
         -----------
@@ -502,7 +512,7 @@ class MaxContrast(ProblemMatrix):
 #%%
     def compute_gurobi_model(self):
         """
-        Generation of the gurobi solver model for the MaxContrast problem
+        Generates the gurobi solver model for the MaxContrast problem.
         
         Parameters 
         -----------
