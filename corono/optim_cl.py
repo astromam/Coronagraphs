@@ -12,130 +12,138 @@ import json
 import gurobipy as gb
 from corono import coronagraph_cl as cg
 
-def get_default_params_matrix_pb():
-    '''
-    default parameters for the optimization problem matrix
+#%%
+"""
+Default parameters
+"""
+#%%
+def get_default_params_ProblemMatrix():
+    """
+    Default parameters for the optimization problem matrix
        
-    Parameters:
+    Parameters
     ----------
-    - cDarkHole: float
+    cDarkHole : float
         contrast goal in log scale inside the search area in the 
         coronagraphic image
     
-    - tau: float
+    tau : float
         integrated amplitude transmission goal in fraction of the pupil 
         amplitude transmission
     
-    Returns:    
+    Returns    
     ----------
-    - tmp: dict
+    tmp : dict
         dictionnary of parameters with their default values
         
-    '''
+    """
     tmp = {'cDarkHole':8,'tau':0.2}
     return tmp
 
-def get_default_params_MaxContrast_pb():
-    '''
-    default parameters for the Max contrast optimization problem
+#%%
+def get_default_params_MaxContrastProblemMatrix():
+    """
+    Default parameters for the Max contrast optimization problem
     
-    Parameters:
+    Parameters
     ---------- 
-    - tmp: dict
+    tmp : dict
         dictionary from the get_default_matrix_pb
         
-    - Lnorm: string
-        L-norm for the optimization problem ('Linf': L-infinite norm, 
-        'L1': L1-norm)
+    Lnorm : string
+        L-norm for the optimization problem ('Linf' : L-infinite norm, 
+        'L1' : L1-norm)
             
-    Returns:    
+    Returns    
     ----------
-    - tmp: dict
+    tmp : dict
         updated dictionary
         
-    '''
+    """
     
-    tmp = get_default_params_matrix_pb()
+    tmp = get_default_params_ProblemMatrix()
     tmp.update({'Lnorm':'L1'})
     return tmp
 
 #%%
+"""
+Problem Matrix class
+"""
 class ProblemMatrix(object):
     
-
-    default_params = get_default_params_matrix_pb()
-
-    
+    default_params = get_default_params_ProblemMatrix()
+  
     def __init__(self,corono=cg.APLC1d(),**kwargs):
-        '''
-        __init__ method: build the constructor for the ProblemMatrix class
+        """
+        __init__ : method
+            build the constructor for the ProblemMatrix class
         
-        attributes:
+        Attributes
         ----------
-        - params: dict
+        params : dict
             dictionary of parameters for the Coronagraph class
         
-        - corono: class
+        corono : class
             object of the Coronagraph class
         
-        - dz: vector_like
+        dz : vector_like
             dark zone points in the coronagraphic image
             
-        - aaa: vector_like
+        aaa : vector_like
             vector indexing the points in the coronagraphic image
             
-        - idz_dz: vector_like
+        idz_dz : vector_like
             vector indexing the points of the dark zone in the coronagraphic 
             image
             
-        - ndz: integer
+        ndz : integer
             number of points of the dark zone in the coronagraphic image
             
-        - pup: vector_like
+        pup : vector_like
             index of non zero points in the aperture
             
-        - bbb: vector_like
+        bbb : vector_like
             vector indexing the points in the pupil
             
-        - idx_pup: vector_like
+        idx_pup : vector_like
             vector indexing the non zero points in the pupil
             
-        - npp: integer
+        npp : integer
             number of non zero points in the aperture
             
-        - lys: vector_like
+        lys : vector_like
             index of non zero points in the Lyot stop
             
-        - idx_lys: vector_like
+        idx_lys : vector_like
             vector indexing the non zero points of the pupil in the Lyot stop
             
-        - direct_field_t_re, direct_field_t_im: 3d array
+        direct_field_t_re, direct_field_t_im : 3d array
             real and imaginary part of the non coronagraphic response matrix 
             for all the points in the pupil and at all the wavelengths
             
-        - corono_field_t_re, corono_field_t_im: 3d array
+        corono_field_t_re, corono_field_t_im : 3d array
             real and imaginary part of the non coronagraphic response matrix 
             for all the points in the pupil and at all the wavelengths
          
-        - corono_field_t_re2: 3d array
+        corono_field_t_re2 : 3d array
             real part of the non coronagraphic response matrix 
             for all the non zero points in the pupil and at all the wavelengths
                                 
-        - A, b, c: matrices
+        A, b, c : matrices
             matrix to solve the problem for a given variable x
             A.x <= b under the cost function c.T.x
         
-        - TR: float
+        TR : float
             integrated amplitude transmission of the pupil with respect to that
             of the clear pupil
             
-        - m: gurobi model
+        m : gurobi model
             gurobi model of the problem to solve
             
-        - Apod: vector_like
+        Apod : vector_like
             apodizer to be generated
         
-        '''
+        """
         self.params  = kwargs
         self.check_params()
         
@@ -178,71 +186,71 @@ class ProblemMatrix(object):
 
 #%%    
     def compute_matrices(self):
-        '''
-        virtual function for the matrix computation
-        '''
+        """
+        Virtual function for the matrix computation
+        """
         print('Warning: virtual fct - no A, b and c matrices will be computed')
 
 #%%
     def __contains__(self, item):
-        '''
-        method to check params for a given item
+        """
+        Method to check params for a given item
         
-        Parameters:
+        Parameters
         ----------
-        - item: string 
+        item : string 
             key in params dictionary
         
         Return:
         ----------
-        - value for the item in the dictionary  
+        value for the item in the dictionary  
             
-        '''
+        """
         return item in self.params
     
 #%%     
     def __getattr__(self, name):
-        '''
-        method to check the attribute for the params
+        """
+        Method to check the attribute for the params
         
-        Parameters:
+        Parameters
         ----------
-        - name: string
+        name : string
             name of the variable to be retrieved
         
         Return:
         ----------
-        - the value of name in params
+        the value of name in params
         
-        '''
+        """
         return self.params[name]
 
 #%%        
     def check_params(self):
-        '''
-        method to check the params
+        """
+        Method to check the params
         
         Return:
         ----------
-        - return the values for all the keys in the params
+        return the values for all the keys in the params
         
-        '''        
+        """        
         for key in self.default_params:
             if not key in self.params:
                 self.params[key] = self.default_params[key]
   
 #%%    
     def load_params(self, fname):
-        '''
-        load the params from a given filename 
+        """
+        Load the params from a given filename 
         using JSON (JavaScript Object Notation)
         
-        Parameters:
+        Parameters
         ----------
-        - fname: string
+        fname : string
             filename to load    
         
-        '''
+        """
         
         f=open(fname,'r')
         params=json.loads(f.read())
@@ -251,9 +259,9 @@ class ProblemMatrix(object):
 
 #%%        
     def solve_model(self):
-        '''
-        solving of the optimization problem for the model using gurobi
-        '''
+        """
+        Solving of the optimization problem for the model using gurobi
+        """
         try:
             
             self.m.Params.Method       = 2
@@ -282,43 +290,47 @@ class ProblemMatrix(object):
 
         
 #%%
+"""
+MaxTau ProblemMatrix subclass
+"""
 class MaxTau(ProblemMatrix):
 
     def __init__(self, corono=cg.APLC1d(), **kwargs):
-        '''
-        constructor for the Matrix problem with the coronagraph object
-        '''
+        """
+        Constructor for the Matrix problem with the coronagraph object
+        """
         super().__init__(**kwargs)
-        
+
+#%%        
     def compute_matrices(self):
-        '''
-        compute the matrices for the optimization problem that consists in 
+        """
+        Compute the matrices for the optimization problem that consists in 
         maximizing the apodizer transmission for a set contrast in a given 
         search area in the coronagraphic image
         
-        Parameters:
+        Parameters
         -----------        
-        - A0, A1: matrices
+        A0, A1 : matrices
             contrast constraints on the coronagraphic electric field
             
-        - A2, A3: matrices
+        A2, A3 : matrices
             plus and minus identity matrices for the non zero points in the
             pupil
             
-        - b0, b1: matrices
+        b0, b1 : matrices
             zero matrices with size is related to A0 and A1
             
-        - b2, b3: matrices
+        b2, b3 : matrices
             zero matrices with size is related to A2 and A3
        
         
-        Return: 
+        Return : 
         ----------
-        - A, b, c:
+        A, b, c:
             the matrices for the optimization problem described above
         
         
-        '''
+        """
         direct_field_t1_re = np.zeros((self.corono.nPup, self.corono.nlam*self.ndz))
         for j in range(self.corono.nlam*self.ndz):
             direct_field_t1_re[:,j] = \
@@ -345,21 +357,22 @@ class MaxTau(ProblemMatrix):
         
         return self.A, self.b, self.c
 
+#%%
     def compute_gurobi_model(self):
-        '''
-        generation of the gurobi solver model for the MaxTau problem
+        """
+        Generation of the gurobi solver model for the MaxTau problem
         
-        Parameters: 
+        Parameters 
         -----------
-        - Apodtmp: vector_like
+        Apodtmp : vector_like
             vector of the apodizer in the non zero points of the pupil
         
-        Return: 
+        Returns
         -----------
-        - m: gurobi model
+        m : gurobi model
             gurobi model of the MaxTau problem to solve
             
-        '''
+        """
         if self.A is None or self.b is None or self.c is None:
             print('computing matrices')
             self.compute_matrices()
@@ -384,65 +397,69 @@ class MaxTau(ProblemMatrix):
  
 
 #%%
+"""
+MaxContrast ProblemMatrix subclass
+"""
 class MaxContrast(ProblemMatrix):
 
-    default_params = get_default_params_MaxContrast_pb()
+    default_params = get_default_params_MaxContrastProblemMatrix()
     
     def __init__(self, corono=cg.APLC1d(), **kwargs):
-        '''
-        constructor for the Matrix problem with the coronagraph object
-        '''
+        """
+        Constructor for the Matrix problem with the coronagraph object
+        """
         super().__init__(**kwargs)
-    
+
+#%%    
     def compute_matrices(self):
-        '''
-        compute the matrices for the optimization problem that consists in 
+        """
+        Compute the matrices for the optimization problem that consists in 
         maximizing the contrast in a given search area in the coronagraphic 
         image for a set integrated apodizer transmission
 
-        Parameters:
+        Parameters
         -----------
-        - Lnorm: string
+        Lnorm : string
             type of L-norm for the optimization problem
             
-        - I0, I1, N0, Z0, c1: matrices
+        I0, I1, N0, Z0, c1 : matrices
             intermediate matrices for the generation of the matrices A0 to A5
             
-        - A0, A1: matrices
+        A0, A1 : matrices
             contrast constraints on the coronagraphic electric field
             
-        - A2, A3: matrices
+        A2, A3 : matrices
             plus and minus identity matrices for the non zero points in the
             pupil
             
-        - A4: matrix
+        A4 : matrix
             
-        - A5: matrix
+        A5 : matrix
             matrix for the integrated apodizer transmission
         
             
-        - b0, b1: matrices
+        b0, b1 : matrices
             zero matrices with size is related to A0 and A1
             
-        - b2: matrix
+        b2 : matrix
             zero matrix with size is related to A2
         
-        - b3: matrix
+        b3 : matrix
             one matrix with size relative to A3
             
-        - b4: matrix
+        b4 : matrix
             zero matrix with size relative to A4
             
-        - b5: matrix
+        b5 : matrix
             single value matrix with tau, the set threshold for the integrated 
             apodizer transmission      
         
         Return:
         -----------
-        - A, b, c:
+        A, b, c:
             the matrices for the optimization problem described above                                            
         
-        '''
+        """
         if self.Lnorm == 'Linf':
             I1 = np.ones(self.ndz*self.corono.nlam)
             I1 = I1[None,:]
@@ -482,22 +499,23 @@ class MaxContrast(ProblemMatrix):
         
         return self.A, self.b, self.c
 
+#%%
     def compute_gurobi_model(self):
-        '''
-        generation of the gurobi solver model for the MaxContrast problem
+        """
+        Generation of the gurobi solver model for the MaxContrast problem
         
-        Parameters: 
+        Parameters 
         -----------
-        - ApodEpstmp: vector_like
+        ApodEpstmp : vector_like
             vector of the apodizer in the non zero points of the pupil 
             and neps points for the coronagraphic image
         
-        Return: 
+        Returns
         -----------
-        - m: gurobi model
+        m : gurobi model
             gurobi model of the MaxTau problem to solve
             
-        '''        
+        """        
         if self.A is None or self.b is  None or self.c is None:
             print('computing matrices')
             self.compute_matrices()
