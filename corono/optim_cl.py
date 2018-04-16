@@ -61,6 +61,7 @@ def get_default_params_MaxContrast_pb():
 
 #%%
 class ProblemMatrix(object):
+    
 
     default_params = get_default_params_matrix_pb()
 
@@ -318,11 +319,12 @@ class MaxTau(ProblemMatrix):
         
         
         '''
-        direct_field_t1_re = np.zeros_like(self.corono_field_t1_re)
+        direct_field_t1_re = np.zeros((self.corono.nPup, self.corono.nlam*self.ndz))
         for j in range(self.corono.nlam*self.ndz):
             direct_field_t1_re[:,j] = \
             self.direct_field_t_re[:,(self.corono.nlam-1)//2,0]
-        direct_field_t2_re = self.corono_field_t1_re[self.idx_pup,:]
+        direct_field_t2_re = direct_field_t1_re[self.idx_pup,:]
+
         
         A0  =  self.corono_field_t2_re \
                 - 10**(-self.cDarkHole/2)/np.sqrt(2.)*direct_field_t2_re
@@ -358,7 +360,10 @@ class MaxTau(ProblemMatrix):
             gurobi model of the MaxTau problem to solve
             
         '''
-        if self.A & self.b & self.c is not None:
+        if self.A is None or self.b is None or self.c is None:
+            print('computing matrices')
+            self.compute_matrices()
+            
             nA = np.shape(self.A)[1]
         
             # Create a new model               
@@ -493,28 +498,29 @@ class MaxContrast(ProblemMatrix):
             gurobi model of the MaxTau problem to solve
             
         '''        
-        if self.A is not None and self.b is not None and self.c is not None:        
-            nn = np.shape(self.A)[1]
-            # Create a new model  
-            self.m = gb.Model("LP max C new")
-            
-            if self.Lnorm == 'Linf':
-                self.neps = 1
-            else:
-                self.neps = self.ndz
-            # Create variables
-            ApodEpsTmp = self.m.addVars(self.npp + self.neps, lb=0.0, name="ApodTmp")        
-            # Set objective
-            self.m.setObjective(gb.quicksum((self.c[i+self.npp]*ApodEpsTmp[i+self.npp] 
-                    for i in range(self.neps))), gb.GRB.MINIMIZE)
-            # Add constraint:
-            self.m.addConstrs((gb.quicksum((ApodEpsTmp[i]*self.A[i,j] 
-                    for i in range(self.npp + self.neps))) <=  self.b[j] 
-                    for j in np.arange(nn)), "cpos")
-            
-            self.m.update()
+        if self.A is None or self.b is  None or self.c is None:
+            print('computing matrices')
+            self.compute_matrices()
+                       
+        nn = np.shape(self.A)[1]
+        # Create a new model  
+        self.m = gb.Model("LP max C new")
+        
+        if self.Lnorm == 'Linf':
+            self.neps = 1
         else:
-            raise ValueError('Be careful: A or b or c is not defined')
+            self.neps = self.ndz
+        # Create variables
+        ApodEpsTmp = self.m.addVars(self.npp + self.neps, lb=0.0, name="ApodTmp")        
+        # Set objective
+        self.m.setObjective(gb.quicksum((self.c[i+self.npp]*ApodEpsTmp[i+self.npp] 
+                for i in range(self.neps))), gb.GRB.MINIMIZE)
+        # Add constraint:
+        self.m.addConstrs((gb.quicksum((ApodEpsTmp[i]*self.A[i,j] 
+                for i in range(self.npp + self.neps))) <=  self.b[j] 
+                for j in np.arange(nn)), "cpos")
+        
+        self.m.update()
             
         return self.m   
 
