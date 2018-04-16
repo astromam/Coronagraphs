@@ -9,8 +9,10 @@ Created on Mon Mar  5 16:10:51 2018
 import numpy as np
 import scipy.special
 
-#%%
-# check python version
+#%% check python version
+"""
+Check python version
+"""
 try:
     reload  # Python 2.7
 except NameError:
@@ -19,16 +21,36 @@ except NameError:
     except ImportError:
         from imp import reload  # Python 3.0 - 3.3
         
-
 #%%
 def to_dict(**kwargs):
+    """
+    Returns the arguments in the dictonary
+    """
     return kwargs
 
 #%%
 def uniform_disk(n, radius, ctr=False):
-    ''' ---------------------------------------------------------
-    returns an (ys x xs) array with a uniform disk of radius "radius".
-    ---------------------------------------------------------  '''
+    """
+    Generates a uniform disk in a 2D array.
+    
+    Parameters
+    ----------
+    n : integer
+        size of the array
+    
+    radius : float
+        radius of the disk
+    
+    ctr : boolean (default=False)
+        type of centering for the disk. If True, the disk is centered between
+        four pixels.
+    
+    Returns
+    ----------
+    res : array_like
+        (ys x xs) array with a uniform disk of radius "radius".
+        
+    """
     val    = 0
     if ctr is True:
         val = 1/2 
@@ -40,21 +62,42 @@ def uniform_disk(n, radius, ctr=False):
 
 #%%
 def sft(A2, NB, m, inv=False, ctr=False):
-    ''' --------------------------------------------------------------
-    Explicit Fourier Transform, using the theory described in:
-    http://adsabs.harvard.edu/abs/2007OExpr..1515935S
+    """
+    Slow Fourier Transform, using the theory described in [1]. 
+    Assumes the original array is square. 
 
-    Assumes the original array is square.
-    No need to "center" the data on the origin.
-
-    Parameters:
+    Parameters
     ----------
-
-    - A2 : the 2D original array
-    - NB : the linear size of the result array (integer)
-    - m  : m/2 = maximum spatial frequency to be computed (in l/D)
-    - inv: boolean (direct or inverse) see the definition of isft()
-    -------------------------------------------------------------- '''
+    A2 : array_like
+        the 2D original array
+    
+    NB : int
+        the linear size of the resulting array (integer)
+    
+    m : float
+        m/2 = maximum spatial frequency to be computed (in lam/D)
+    
+    inv : boolean (default=False)
+        boolean (direct or inverse) see the definition of isft()
+        
+    ctr : boolean (default=False)
+        type of centering for the disk. If True, the disk is centered between
+        four pixels.
+    
+    Returns
+    ---------
+    res : array_like
+        Fourier transform of the array A2 within array of dimensions NBxNB
+    
+    References
+    ---------
+    
+    .. [1] Soummer, Pueyo, Sivaramakrishnan, Vanderbei, Fast computation 
+        of Lyot-style coronagraph propagation, Optics Express, vol. 15, issue 24, 
+        p. 15935 (2007).
+        https://www.osapublishing.org/oe/abstract.cfm?uri=oe-15-24-15935
+    
+    """
     val    = 0
     if ctr is True:
         val = 1/2
@@ -84,28 +127,80 @@ def sft(A2, NB, m, inv=False, ctr=False):
 
 #%%
 def isft(A2, NB, m, ctr=False):
-    ''' --------------------------------------------------------------
-    Explicit inverse Fourier Transform, using the theory described in:
-    http://adsabs.harvard.edu/abs/2007OExpr..1515935S
+    """
+    Explicit inverse Slow Fourier Transform, using the theory described in [1].
 
-    See documentation for sft().
-    -------------------------------------------------------------- '''
+    See Also
+    --------
+    sft() : Slow Fourier Transform
+        
+    References
+    ---------
+    
+    .. [1] Soummer, Pueyo, Sivaramakrishnan, Vanderbei, Fast computation 
+        of Lyot-style coronagraph propagation, Optics Express, vol. 15, issue 24, 
+        p. 15935 (2007).
+        https://www.osapublishing.org/oe/abstract.cfm?uri=oe-15-24-15935
+        
+    """
     return sft(A2, NB, m, inv=True, ctr=ctr)
 
-#%%
-# import Bessel function
+#%% import Bessel function
 besselJ0raw=lambda z: scipy.special.jv(0,z)
 def besselJ0(z):
+    """
+    Computes the Bessel function of zero order for a given array
+    
+    Parameters
+    ---------
+    z : array_like
+        variable for which the bessel function is computed
+    
+    Returns
+    ---------
+    temp : array_like
+        Bessel function of zero order for the z array
+    
+    """
     temp=besselJ0raw(z)
     temp[np.isnan(temp)]=0
     return temp
 
 #%%
 def write_apod1d(fpath, test):
+    """
+    Saves 1D apodizer
+    
+    Parameters
+    ----------
+    fpath : string
+        Filepath in which to save fpath
+    
+    test : array_like 
+        Array to be saved
+    
+    """
     np.savetxt(fpath, test)
     
 #%%
 def load_apod1d(fpath):
+    """
+    load 1D apodizer
+    
+    Parameters
+    ----------
+    fpath : string
+        Path of the file to load
+        
+    Returns
+    ---------
+    rApod : array_like
+        Radial coordinate of the apodizer points to be loaded
+    
+    Apod : array_like
+        Apodizer to be loaded
+    
+    """
     test  = np.loadtxt(fpath)
     rApod = test[:,0]
     Apod  = test[:,1]
