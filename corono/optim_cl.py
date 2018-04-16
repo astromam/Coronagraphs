@@ -24,17 +24,17 @@ def get_default_params_ProblemMatrix():
     Parameters
     ----------
     cDarkHole : float
-        contrast goal in log scale inside the search area in the 
+        Contrast goal in log scale inside the search area in the 
         coronagraphic image
     
     tau : float
-        integrated amplitude transmission goal in fraction of the pupil 
+        Integrated amplitude transmission goal in fraction of the pupil 
         amplitude transmission
     
     Returns    
     ----------
     tmp : dict
-        dictionnary of parameters with their default values
+        Dictionnary of parameters with their default values
         
     """
     tmp = {'cDarkHole':8,'tau':0.2}
@@ -48,7 +48,7 @@ def get_default_params_MaxContrastProblemMatrix():
     Parameters
     ---------- 
     tmp : dict
-        dictionary from the get_default_matrix_pb
+        Dictionary from the get_default_matrix_pb
         
     Lnorm : string
         L-norm for the optimization problem ('Linf' : L-infinite norm, 
@@ -57,7 +57,7 @@ def get_default_params_MaxContrastProblemMatrix():
     Returns    
     ----------
     tmp : dict
-        updated dictionary
+        Updated dictionary
         
     """
     
@@ -78,72 +78,72 @@ class ProblemMatrix(object):
     def __init__(self,corono=cg.APLC1d(),**kwargs):
         """
         __init__ : method
-            build the constructor for the ProblemMatrix class
+            Constructor for the ProblemMatrix class
         
         Attributes
         ----------
         params : dict
-            dictionary of parameters for the Coronagraph class
+            Dictionary of parameters for the Coronagraph class
         
         corono : class
-            object of the Coronagraph class
+            Object of the Coronagraph class
         
-        dz : vector_like
-            dark zone points in the coronagraphic image
+        dz : array_like
+            Dark zone points in the coronagraphic image
             
-        aaa : vector_like
-            vector indexing the points in the coronagraphic image
+        aaa : array_like
+            Vector indexing the points in the coronagraphic image
             
-        idz_dz : vector_like
-            vector indexing the points of the dark zone in the coronagraphic 
+        idz_dz : array_like
+            Vector indexing the points of the dark zone in the coronagraphic 
             image
             
-        ndz : integer
-            number of points of the dark zone in the coronagraphic image
+        ndz : int
+            Number of points of the dark zone in the coronagraphic image
             
-        pup : vector_like
-            index of non zero points in the aperture
+        pup : array_like
+            Index of non zero points in the aperture
             
-        bbb : vector_like
-            vector indexing the points in the pupil
+        bbb : array_like
+            Vector indexing the points in the pupil
             
-        idx_pup : vector_like
-            vector indexing the non zero points in the pupil
+        idx_pup : array_like
+            Vector indexing the non zero points in the pupil
             
-        npp : integer
-            number of non zero points in the aperture
+        npp : int
+            Number of non zero points in the aperture
             
-        lys : vector_like
-            index of non zero points in the Lyot stop
+        lys : array_like
+            Index of non zero points in the Lyot stop
             
-        idx_lys : vector_like
-            vector indexing the non zero points of the pupil in the Lyot stop
+        idx_lys : array_like
+            Vector indexing the non zero points of the pupil in the Lyot stop
             
-        direct_field_t_re, direct_field_t_im : 3d array
-            real and imaginary part of the non coronagraphic response matrix 
+        direct_field_t_re, direct_field_t_im : array_like
+            Real and imaginary part of the non coronagraphic response matrix 
             for all the points in the pupil and at all the wavelengths
             
-        corono_field_t_re, corono_field_t_im : 3d array
-            real and imaginary part of the non coronagraphic response matrix 
+        corono_field_t_re, corono_field_t_im : array_like
+            Real and imaginary part of the non coronagraphic response matrix 
             for all the points in the pupil and at all the wavelengths
          
-        corono_field_t_re2 : 3d array
-            real part of the non coronagraphic response matrix 
+        corono_field_t_re2 : array_like
+            Real part of the non coronagraphic response matrix 
             for all the non zero points in the pupil and at all the wavelengths
                                 
-        A, b, c : matrices
-            matrix to solve the problem for a given variable x
+        A, b, c : array_like, array_like, array_like
+            Matrix to solve the problem for a given variable x
             A.x <= b under the cost function c.T.x
         
         TR : float
-            integrated amplitude transmission of the pupil with respect to that
+            Integrated amplitude transmission of the pupil with respect to that
             of the clear pupil
             
         m : gurobi model
-            gurobi model of the problem to solve
+            Gurobi model of the problem to solve
             
-        Apod : vector_like
-            apodizer to be generated
+        Apod : array_like
+            Apodizer to be generated
         
         """
         self.params  = kwargs
@@ -190,6 +190,12 @@ class ProblemMatrix(object):
     def compute_matrices(self):
         """
         Virtual function for the matrix computation.
+        
+        Returns
+        --------
+        res
+            Display of a warning
+        
         """
         print('Warning: virtual fct - no A, b and c matrices will be computed')
 
@@ -201,11 +207,12 @@ class ProblemMatrix(object):
         Parameters
         ----------
         item : string 
-            key in params dictionary
+            Key in params dictionary
         
-        Return:
+        Returns
         ----------
-        value for the item in the dictionary  
+        res
+            Value for the item in the dictionary  
             
         """
         return item in self.params
@@ -218,11 +225,12 @@ class ProblemMatrix(object):
         Parameters
         ----------
         name : string
-            name of the variable to be retrieved
+            Name of the variable to be retrieved
         
-        Return:
+        Returns
         ----------
-        the value of name in params
+        res
+            Value for name in params
         
         """
         return self.params[name]
@@ -232,9 +240,10 @@ class ProblemMatrix(object):
         """
         Check the params.
         
-        Return:
+        Returns
         ----------
-        return the values for all the keys in the params
+        res
+            Values for all the keys in the params
         
         """        
         for key in self.default_params:
@@ -250,7 +259,7 @@ class ProblemMatrix(object):
         Parameters
         ----------
         fname : string
-            filename to load    
+            Filename to load    
         
         """
         
@@ -263,6 +272,12 @@ class ProblemMatrix(object):
     def solve_model(self):
         """
         Solves the optimization problem for the model using the gurobi solver.
+        
+        Returns
+        -------
+        Apod
+            Solution for the optimization problem
+        
         """
         try:
             
@@ -303,6 +318,7 @@ class MaxTau(ProblemMatrix):
     def __init__(self, corono=cg.APLC1d(), **kwargs):
         """
         Constructor for the Matrix problem with the coronagraph object
+        
         """
         super().__init__(**kwargs)
 
@@ -315,25 +331,24 @@ class MaxTau(ProblemMatrix):
         
         Parameters
         -----------        
-        A0, A1 : matrices
-            contrast constraints on the coronagraphic electric field
+        A0, A1 : array_like, array_like
+            Contrast constraints on the coronagraphic electric field
             
-        A2, A3 : matrices
-            plus and minus identity matrices for the non zero points in the
+        A2, A3 : array_like, array_like
+            Plus and minus identity matrices for the non zero points in the
             pupil
             
-        b0, b1 : matrices
-            zero matrices with size is related to A0 and A1
+        b0, b1 : array_like, array_like
+            Zero matrices with size is related to A0 and A1
             
-        b2, b3 : matrices
-            zero matrices with size is related to A2 and A3
+        b2, b3 : array_like, array_like
+            Zero matrices with size is related to A2 and A3
        
         
-        Return : 
+        Returns 
         ----------
-        A, b, c:
-            the matrices for the optimization problem described above
-        
+        A, b, c: array_like, array_like
+            The matrices for the optimization problem described above      
         
         """
         direct_field_t1_re = np.zeros((self.corono.nPup, self.corono.nlam*self.ndz))
@@ -369,13 +384,13 @@ class MaxTau(ProblemMatrix):
         
         Parameters 
         -----------
-        Apodtmp : vector_like
-            vector of the apodizer in the non zero points of the pupil
+        Apodtmp : array_like
+            Vector of the apodizer in the non zero points of the pupil
         
         Returns
         -----------
         m : gurobi model
-            gurobi model of the MaxTau problem to solve
+            Gurobi model of the MaxTau problem to solve
             
         """
         if self.A is None or self.b is None or self.c is None:
@@ -415,8 +430,8 @@ class MaxContrast(ProblemMatrix):
     
     def __init__(self, corono=cg.APLC1d(), **kwargs):
         """
-        builds the constructor for the Matrix problem with 
-        the coronagraph object
+        Constructor for the Matrix problem with 
+        the coronagraph object.
         """
         super().__init__(**kwargs)
 
@@ -430,44 +445,44 @@ class MaxContrast(ProblemMatrix):
         Parameters
         -----------
         Lnorm : string
-            type of L-norm for the optimization problem
+            Type of L-norm for the optimization problem
             
-        I0, I1, N0, Z0, c1 : matrices
-            intermediate matrices for the generation of the matrices A0 to A5
+        I0, I1, N0, Z0, c1 : array_like
+            Intermediate matrices for the generation of the matrices A0 to A5
             
-        A0, A1 : matrices
-            contrast constraints on the coronagraphic electric field
+        A0, A1 : array_like, array_like
+            Contrast constraints on the coronagraphic electric field
             
-        A2, A3 : matrices
-            plus and minus identity matrices for the non zero points in the
+        A2, A3 : array_like, array_like
+            Plus and minus identity matrices for the non zero points in the
             pupil
             
-        A4 : matrix
+        A4 : array_like
             
-        A5 : matrix
-            matrix for the integrated apodizer transmission
+        A5 : array_like
+            Matrix for the integrated apodizer transmission
         
             
-        b0, b1 : matrices
-            zero matrices with size is related to A0 and A1
+        b0, b1 : array_like, array_like
+            Zero matrices with size is related to A0 and A1
             
-        b2 : matrix
-            zero matrix with size is related to A2
+        b2 : array_like
+            Zero matrix with size is related to A2
         
-        b3 : matrix
-            one matrix with size relative to A3
+        b3 : array_like
+            One matrix with size relative to A3
             
-        b4 : matrix
-            zero matrix with size relative to A4
+        b4 : array_like
+            Zero matrix with size relative to A4
             
-        b5 : matrix
-            single value matrix with tau, the set threshold for the integrated 
+        b5 : array_like
+            Single value matrix with tau, the set threshold for the integrated 
             apodizer transmission      
         
-        Return:
+        Returns
         -----------
-        A, b, c:
-            the matrices for the optimization problem described above                                            
+        A, b, c: array_like, array_like, array_like
+            Matrices for the optimization problem for MaxContrast                                           
         
         """
         if self.Lnorm == 'Linf':
@@ -516,14 +531,14 @@ class MaxContrast(ProblemMatrix):
         
         Parameters 
         -----------
-        ApodEpstmp : vector_like
-            vector of the apodizer in the non zero points of the pupil 
+        ApodEpstmp : array_like
+            Vector of the apodizer in the non zero points of the pupil 
             and neps points for the coronagraphic image
         
         Returns
         -----------
         m : gurobi model
-            gurobi model of the MaxTau problem to solve
+            Gurobi model of the MaxContrast problem to solve
             
         """        
         if self.A is None or self.b is  None or self.c is None:
