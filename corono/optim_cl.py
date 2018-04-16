@@ -157,18 +157,18 @@ class ProblemMatrix(object):
         self.idx_dz  = list(self.aaa[self.dz])
         self.ndz     = len(self.idx_dz)
     
-        self.pup     = (self.corono.Pupil > 0.)
+        self.pup     = (self.corono.Pupil1d > 0.)
         self.bbb     = np.arange(self.corono.nPup)
         self.idx_pup = list(self.bbb[self.pup])
         self.npp     = len(self.idx_pup)
     
-        self.lys     = (self.corono.LyotStop > 0.)
+        self.lys     = (self.corono.LyotStop1d > 0.)
         self.idx_lys = list(self.bbb[self.lys]) 
     
         self.direct_field_t_re, self.direct_field_t_im = \
-                self.corono.prop_direct_matrix()
+                self.corono.prop_direct_matrix_1d()
         self.corono_field_t_re, self.corono_field_t_im = \
-                self.corono.prop_corono_matrix()
+                self.corono.prop_corono_matrix_1d()
         
         self.corono_field_t2_re = np.reshape(
                 self.corono_field_t_re[:,:,self.idx_dz], 
@@ -182,7 +182,7 @@ class ProblemMatrix(object):
         
         self.Apod    = np.zeros((self.corono.nPup))
         
-        self.TR      = np.sum(2.*np.pi*self.corono.Pupil *np.linspace(
+        self.TR      = np.sum(2.*np.pi*self.corono.Pupil1d *np.linspace(
                 0.5,self.corono.nPup+0.5,num=self.corono.nPup)\
                 /(2.*self.corono.nPup)**2) 
 
@@ -493,7 +493,7 @@ class MaxContrast(ProblemMatrix):
         A4  = np.concatenate((np.zeros((self.npp, self.ndz)), -I0), axis=0)
         A5  = np.concatenate((- 2.*np.pi*(
                 np.arange(self.corono.nPup)[self.idx_pup]+0.5)\
-            *self.corono.Pupil[self.idx_pup]/(2.*self.corono.nPup)**2/self.TR, 
+            *self.corono.Pupil1d[self.idx_pup]/(2.*self.corono.nPup)**2/self.TR, 
                                   Z0))
         
         b0  = np.zeros((self.corono.nlam*self.ndz))
