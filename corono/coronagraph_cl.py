@@ -4,82 +4,85 @@
 Created on Wed Mar  7 21:57:28 2018
 
 @author: mndiaye
+
+Class for different types of coronagraphs
 """
 
 #%%
-'''
-### initialization
-'''
+"""
+initialization
+"""
 import numpy as np
 #import pylab as pl
 #from astropy.io import fits
 from .utils import besselJ0, sft, isft, uniform_disk
 import json
 
+#%% 
+"""
+default parameters
+"""
 #%%
-'''
-### Coronagraph class
-'''
 def get_default_params_coronagraph():
-    '''
-    default parameters for the Coronagraph class:
+    """
+    Default parameters for the Coronagraph class:
         
-    Parameters:
+    Parameters
     ---------- 
-    - PupilObs: float
+    PupilObs : float
         Pupil central obstruction size in pupil diameter
         
-    - LyotStopObs: float
+    LyotStopObs : float
         Lyot stop central obstruction size in pupil diameter
         
-    - rho0: float
+    rho0 : float
         inner edge of the coronagraphic image search area
         
-    - rho1: float
+    rho1 : float
         outer edge of the coronagraphic image search area
         
-    - nPup: integer
+    nPup : int
         Pupil sampling
         
-    - nImg: integer
+    nImg : int
         Final image plane sampling
         
-    - Fmax: float
+    Fmax : float
         Maximum spatial frequency in the image plane
         
-    - nImg2d: integer
+    nImg2d : int
         Final image plane sampling for 2D simulations
         
-    - Fmax2d: float
+    Fmax2d : float
         Maximum spatial frequency in the image plane for 2D simulations
 
-    - lam0: float
+    lam0 : float
         central wavelength 
 
-    - bw: float 
+    bw : float 
         spectral bandwidth in fraction of lam0 unit            
     
-    - nlam: integer 
+    nlam : int 
         spectral sampling
   
-    - R: float 
+    R : float 
         unitary radius of the pupil
         
-    - fdir: string
+    fdir : string
         directory
         
-    - ctr: Truth value
+    ctr : boolean
         work with pixel centered arrays if True
         
-    - ctr2: Truth value
+    ctr2 : boolean
         work with pixel centered arrays if True           
             
-    Returns:    
+    Returns    
     ----------
-    - tmp: dict
+    tmp : dict
         return a dictionary with parameters and all their default values
             
-    '''
+    """
     tmp = {'PupilObs':0.14,'LyotStopObs':0.28,
            'rho0':5,'rho1':10,
            'nPup':200,'nImg':200,'Fmax':25,
@@ -91,66 +94,68 @@ def get_default_params_coronagraph():
            }
     return tmp
 
+#%%
 def get_default_params_APLC1d():
-    '''
-    default parameters for the APLC1d class:
+    """
+    Default parameters for the APLC1d coronagraph class:
         
-    Parameters:
+    Parameters
     ---------- 
-    - rMask: float
+    rMask : float
         focal plane mask radius in lam0/D
         
-    - nFPM: integer
+    nFPM : int
         mask sampling
             
-    Returns:    
+    Returns    
     ----------
-    - tmp: dict
+    tmp : dict
         return a dictionary with all the default values of the 
         Coronagraph and the APLC1d class
     
-    '''
+    """
     tmp = get_default_params_coronagraph()
     tmp.update({'rMask':2.8,'nFPM':50})
     return tmp
 
+#%%
 def get_default_params_DZPM1d():
-    '''
-    default parameters for the DZPM1d class:
+    """
+    Default parameters for the DZPM1d coronagraph class:
         
-    Parameters:
+    Parameters
     ---------- 
-    - rMask1: float
+    rMask1 : float
         inner part of the focal plane mask radius in lam0/D
         
-    - rMask2: float
+    rMask2 : float
         outer part of the focal plane mask radius in lam0/D    
         
-    - OPDx1: float
+    OPDx1 : float
         optical path difference for the inner part of the focal plane mask
         
-    - OPDx2: float
+    OPDx2 : float
         optical path difference for the outer part of the focal plane mask
         
-    - ome1: float
+    ome1 : float
         second order term for a polynomial amplitude apodization
         
-    - ome2: float
+    ome2 : float
         forth order term for a polynomial amplitude apodization
         
-    - beta: float
+    beta : float
         coefficient in lam0 related to a defocus term applied to the mask
         
-    - gFPM: float
+    gFPM : float
         mask sampling            
             
-    Returns:    
+    Returns    
     ----------
-    - tmp: dict
+    tmp : dict
         return a dictionary with all the default values of the 
         Coronagraph and the APLC1d class
     
-    '''   
+    """   
     tmp = get_default_params_coronagraph()
     tmp.update({'rMask1':0.875/2, 'rMask2':1.453/2.,
            'OPDx1':0.309, 'OPDx2':0.672,
@@ -158,131 +163,139 @@ def get_default_params_DZPM1d():
            'gFPM':68.82312456985547})
     return tmp
 
+#%%
 def get_default_params_APLC2d():
-    '''
-    default parameters for the APLC2d class:
+    """
+    Default parameters for the APLC2d coronagraph class:
         
-    Parameters:
+    Parameters
     ---------- 
-    - rMask: float
+    rMask : float
         focal plane mask radius in lam0/D
     
-    - nPup: integer
+    nPup : int
         Pupil sampling 
     
-    - nFPM: integer
+    nFPM : int
         mask sampling
             
-    Returns:    
+    Returns    
     ----------
-    - tmp: dict
+    tmp : dict
         return a dictionary with all the default values of the 
         Coronagraph and the APLC2d class
         
-    '''    
+    """    
     tmp = get_default_params_coronagraph()
     tmp.update({'rMask':2.8,
                 'nPup':50, 'nFPM':25
                 })
     return tmp
-    
+
+#%%
+"""
+Coronagraph filename
+""" 
 fname_coronagraph = 'obs={PupilObs}_ls={LyotStopObs}\
 _IWA={rho0}_OWA={rho1}\
 _nPup={nPup:04d}_nImg={nImg}_Fmax={Fmax}\
 _bw={bw}_nlam={nlam:02d}'
 
-#%%
-# =============================================================================
-# Coronagraph class
-# =============================================================================
+#%% 
+"""
+Coronagraph class
+"""
 class Coronagraph(object):
-        
+    """
+    Coronagraph class
+    """    
     default_params = get_default_params_coronagraph()
     fname_format   = fname_coronagraph
 #%%
     def __init__(self, **kwargs):
-        '''
-        __init__ method: build the constructor for the Coronagraph class
+        """
+        __init__ : method
+            build the constructor for the Coronagraph class
         
-        attributes:
+        Attributes:
         ----------
             
-        - params: dict
+        params : dict
             dictionary of parameters for the Coronagraph class
             
-        - check_params():
+        check_params()
+            TBC
             
-            
-        - lam0: float
+        lam0 : float
             central wavelength 
         
-        - bw: float 
+        bw : float 
             spectral bandwidth in fraction of lam0 unit
         
-        - dlam: float 
+        dlam : float 
             spectral bandwidth in lam0 unit
             
-        - r: 1D array 
+        r : array_like 
             pupil radial coordinate
             
-        - nPup: float 
+        nPup : float 
             number of points in the pupil
             
-        - R: float 
+        R : float 
             unitary radius of the pupil
 
-        - PupilObs: float
+        PupilObs : float
             central obstruction of the pupil in pupil diameter
         
-        - LyotStopObs: float
+        LyotStopObs : float
             central obstruction of the Lyot stop in pupil diameter
         
-        - ClearPupil: 1D arrat 
+        ClearPupil : 1D arrat 
             1D clear pupil
         
-        - Pupil: 1D array
+        Pupil : array_like
             1D pupil
         
-        - LyotStop: 1D array 
+        LyotStop : array_like 
             1D Lyot Stop
         
-        - xi: 1D array 
+        xi : array_like 
             final image pupil plane coordinate
         
-        - xii: 1D array 
+        xii : array_like 
             final image pupil plane coordinate weighted with wavelength
         
-        - Apod_t: 2D array 
+        Apod_t : array_like 
             identity matrix for the apodization response matrix
         
-        - hankel_kernel: 2D array
+        hankel_kernel : array_like
             Hankel kernel without wavelength variation
         
-        - hankel_kernel_all: 3D array
+        hankel_kernel_all : 3D array
             Hankel kernel including wavelength variation
         
-        - ClearPupil2d: 2D array 
+        ClearPupil2d : array_like 
             2D clear pupil
         
-        - Pupil2d: 2D array     
+        Pupil2d : array_like     
             2D pupil
         
-        - mask2d: 2D array 
+        mask2d : array_like 
             2D focal plane mask
         
-        - LyotStop2d: 2D array 
+        LyotStop2d : array_like 
             2D Lyot stop
         
-        - xi2d: 1D array 
+        xi2d : array_like 
             final image plane coordinate vector centered on a pixel 
         
-        - xi2d_ctr: 1D array
+        xi2d_ctr : array_like
             final image plane coordinate vector centered between 4 pixels
         
-        - Apod2d_t : 2D array
+        Apod2d_t : array_like
             identity matrix for the 2D apodization
         
-        '''
+        """
         self.params      = kwargs 
         self.check_params()
         
@@ -339,30 +352,30 @@ class Coronagraph(object):
         
 #%%        
     def save_params(self, fname):
-        '''
-        method to save params in fname using JSON (JavaScript Object Notation)
+        """
+        Method to save params in fname using JSON (JavaScript Object Notation)
         
-        Parameters:
+        Parameters
         ---------- 
-        - fname: string
+        fname : string
             filename in which parameters are to be written
         
-        '''
+        """
         f=open(fname,'w')
         f.write(json.dumps(self.params,sort_keys=True,indent=4))
         f.close()
         
 #%%    
     def load_params(self, fname):
-        '''
-        method to load params from fname using JSON (JavaScript Object Notation)
+        """
+        Method to load params from fname using JSON (JavaScript Object Notation)
         
-        Parameters:
+        Parameters
         ---------- 
-        - fname: string
+        fname : string
             filename in which parameters are to be load
                 
-        '''
+        """
         
         f=open(fname,'r')
         params=json.loads(f.read())
@@ -371,24 +384,24 @@ class Coronagraph(object):
         
 #%%        
     def get_filename(self):
-        '''
-        method to obtain params from the params list
+        """
+        Method to obtain params from the params list
         ----
                 
-        '''
+        """
         return self.fname_format.format(**self.params)
     
 #%%    
     def get_cache(self,varname):
-        '''
-        method to define filename with a given varname
+        """
+        Method to define filename with a given varname
         
-        Parameters:
+        Parameters
         ---------- 
-        - varname: string
+        varname : string
             filename in which...
                 
-        '''
+        """
         try:
             self.get_filename()+ '_' + varname
         except FileNotFoundError:
@@ -396,28 +409,28 @@ class Coronagraph(object):
         
 #%%        
     def check_params(self):
-        '''
-        method to set default value to the parameters that have not been 
+        """
+        Method to set default value to the parameters that have not been 
         by the user.
         ----
                
-        '''        
+        """        
         for key in self.default_params:
             if not key in self.params:
                 self.params[key] = self.default_params[key]
                 
 #%%
     def __repr__(self):        
-        '''
-        reserved method to print the official string representation of all 
+        """
+        Reserved method to print the official string representation of all 
         the values in the params object.
         
-        Returns:    
+        Returns    
         ----------
-        - res
+        res
             print all the values in the object params
             
-        '''
+        """
         res=''
         for key in sorted(self.params):
             res+='{:>20s} : {}\n'.format(key,self.params[key])        
@@ -425,58 +438,58 @@ class Coronagraph(object):
     
 #%%
     def __contains__(self, item):
-        '''
-        reserved method to request the value of an item in the params object.
+        """
+        Reserved method to request the value of an item in the params object.
             
-        Parameters:
+        Parameters
         ----------  
-        - item: 
+        item
             parameter in params
         
-        Returns:    
+        Returns    
         ----------
-        - item:
+        item
             value of the requested parameter
             
-        '''
+        """
         return item in self.params
     
 #%%     
     def __getattr__(self, name):
-        '''
-        reserved method to get the attribute of a key in the params object.
+        """
+        Reserved method to get the attribute of a key in the params object.
         
-        Parameters:
+        Parameters
         ----------  
-        - name: string
+        name : string
             name of the requested parameters
                 
-        Returns:    
+        Returns    
         ----------
         return the value of parameter related to name 
                 
-        '''
+        """
         return self.params[name]
 
-#%%    # direct signal in intensity
+#%% direct signal in intensity
     def compute_direct_intensity_1d(self,Apod,poly=True):
-        '''
-        compute the intensity of the direct image for 1D problem
+        """
+        Compute the intensity of the direct image for 1D problem
         
-        Parameters:
+        Parameters
         ---------- 
-        - Apod: 1D array
+        Apod : array_like
             Entrance pupil apodization
         
-        - poly: thuth value, True by default
+        poly : thuth value, True by default
             parameter to compute broadband image or monochromatic images
             at all the wavelengths
                 
-        Returns:    
+        Returns    
         ----------
         direct image intensity 
             
-        '''
+        """
         direct_field = self.compute_direct_field_1d(Apod)
         
         if poly:
@@ -484,25 +497,25 @@ class Coronagraph(object):
         else:
             return np.abs(direct_field)**2
 
-#%%    # coronagraphic signal in intensity
+#%% coronagraphic signal in intensity
     def compute_corono_intensity_1d(self,Apod,poly=True):
-        '''
-        compute the intensity of the coronagraphic image for 1D problem
+        """
+        Compute the intensity of the coronagraphic image for 1D problem
         
-        Parameters:
+        Parameters
         ---------- 
-        - Apod: 1D array
+        Apod : array_like
             Entrance pupil apodization
             
-        - poly: truth value, True by default
+        poly : boolean (default=True)
             parameter to compute broadband image or monochromatic images
             at all the wavelengths
                 
-        Returns:    
+        Returns    
         ----------
         coronagraphic image intensity 
             
-        '''        
+        """        
         corono_field = self.compute_corono_field_1d(Apod)
         
         if poly:
@@ -511,17 +524,17 @@ class Coronagraph(object):
             print('Warning: No normalization for multiple lambda!')
             return np.abs(corono_field)**2       
 
-#%%    # generation of the direct response matrix
+#%% generation of the direct response matrix
     def prop_direct_matrix(self,):
-        '''
-        compute the response matrix of the direct image for all the points in
+        """
+        Compute the response matrix of the direct image for all the points in
         the pupil for 1D problem
                 
-        Returns:    
+        Returns    
         ----------
         real and imaginary parts of the direct image response matrix 
             
-        '''        
+        """        
         direct_field_t = np.zeros((self.nPup, self.nlam, self.nImg+1), 
                                   dtype='complex128')
         print('generating direct response matrices')
@@ -531,17 +544,17 @@ class Coronagraph(object):
         direct_field_t_im = direct_field_t.imag
         return direct_field_t_re, direct_field_t_im    
     
-#%%    # generation of the coronagraphic response matrix        
+#%% generation of the coronagraphic response matrix        
     def prop_corono_matrix(self,):
-        '''
-        compute the response matrix of the coronagraphic image for all the 
+        """
+        Compute the response matrix of the coronagraphic image for all the 
         points in the pupil for 1D problem
                 
-        Returns:    
+        Returns    
         ----------
         real and imaginary parts of the coronagraphic image response matrix 
             
-        '''
+        """
         corono_field_t = np.zeros((self.nPup, self.nlam, self.nImg+1), 
                                   dtype='complex128')
         print('generating corono response matrices')
@@ -551,25 +564,25 @@ class Coronagraph(object):
         corono_field_t_im = corono_field_t.imag
         return corono_field_t_re, corono_field_t_im 
 
-#%%    # direct signal in intensity
+#%% direct signal in intensity
     def compute_direct_intensity_2d(self,Apod2d,poly=True):
-        '''
-        compute the intensity of the direct image for 2D problem
+        """
+        Compute the intensity of the direct image for 2D problem
         
-        Parameters:
+        Parameters
         ---------- 
-        - Apod2d: 2D array
+        Apod2d : array_like
             Entrance pupil apodization
         
-        - poly: thuth value, True by default
+        poly : thuth value, True by default
             parameter to compute broadband image or monochromatic images
             at all the wavelengths
                 
-        Returns:    
+        Returns    
         ----------
         direct image intensity 
             
-        '''        
+        """        
         direct_field_2d = self.compute_direct_field_2d(Apod2d)
         
         if poly:
@@ -577,26 +590,25 @@ class Coronagraph(object):
         else:
             return np.abs(direct_field_2d)**2
 
-#%%
-    # coronagraphic signal in intensity
+#%% coronagraphic signal in intensity
     def compute_corono_intensity_2d(self,Apod2d,poly=True):
-        '''
-        compute the intensity of the coronagraphic image for 2D problem
+        """
+        Compute the intensity of the coronagraphic image for 2D problem
         
-        Parameters:
+        Parameters
         ---------- 
-        - Apod2d: 2D array
+        Apod2d : array_like
             Entrance pupil apodization
             
-        - poly: truth value, True by default
+        poly : boolean (default=True)
             parameter to compute broadband image or monochromatic images
             at all the wavelengths
                 
-        Returns:    
+        Returns    
         ----------
         coronagraphic image intensity
         
-        '''
+        """
         corono_field_2d = self.compute_corono_field_2d(Apod2d)
         
         if poly:
@@ -607,20 +619,20 @@ class Coronagraph(object):
 
 #%%
     def compute_direct_field_2d_vec(self,Apod2d):
-        '''
-        compute the electric field of the direct image 
+        """
+        Compute the electric field of the direct image 
         for vectorized 2D problem
         
-        Parameters:
+        Parameters
         ---------- 
-        - Apod2d: 2D array
+        Apod2d : array_like
             Entrance pupil apodization
                 
-        Returns:    
+        Returns    
         ----------
         direct electric field 
             
-        '''        
+        """        
         test = self.compute_direct_field_2d(Apod2d)
         test_re = np.reshape(test.real, (self.nlam, self.nImg2d**2))
         test_im = np.reshape(test.imag, (self.nlam, self.nImg2d**2))
@@ -628,37 +640,36 @@ class Coronagraph(object):
 
 #%%
     def compute_corono_field_2d_vec(self,Apod2d):
-        '''
-        compute the electric field of the coronagraphic image 
+        """
+        Compute the electric field of the coronagraphic image 
         for vectorized 2D problem
         
-        Parameters:
+        Parameters
         ---------- 
-        - Apod2d: 2D array
+        Apod2d : array_like
             Entrance pupil apodization
                 
-        Returns:    
+        Returns    
         ----------
         coronagraphic electric field 
             
-        ''' 
+        """ 
         test = self.compute_corono_field_2d(Apod2d)
         test_re = np.reshape(test.real, (self.nlam, self.nImg2d**2))
         test_im = np.reshape(test.imag, (self.nlam, self.nImg2d**2))
         return test_re, test_im
 
-#%%
-    # generation of the direct response matrix
+#%% generation of the direct response matrix
     def prop_direct_matrix_2d(self):
-        '''
-        compute the response matrix of the direct image for all the points in
+        """
+        Compute the response matrix of the direct image for all the points in
         the pupil for vectorized 2D problem
                 
-        Returns:    
+        Returns    
         ----------
         real and imaginary parts of the direct image response matrix 
             
-        '''
+        """
         
         direct_field_t_re = np.zeros((self.nPup**2, self.nlam, self.nImg2d**2))
         direct_field_t_im = np.zeros((self.nPup**2, self.nlam, self.nImg2d**2))
@@ -668,18 +679,17 @@ class Coronagraph(object):
             direct_field_t_re[i],direct_field_t_im[i] = self.compute_direct_field_2d_vec(Apod2d)
         return direct_field_t_re, direct_field_t_im    
 
-#%%
-    # generation of the coronagraphic response matrix        
+#%% generation of the coronagraphic response matrix        
     def prop_corono_matrix_2d(self):
-        '''
-        compute the response matrix of the coronagraphic image for all the 
+        """
+        Compute the response matrix of the coronagraphic image for all the 
         points in the pupil for vectorized 2D problem
                 
-        Returns:    
+        Returns    
         ----------
         real and imaginary parts of the coronagraphic image response matrix 
             
-        '''
+        """
         corono_field_t_re = np.zeros((self.nPup**2, self.nlam, self.nImg2d**2))
         corono_field_t_im = np.zeros((self.nPup**2, self.nlam, self.nImg2d**2))
         print('generating corono response matrix')
@@ -690,32 +700,32 @@ class Coronagraph(object):
 
 #%%
     def generate_area(self,):
-        ''' --------------------------------------------------------------
+        """
         Compute the list of points with a given area in the final image plane 
         of the coronagraph. The area is defined by an annulus with minimum and maximum 
         angular separation from the star.
     
-        Parameters:
+        Parameters
         ----------     
-        - mD: float
+        mD : float
             spatial frequency range in the final image plane D in lam0/D
             
-        - nImg2d: integer
+        nImg2d : int
             linear number of points in the final image plane D
             
-        - sep_min : float
+        sep_min : float
             minimum angular separation from the star for the area
             
-        - sep_max : float
+        sep_max : float
             maximum angular separation from the star for the area
     
-        Returns:    
+        Returns    
         ----------
-        - res    : 2D array
+        res : array_like
             2D array with 1 and 0 for points inside and outside the area in the 
             coronagraphic image
     
-        -------------------------------------------------------------- '''
+        """
         val = 0
         if self.ctr is True:
             val = 1/2
@@ -729,43 +739,44 @@ class Coronagraph(object):
         res = (mydist <= self.rho1)*(mydist >= self.rho0)
         return res, mydist[res]
     
-#%%
-# =============================================================================
-# APLC 1d class
-# =============================================================================
+#%% 
+"""
+APLC 1d class
+"""
 class APLC1d(Coronagraph):
     
     default_params = get_default_params_APLC1d()
     
     def __init__(self, **kwargs):
-        '''
-        __init__ method: build the constructor for the APLC1d class
+        """
+        __init__ : method
+            build the constructor for the APLC1d class
         
-        attributes:
+        Attributes:
         ----------  
-        - rMask_t: array
+        rMask_t : array
             focal plane mask radius scaled with wavelength
             
-        - nFPM_t: array
+        nFPM_t : array
             mask sampling at a given wavelength
             
-        - nFPM_max: float
+        nFPM_max : float
             maximum mask sampling over all the wavelengths
             
-        - mask_lam: array
+        mask_lam : array
             focal plane mask in lam/D unit
             
-        - xi_FPM_lam: array
+        xi_FPM_lam : array
             focal plane mask coordinate in lam/D
             
-        - hankel_kernel_FPM_all: array
+        hankel_kernel_FPM_all : array
             hankel kernel for the focal plane mask at all the wavelengths
             
-        - hankel_kernel_iFPM_all: array
+        hankel_kernel_iFPM_all : array
             inverse hankel transform for the focal plane mask at all the 
             wavelengths
 
-        '''      
+        """      
         super().__init__(**kwargs)      
         
         # mask size at Apod given wavelength
@@ -785,41 +796,41 @@ class APLC1d(Coronagraph):
         self.hankel_kernel_iFPM_all = besselJ0(
                 np.pi/self.R*self.xi_FPM_lam[:,None,:]*self.r[None,:,None])
         
-#%%    # direct propagation (no focal plane mask)
+#%% # direct propagation (no focal plane mask)
     def compute_direct_field_1d(self,Apod):
-        '''
-        compute the electric field of the direct image with APLC
+        """
+        Compute the electric field of the direct image with APLC
         for 1D problem
         
-        Parameters:
+        Parameters
         ---------- 
-        - Apod: 1D array
+        Apod: array_like
             Entrance pupil apodization
                 
-        Returns:    
+        Returns    
         ----------
         direct electric field at all the wavelengths
             
-        '''
+        """
         return self.lam0/self.lam_t[:,None]*np.pi*self.hankel_kernel_all.dot(
                 self.Pupil*Apod*self.LyotStop*self.r/self.R)*self.R/self.nPup
 
-#%%    # propagation through coronagraph (with focal plane mask)
+#%% # propagation through coronagraph (with focal plane mask)
     def compute_corono_field_1d(self,Apod):
-        '''
-        compute the electric field of the coronagraphic image with APLC
+        """
+        Compute the electric field of the coronagraphic image with APLC
         for 1D problem
         
-        Parameters:
+        Parameters
         ---------- 
-        - Apod: 1D array
+        Apod : array_like
             Entrance pupil apodization
                 
-        Returns:    
+        Returns    
         ----------
         coronagraphic electric field at all the wavelengths
             
-        '''
+        """
         FPM_field  = np.pi*self.hankel_kernel_FPM_all.dot(
                 Apod*self.Pupil*self.r/self.R)\
                 *(self.R/self.nPup)*self.xi_FPM_lam
@@ -842,92 +853,93 @@ class APLC1d(Coronagraph):
         return self.lam0/self.lam_t[:,None]*np.pi\
             *corono_field_tmp*self.R/self.nPup
             
-#%%
-# =============================================================================
-# class DZPM 1d     
-# =============================================================================
+#%% 
+"""
+class DZPM 1d     
+"""
 class DZPM1d(Coronagraph):
     
     default_params = get_default_params_DZPM1d()    
 
     def __init__(self, **kwargs):
-        '''
-        __init__ method: build the constructor for the DZPM1d class
+        """
+        __init__ : method
+            build the constructor for the DZPM1d class
         
-        attributes:
+        Attributes:
         ----------      
-        - OPD1: float
+        OPD1 : float
             optical path difference for the inner part of the mask
             
-        - OPD2: float
+        OPD2 : float
             optical path difference for the outer part of the mask
             
-        - phi1_t: array
+        phi1_t : array
             phase shift induced by the inner part of the mask at all the 
             wavelengths
 
-        - phi2_t: array
+        phi2_t : array
             phase shift induced by the outer part of the mask at all the 
             wavelengths
         
-        - eps1_t: array
+        eps1_t : array
             phasor induced by the inner part of the mask at all the 
             wavelengths
 
-        - eps2_t: array
+        eps2_t : array
             phasor induced by the outer part of the mask at all the 
             wavelengths
         
-        - rMask1_t: array
+        rMask1_t : array
             focal plane mask inner part radius scaled with wavelength
             
-        - rMask2_t: array
+        rMask2_t : array
             focal plane mask outer part radius scaled with wavelength
             
-        - nFPM1_t: array
+        nFPM1_t : array
             inner mask sampling at a given wavelength
         
-        - nFPM2_t: array
+        nFPM2_t : array
             inner mask sampling at a given wavelength
         
-        - nFPM1_max: float
+        nFPM1_max : float
             maximum inner mask sampling over all the wavelengths
             
-        - nFPM2_max: float
+        nFPM2_max : float
             maximum inner mask sampling over all the wavelengths
         
-        - mask1_lam: array
+        mask1_lam : array
             inner focal plane mask in lam/D unit
         
-        - mask2_lam: array
+        mask2_lam : array
             outer focal plane mask in lam/D unit
         
-        - xi_FPM1_lam: array
+        xi_FPM1_lam : array
             inner focal plane mask coordinate in lam/D
         
-        - xi_FPM2_lam: array
+        xi_FPM2_lam : array
             outer focal plane mask coordinate in lam/D       
  
-        - hankel_kernel_FPM1_all: array
+        hankel_kernel_FPM1_all : array
             hankel kernel for the inner focal plane mask
             at all the wavelengths
         
-        - hankel_kernel_FPM2_all: array
+        hankel_kernel_FPM2_all : array
             hankel kernel for the outer focal plane mask
             at all the wavelengths
         
-        - hankel_kernel_iFPM1_all: array
+        hankel_kernel_iFPM1_all : array
             inverse hankel transform for the inner focal plane mask
             at all the wavelengths
             
-        - hankel_kernel_iFPM2_all: array
+        hankel_kernel_iFPM2_all : array
             inverse hankel transform for the outer focal plane mask
             at all the wavelengths
             
-        - Apod_w: array
+        Apod_w : array
             complex apodization at all the wavelengths
 
-        '''
+        """
         super().__init__(**kwargs)
         
         # Optical path difference introduced by the mask
@@ -973,23 +985,22 @@ class DZPM1d(Coronagraph):
         1j*np.sin(2.*np.pi*(self.r/2)**2*self.beta*self.lam0/self.lam_t[:,None])\
         + np.cos(2.*np.pi*(self.r/2)**2*self.beta*self.lam0/self.lam_t[:,None])
 
-#%%       
-    # direct propagation (no focal plane mask)
+#%% direct propagation (no focal plane mask)
     def compute_direct_field_1d(self,Apod):
-        '''
-        compute the electric field of the direct image with DZPM
+        """
+        Compute the electric field of the direct image with DZPM
         for 1D problem
         
-        Parameters:
+        Parameters
         ---------- 
-        - Apod: 1D array
+        Apod: array_like
             Entrance pupil apodization
                 
-        Returns:    
+        Returns    
         ----------
         direct electric field at all the wavelengths
             
-        '''
+        """
         field = np.zeros((self.nlam,self.nImg+1), dtype='complex128')
         for i in range(self.nlam):
             field[i,:] = \
@@ -998,23 +1009,22 @@ class DZPM1d(Coronagraph):
                     *self.R/self.nPup
         return field
 
-#%%
-    # propagation through coronagraph (with focal plane mask)
+#%% propagation through coronagraph (with focal plane mask)
     def compute_corono_field_1d(self,Apod):
-        '''
-        compute the electric field of the coronagraphic image with DZPM
+        """
+        Compute the electric field of the coronagraphic image with DZPM
         for 1D problem
         
-        Parameters:
+        Parameters
         ---------- 
-        - Apod: 1D array
+        Apod: array_like
             Entrance pupil apodization
                 
-        Returns:    
+        Returns    
         ----------
         coronagraphic electric field at all the wavelengths
             
-        '''
+        """
         FPM1_field = np.zeros((self.nlam, self.nFPM1_max+1), dtype='complex128')
         for i in range(self.nlam):
             FPM1_field[i,:] = np.pi*self.hankel_kernel_FPM1_all[i,:,:].dot(
@@ -1049,29 +1059,30 @@ class DZPM1d(Coronagraph):
         
         return self.lam0/self.lam_t[:,None]*np.pi*corono_field_tmp*self.R/self.nPup
     
-#%%
-# =============================================================================
-# APLC 2d class        
-# =============================================================================
+#%% 
+"""
+APLC 2d class        
+"""
 class APLC2d(Coronagraph):
 
     default_params = get_default_params_APLC2d()
 
     def __init__(self, **kwargs):
-        '''
-        __init__ method: build the constructor for the APLC2d class
+        """
+        __init__ : method
+            build the constructor for the APLC2d class
         
-        attributes:
+        Attributes:
         ----------        
-        - mB_t: array
+        mB_t : array
             spatial frequency range within the focal plane mask 
             in plane B in lam/D at all the wavelengths
            
-        - mD_t: array
+        mD_t : array
             spatial frequency range in the final image plane D in lam/D at 
             all the wavelengths
                 
-        '''      
+        """      
 
         super().__init__(**kwargs)
         
@@ -1079,10 +1090,9 @@ class APLC2d(Coronagraph):
         self.mB_t  = 2.*self.rMask*(self.lam0/self.lam_t)
         self.mD_t  = self.Fmax2d*(self.lam0/self.lam_t)
         
-#%%
-    # direct propagation (no focal plane mask)
+#%% direct propagation (no focal plane mask)
     def compute_direct_field_2d(self,Apod2d):
-        ''' --------------------------------------------------------------
+        """ 
         Compute the coronagraph electric field for a classical Lyot coronagraph
         with four planes (A: entrance pupil, B: intermediate focal plane, 
         C: relayed pupil before stop, L: relayed pupil after stop, 
@@ -1090,18 +1100,18 @@ class APLC2d(Coronagraph):
         Resolution element are given in lam0/D where lam0 and D denote 
         the central and the telescope diameter
     
-        Parameters:
+        Parameters
         ----------     
-        - Apod2d: 2D array 
+        Apod2d : array_like 
             Entrance pupil apodization
             
-        Returns:    
+        Returns    
         ----------    
-        - field_Dtmp: 3D array
+        field_Dtmp : 3D array
             direct electric field in the final image plane at 
             all the wavelengths
     
-        -------------------------------------------------------------- '''    
+        """    
 
         field_A    = Apod2d*self.Pupil2d
         field_L    = field_A*self.LyotStop2d 
@@ -1115,7 +1125,7 @@ class APLC2d(Coronagraph):
  
 #%%
     def compute_corono_field_2d(self,Apod2d):
-        ''' --------------------------------------------------------------
+        """
         Compute the coronagraph electric field for a classical Lyot coronagraph
         with four planes (A: entrance pupil, B: intermediate focal plane, 
         C: relayed pupil before stop, L: relayed pupil after stop, 
@@ -1125,17 +1135,16 @@ class APLC2d(Coronagraph):
     
         Parameters
         ---------- 
-        - Apod2d: 2D array 
+        Apod2d : array_like 
             Entrance pupil apodization
             
-        Returns:    
+        Returns    
         ----------    
-        - field_Dtmp: 3D array
+        field_Dtmp : 3D array
             coronagraphic electric field in the final image plane at 
             all the wavelengths
             
-        -------------------------------------------------------------- '''        
-
+        """        
         field_A    = Apod2d*self.Pupil2d    
         field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
                               dtype='complex128')
