@@ -331,24 +331,37 @@ class MaxTau(ProblemMatrix):
         
         Parameters
         -----------        
-        A0, A1 : array_like, array_like
-            Contrast constraints on the coronagraphic electric field
+        A0, b0 : array_like, array_like
+            Contrast constraint on the coronagraphic electric field Psi_D
+            that is represented the following equation:
+            Psi_D(xi,lambda)-10^(-C/2)xPsi_0(xi,lambda) <= 0 (0),
+            xi and lambda denote the image plane coordinate and wavelength,
+            Psi_0 represents the coronagraphic electric field in the absence of
+            coronagraph.
             
-        A2, A3 : array_like, array_like
-            Plus and minus identity matrices for the non zero points in the
-            pupil
+        A1, b1 : array_like, array_like
+            Contrast constraints on the coronagraphic electric field Psi_D
+            that is represented the following equations:
+            -Psi_D(xi,lambda)-10^(-C/2)xPsi_0(xi,lambda) <= 0 (1).
+
+        A2, b2 : array_like, array_like
+            Constraint on the transmission of the amplitude apodization Phi 
+            - Phi(r) <= 0 (2),
+            in which r represents the radial coordinate of the pupil.
             
-        b0, b1 : array_like, array_like
-            Zero matrices with size is related to A0 and A1
-            
-        b2, b3 : array_like, array_like
-            Zero matrices with size is related to A2 and A3
-       
+        A3, b3 : array_like, array_like
+            Constraint on the transmission of the amplitude apodization Phi 
+            Phi(r) <= 1 (3).
         
         Returns 
         ----------
-        A, b, c: array_like, array_like
-            The matrices for the optimization problem described above      
+        A, b, c: array_like, array_like, array_like
+            The matrices for the optimization problem.
+            A and b are concatenations of the matrices for the constraints that 
+            are described above.
+            c represents the cost function to maximize, here the integral of 
+            the amplitude transmission, used as a proxy of the apodizer 
+            throughput. c is normalized to the integral of the pupil transmission.
         
         """
         direct_field_t1_re = np.zeros((self.corono.nPup, self.corono.nlam*self.ndz))
@@ -436,7 +449,12 @@ class MaxContrast(ProblemMatrix):
         """
         Computes the matrices for the optimization problem that consists in 
         maximizing the contrast in a given search area in the coronagraphic 
-        image for a set integrated apodizer transmission.
+        image for a set integrated apodizer transmission. 
+        The variable x is a concatenation of the apodizer transmission function
+        Phi and an auxiliary variable epsilon. 
+        Epsilon represents the contrast to maximize in the search in the 
+        coronagraphic image. It can depend on the position in the coronagraphic
+        image or not (L1-norm or Linfinite-norm problem).
 
         Parameters
         -----------
@@ -444,41 +462,56 @@ class MaxContrast(ProblemMatrix):
             Type of L-norm for the optimization problem
             
         I0, I1, N0, Z0, c1 : array_like
-            Intermediate matrices for the generation of the matrices A0 to A5
+            Intermediate matrices for the generation of the matrices A0 to A5.
+            They depend on the type of the norm (L1 or Linfinite) 
+            for the problem.
+
+        A0, b0 : array_like, array_like
+            Contrast constraint on the coronagraphic electric field Psi_D
+            that is represented the following equation:
+            Psi_D(xi,lambda)-epsilon(x) <= 0 (0) if L1-norm,
+            Psi_D(xi,lambda)-epsilon    <= 0 (0) if Linfinite-norm,
+            xi and lambda denote the image plane coordinate and wavelength.
+
+        A1, b1 : array_like, array_like
+            Contrast constraint on the coronagraphic electric field Psi_D
+            that is represented the following equation:
+            -Psi_D(xi,lambda)-epsilon(x) <= 0 (1) if L1-norm,
+            -Psi_D(xi,lambda)-epsilon    <= 0 (1) if Linfinite-norm,
+            xi and lambda denote the image plane coordinate and wavelength.
+
+        A2, b2 : array_like, array_like
+            Constraint on the transmission of the amplitude apodization Phi 
+            - Phi(r) <= 0 (2),
+            in which r represents the radial coordinate of the pupil.
             
-        A0, A1 : array_like, array_like
-            Contrast constraints on the coronagraphic electric field
+        A3, b3 : array_like, array_like
+            Constraint on the transmission of the amplitude apodization Phi 
+            Phi(r) <= 1 (3).
             
-        A2, A3 : array_like, array_like
-            Plus and minus identity matrices for the non zero points in the
-            pupil
-            
-        A4 : array_like
-            
-        A5 : array_like
-            Matrix for the integrated apodizer transmission
+        A4, b4 : array_like, array_like
+            Constraint on the variable epsilon that is related to contrast
+            and represented by the following equation:
+            -epsilon(xi) <= 0 if L1-norm,
+            -epsilon     <= 0 if Linfinite-norm.            
+                  
+        A5, b5 : array_like
+            Constraint on the integral of the amplitude transmission, 
+            used as a proxy of the apodizer throughput. It is normalized to the
+            integral of the pupil transmission and is larger than a parameter 
+            tau set by the user.
+            - \int_0^1 (\Phi(r)) <= \tau
         
-            
-        b0, b1 : array_like, array_like
-            Zero matrices with size is related to A0 and A1
-            
-        b2 : array_like
-            Zero matrix with size is related to A2
-        
-        b3 : array_like
-            One matrix with size relative to A3
-            
-        b4 : array_like
-            Zero matrix with size relative to A4
-            
-        b5 : array_like
-            Single value matrix with tau, the set threshold for the integrated 
-            apodizer transmission      
         
         Returns
         -----------
         A, b, c: array_like, array_like, array_like
-            Matrices for the optimization problem for MaxContrast                                           
+            The matrices for the optimization problem.
+            A and b are concatenations of the matrices for the constraints that 
+            are described above.
+            c represents the cost function to maximize, here the integral of 
+            the epsilon, the weighted or unweighted contrast in the search area
+            inside the coronagraphic image.
         
         """
         if self.Lnorm == 'Linf':
