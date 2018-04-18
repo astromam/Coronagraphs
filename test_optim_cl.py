@@ -42,12 +42,12 @@ pl.imshow(abs(A1.T)**0.25)
 
 pl.figure(2)
 pl.clf()
-pl.title(r'Matrix for L$_1$-norm MaxContrast problem')
+pl.title(r'Matrix for MaxContrast problem, L$_1$-norm')
 pl.imshow(abs(A2.T)**0.25)
 
 pl.figure(3)
 pl.clf()
-pl.title(r'Matrix for L$_\infty$-norm MaxContrast problem')
+pl.title(r'Matrix for MaxContrast problem, L$_\infty$-norm')
 pl.imshow(abs(A3.T)**0.25)
 
 #%% Gurobi model of the problems
@@ -74,7 +74,7 @@ pl.figure(4)
 pl.clf()
 pl.title('Transmission profiles of the apodizers')
 pl.plot(corono0.r, Apod1, label='MaxTau')
-pl.plot(corono0.r, Apod2, label=r'MaxContrast,   L$_1$-norm')
+pl.plot(corono0.r, Apod2, label=r'MaxContrast, L$_1$-norm')
 pl.plot(corono0.r, Apod3, label=r'MaxContrast, L$_\infty$-norm')
 pl.xlabel(r'Pupil radius r')
 pl.ylabel('Apodizer amplitude transmission')

@@ -446,15 +446,15 @@ class MaxContrast(ProblemMatrix):
 
 #%%    
     def compute_matrices(self):
-        """
+        r"""
         Computes the matrices for the optimization problem that consists in 
         maximizing the contrast in a given search area in the coronagraphic 
         image for a set integrated apodizer transmission. 
         The variable x is a concatenation of the apodizer transmission function
-        Phi and an auxiliary variable epsilon. 
-        Epsilon represents the contrast to maximize in the search in the 
-        coronagraphic image. It can depend on the position in the coronagraphic
-        image or not (L1-norm or Linfinite-norm problem).
+        :math:`\Phi` and an auxiliary variable :math:`\epsilon`. 
+        :math:`\epsilon` represents the contrast to maximize in the search in 
+        the coronagraphic image. It can depend on the position in the 
+        coronagraphic image or not (:math:`L_1`-norm or :math:`L_\infty`-norm problem).
 
         Parameters
         -----------
@@ -463,31 +463,45 @@ class MaxContrast(ProblemMatrix):
             
         I0, I1, N0, Z0, c1 : array_like
             Intermediate matrices for the generation of the matrices A0 to A5.
-            They depend on the type of the norm (L1 or Linfinite) 
+            They depend on the type of the norm (:math:`L_1` or :math:`L_\infty`) 
             for the problem.
 
         A0, b0 : array_like, array_like
-            Contrast constraint on the coronagraphic electric field Psi_D
+            Contrast constraint on the coronagraphic electric field :math:`\Psi_D`
             that is represented the following equation:
-            Psi_D(xi,lambda)-epsilon(x) <= 0 (0) if L1-norm,
-            Psi_D(xi,lambda)-epsilon    <= 0 (0) if Linfinite-norm,
-            xi and lambda denote the image plane coordinate and wavelength.
+                
+            :math:`\Psi_D(\xi,\lambda)-\epsilon(\xi) \leq 0` 
+            if :math:`L_1`-norm,
+            
+            :math:`\Psi_D(\xi,\lambda)-\epsilon    \leq 0`  
+            if :math:`L_\infty`-norm,
+            
+            :math:`\xi` and :math:`\lambda` denote the image plane coordinate 
+            and wavelength.
 
         A1, b1 : array_like, array_like
-            Contrast constraint on the coronagraphic electric field Psi_D
+            Contrast constraint on the coronagraphic electric field :math:`\Psi_D`
             that is represented the following equation:
-            -Psi_D(xi,lambda)-epsilon(x) <= 0 (1) if L1-norm,
-            -Psi_D(xi,lambda)-epsilon    <= 0 (1) if Linfinite-norm,
-            xi and lambda denote the image plane coordinate and wavelength.
+                
+            :math:`-\Psi_D(\xi, \lambda) - \epsilon(\xi) \leq 0`
+            if :math:`L_1`-norm,
+            
+            :math:`-\Psi_D(\xi,\lambda) - \epsilon    \leq 0`
+            if :math:`L_\infty`-norm,
+            
 
         A2, b2 : array_like, array_like
-            Constraint on the transmission of the amplitude apodization Phi 
-            - Phi(r) <= 0 (2),
+            Constraint on the transmission of the amplitude apodization 
+            :math:`\Phi`
+            
+            :math:`- \Phi(r) \leq 0`,
             in which r represents the radial coordinate of the pupil.
             
         A3, b3 : array_like, array_like
-            Constraint on the transmission of the amplitude apodization Phi 
-            Phi(r) <= 1 (3).
+            Constraint on the transmission of the amplitude apodization 
+            :math:`\Phi`
+            
+            :math:`\Phi(r) \leq 1`.
             
         A4, b4 : array_like, array_like
             Constraint on the variable epsilon that is related to contrast
@@ -502,6 +516,7 @@ class MaxContrast(ProblemMatrix):
             tau set by the user.
             - \int_0^1 (\Phi(r)) <= \tau
         
+        .. math:: \Psi_D(\xi, \lambda) - \epsilon(\xi) \leq 0
         
         Returns
         -----------
