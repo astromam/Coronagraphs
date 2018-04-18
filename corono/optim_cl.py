@@ -18,23 +18,24 @@ Default parameters
 """
 #%%
 def get_default_params_ProblemMatrix():
-    """
+    r"""
     Gets the default parameters for the optimization problem matrix.
        
     Parameters
     ----------
-    cDarkHole : float
-        Contrast goal in log scale inside the search area in the 
-        coronagraphic image
+    cDarkHole : float (default=8)
+        Contrast goal :math:`C` in log scale inside the search area in the 
+        coronagraphic image.
     
-    tau : float
-        Integrated amplitude transmission goal in fraction of the pupil 
-        amplitude transmission
+    tau : float (default=0.2)
+        Integrated amplitude transmission :math:`\tau` of the apodizer :math:`\Phi` in 
+        fraction of the integrated amplitude transmissio of the pupil 
+        :math:`P_0`.
     
     Returns    
     ----------
     tmp : dict
-        Dictionnary of parameters with their default values
+        Dictionnary of parameters with their default values.
         
     """
     tmp = {'cDarkHole':8,'tau':0.2}
@@ -42,7 +43,7 @@ def get_default_params_ProblemMatrix():
 
 #%%
 def get_default_params_MaxContrastProblemMatrix():
-    """
+    r"""
     Gets the default parameters for the Max contrast optimization problem.
     
     Parameters
@@ -50,9 +51,9 @@ def get_default_params_MaxContrastProblemMatrix():
     tmp : dict
         Dictionary from the get_default_matrix_pb
         
-    Lnorm : string
-        L-norm for the optimization problem ('Linf' : L-infinite norm, 
-        'L1' : L1-norm)
+    Lnorm : string (default= 'L1')
+        L-norm type for the optimization problem 
+        ('Linf' : :math:`L_{\infty}` norm, 'L1' : :math:`L_1`-norm)
             
     Returns    
     ----------
@@ -70,13 +71,13 @@ def get_default_params_MaxContrastProblemMatrix():
 Problem Matrix class
 """
 class ProblemMatrix(object):
-    """
+    r"""
     Defines the class for Matrix of optimization problem
     """
     default_params = get_default_params_ProblemMatrix()
   
     def __init__(self,corono=cg.APLC1d(),**kwargs):
-        """
+        r"""
         __init__ : method
             Constructor for the ProblemMatrix class
         
@@ -102,48 +103,51 @@ class ProblemMatrix(object):
             Number of points of the dark zone in the coronagraphic image
             
         pup : array_like
-            Index of non zero points in the aperture
+            Index of non zero points in the pupil :math:`P_0`
             
         bbb : array_like
-            Vector indexing the points in the pupil
+            Vector indexing the points in the pupil :math:`P_0`
             
         idx_pup : array_like
-            Vector indexing the non zero points in the pupil
+            Vector indexing the non zero points in the pupil  :math:`P_0`
             
         npp : int
-            Number of non zero points in the aperture
+            Number of non zero points in the pupil :math:`P_0`
             
         lys : array_like
-            Index of non zero points in the Lyot stop
+            Index of non zero points in the Lyot stop  :math:`L`
             
         idx_lys : array_like
             Vector indexing the non zero points of the pupil in the Lyot stop
+            :math:`L`
             
-        direct_field_t_re, direct_field_t_im : array_like
+        direct_field_t_re, direct_field_t_im : array_like, array_like
             Real and imaginary part of the non coronagraphic response matrix 
-            for all the points in the pupil and at all the wavelengths
+            for all the points in the pupil :math:`P_0` and at all the wavelengths
             
-        corono_field_t_re, corono_field_t_im : array_like
-            Real and imaginary part of the non coronagraphic response matrix 
-            for all the points in the pupil and at all the wavelengths
+        corono_field_t_re, corono_field_t_im : array_like, array_like
+            Real and imaginary part of the coronagraphic response matrix 
+            for all the points in the pupil :math:`P_0` and at all the wavelengths
          
         corono_field_t_re2 : array_like
-            Real part of the non coronagraphic response matrix 
+            Real part of the coronagraphic response matrix 
             for all the non zero points in the pupil and at all the wavelengths
                                 
         A, b, c : array_like, array_like, array_like
-            Matrix to solve the problem for a given variable x
-            A.x <= b under the cost function c.T.x
+            Matrices for the optimization problem that writes as
+            
+            .. math:: \max_{\tau} c^{T}.x,    
+            under the constraint :math:`A.x \leq b`.
         
         TR : float
-            Integrated amplitude transmission of the pupil with respect to that
-            of the clear pupil
+            Integrated amplitude transmission of the pupil :math:`P_0` 
+            with respect to that of the clear pupil
             
         m : gurobi model
             Gurobi model of the problem to solve
             
         Apod : array_like
-            Apodizer to be generated
+            Apodizer :math:`\Phi` to be generated
         
         """
         self.params  = kwargs
@@ -191,7 +195,7 @@ class ProblemMatrix(object):
         """
         Virtual function for the matrix computation.
         
-        Returns
+        Raises
         --------
         res
             Display of a warning
@@ -311,9 +315,10 @@ class ProblemMatrix(object):
 MaxTau ProblemMatrix subclass
 """
 class MaxTau(ProblemMatrix):
-    """
+    r"""
     Defines the ProblemMatrix subclass for the optimization problem that 
-    maximizes the apodizer transmission for a given contrast in the search area.
+    maximizes the integrated apodizer transmission for a given contrast 
+    :math:`C` in the search area inside the coronagraphic image.
     """
     def __init__(self, corono=cg.APLC1d(), **kwargs):
         """
@@ -432,7 +437,8 @@ class MaxTau(ProblemMatrix):
         Parameters 
         -----------
         Apodtmp : array_like
-            Vector of the apodizer in the non zero points of the pupil
+            Vector of the apodizer :math:`\Phi` in the non zero points of 
+            the pupil :math:`P_0`
         
         Returns
         -----------
@@ -464,10 +470,10 @@ class MaxTau(ProblemMatrix):
 MaxContrast ProblemMatrix subclass
 """
 class MaxContrast(ProblemMatrix):
-    """
+    r"""
     Defines the ProblemMatrix subclass for the optimization problem that 
     maximizes the contrast in a given search area for a given integrated 
-    apodizer transmission.
+    apodizer transmission :math:`\tau`.
     """
     default_params = get_default_params_MaxContrastProblemMatrix()
     
@@ -496,7 +502,8 @@ class MaxContrast(ProblemMatrix):
         the search area ranging between :math:`\rho_0` and :math:`\rho_1` in 
         the coronagraphic image. It can either depend on the position 
         :math:`\xi` in the coronagraphic image or not (:math:`L_1`-norm or 
-        :math:`L_\infty`-norm problem).
+        :math:`L_\infty`-norm problem). 
+        The variables follow the notations of [1]_ and [2]_.
 
         Parameters
         -----------
@@ -580,6 +587,22 @@ class MaxContrast(ProblemMatrix):
             :math:`W(\xi)= \xi` if :math:`L_1`-norm constraint
             
             :math:`W(\xi) = 1` if :math:`L_\infty`-norm constraint
+
+        References
+        ----------
+        .. [1] M. N'Diaye, L. Pueyo, and R. Soummer, Apodized Pupil Lyot Coronagraphs for 
+            Arbitrary Apertures. IV. Reduced Inner Working Angle and Increased 
+            Robustness to Low-order Aberrations, ApJ 799, 2, 225 (2015).
+            
+            http://iopscience.iop.org/article/10.1088/0004-637X/799/2/225/meta.
+            
+        .. [2] M. N'Diaye, R. Soummer, L. Pueyo, A. Carlotti, C. Stark, M. Perrin,
+            Apodized Pupil Lyot Coronagraphs for Arbitrary Apertures. V. Hybrid
+            Shaped Pupil Designs for Imaging Earth-like planets with Future 
+            Space Observatories, ApJ 818, 2, 163 (2016). 
+            
+            http://iopscience.iop.org/article/10.3847/0004-637X/818/2/163/meta
+
                                 
         """
         if self.Lnorm == 'Linf':
@@ -623,14 +646,14 @@ class MaxContrast(ProblemMatrix):
 
 #%%
     def compute_gurobi_model(self):
-        """
+        r"""
         Generates the gurobi solver model for the MaxContrast problem.
         
         Parameters 
         -----------
         ApodEpstmp : array_like
             Vector of the apodizer in the non zero points of the pupil 
-            and neps points for the coronagraphic image
+            :math:`P_0` and neps points for the coronagraphic image
         
         Returns
         -----------
