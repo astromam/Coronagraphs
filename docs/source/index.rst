@@ -23,16 +23,16 @@ corono.utils
 .. automodule:: corono.utils
    :members:
 
-corono.coronagraph_cl
+corono.corono_design
 ------
 
-.. automodule:: corono.coronagraph_cl
+.. automodule:: corono.corono_design
    :members:
 
-corono.optim_cl
+corono.corono_optim
 ------
 
-.. automodule:: corono.optim_cl
+.. automodule:: corono.corono_optim
    :members:
 
 Indices and tables
