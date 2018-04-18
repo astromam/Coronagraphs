@@ -146,7 +146,6 @@ def isft(A2, NB, m, ctr=False):
     return sft(A2, NB, m, inv=True, ctr=ctr)
 
 #%% import Bessel function
-besselJ0raw=lambda z: scipy.special.jv(0,z)
 def besselJ0(z):
     """
     Computes the Bessel function of zero order for a given array
@@ -162,7 +161,7 @@ def besselJ0(z):
         Bessel function of zero order for the z array
     
     """
-    temp=besselJ0raw(z)
+    temp=scipy.special.jv(0,z)
     temp[np.isnan(temp)]=0
     return temp
 
