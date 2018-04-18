@@ -29,6 +29,12 @@ corono.coronagraph_cl
 .. automodule:: corono.coronagraph_cl
    :members:
 
+corono.optim_cl
+------
+
+.. automodule:: corono.optim_cl
+   :members:
+
 Indices and tables
 ==================
 

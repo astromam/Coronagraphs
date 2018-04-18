@@ -449,12 +449,20 @@ class MaxContrast(ProblemMatrix):
         r"""
         Computes the matrices for the optimization problem that consists in 
         maximizing the contrast in a given search area in the coronagraphic 
-        image for a set integrated apodizer transmission. 
-        The variable x is a concatenation of the apodizer transmission function
-        :math:`\Phi` and an auxiliary variable :math:`\epsilon`. 
-        :math:`\epsilon` represents the contrast to maximize in the search in 
-        the coronagraphic image. It can depend on the position in the 
-        coronagraphic image or not (:math:`L_1`-norm or :math:`L_\infty`-norm problem).
+        image for a set integrated apodizer transmission :math:`\tau`. In terms
+        of matrices, the optimization problem writes as
+            
+        .. math:: \max_{\tau} c^{T}.x,
+            
+        under the constraint :math:`A.x \leq b`.
+                
+        The variable :math:`x` is a concatenation of the apodizer transmission 
+        function :math:`\Phi` and an auxiliary variable :math:`\epsilon`.
+        The variable :math:`\epsilon` represents the contrast to maximize in 
+        the search area ranging between :math:`\rho_0` and :math:`\rho_1` in 
+        the coronagraphic image. It can either depend on the position 
+        :math:`\xi` in the coronagraphic image or not (:math:`L_1`-norm or 
+        :math:`L_\infty`-norm problem).
 
         Parameters
         -----------
@@ -471,10 +479,10 @@ class MaxContrast(ProblemMatrix):
             that is represented the following equation:
                 
             :math:`\Psi_D(\xi,\lambda)-\epsilon(\xi) \leq 0` 
-            if :math:`L_1`-norm,
+            if :math:`L_1`-norm constraint,
             
             :math:`\Psi_D(\xi,\lambda)-\epsilon    \leq 0`  
-            if :math:`L_\infty`-norm,
+            if :math:`L_\infty`-norm constraint,
             
             :math:`\xi` and :math:`\lambda` denote the image plane coordinate 
             and wavelength.
@@ -484,10 +492,10 @@ class MaxContrast(ProblemMatrix):
             that is represented the following equation:
                 
             :math:`-\Psi_D(\xi, \lambda) - \epsilon(\xi) \leq 0`
-            if :math:`L_1`-norm,
+            if :math:`L_1`-norm constraint,
             
             :math:`-\Psi_D(\xi,\lambda) - \epsilon    \leq 0`
-            if :math:`L_\infty`-norm,
+            if :math:`L_\infty`-norm constraint,
             
 
         A2, b2 : array_like, array_like
@@ -506,17 +514,19 @@ class MaxContrast(ProblemMatrix):
         A4, b4 : array_like, array_like
             Constraint on the variable epsilon that is related to contrast
             and represented by the following equation:
-            -epsilon(xi) <= 0 if L1-norm,
-            -epsilon     <= 0 if Linfinite-norm.            
+                
+            :math:`-\epsilon(\xi) \leq 0` if :math:`L_1`-norm constraint,
+            
+            :math:`-\epsilon     \leq 0` if :math:`L_\infty`-norm constraint.            
                   
         A5, b5 : array_like
-            Constraint on the integral of the amplitude transmission, 
+            Constraint on the integral of the apodization amplitude transmission, 
             used as a proxy of the apodizer throughput. It is normalized to the
-            integral of the pupil transmission and is larger than a parameter 
-            tau set by the user.
-            - \int_0^1 (\Phi(r)) <= \tau
-        
-        .. math:: \Psi_D(\xi, \lambda) - \epsilon(\xi) \leq 0
+            integral of the transmission of the pupil :math:`P` and is larger 
+            than a parameter :math:`\tau` set by the user.
+            
+            .. math:: - \frac{\int_{P} \Phi(r)dr}{\int_{P} P(r)dr} \leq \tau
+                  
         
         Returns
         -----------
@@ -524,10 +534,19 @@ class MaxContrast(ProblemMatrix):
             The matrices for the optimization problem.
             A and b are concatenations of the matrices for the constraints that 
             are described above.
-            c represents the cost function to maximize, here the integral of 
-            the epsilon, the weighted or unweighted contrast in the search area
+            
+            The cost function c to maximize represents the contrast 
+            in the search area ranging between :math:`\rho_0` and :math:`\rho_1` 
             inside the coronagraphic image.
-        
+            
+            .. math:: \max_{\tau}[ - \int_{\rho_0}^{\rho_1} W(\xi)\epsilon(\xi)d\xi]
+            
+            with
+            
+            :math:`W(\xi)= \xi` if :math:`L_1`-norm constraint
+            
+            :math:`W(\xi) = 1` if :math:`L_\infty`-norm constraint
+                                
         """
         if self.Lnorm == 'Linf':
             I1 = np.ones(self.ndz*self.corono.nlam)
