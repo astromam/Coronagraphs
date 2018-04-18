@@ -173,7 +173,7 @@ def get_default_params_DZPM1d():
         Coefficient :math:`\beta` in :math:`\lambda_0` related to a defocus shift that is applied to the 
         focal plane mask. Equivalent to a phase entrance pupil apodization. 
         
-    gFPM : float (default=68.82)
+    nFPM : float (default=68.82)
         Mask sampling            
             
     Returns    
@@ -207,7 +207,7 @@ def get_default_params_DZPM1d():
     tmp.update({'rMask1':0.875/2, 'rMask2':1.453/2.,
            'OPDx1':0.309, 'OPDx2':0.672,
            'ome1':-2.340, 'ome2':2.051, 'beta':-0.236,
-           'gFPM':68.82312456985547})
+           'nFPM':68.82312456985547})
     return tmp
 
 #%%
@@ -1084,19 +1084,19 @@ class DZPM1d(Coronagraph):
         self.rMask2_t = (self.lam0/self.lam_t)*self.rMask2
         
         # mask sampling at Apod given wavelength and max nFPM_max 
-        self.nFPM1_t   = self.rMask1_t*self.gFPM
+        self.nFPM1_t   = self.rMask1_t*self.nFPM
         self.nFPM1_max = int(np.max(self.nFPM1_t))     
-        self.nFPM2_t   = self.rMask2_t*self.gFPM
+        self.nFPM2_t   = self.rMask2_t*self.nFPM
         self.nFPM2_max = int(np.max(self.nFPM2_t))
 
         self.mask1_lam   = (np.arange(self.nFPM1_max+1)[None,:]\
-                            <=self.rMask1_t[:,None]*self.gFPM)
+                            <=self.rMask1_t[:,None]*self.nFPM)
         self.xi_FPM1_lam = np.arange(self.nFPM1_max+1)[None,:]\
-        *self.mask1_lam/self.gFPM       
+        *self.mask1_lam/self.nFPM       
         self.mask2_lam   = (np.arange(self.nFPM2_max+1)[None,:]\
-                            <=self.rMask2_t[:,None]*self.gFPM)
+                            <=self.rMask2_t[:,None]*self.nFPM)
         self.xi_FPM2_lam = np.arange(self.nFPM2_max+1)[None,:]\
-        *self.mask2_lam/self.gFPM
+        *self.mask2_lam/self.nFPM
 
         self.hankel_kernel_FPM1_all  = besselJ0(
                 np.pi/self.R*self.xi_FPM1_lam[:,:,None]*self.r[None,None,:])
@@ -1162,7 +1162,7 @@ class DZPM1d(Coronagraph):
         iFPM1_field = np.zeros((self.nlam,self.nPup), dtype='complex128')
         for i in range(self.nlam):
             iFPM1_field[i,:]= np.pi*self.hankel_kernel_iFPM1_all[i,:,:].dot(
-                    FPM1_field[i,:])*(1/self.gFPM)
+                    FPM1_field[i,:])*(1/self.nFPM)
     
         FPM2_field = np.zeros((self.nlam, self.nFPM2_max+1), dtype='complex128')
         for i in range(self.nlam):
@@ -1173,7 +1173,7 @@ class DZPM1d(Coronagraph):
         iFPM2_field = np.zeros((self.nlam,self.nPup), dtype='complex128')
         for i in range(self.nlam):
             iFPM2_field[i,:]=np.pi*self.hankel_kernel_iFPM2_all[i,:,:].dot(
-                    FPM2_field[i,:])*(1/self.gFPM)
+                    FPM2_field[i,:])*(1/self.nFPM)
              
         nolyot_field = (Apod[None,:]*self.Apod_w*self.Pupil1d[None,:]\
                         -(self.eps2_t[:,None] - self.eps1_t[:,None])*iFPM1_field \
