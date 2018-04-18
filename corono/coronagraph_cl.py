@@ -814,7 +814,7 @@ class APLC1d(Coronagraph):
             wavelengths
 
         """      
-        super().__init__(**kwargs)      
+        super(APLC1d,self).__init__(**kwargs)      
         
         # mask size at Apod given wavelength
         self.rMask_t    = (self.lam0/self.lam_t)*self.rMask
@@ -1130,7 +1130,7 @@ class APLC2d(Coronagraph):
             all the wavelengths
                 
         """      
-        super().__init__(**kwargs)
+        super(APLC2d,self).__init__(**kwargs)
         
         # mask size at a given wavelength for SFT
         self.mB_t  = 2.*self.rMask*(self.lam0/self.lam_t)

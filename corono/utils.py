@@ -15,6 +15,7 @@ Check python version
 """
 try:
     reload  # Python 2.7
+    reload=reload
 except NameError:
     try:
         from importlib import reload  # Python 3.4+
