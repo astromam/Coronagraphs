@@ -324,34 +324,49 @@ class MaxTau(ProblemMatrix):
 
 #%%        
     def compute_matrices(self):
-        """
+        r"""
         Computes the matrices for the optimization problem that consists in 
-        maximizing the apodizer transmission for a set contrast in a given 
-        search area in the coronagraphic image.
+        maximizing the amplitude transmission of the apodizer :math:`\Phi` 
+        for a set contrast :math:`C` in a given search area in the coronagraphic 
+        image. In terms of matrices, the optimization problem writes as
+            
+        .. math:: \max_{C} c^{T}.x,
+            
+        under the constraint :math:`A.x \leq b`.
+                
+        The variable :math:`x` represents the apodizer transmission 
+        function :math:`\Phi`. The variables follow the notations of [1]_ and [2]_.       
         
         Parameters
         -----------        
         A0, b0 : array_like, array_like
-            Contrast constraint on the coronagraphic electric field Psi_D
+            Contrast constraint on the coronagraphic electric field :math:`\Psi_D`
             that is represented the following equation:
-            Psi_D(xi,lambda)-10^(-C/2)xPsi_0(xi,lambda) <= 0 (0),
-            xi and lambda denote the image plane coordinate and wavelength,
-            Psi_0 represents the coronagraphic electric field in the absence of
-            coronagraph.
+                
+            :math:`\Psi_D(\xi,\lambda)-10^{-C/2}\Psi_0(\xi,\lambda) \leq 0`. 
+            
+            :math:`\xi` and :math:`\lambda` denote the image plane coordinate 
+            and wavelength. The term :math:`\Psi_0` represents the coronagraphic 
+            electric field in the absence of focal plane mask (FPM).
             
         A1, b1 : array_like, array_like
             Contrast constraints on the coronagraphic electric field Psi_D
             that is represented the following equations:
-            -Psi_D(xi,lambda)-10^(-C/2)xPsi_0(xi,lambda) <= 0 (1).
+                
+            :math:`-\Psi_D(\xi,\lambda)-10^{-C/2}\Psi_0(\xi,\lambda) \leq 0`.
 
         A2, b2 : array_like, array_like
-            Constraint on the transmission of the amplitude apodization Phi 
-            - Phi(r) <= 0 (2),
-            in which r represents the radial coordinate of the pupil.
+            Constraint on the transmission of the amplitude apodization 
+            :math:`\Phi`
+            
+            :math:`- \Phi(r) \leq 0`,
+            in which :math:`r` represents the radial coordinate of the pupil.
             
         A3, b3 : array_like, array_like
-            Constraint on the transmission of the amplitude apodization Phi 
-            Phi(r) <= 1 (3).
+            Constraint on the transmission of the amplitude apodization 
+            :math:`\Phi`
+            
+            :math:`\Phi(r) \leq 1`.
         
         Returns 
         ----------
@@ -359,10 +374,29 @@ class MaxTau(ProblemMatrix):
             The matrices for the optimization problem.
             A and b are concatenations of the matrices for the constraints that 
             are described above.
-            c represents the cost function to maximize, here the integral of 
-            the amplitude transmission, used as a proxy of the apodizer 
-            throughput. c is normalized to the integral of the pupil transmission.
-        
+            
+            The cost function c to maximize is the transmission of the apodizer 
+            inside the pupil :math:`P_0`.
+            
+            .. math:: \max_{C}[\int_{P_0} \Phi(r)dr].
+            
+        References
+        ----------
+        .. [1] M. N'Diaye, L. Pueyo, and R. Soummer, Apodized Pupil Lyot Coronagraphs for 
+            Arbitrary Apertures. IV. Reduced Inner Working Angle and Increased 
+            Robustness to Low-order Aberrations, ApJ 799, 2, 225 (2015).
+            
+            http://iopscience.iop.org/article/10.1088/0004-637X/799/2/225/meta.
+            
+        .. [2] M. N'Diaye, R. Soummer, L. Pueyo, A. Carlotti, C. Stark, M. Perrin,
+            Apodized Pupil Lyot Coronagraphs for Arbitrary Apertures. V. Hybrid
+            Shaped Pupil Designs for Imaging Earth-like planets with Future 
+            Space Observatories, ApJ 818, 2, 163 (2016). 
+            
+            http://iopscience.iop.org/article/10.3847/0004-637X/818/2/163/meta
+            
+            
+            
         """
         direct_field_t1_re = np.zeros((self.corono.nPup, self.corono.nlam*self.ndz))
         for j in range(self.corono.nlam*self.ndz):
@@ -495,7 +529,7 @@ class MaxContrast(ProblemMatrix):
             if :math:`L_1`-norm constraint,
             
             :math:`-\Psi_D(\xi,\lambda) - \epsilon    \leq 0`
-            if :math:`L_\infty`-norm constraint,
+            if :math:`L_\infty`-norm constraint.
             
 
         A2, b2 : array_like, array_like
@@ -503,7 +537,7 @@ class MaxContrast(ProblemMatrix):
             :math:`\Phi`
             
             :math:`- \Phi(r) \leq 0`,
-            in which r represents the radial coordinate of the pupil.
+            in which :math:`r` represents the radial coordinate of the pupil.
             
         A3, b3 : array_like, array_like
             Constraint on the transmission of the amplitude apodization 
@@ -522,10 +556,10 @@ class MaxContrast(ProblemMatrix):
         A5, b5 : array_like
             Constraint on the integral of the apodization amplitude transmission, 
             used as a proxy of the apodizer throughput. It is normalized to the
-            integral of the transmission of the pupil :math:`P` and is larger 
+            integral of the transmission of the pupil :math:`P_0` and is larger 
             than a parameter :math:`\tau` set by the user.
             
-            .. math:: - \frac{\int_{P} \Phi(r)dr}{\int_{P} P(r)dr} \leq \tau
+            .. math:: - \frac{\int_{P} \Phi(r)dr}{\int_{P_0} P(r)dr} \leq \tau.
                   
         
         Returns
@@ -539,7 +573,7 @@ class MaxContrast(ProblemMatrix):
             in the search area ranging between :math:`\rho_0` and :math:`\rho_1` 
             inside the coronagraphic image.
             
-            .. math:: \max_{\tau}[ - \int_{\rho_0}^{\rho_1} W(\xi)\epsilon(\xi)d\xi]
+            .. math:: \max_{\tau}[ - \int_{\rho_0}^{\rho_1} W(\xi)\epsilon(\xi)d\xi],
             
             with
             

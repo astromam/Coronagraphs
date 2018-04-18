@@ -64,7 +64,7 @@ def uniform_disk(n, radius, ctr=False):
 #%%
 def sft(A2, NB, m, inv=False, ctr=False):
     """
-    Slow Fourier Transform, using the theory described in [1]. 
+    Slow Fourier Transform, using the theory described in [1]_. 
     Assumes the original array is square. 
 
     Parameters
