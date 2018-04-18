@@ -11,7 +11,7 @@ Created on Mon Mar  5 15:59:00 2018
 #from . import aplc_1d_propag_cl
 #from . import aplc_2d_propag_cl
 #from . import dzpm_1d_propag_cl
-from . import coronagraph_cl
+from . import corono_design
 from . import utils
 
 
@@ -20,7 +20,7 @@ from .utils import to_dict, write_apod1d, load_apod1d
 
 __version__ = '0.1.0b'
 
-lst_submodule = ['coronagraph_cl']
+lst_submodule = ['corono_design']
 lst_utils = ['reload', 'sft', 'isft', 'uniform_disk', 'to_dict', 'write_apod1d',
              'load_apod1d']
 

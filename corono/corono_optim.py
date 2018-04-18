@@ -10,7 +10,7 @@ Created on Fri Mar  9 11:36:39 2018
 import numpy as np
 import json
 import gurobipy as gb
-from corono import coronagraph_cl as cg
+from corono import corono_design as cd
 
 #%%
 """
@@ -76,7 +76,7 @@ class ProblemMatrix(object):
     """
     default_params = get_default_params_ProblemMatrix()
   
-    def __init__(self,corono=cg.APLC1d(),**kwargs):
+    def __init__(self,corono=cd.APLC1d(),**kwargs):
         r"""
         __init__ : method
             Constructor for the ProblemMatrix class
@@ -320,7 +320,7 @@ class MaxTau(ProblemMatrix):
     maximizes the integrated apodizer transmission for a given contrast 
     :math:`C` in the search area inside the coronagraphic image.
     """
-    def __init__(self, corono=cg.APLC1d(), **kwargs):
+    def __init__(self, corono=cd.APLC1d(), **kwargs):
         """
         Constructor for the Matrix problem with the coronagraph object
         
@@ -477,7 +477,7 @@ class MaxContrast(ProblemMatrix):
     """
     default_params = get_default_params_MaxContrastProblemMatrix()
     
-    def __init__(self, corono=cg.APLC1d(), **kwargs):
+    def __init__(self, corono=cd.APLC1d(), **kwargs):
         """
         Constructor for the Matrix problem with 
         the coronagraph object.

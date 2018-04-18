@@ -7,25 +7,25 @@ Created on Fri Mar  9 17:40:02 2018
 """
 import pylab as pl
 
-from corono import coronagraph_cl as cg
-from corono import optim_cl as op
+from corono import corono_design as cd
+from corono import corono_optim as co
 
 #%%  
 """ 
 Coronagraph defintion
 """
-corono0 = cg.APLC1d()
+corono0 = cd.APLC1d()
 
 #%%
 """
 Problem defintion
 """
 # Maximization of the integrated amplitude transmission of the apodizer
-problem1 = op.MaxTau(corono=corono0,)
+problem1 = co.MaxTau(corono=corono0,)
 # Maximization of the contrast under L1-norm
-problem2 = op.MaxContrast(corono=corono0, Lnorm='L1')
+problem2 = co.MaxContrast(corono=corono0, Lnorm='L1')
 # Maximization of the contrast under L-infinite norm
-problem3 = op.MaxContrast(corono=corono0, Lnorm='Linf')
+problem3 = co.MaxContrast(corono=corono0, Lnorm='Linf')
 
 #%%
 """

@@ -9,13 +9,13 @@ Created on Thu Mar  8 23:07:48 2018
 #%% Initialization
 import numpy as np
 import pylab as pl
-from corono import coronagraph_cl as cg
+from corono import corono_design as cd
 
 ##%% APLC tests   
 #'''
 #tests on the APLC 1d class
 #'''
-#a = cg.APLC1d()
+#a = cd.APLC1d()
 #Apod = np.ones((a.params['nPup']))
 #direct_matrix_re, direct_matrix_im = a.prop_direct_matrix()
 #corono_matrix_re, corono_matrix_im = a.prop_corono_matrix()
@@ -49,7 +49,7 @@ from corono import coronagraph_cl as cg
 #'''
 #tests on the DZPM 1d class
 #'''
-#b = cg.DZPM1d(PupilObs=0.,LyotStopObs=0,nImg=256,nPup=300,Fmax=50)
+#b = cd.DZPM1d(PupilObs=0.,LyotStopObs=0,nImg=256,nPup=300,Fmax=50)
 #Apod_b = np.ones((b.params['nPup']))
 #direct_matrix_re, direct_matrix_im = b.prop_direct_matrix()
 #corono_matrix_re, corono_matrix_im = b.prop_corono_matrix()
@@ -89,7 +89,7 @@ from corono import coronagraph_cl as cg
 '''
 tests on APLC 2d class
 '''
-a = cg.APLC2d()
+a = cd.APLC2d()
 
 Apod2d = a.Pupil2d
 
@@ -114,7 +114,6 @@ nImg2d    = a.params['nImg2d']
 rMask     = a.params['rMask']
 rho0      = a.params['rho0']
 rho1      = a.params['rho1']
-#cDarkHole = a.params['cDarkHole']
 # Intensity profiles of the direct and coronagraphic images
 pl.figure(3)
 pl.clf()
