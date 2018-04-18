@@ -114,7 +114,7 @@ nImg2d    = a.params['nImg2d']
 rMask     = a.params['rMask']
 rho0      = a.params['rho0']
 rho1      = a.params['rho1']
-cDarkHole = a.params['cDarkHole']
+#cDarkHole = a.params['cDarkHole']
 # Intensity profiles of the direct and coronagraphic images
 pl.figure(3)
 pl.clf()
@@ -123,7 +123,7 @@ pl.semilogy(a.xi2d,poly_corono_intensity_2d[nImg2d//2,nImg2d//2:]/poly_direct_in
 pl.axvline(x=rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
 pl.axvline(x=rho0, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
 pl.axvline(x=rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
-pl.axhline(10**(-cDarkHole), xmin=a.xi2d.min(), xmax=a.xi2d.max(), linewidth=1, color='k', linestyle='--')
+#pl.axhline(10**(-cDarkHole), xmin=a.xi2d.min(), xmax=a.xi2d.max(), linewidth=1, color='k', linestyle='--')
 pl.xlabel(r'Angular separation in $\lambda_0$/D')
 pl.ylabel('Normalized intensity in log scale')
 pl.legend()
