@@ -14,7 +14,8 @@ from corono import corono_optim as co
 """ 
 Coronagraph defintion
 """
-corono0 = cd.APLC1d()
+#corono0 = cd.APLC1d()
+corono0 = cd.SP1d()
 
 #%%
 """
