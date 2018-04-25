@@ -341,9 +341,6 @@ class Coronagraph(object):
             Final image plane coordinate vector centered between 4 pixels
             for 2D problem
         
-        Apod1d_t : array_like 
-            Identity matrix for the computation of the response matrix for all
-            the points in the Entrance pupil plane for 2D problem
 
         References
         ----------
@@ -387,9 +384,6 @@ class Coronagraph(object):
         # final image plane coordinate weighted with wavelength
         self.xii = self.xi[None,:]*self.lam0/self.lam_t[:,None]
 
-        # identity matrix for the apodization
-        #self.Apod1d_t = np.identity(self.nPup)
-
         # Hankel kernel (no wavelength variation)
         self.hankel_kernel     = besselJ0(
                 np.pi/self.R*self.xi[:,None]*self.r[None,:])
@@ -411,9 +405,6 @@ class Coronagraph(object):
         # Final image plane coordinate
         self.xi2d     = (np.arange(self.nImg2d//2))* self.Fmax2d/self.nImg2d
         self.xi2d_ctr = (np.arange(self.nImg2d//2)+1/2)* self.Fmax2d/self.nImg2d
-
-        # identity matrix for the apodization
-        #self.Apod2d_t = np.identity(self.nPup**2)
 
         
 #%%        
@@ -623,11 +614,11 @@ class Coronagraph(object):
         direct_field_t = np.zeros((self.nPup, self.nlam, self.nImg+1), 
                                   dtype='complex128')
         print('generating direct response matrices for 1D problem')
+        Apod1d    = np.zeros((self.nPup))
         for i in np.arange(self.nPup):
-        #    direct_field_t[i] = self.compute_direct_field_1d(self.Apod1d_t[i])
-            Apod1d    = np.zeros((self.nPup))
             Apod1d[i] = 1
-            direct_field_t[i] = self.compute_direct_field_1d(Apod1d)            
+            direct_field_t[i] = self.compute_direct_field_1d(Apod1d)
+            Apod1d[i] = 0            
         direct_field_t_re = direct_field_t.real
         direct_field_t_im = direct_field_t.imag
         return direct_field_t_re, direct_field_t_im    
@@ -648,11 +639,11 @@ class Coronagraph(object):
         corono_field_t = np.zeros((self.nPup, self.nlam, self.nImg+1), 
                                   dtype='complex128')
         print('generating corono response matrices for 1D problem')
+        Apod1d    = np.zeros((self.nPup))
         for i in np.arange(self.nPup):
-#            corono_field_t[i] = self.compute_corono_field_1d(self.Apod1d_t[i])
-            Apod1d    = np.zeros((self.nPup))
-            Apod1d[i] = 1 
+            Apod1d[i] = 1
             corono_field_t[i] = self.compute_corono_field_1d(Apod1d)
+            Apod1d[i] = 0
         corono_field_t_re = corono_field_t.real
         corono_field_t_im = corono_field_t.imag
         return corono_field_t_re, corono_field_t_im 
@@ -773,12 +764,13 @@ class Coronagraph(object):
         direct_field_t_re = np.zeros((self.nPup**2, self.nlam, self.nImg2d**2))
         direct_field_t_im = np.zeros((self.nPup**2, self.nlam, self.nImg2d**2))
         print('generating direct response matrix for 2D problem')
-        for i in np.arange(self.nPup**2):
-#            Apod2d = np.reshape(self.Apod2d_t[i], (self.nPup,self.nPup))  
-            Apod2d = np.zeros((self.nPup, self.nPup))
+        Apod2d = np.zeros((self.nPup, self.nPup))
+        for i in np.arange(self.nPup**2):  
             (i0, j0) = np.unravel_index(i, (self.nPup, self.nPup))
             Apod2d[i0,j0] = 1
-            direct_field_t_re[i],direct_field_t_im[i] = self.compute_direct_field_2d_vec(Apod2d)
+            direct_field_t_re[i],direct_field_t_im[i] = \
+            self.compute_direct_field_2d_vec(Apod2d)
+            Apod2d[i0,j0] = 0
         return direct_field_t_re, direct_field_t_im    
 
 #%% generation of the coronagraphic response matrix        
@@ -796,12 +788,13 @@ class Coronagraph(object):
         corono_field_t_re = np.zeros((self.nPup**2, self.nlam, self.nImg2d**2))
         corono_field_t_im = np.zeros((self.nPup**2, self.nlam, self.nImg2d**2))
         print('generating corono response matrix for 2D problem')
-        for i in np.arange(self.nPup**2):
-            # Apod2d = np.reshape(self.Apod2d_t[i], (self.nPup,self.nPup)) 
-            Apod2d = np.zeros((self.nPup, self.nPup))
+        Apod2d = np.zeros((self.nPup, self.nPup))
+        for i in np.arange(self.nPup**2): 
             (i0, j0) = np.unravel_index(i, (self.nPup, self.nPup))
-            Apod2d[i0,j0] = 1
-            corono_field_t_re[i], corono_field_t_im[i] = self.compute_corono_field_2d_vec(Apod2d)
+            Apod2d[i0,j0] = 1            
+            corono_field_t_re[i], corono_field_t_im[i] = \
+            self.compute_corono_field_2d_vec(Apod2d)
+            Apod2d[i0,j0] = 0 
         return corono_field_t_re, corono_field_t_im 
 
 #%%
