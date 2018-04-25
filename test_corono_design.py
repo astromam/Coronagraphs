@@ -15,7 +15,8 @@ from corono import corono_design as cd
 """
 #tests on the APLC 1d class
 """
-a = cd.APLC1d()
+#a = cd.APLC1d()
+a = cd.SP1d()
 Apod = np.ones((a.params['nPup']))
 direct_matrix_re, direct_matrix_im = a.prop_direct_matrix_1d()
 corono_matrix_re, corono_matrix_im = a.prop_corono_matrix_1d()

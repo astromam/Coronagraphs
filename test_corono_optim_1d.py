@@ -10,23 +10,41 @@ import pylab as pl
 from corono import corono_design as cd
 from corono import corono_optim as co
 
+from corono.utils import to_dict
+
+#%% parameters
+"""
+Parameters
+"""
+# dark zone bounds (inner and outer edges) in lam0/D unit
+rho0 = 3.0
+rho1 = 10.0
+
+# contrast in the dark region
+cDarkHole = 4.0
+
+# tau (integrated Pupil transmission)
+tau   = 0.5
+
+params = to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau)
+
 #%%  
 """ 
 Coronagraph defintion
 """
-corono0 = cd.APLC1d()
-#corono0 = cd.SP1d()
+#corono0 = cd.APLC1d()
+corono0 = cd.SP1d(**params)
 
 #%%
 """
 Problem defintion
 """
 # Maximization of the integrated amplitude transmission of the apodizer
-problem1 = co.MaxTau(corono=corono0,)
+problem1 = co.MaxTau(corono=corono0, **params)
 # Maximization of the contrast under L1-norm
-problem2 = co.MaxContrast(corono=corono0, Lnorm='L1')
+problem2 = co.MaxContrast(corono=corono0, Lnorm='L1',**params)
 # Maximization of the contrast under L-infinite norm
-problem3 = co.MaxContrast(corono=corono0, Lnorm='Linf')
+problem3 = co.MaxContrast(corono=corono0, Lnorm='Linf',**params)
 
 #%%
 """
@@ -45,7 +63,7 @@ pl.figure(2)
 pl.clf()
 pl.title(r'Matrix for MaxContrast problem, L$_1$-norm')
 pl.imshow(abs(A2.T)**0.25)
-
+#
 pl.figure(3)
 pl.clf()
 pl.title(r'Matrix for MaxContrast problem, L$_\infty$-norm')
@@ -74,7 +92,7 @@ Plot display of the apodizers
 pl.figure(4)
 pl.clf()
 pl.title('Transmission profiles of the apodizers')
-pl.plot(corono0.r, Apod1, label='MaxTau')
+pl.plot(corono0.r, Apod1/Apod1.max(), label='MaxTau')
 pl.plot(corono0.r, Apod2, label=r'MaxContrast, L$_1$-norm')
 pl.plot(corono0.r, Apod3, label=r'MaxContrast, L$_\infty$-norm')
 pl.xlabel(r'Pupil radius r')
@@ -105,7 +123,7 @@ pl.title('Intensity profiles of the coronagraphic images')
 pl.semilogy(corono0.xi,poly_corono_image1/poly_direct_image1.max(),label='MaxTau')
 pl.semilogy(corono0.xi,poly_corono_image2/poly_direct_image2.max(),label=r'MaxContrast, L$_1$-norm')
 pl.semilogy(corono0.xi,poly_corono_image3/poly_direct_image3.max(),label=r'MaxContrast, L$_{\infty}$-norm')
-pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
+#pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
 pl.axvline(x=corono0.rho0, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
 pl.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
 pl.axhline(10**(-problem1.params['cDarkHole']), xmin=corono0.xi.min(), xmax=corono0.xi.max(), linewidth=1, color='k', linestyle='--')

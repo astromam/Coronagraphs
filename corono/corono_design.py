@@ -139,6 +139,31 @@ def get_default_params_APLC1d():
     return tmp
 
 #%%
+def get_default_params_SP1d():
+    r"""
+    Gets the default parameters for the SP1d Coronagraph subclass.
+        
+    Parameters
+    ---------- 
+    rMask : float
+        Focal plane mask (FPM) radius :math:`m/2` in :math:`\lambda_0/D`
+        
+    nFPM : int
+        Mask sampling
+            
+    Returns    
+    ----------
+    tmp : dict
+        Dictionary that contains all the default values of the 
+        Coronagraph class and the APLC1d subclass
+    
+    """
+    tmp = get_default_params_Coronagraph()
+    tmp.update({'rMask':5.0,'nFPM':50})
+    return tmp
+
+
+#%%
 def get_default_params_DZPM1d():
     r"""
     Gets the default parameters for the DZPM1d Coronagraph subclass.
@@ -960,6 +985,109 @@ class APLC1d(Coronagraph):
         return self.lam0/self.lam_t[:,None]*np.pi\
             *corono_field_tmp*self.R/self.nPup
             
+#%% 
+"""
+APLC 1d class
+"""
+class SP1d(Coronagraph):
+    """
+    Defines the Coronagraph subclass for the Shaped Pupil Coronagraph
+    (SP) for 1D geometry.
+    """
+    default_params = get_default_params_SP1d()
+    
+    def __init__(self, **kwargs):
+        """
+        __init__ : method
+            Builds the constructor for the APLC1d class
+        
+        Attributes:
+        ----------  
+        rMask_t : array_like
+            Focal plane mask (FPM) radius :math:`m` scaled with wavelength
+            :math:`\lambda`
+            
+        nFPM_t : array_like
+            Mask sampling at a given wavelength :math:`\lambda`
+            
+        nFPM_max : float
+            Maximum mask sampling over all the wavelengths
+            
+        mask_lam : array_like
+            Focal plane mask in :math:`\lambda/D` unit
+            
+        xi_FPM_lam : array_like
+            Focal plane mask coordinate in :math:`\lambda/D`
+            
+        hankel_kernel_FPM_all : array_like
+            Hankel kernel for the FPM at all the wavelengths
+            
+        hankel_kernel_iFPM_all : array_like
+            Inverse hankel transform for the FPM at all the 
+            wavelengths
+
+        """      
+        super(SP1d,self).__init__(**kwargs)      
+        
+        # mask size at Apod given wavelength
+        self.rMask_t    = (self.lam0/self.lam_t)*self.rMask
+        
+        # mask sampling at Apod given wavelength and max nFPM_max 
+        self.nFPM_t     = self.rMask_t*self.nFPM
+        self.nFPM_max   = int(np.max(self.nFPM_t))
+        self.mask_lam   = (np.arange(self.nFPM_max+1)[None,:]\
+                           <self.rMask_t[:,None]*self.nFPM)
+        self.xi_FPM_lam = np.arange(self.nFPM_max+1)[None,:]\
+                *self.mask_lam/self.nFPM
+
+        # Hankel kernel for the focal plane mask (FPM) 
+#        self.hankel_kernel_FPM_all  = besselJ0(
+#                np.pi/self.R*self.xi_FPM_lam[:,:,None]*self.r[None,None,:])
+#        self.hankel_kernel_iFPM_all = besselJ0(
+#                np.pi/self.R*self.xi_FPM_lam[:,None,:]*self.r[None,:,None])
+        
+#%% # direct propagation (no focal plane mask)
+    def compute_direct_field_1d(self,Apod):
+        """
+        Computes the electric field of the direct image with APLC
+        for the 1D problem.
+        
+        Parameters
+        ---------- 
+        Apod : array_like
+            Entrance pupil apodization :math:`\Phi`
+                
+        Returns    
+        ----------
+        res : array_like
+            Direct electric field :math:`\Psi_0` at all the wavelengths
+            
+        """
+        return self.lam0/self.lam_t[:,None]*np.pi*self.hankel_kernel_all.dot(
+                self.Pupil1d*Apod*self.r/self.R)*self.R/self.nPup
+
+#%% # propagation through coronagraph (with focal plane mask)
+    def compute_corono_field_1d(self,Apod):
+        """
+        Computes the electric field of the coronagraphic image with SP
+        for the 1D problem.
+        
+        Parameters
+        ---------- 
+        Apod : array_like
+            Entrance pupil apodization :math:`\Phi`
+                
+        Returns    
+        ----------
+        res : array_like
+            Coronagraphic electric field :math:`\Psi_D` at all the wavelengths
+            
+        """
+        return self.lam0/self.lam_t[:,None]*np.pi*self.hankel_kernel_all.dot(
+                self.Pupil1d*Apod*self.r/self.R)*self.R/self.nPup
+            
+
+
 #%% 
 """
 class DZPM 1d     
