@@ -210,7 +210,8 @@ class ProblemMatrix(object):
                 self.corono_field_t_im[:,:,self.idx_dz], 
                 (self.corono.nPup**2, self.corono.nlam*self.ndz))[self.idx_pup,:]
 
-        self.corono_field_t2    = np.concatenate((self.corono_field_t2_re,self.corono_field_t2_im), 
+        self.corono_field_t2    = np.concatenate((self.corono_field_t2_re,
+                                                  self.corono_field_t2_im), 
                                                  axis=1)
 
         
@@ -368,7 +369,7 @@ class MaxTau(ProblemMatrix):
         Constructor for the Matrix problem with the coronagraph object
         
         """
-        super().__init__(**kwargs)
+        super(MaxTau, self).__init__(**kwargs)
 
 #%%        
     def compute_matrices(self):
@@ -545,7 +546,7 @@ class MaxContrast(ProblemMatrix):
         Constructor for the Matrix problem with 
         the coronagraph object.
         """
-        super().__init__(**kwargs)
+        super(MaxContrast,self).__init__(**kwargs)
 
 #%%    
     def compute_matrices(self):
@@ -668,8 +669,45 @@ class MaxContrast(ProblemMatrix):
 
                                 
         """
+#        if self.Lnorm == 'Linf':
+#            I1 = np.ones(self.ndz*self.corono.nlam)
+#            I1 = I1[None,:]
+#            I0 = np.ones(self.ndz)
+#            I0 = I0[None,:]
+#            N0 = np.zeros((1, self.npp))
+#            Z0 = np.zeros(1)
+#            c1 = [1]
+#        else:
+#            I0 = np.identity(self.ndz)
+#            I1 = np.hstack([I0 for k in range(self.corono.nlam)])            
+#            N0 = np.zeros((self.ndz, self.npp))
+#            Z0 = np.zeros(self.ndz)
+#            c1 = 2.*np.pi*np.array(self.idx_dz)*(self.corono.Fmax\
+#                                  /self.corono.nImg)**2
+#        
+#        A0  = np.concatenate(( self.corono_field_t2_re, -I1), axis=0)
+#        A1  = np.concatenate((-self.corono_field_t2_re, -I1), axis=0)
+#        A2  = np.concatenate((-np.identity(self.npp), N0), axis=0)
+#        A3  = np.concatenate(( np.identity(self.npp), N0), axis=0)
+#        A4  = np.concatenate((np.zeros((self.npp, self.ndz)), -I0), axis=0)
+#        A5  = np.concatenate((- 2.*np.pi*(
+#                np.arange(self.corono.nPup)[self.idx_pup]+0.5)\
+#            *self.corono.Pupil1d[self.idx_pup]/(2.*self.corono.nPup)**2/self.TR, 
+#                                  Z0))
+#        
+#        b0  = np.zeros((self.corono.nlam*self.ndz))
+#        b1  = np.zeros((self.corono.nlam*self.ndz))
+#        b2  = np.zeros(self.npp)
+#        b3  = np.ones(self.npp)
+#        b4  = np.zeros(self.ndz)
+#        b5  = [-self.tau]
+#        
+#        self.A = np.concatenate((A0,A1,A2,A3,A4,A5[:,None]), axis=1)
+#        self.b = np.concatenate((b0,b1,b2,b3,b4,b5))        
+#        self.c = np.concatenate((np.zeros(self.npp), c1), axis=0)
+
         if self.Lnorm == 'Linf':
-            I1 = np.ones(self.ndz*self.corono.nlam)
+            I1 = np.ones(self.ndz*self.corono.nlam*2)
             I1 = I1[None,:]
             I0 = np.ones(self.ndz)
             I0 = I0[None,:]
@@ -678,24 +716,21 @@ class MaxContrast(ProblemMatrix):
             c1 = [1]
         else:
             I0 = np.identity(self.ndz)
-            I1 = np.hstack([I0 for k in range(self.corono.nlam)])            
+            I1 = np.hstack([I0 for k in range(self.corono.nlam*2)])            
             N0 = np.zeros((self.ndz, self.npp))
             Z0 = np.zeros(self.ndz)
-            c1 = 2.*np.pi*np.array(self.idx_dz)*(self.corono.Fmax\
-                                  /self.corono.nImg)**2
+            c1 = np.array(self.rad2d)
         
-        A0  = np.concatenate(( self.corono_field_t2_re, -I1), axis=0)
-        A1  = np.concatenate((-self.corono_field_t2_re, -I1), axis=0)
+        A0  = np.concatenate(( self.corono_field_t2, -I1), axis=0)
+        A1  = np.concatenate((-self.corono_field_t2, -I1), axis=0)
         A2  = np.concatenate((-np.identity(self.npp), N0), axis=0)
         A3  = np.concatenate(( np.identity(self.npp), N0), axis=0)
         A4  = np.concatenate((np.zeros((self.npp, self.ndz)), -I0), axis=0)
-        A5  = np.concatenate((- 2.*np.pi*(
-                np.arange(self.corono.nPup)[self.idx_pup]+0.5)\
-            *self.corono.Pupil1d[self.idx_pup]/(2.*self.corono.nPup)**2/self.TR, 
+        A5  = np.concatenate((- self.Pupil_vec[self.idx_pup]/self.TR, 
                                   Z0))
         
-        b0  = np.zeros((self.corono.nlam*self.ndz))
-        b1  = np.zeros((self.corono.nlam*self.ndz))
+        b0  = np.zeros((self.corono.nlam*self.ndz*2))
+        b1  = np.zeros((self.corono.nlam*self.ndz*2))
         b2  = np.zeros(self.npp)
         b3  = np.ones(self.npp)
         b4  = np.zeros(self.ndz)
@@ -724,7 +759,7 @@ class MaxContrast(ProblemMatrix):
             Gurobi model of the MaxContrast problem to solve
             
         """        
-        if self.A is None or self.b is  None or self.c is None:
+        if self.A is None or self.b is None or self.c is None:
             print('computing matrices')
             self.compute_matrices()
                        
@@ -737,13 +772,13 @@ class MaxContrast(ProblemMatrix):
         else:
             self.neps = self.ndz
         # Create variables
-        ApodEpsTmp = self.m.addVars(self.npp + self.neps, lb=0.0, name="ApodTmp")        
+        ApodEpsTmp = self.m.addVars(self.npp + self.neps, lb=0.0, name="ApodEpsTmp")        
         # Set objective
         self.m.setObjective(gb.quicksum((self.c[i+self.npp]*ApodEpsTmp[i+self.npp] 
                 for i in range(self.neps))), gb.GRB.MINIMIZE)
         # Add constraint:
         self.m.addConstrs((gb.quicksum((ApodEpsTmp[i]*self.A[i,j] 
-                for i in range(self.npp + self.neps))) <=  self.b[j] 
+                for i in range(self.npp + self.neps) if self.A[i,j])) <=  self.b[j] 
                 for j in np.arange(nn)), "cpos")
         
         self.m.update()
