@@ -7,6 +7,7 @@ Created on Wed Apr 25 17:52:23 2018
 """
 
 import pylab as pl
+import numpy as np
 
 from corono import corono_design as cd
 from corono import corono_optim as co
@@ -18,7 +19,7 @@ from corono.utils import to_dict
 Parameters
 """
 # dark zone bounds (inner and outer edges) in lam0/D unit
-rho0 = 3.0
+rho0 =  5.0
 rho1 = 10.0
 
 # contrast in the dark region
@@ -27,13 +28,21 @@ cDarkHole = 4.0
 # tau (integrated Pupil transmission)
 tau   = 0.5
 
-params = to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau)
+# ctr2
+ctr  = True
+ctr2 = True
+
+#nlam
+nlam=1 
+
+params = to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau, 
+                 ctr=ctr, ctr2=ctr2, nlam=nlam)
 
 #%%  
 """ 
 Coronagraph defintion
 """
-corono0 = cd.APLC2d()
+corono0 = cd.APLC2d(**params)
 
 #%%
 """
@@ -89,38 +98,69 @@ Apod1 = problem1.solve_model()
 """
 Plot display of the apodizers
 """
+#pl.figure(4)
+#pl.clf()
+#pl.title('Transmission profiles of the apodizers')
+#pl.plot(Apod1/Apod1.max(), label='MaxTau')
+##pl.plot(corono0.r, Apod2, label=r'MaxContrast, L$_1$-norm')
+##pl.plot(corono0.r, Apod3, label=r'MaxContrast, L$_\infty$-norm')
+#pl.xlabel(r'Pupil radius r')
+#pl.ylabel('Apodizer amplitude transmission')
+#pl.legend()
+
+Apod1_2d = np.reshape(Apod1, (corono0.nPup, corono0.nPup))
+
 pl.figure(4)
 pl.clf()
-pl.title('Transmission profiles of the apodizers')
-pl.plot(corono0.r, Apod1/Apod1.max(), label='MaxTau')
-#pl.plot(corono0.r, Apod2, label=r'MaxContrast, L$_1$-norm')
-#pl.plot(corono0.r, Apod3, label=r'MaxContrast, L$_\infty$-norm')
-pl.xlabel(r'Pupil radius r')
-pl.ylabel('Apodizer amplitude transmission')
-pl.legend()
+pl.imshow(Apod1_2d)
+pl.title('Apodizer transmission')
+
+pl.figure(5)
+pl.clf()
+pl.imshow(corono0.Pupil2d)
+pl.title('Apodizer transmission')
+
 
 #%% Signal in intensity
 """
 Computation of the direct and coronagraphic images
 """
-poly_direct_image1 = corono0.compute_direct_intensity_1d(Apod1)
-poly_corono_image1 = corono0.compute_corono_intensity_1d(Apod1)
+poly_direct_image1 = corono0.compute_direct_intensity_2d(Apod1_2d)
+poly_corono_image1 = corono0.compute_corono_intensity_2d(Apod1_2d)
 #poly_direct_image2 = corono0.compute_direct_intensity_1d(Apod2)
 #poly_corono_image2 = corono0.compute_corono_intensity_1d(Apod2)
 #poly_direct_image3 = corono0.compute_direct_intensity_1d(Apod3)
 #poly_corono_image3 = corono0.compute_corono_intensity_1d(Apod3)
 
+#%% image plot
+
+pl.figure(6)
+pl.clf()
+pl.imshow(poly_direct_image1**0.25)
+pl.title('direct image')
+
+
+pl.figure(7)
+pl.clf()
+pl.imshow(poly_corono_image1**0.25)
+pl.title('coronagraphic image')
+
+
 #%% Intensity profiles of the direct and coronagraphic images
 """
 Display of the intensity profiles of the coronagraphic images
 """
-pl.figure(5)
+
+nImg2d = corono0.params['nImg2d']
+
+
+pl.figure(8)
 pl.clf()
 pl.title('Intensity profiles of the coronagraphic images')
 #pl.semilogy(corono0.xi,poly_direct_image1/poly_direct_image1.max(),label='Direct')
 #pl.semilogy(corono0.xi,poly_direct_image2/poly_direct_image2.max(),label='Direct')
 #pl.semilogy(corono0.xi,poly_direct_image3/poly_direct_image3.max(),label='Direct')
-pl.semilogy(corono0.xi,poly_corono_image1/poly_direct_image1.max(),label='MaxTau')
+pl.semilogy(corono0.xi2d,poly_corono_image1[nImg2d//2,nImg2d//2:]/poly_direct_image1.max(),label='MaxTau')
 #pl.semilogy(corono0.xi,poly_corono_image2/poly_direct_image2.max(),label=r'MaxContrast, L$_1$-norm')
 #pl.semilogy(corono0.xi,poly_corono_image3/poly_direct_image3.max(),label=r'MaxContrast, L$_{\infty}$-norm')
 #pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')

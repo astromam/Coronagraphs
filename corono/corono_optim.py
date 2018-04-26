@@ -205,6 +205,14 @@ class ProblemMatrix(object):
         self.corono_field_t2_re = np.reshape(
                 self.corono_field_t_re[:,:,self.idx_dz], 
                 (self.corono.nPup**2, self.corono.nlam*self.ndz))[self.idx_pup,:]
+
+        self.corono_field_t2_im = np.reshape(
+                self.corono_field_t_im[:,:,self.idx_dz], 
+                (self.corono.nPup**2, self.corono.nlam*self.ndz))[self.idx_pup,:]
+
+        self.corono_field_t2    = np.concatenate((self.corono_field_t2_re,self.corono_field_t2_im), 
+                                                 axis=1)
+
         
         self.A       = None
         self.b       = None
@@ -212,11 +220,18 @@ class ProblemMatrix(object):
         
         self.m       = None
         
-        self.Apod    = np.zeros((self.corono.nPup))
+#        self.Apod    = np.zeros((self.corono.nPup))
+
+#        self.TR      = np.sum(2.*np.pi*self.corono.Pupil1d *np.linspace(
+#                0.5,self.corono.nPup+0.5,num=self.corono.nPup)\
+#                /(2.*self.corono.nPup)**2)
         
-        self.TR      = np.sum(2.*np.pi*self.corono.Pupil1d *np.linspace(
-                0.5,self.corono.nPup+0.5,num=self.corono.nPup)\
-                /(2.*self.corono.nPup)**2) 
+        self.Apod    = np.zeros((self.corono.nPup**2))
+
+        
+        self.TR      = np.sum(self.Pupil_vec)
+        
+ 
 
 #%%    
     def compute_matrices(self):
@@ -324,9 +339,9 @@ class ProblemMatrix(object):
                 Apodtmp[i] = self.m.getVars()[i].x
             self.Apod[self.idx_pup] = Apodtmp
             
-            test = np.zeros((self.corono.nPup, 2))
-            test[:,0] = self.corono.r
-            test[:,1] = self.Apod   
+#            test = np.zeros((self.corono.nPup, 2))
+#            test[:,0] = self.corono.r
+#            test[:,1] = self.Apod   
 #            if fpath: write_apod1d(fpath, test)    
                 
             return self.Apod
@@ -431,29 +446,49 @@ class MaxTau(ProblemMatrix):
             
             
         """
-        direct_field_t1_re = np.zeros((self.corono.nPup, self.corono.nlam*self.ndz))
-        for j in range(self.corono.nlam*self.ndz):
-            direct_field_t1_re[:,j] = \
-            self.direct_field_t_re[:,(self.corono.nlam-1)//2,0]
-        direct_field_t2_re = direct_field_t1_re[self.idx_pup,:]
+#        direct_field_t1_re = np.zeros((self.corono.nPup, self.corono.nlam*self.ndz))
+#        for j in range(self.corono.nlam*self.ndz):
+#            direct_field_t1_re[:,j] = \
+#            self.direct_field_t_re[:,(self.corono.nlam-1)//2,0]
+#        direct_field_t2_re = direct_field_t1_re[self.idx_pup,:]
+       
+#        A0  =  self.corono_field_t2_re \
+#                - 10**(-self.cDarkHole/2)/np.sqrt(2.)*direct_field_t2_re
+#        A1  = -self.corono_field_t2_re \
+#                - 10**(-self.cDarkHole/2)/np.sqrt(2.)*direct_field_t2_re
+#        A2  = -np.identity(self.npp)
+#        A3  =  np.identity(self.npp)
+    
+#        b0  = np.zeros((self.corono.nlam*self.ndz))
+#        b1  = np.zeros((self.corono.nlam*self.ndz))
+#        b2  = np.zeros(self.npp)
+#        b3  = np.ones(self.npp)
+    
+#        self.A = np.concatenate((A0,A1,A2,A3), axis=1)
+#        self.b = np.concatenate((b0,b1,b2,b3))
+#        self.c = - 2.*np.pi*(np.arange(self.corono.nPup)[self.idx_pup]+0.5)\
+#                /(2.*self.corono.nPup)**2/self.TR
 
-        
-        A0  =  self.corono_field_t2_re \
-                - 10**(-self.cDarkHole/2)/np.sqrt(2.)*direct_field_t2_re
-        A1  = -self.corono_field_t2_re \
-                - 10**(-self.cDarkHole/2)/np.sqrt(2.)*direct_field_t2_re
+        ED0 = np.zeros_like(self.corono_field_t2)
+        ED0tmp = self.Pupil_vec[self.idx_pup]*self.LyotStop_vec[self.idx_pup]
+        for j in range(self.corono.nlam*self.ndz*2):
+            ED0[:,j] = ED0tmp
+        cst = 10.**(-self.corono.cDarkHole/2.)/np.sqrt(2.)        
+        ED0 *= cst*self.corono.Fmax2d/(self.corono.nImg2d*self.corono.nPup)
+
+        A0  =  self.corono_field_t2 - ED0                
+        A1  = -self.corono_field_t2 - ED0       
         A2  = -np.identity(self.npp)
         A3  =  np.identity(self.npp)
-    
-        b0  = np.zeros((self.corono.nlam*self.ndz))
-        b1  = np.zeros((self.corono.nlam*self.ndz))
+
+        b0  = np.zeros((self.corono.nlam*self.ndz*2))
+        b1  = np.zeros((self.corono.nlam*self.ndz*2))
         b2  = np.zeros(self.npp)
         b3  = np.ones(self.npp)
-    
+
         self.A = np.concatenate((A0,A1,A2,A3), axis=1)
         self.b = np.concatenate((b0,b1,b2,b3))
-        self.c = - 2.*np.pi*(np.arange(self.corono.nPup)[self.idx_pup]+0.5)\
-                /(2.*self.corono.nPup)**2/self.TR
+        self.c = -self.Pupil_vec[self.idx_pup]/self.TR
         
         return self.A, self.b, self.c
 
