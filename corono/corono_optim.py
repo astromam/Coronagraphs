@@ -76,7 +76,7 @@ class ProblemMatrix(object):
     """
     default_params = get_default_params_ProblemMatrix()
   
-    def __init__(self,corono=cd.SP1d(),**kwargs):
+    def __init__(self,corono=cd.APLC2d(),**kwargs):
         r"""
         __init__ : method
             Constructor for the ProblemMatrix class
@@ -155,28 +155,56 @@ class ProblemMatrix(object):
         
         self.corono  = corono
         
-        self.dz      = (self.corono.xi >= self.corono.rho0) \
-                & (self.corono.xi <= self.corono.rho1)
-        self.aaa     = np.arange(self.corono.nImg+1) 
-        self.idx_dz  = list(self.aaa[self.dz])
-        self.ndz     = len(self.idx_dz)
+#        self.dz      = (self.corono.xi >= self.corono.rho0) \
+#                & (self.corono.xi <= self.corono.rho1)
+#        self.aaa     = np.arange(self.corono.nImg+1) 
+#        self.idx_dz  = list(self.aaa[self.dz])
+#        self.ndz     = len(self.idx_dz)
     
-        self.pup     = (self.corono.Pupil1d > 0.)
-        self.bbb     = np.arange(self.corono.nPup)
-        self.idx_pup = list(self.bbb[self.pup])
-        self.npp     = len(self.idx_pup)
+#        self.pup     = (self.corono.Pupil1d > 0.)
+#        self.bbb     = np.arange(self.corono.nPup)
+#        self.idx_pup = list(self.bbb[self.pup])
+#        self.npp     = len(self.idx_pup)
     
-        self.lys     = (self.corono.LyotStop1d > 0.)
-        self.idx_lys = list(self.bbb[self.lys]) 
+#        self.lys     = (self.corono.LyotStop1d > 0.)
+#        self.idx_lys = list(self.bbb[self.lys]) 
     
-        self.direct_field_t_re, self.direct_field_t_im = \
-                self.corono.prop_direct_matrix_1d()
-        self.corono_field_t_re, self.corono_field_t_im = \
-                self.corono.prop_corono_matrix_1d()
+#        self.direct_field_t_re, self.direct_field_t_im = \
+#                self.corono.prop_direct_matrix_1d()
+#        self.corono_field_t_re, self.corono_field_t_im = \
+#                self.corono.prop_corono_matrix_1d()
+
+#        self.corono_field_t2_re = np.reshape(
+#                self.corono_field_t_re[:,:,self.idx_dz], 
+#                (self.corono.nPup, self.corono.nlam*self.ndz))[self.idx_pup,:]
+
+
+        self.Pupil_vec = np.reshape(self.corono.Pupil2d, (self.corono.nPup**2))
         
+        self.pup     = (self.Pupil_vec > 0.)
+        self.bbb     = np.arange(self.corono.nPup**2)
+        self.idx_pup = list(self.bbb[self.pup])
+        self.npp     = len(self.idx_pup) 
+        
+        self.dz2d, self.rad2d = self.corono.generate_area()
+        self.dz      = np.reshape(self.dz2d, (self.corono.nImg2d**2))
+        self.aaa     = np.arange(self.corono.nImg2d**2)
+        self.idx_dz  = list(self.aaa[self.dz])  
+        self.ndz     = len(self.idx_dz)
+
+        self.LyotStop_vec = np.reshape(self.corono.LyotStop2d, (self.corono.nPup**2))
+        self.lys     = (self.LyotStop_vec > 0.)
+        self.idx_lys = list(self.bbb[self.lys]) 
+
+
+        self.direct_field_t_re, self.direct_field_t_im = \
+                self.corono.prop_direct_matrix_2d()
+        self.corono_field_t_re, self.corono_field_t_im = \
+                self.corono.prop_corono_matrix_2d()
+       
         self.corono_field_t2_re = np.reshape(
                 self.corono_field_t_re[:,:,self.idx_dz], 
-                (self.corono.nPup, self.corono.nlam*self.ndz))[self.idx_pup,:]
+                (self.corono.nPup**2, self.corono.nlam*self.ndz))[self.idx_pup,:]
         
         self.A       = None
         self.b       = None
