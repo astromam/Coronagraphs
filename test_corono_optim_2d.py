@@ -16,19 +16,21 @@ from corono.utils import to_dict
 
 from matplotlib import cm
 
+from astropy.io import fits
+
 #%% parameters
 """
 Parameters
 """
 # dark zone bounds (inner and outer edges) in lam0/D unit
-rho0 =  3.0
+rho0 =  4.0
 rho1 = 10.0
 
 # contrast in the dark region
-cDarkHole = 5.0
+cDarkHole = 4.0
 
 # tau (integrated Pupil transmission)
-tau   = 0.7
+tau   = 0.4
 
 # ctr2
 ctr  = True
@@ -47,12 +49,28 @@ Coronagraph defintion
 #corono0 = cd.APLC2d(**params)
 corono0 = cd.SP2d(**params)
 
+
+#%%
+"""
+File reading
+"""
+
+nPup = corono0.params['nPup']
+
+pupil_name = 'sbr' # 'vlt' or 'sbr'
+fdir = '/Users/mndiaye/Dropbox/python/pupils/'
+fname = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
+fpath = fdir + fname
+
+Pupil2d = fits.getdata(fpath)
+
+
 #%%
 """
 Problem defintion
 """
 # Maximization of the integrated amplitude transmission of the apodizer
-problem1 = co2d.MaxTau(corono=corono0, **params)
+problem1 = co2d.MaxTau(corono=corono0, Pupil2d = Pupil2d, **params)
 # Maximization of the contrast under L1-norm
 problem2 = co2d.MaxContrast(corono=corono0, Lnorm='L1',**params)
 # Maximization of the contrast under L-infinite norm
@@ -113,29 +131,29 @@ pl.title('Pupil transmission')
 
 pl.figure(5)
 pl.clf()
-pl.imshow(Apod1_2d, cmap = cm.inferno)
-pl.title('Apodizer transmission - MaxTau problem')
+pl.imshow(Apod1_2d*Pupil2d, cmap = cm.inferno)
+pl.title('Apod 1 transmission - MaxTau problem')
 
 pl.figure(6)
 pl.clf()
-pl.imshow(Apod2_2d, cmap = cm.inferno)
-pl.title(r'Apodizer transmission - MaxContrast problem, L$_1$-norm')
+pl.imshow(Apod2_2d*Pupil2d, cmap = cm.inferno)
+pl.title(r'Apod 2 transmission - MaxContrast problem, L$_1$-norm')
 
 pl.figure(7)
 pl.clf()
-pl.imshow(Apod3_2d, cmap = cm.inferno)
-pl.title(r'Apodizer transmission - MaxContrast problem, L$_1$-norm')
+pl.imshow(Apod3_2d*Pupil2d, cmap = cm.inferno)
+pl.title(r'Apod 3 transmission - MaxContrast problem, L$_1$-norm')
 
 #%% Signal in intensity
 """
 Computation of the direct and coronagraphic images
 """
-poly_direct_image1 = corono0.compute_direct_intensity_2d(Apod1_2d)
-poly_corono_image1 = corono0.compute_corono_intensity_2d(Apod1_2d)
-poly_direct_image2 = corono0.compute_direct_intensity_2d(Apod2_2d)
-poly_corono_image2 = corono0.compute_corono_intensity_2d(Apod2_2d)
-poly_direct_image3 = corono0.compute_direct_intensity_2d(Apod3_2d)
-poly_corono_image3 = corono0.compute_corono_intensity_2d(Apod3_2d)
+poly_direct_image1 = corono0.compute_direct_intensity_2d(Apod1_2d, Pupil2d)
+poly_corono_image1 = corono0.compute_corono_intensity_2d(Apod1_2d, Pupil2d)
+poly_direct_image2 = corono0.compute_direct_intensity_2d(Apod2_2d, Pupil2d)
+poly_corono_image2 = corono0.compute_corono_intensity_2d(Apod2_2d, Pupil2d)
+poly_direct_image3 = corono0.compute_direct_intensity_2d(Apod3_2d, Pupil2d)
+poly_corono_image3 = corono0.compute_corono_intensity_2d(Apod3_2d, Pupil2d)
 
 #%% image plot
 
