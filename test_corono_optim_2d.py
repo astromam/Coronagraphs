@@ -14,6 +14,8 @@ from corono import corono_optim_2d as co2d
 
 from corono.utils import to_dict
 
+from matplotlib import cm
+
 #%% parameters
 """
 Parameters
@@ -106,22 +108,22 @@ Apod3_2d = np.reshape(Apod3, (corono0.nPup, corono0.nPup))
 
 pl.figure(4)
 pl.clf()
-pl.imshow(corono0.Pupil2d)
+pl.imshow(corono0.Pupil2d, cmap = cm.inferno)
 pl.title('Pupil transmission')
 
 pl.figure(5)
 pl.clf()
-pl.imshow(Apod1_2d)
+pl.imshow(Apod1_2d, cmap = cm.inferno)
 pl.title('Apodizer transmission - MaxTau problem')
 
 pl.figure(6)
 pl.clf()
-pl.imshow(Apod2_2d)
+pl.imshow(Apod2_2d, cmap = cm.inferno)
 pl.title(r'Apodizer transmission - MaxContrast problem, L$_1$-norm')
 
 pl.figure(7)
 pl.clf()
-pl.imshow(Apod3_2d)
+pl.imshow(Apod3_2d, cmap = cm.inferno)
 pl.title(r'Apodizer transmission - MaxContrast problem, L$_1$-norm')
 
 #%% Signal in intensity
@@ -139,32 +141,32 @@ poly_corono_image3 = corono0.compute_corono_intensity_2d(Apod3_2d)
 
 pl.figure(10)
 pl.clf()
-pl.imshow(poly_direct_image1**0.25)
+pl.imshow(poly_direct_image1**0.25, cmap = cm.inferno)
 pl.title('Apod1 - direct image')
 
 pl.figure(11)
 pl.clf()
-pl.imshow(poly_corono_image1**0.25)
+pl.imshow(poly_corono_image1**0.25, cmap = cm.inferno)
 pl.title('Apod1 - coronagraphic image')
 
 pl.figure(12)
 pl.clf()
-pl.imshow(poly_direct_image2**0.25)
+pl.imshow(poly_direct_image2**0.25, cmap = cm.inferno)
 pl.title('Apod2 - direct image')
 
 pl.figure(13)
 pl.clf()
-pl.imshow(poly_corono_image2**0.25)
+pl.imshow(poly_corono_image2**0.25, cmap = cm.inferno)
 pl.title('Apod2 - coronagraphic image')
 
 pl.figure(14)
 pl.clf()
-pl.imshow(poly_direct_image3**0.25)
+pl.imshow(poly_direct_image3**0.25, cmap = cm.inferno)
 pl.title('Apod3 - direct image')
 
 pl.figure(15)
 pl.clf()
-pl.imshow(poly_corono_image3**0.25)
+pl.imshow(poly_corono_image3**0.25, cmap = cm.inferno)
 pl.title('Apod3 - coronagraphic image')
 
 
