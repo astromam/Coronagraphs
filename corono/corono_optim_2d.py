@@ -77,7 +77,7 @@ class ProblemMatrix(object):
     """
     default_params = get_default_params_ProblemMatrix()
   
-    def __init__(self,corono=cd.APLC2d(),Pupil2d=None,**kwargs):
+    def __init__(self,corono=cd.APLC2d(),Pupil2d=None, LyotStop2d=None, **kwargs):
         r"""
         __init__ : method
             Constructor for the ProblemMatrix class
@@ -198,15 +198,18 @@ class ProblemMatrix(object):
         self.idx_dz  = list(self.aaa[self.dz])  
         self.ndz     = len(self.idx_dz)
 
-        self.LyotStop_vec = np.reshape(self.corono.LyotStop2d, (self.corono.nPup**2))
+        if LyotStop2d is None:
+            LyotStop2d = self.corono.LyotStop2d
+
+        self.LyotStop_vec = np.reshape(LyotStop2d, (self.corono.nPup**2))
         self.lys     = (self.LyotStop_vec > 0.)
         self.idx_lys = list(self.bbb[self.lys]) 
 
 
         self.direct_field_t_re, self.direct_field_t_im = \
-                self.corono.prop_direct_matrix_2d(Pupil2d)
+                self.corono.prop_direct_matrix_2d(Pupil2d, LyotStop2d)
         self.corono_field_t_re, self.corono_field_t_im = \
-                self.corono.prop_corono_matrix_2d(Pupil2d)
+                self.corono.prop_corono_matrix_2d(Pupil2d, LyotStop2d)
        
         self.corono_field_t2_re = np.reshape(
                 self.corono_field_t_re[:,:,self.idx_dz], 
