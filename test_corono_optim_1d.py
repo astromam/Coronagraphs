@@ -17,7 +17,7 @@ from corono.utils import to_dict
 Parameters
 """
 # dark zone bounds (inner and outer edges) in lam0/D unit
-rho0 = 3.0
+rho0 = 5.0
 rho1 = 10.0
 
 # contrast in the dark region

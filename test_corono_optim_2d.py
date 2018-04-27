@@ -19,14 +19,14 @@ from corono.utils import to_dict
 Parameters
 """
 # dark zone bounds (inner and outer edges) in lam0/D unit
-rho0 =  5.0
+rho0 =  3.0
 rho1 = 10.0
 
 # contrast in the dark region
-cDarkHole = 6.0
+cDarkHole = 5.0
 
 # tau (integrated Pupil transmission)
-tau   = 0.5
+tau   = 0.7
 
 # ctr2
 ctr  = True
@@ -42,7 +42,8 @@ params = to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
 """ 
 Coronagraph defintion
 """
-corono0 = cd.APLC2d(**params)
+#corono0 = cd.APLC2d(**params)
+corono0 = cd.SP2d(**params)
 
 #%%
 """

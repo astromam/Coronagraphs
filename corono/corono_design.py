@@ -265,6 +265,36 @@ def get_default_params_APLC2d():
     return tmp
 
 #%%
+def get_default_params_SP2d():
+    r"""
+    Gets the default parameters for the SP2d Coronagraph subclass.
+        
+    Parameters
+    ---------- 
+    rMask : float
+        Focal plane mask (FPM) radius :math:`m/2` in :math:`\lambda_0/D`
+    
+    nPup : int
+        Sampling across the pupil diameter :math:`D`
+    
+    nFPM : int
+        Sampling across the mask diameter :math:`m`
+            
+    Returns    
+    ----------
+    tmp : dict
+        Dictionary with all the default values of the 
+        Coronagraph class and the APLC2d subclass
+        
+    """    
+    tmp = get_default_params_Coronagraph()
+    tmp.update({'rMask':2.8,
+                'nPup':50, 'nFPM':25
+                })
+    return tmp
+
+
+#%%
 """
 Coronagraph filename
 """ 
@@ -867,7 +897,7 @@ class Coronagraph(object):
     
 #%% 
 """
-APLC 1d class
+APLC 1d Coronagraph subclass
 """
 class APLC1d(Coronagraph):
     """
@@ -987,7 +1017,7 @@ class APLC1d(Coronagraph):
             
 #%% 
 """
-APLC 1d class
+SP 1d Coronagraph subclass
 """
 class SP1d(Coronagraph):
     """
@@ -1090,7 +1120,7 @@ class SP1d(Coronagraph):
 
 #%% 
 """
-class DZPM 1d     
+DZPM 1d Coronagraph class     
 """
 class DZPM1d(Coronagraph):
     """
@@ -1423,5 +1453,99 @@ class APLC2d(Coronagraph):
 
         return field_Dtmp   
 
+#%% 
+"""
+SP 2d Coronagraph subclass        
+"""
+class SP2d(Coronagraph):
+    """
+    Defines the Coronagraph subclass for the Apodized Pupil Lyot Coronagraph
+    for two-dimension geometry.
+    """
+    default_params = get_default_params_SP2d()
+
+    def __init__(self, **kwargs):
+        r"""
+        __init__ : method
+            Constructor for the APLC2d class.
+        
+        Attributes
+        ----------        
+        mB_t : array_like
+            Spatial frequency range within the focal plane mask (FPM) 
+            in plane B in :math:`\lambda/D` at all the wavelengths
+           
+        mD_t : array_like
+            Spatial frequency range in the final image plane D 
+            in :math:`\lambda/D` at all the wavelengths
+                
+        """      
+        super(SP2d,self).__init__(**kwargs)
+        
+        # mask size at a given wavelength for SFT
+        self.mD_t  = self.Fmax2d*(self.lam0/self.lam_t)
+        
+#%% direct propagation (no focal plane mask)
+    def compute_direct_field_2d(self,Apod2d):
+        r""" 
+        Computes the coronagraph electric field for a classical Lyot coronagraph
+        with four planes (A: entrance pupil, D: final image plane).
+        Resolution element are given in :math:`\lambda_0/D` where 
+        :math:`\lambda_0` and :math:`D` denote the central and the telescope 
+        diameter.
+    
+        Parameters
+        ----------     
+        Apod2d : array_like 
+            Entrance pupil apodization :math:`\Phi`
+            
+        Returns    
+        ----------    
+        field_Dtmp : array_like
+            Direct electric field :math:`\Psi_0` in the final image plane at 
+            all the wavelengths
+    
+        """    
+        field_A    = Apod2d*self.Pupil2d
+        field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
+                              dtype='complex128')
+        for i in range(self.nlam):
+            field_Dtmp[i] = sft(field_A, self.nImg2d, self.mD_t[i], 
+                      ctr=self.ctr2)         
+    
+        return field_Dtmp
+ 
 #%%
+    def compute_corono_field_2d(self,Apod2d):
+        """
+        Computes the coronagraph electric field for a classical Lyot coronagraph
+        with two planes (A: entrance pupil, D: final image plane).
+        Resolution element are given in :math:`\lambda_0/D` where 
+        :math:`\lambda_0` and :math:`D` denote the central and the telescope 
+        diameter.
+    
+        Parameters
+        ---------- 
+        Apod2d : array_like 
+            Entrance pupil apodization :math:`\Phi`
+            
+        Returns    
+        ----------    
+        field_Dtmp : array_like
+            Coronagraphic electric field :math:`\Psi_D` in the final image plane
+            at all the wavelengths
+            
+        """        
+        field_A    = Apod2d*self.Pupil2d    
+        field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
+                              dtype='complex128')
+        for i in range(self.nlam):
+            field_Dtmp[i] = sft(field_A, self.nImg2d, self.mD_t[i], 
+                      ctr=self.ctr2)
+
+        return field_Dtmp   
+
+#%%
+     
+
      

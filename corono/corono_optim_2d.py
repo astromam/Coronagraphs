@@ -475,7 +475,7 @@ class MaxTau(ProblemMatrix):
         ED0tmp = self.Pupil_vec[self.idx_pup]*self.LyotStop_vec[self.idx_pup]
         for j in range(self.corono.nlam*self.ndz*2):
             ED0[:,j] = ED0tmp
-        cst = 10.**(-self.corono.cDarkHole/2.)/np.sqrt(2.)        
+        cst = 10.**(-self.cDarkHole/2.)/np.sqrt(2.)        
         ED0 *= cst*self.corono.Fmax2d/(self.corono.nImg2d*self.corono.nPup)
 
         A0  =  self.corono_field_t2 - ED0                

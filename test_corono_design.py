@@ -16,38 +16,38 @@ from corono import corono_design as cd
 #tests on the APLC 1d class
 """
 #a = cd.APLC1d()
-a = cd.SP1d()
-Apod = np.ones((a.params['nPup']))
-direct_matrix_re, direct_matrix_im = a.prop_direct_matrix_1d()
-corono_matrix_re, corono_matrix_im = a.prop_corono_matrix_1d()
-
-direct_int_a = a.compute_direct_intensity_1d(Apod)
-corono_int_a = a.compute_corono_intensity_1d(Apod)
+#a = cd.SP1d()
+#Apod = np.ones((a.params['nPup']))
+#direct_matrix_re, direct_matrix_im = a.prop_direct_matrix_1d()
+#corono_matrix_re, corono_matrix_im = a.prop_corono_matrix_1d()
+#
+#direct_int_a = a.compute_direct_intensity_1d(Apod)
+#corono_int_a = a.compute_corono_intensity_1d(Apod)
 #
 #%% plot displays
-pl.figure(1)
-pl.clf()
-pl.imshow(direct_matrix_re[:,2,:])
-
-pl.figure(2)
-pl.clf()
-pl.imshow(direct_matrix_im[:,2,:])
-
-pl.figure(3)
-pl.clf()
-pl.imshow(corono_matrix_re[:,2,:])
-
-pl.figure(4)
-pl.clf()
-pl.imshow(corono_matrix_im[:,2,:])
-
-pl.figure(5)
-pl.clf()
-pl.semilogy(a.xi, direct_int_a/direct_int_a.max())
-pl.semilogy(a.xi, corono_int_a/direct_int_a.max())
-pl.title('Intensity profiles for the APLC in 1D')
-pl.xlabel(r'Angular separation in $\lambda_0$/D')
-pl.ylabel('Normalized intensity in log scale')
+#pl.figure(1)
+#pl.clf()
+#pl.imshow(direct_matrix_re[:,2,:])
+#
+#pl.figure(2)
+#pl.clf()
+#pl.imshow(direct_matrix_im[:,2,:])
+#
+#pl.figure(3)
+#pl.clf()
+#pl.imshow(corono_matrix_re[:,2,:])
+#
+#pl.figure(4)
+#pl.clf()
+#pl.imshow(corono_matrix_im[:,2,:])
+#
+#pl.figure(5)
+#pl.clf()
+#pl.semilogy(a.xi, direct_int_a/direct_int_a.max())
+#pl.semilogy(a.xi, corono_int_a/direct_int_a.max())
+#pl.title('Intensity profiles for the APLC in 1D')
+#pl.xlabel(r'Angular separation in $\lambda_0$/D')
+#pl.ylabel('Normalized intensity in log scale')
 #
 
 
@@ -55,54 +55,55 @@ pl.ylabel('Normalized intensity in log scale')
 """
 #tests on the DZPM 1d class
 """
-b = cd.DZPM1d(PupilObs=0.,LyotStopObs=0,nImg=256,nPup=300,Fmax=50)
-Apod_b = np.ones((b.params['nPup']))
-direct_matrix_re, direct_matrix_im = b.prop_direct_matrix_1d()
-corono_matrix_re, corono_matrix_im = b.prop_corono_matrix_1d()
-
-ome1 = -2.340
-ome2 = 2.051
-Apod_b = 1 + ome1*(b.r/2)**2 + ome2*(b.r/2)**4
-
-direct_int_b = b.compute_direct_intensity_1d(Apod_b)
-corono_int_b = b.compute_corono_intensity_1d(Apod_b)
+#b = cd.DZPM1d(PupilObs=0.,LyotStopObs=0,nImg=256,nPup=300,Fmax=50)
+#Apod_b = np.ones((b.params['nPup']))
+#direct_matrix_re, direct_matrix_im = b.prop_direct_matrix_1d()
+#corono_matrix_re, corono_matrix_im = b.prop_corono_matrix_1d()
+#
+#ome1 = -2.340
+#ome2 = 2.051
+#Apod_b = 1 + ome1*(b.r/2)**2 + ome2*(b.r/2)**4
+#
+#direct_int_b = b.compute_direct_intensity_1d(Apod_b)
+#corono_int_b = b.compute_corono_intensity_1d(Apod_b)
 #
 #%% plot displays
-pl.figure(6)
-pl.clf()
-pl.imshow(direct_matrix_re[:,2,:])
-pl.title(r'direct response matrix for DZPM at $\lambda_0$ - real part')
-
-pl.figure(7)
-pl.clf()
-pl.imshow(direct_matrix_im[:,2,:])
-pl.title(r'direct response matrix for DZPM at $\lambda_0$ - imaginary part')
-
-pl.figure(8)
-pl.clf()
-pl.imshow(corono_matrix_re[:,2,:])
-pl.title(r'coronagraphic response matrix for DZPM at $\lambda_0$ - real part')
-
-pl.figure(9)
-pl.clf()
-pl.imshow(corono_matrix_im[:,2,:])
-pl.title(r'coronagraphic response matrix for DZPM at $\lambda_0$ - imaginary part')
-
-pl.figure(10)
-pl.clf()
-pl.semilogy(b.xi, direct_int_b/direct_int_b.max())
-pl.semilogy(b.xi, corono_int_b/direct_int_b.max())
-pl.title('Intensity profiles for the DZPM in 1D')
-pl.xlabel(r'Angular separation in $\lambda_0$/D')
-pl.ylabel('Normalized intensity in log scale')
-
-pl.show()
+#pl.figure(6)
+#pl.clf()
+#pl.imshow(direct_matrix_re[:,2,:])
+#pl.title(r'direct response matrix for DZPM at $\lambda_0$ - real part')
+#
+#pl.figure(7)
+#pl.clf()
+#pl.imshow(direct_matrix_im[:,2,:])
+#pl.title(r'direct response matrix for DZPM at $\lambda_0$ - imaginary part')
+#
+#pl.figure(8)
+#pl.clf()
+#pl.imshow(corono_matrix_re[:,2,:])
+#pl.title(r'coronagraphic response matrix for DZPM at $\lambda_0$ - real part')
+#
+#pl.figure(9)
+#pl.clf()
+#pl.imshow(corono_matrix_im[:,2,:])
+#pl.title(r'coronagraphic response matrix for DZPM at $\lambda_0$ - imaginary part')
+#
+#pl.figure(10)
+#pl.clf()
+#pl.semilogy(b.xi, direct_int_b/direct_int_b.max())
+#pl.semilogy(b.xi, corono_int_b/direct_int_b.max())
+#pl.title('Intensity profiles for the DZPM in 1D')
+#pl.xlabel(r'Angular separation in $\lambda_0$/D')
+#pl.ylabel('Normalized intensity in log scale')
+#
+#pl.show()
 
 #%% APLC2d tests
 """
 tests on APLC 2d class
 """
-a = cd.APLC2d()
+#a = cd.APLC2d()
+a = cd.SP2d()
 
 Apod2d = a.Pupil2d
 
