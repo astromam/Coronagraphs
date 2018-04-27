@@ -8,7 +8,7 @@ Created on Fri Mar  9 17:40:02 2018
 import pylab as pl
 
 from corono import corono_design as cd
-from corono import corono_optim as co
+from corono import corono_optim_1d as co1d
 
 from corono.utils import to_dict
 
@@ -40,11 +40,11 @@ corono0 = cd.SP1d(**params)
 Problem defintion
 """
 # Maximization of the integrated amplitude transmission of the apodizer
-problem1 = co.MaxTau(corono=corono0, **params)
+problem1 = co1d.MaxTau(corono=corono0, **params)
 # Maximization of the contrast under L1-norm
-problem2 = co.MaxContrast(corono=corono0, Lnorm='L1',**params)
+problem2 = co1d.MaxContrast(corono=corono0, Lnorm='L1',**params)
 # Maximization of the contrast under L-infinite norm
-problem3 = co.MaxContrast(corono=corono0, Lnorm='Linf',**params)
+problem3 = co1d.MaxContrast(corono=corono0, Lnorm='Linf',**params)
 
 #%%
 """
