@@ -112,6 +112,7 @@ def get_default_params_Coronagraph():
            'fdir':'',
            'ctr':True, 'ctr2':False
            }
+            
     return tmp
 
 #%%
@@ -262,6 +263,12 @@ def get_default_params_APLC2d():
     tmp.update({'rMask':2.8,
                 'nPup':50, 'nFPM':25
                 })
+    Pupil2d      = uniform_disk(tmp['nPup'], tmp['nPup']/2., ctr=tmp['ctr'])\
+        - uniform_disk(tmp['nPup'], tmp['PupilObs']*tmp['nPup']/2., ctr=tmp['ctr'])
+    # Lyot stop 
+    LyotStop2d   = uniform_disk(tmp['nPup'], tmp['nPup']/2., ctr=tmp['ctr'])\
+        - uniform_disk(tmp['nPup'], tmp['LyotStopObs']*tmp['nPup']/2., ctr=tmp['ctr'])
+    tmp.update({'Pupil2d':Pupil2d, 'LyotStop2d':LyotStop2d})
     return tmp
 
 #%%
@@ -291,6 +298,9 @@ def get_default_params_SP2d():
     tmp.update({'rMask':2.8,
                 'nPup':50, 'nFPM':25
                 })
+    Pupil2d      = uniform_disk(tmp['nPup'], tmp['nPup']/2., ctr=tmp['ctr'])\
+        - uniform_disk(tmp['nPup'], tmp['PupilObs']*tmp['nPup']/2., ctr=tmp['ctr'])
+    tmp.update({'Pupil2d':Pupil2d})
     return tmp
 
 
@@ -449,13 +459,13 @@ class Coronagraph(object):
         # clear Pupil
         self.ClearPupil2d = uniform_disk(self.nPup, self.nPup/2., ctr=self.ctr)
         # Telescope aperture
-        self.Pupil2d      = uniform_disk(self.nPup, self.nPup/2., ctr=self.ctr)\
-        - uniform_disk(self.nPup, self.PupilObs*self.nPup/2., ctr=self.ctr)
+#        self.Pupil2d      = uniform_disk(self.nPup, self.nPup/2., ctr=self.ctr)\
+#        - uniform_disk(self.nPup, self.PupilObs*self.nPup/2., ctr=self.ctr)
         # Focal plane mask
         self.mask2d       = uniform_disk(self.nFPM, self.nFPM/2., ctr=self.ctr)
         # Lyot stop 
-        self.LyotStop2d   = uniform_disk(self.nPup, self.nPup/2., ctr=self.ctr)\
-        - uniform_disk(self.nPup, self.LyotStopObs*self.nPup/2., ctr=self.ctr)
+#        self.LyotStop2d   = uniform_disk(self.nPup, self.nPup/2., ctr=self.ctr)\
+#        - uniform_disk(self.nPup, self.LyotStopObs*self.nPup/2., ctr=self.ctr)
 
         # Final image plane coordinate
         self.xi2d     = (np.arange(self.nImg2d//2))* self.Fmax2d/self.nImg2d
@@ -704,7 +714,7 @@ class Coronagraph(object):
         return corono_field_t_re, corono_field_t_im 
 
 #%% direct signal in intensity
-    def compute_direct_intensity_2d(self,Apod2d,Pupil2d,LyotStop2d, poly=True):
+    def compute_direct_intensity_2d(self,Apod2d, poly=True):
         """
         Computes the intensity of the direct image for the 2D problem.
         
@@ -723,7 +733,8 @@ class Coronagraph(object):
             Intensity of the direct broadband image or monochromatic images. 
             
         """        
-        direct_field_2d = self.compute_direct_field_2d(Apod2d,Pupil2d, LyotStop2d)
+#        direct_field_2d = self.compute_direct_field_2d(Apod2d,Pupil2d, LyotStop2d)
+        direct_field_2d = self.compute_direct_field_2d(Apod2d)
         
         if poly:
             return np.sum(np.abs(direct_field_2d)**2,0)
@@ -731,7 +742,7 @@ class Coronagraph(object):
             return np.abs(direct_field_2d)**2
 
 #%% coronagraphic signal in intensity
-    def compute_corono_intensity_2d(self,Apod2d,Pupil2d,LyotStop2d, poly=True):
+    def compute_corono_intensity_2d(self,Apod2d, poly=True):
         """
         Computes the intensity of the coronagraphic image for the 2D problem.
         
@@ -751,7 +762,8 @@ class Coronagraph(object):
             images.
         
         """
-        corono_field_2d = self.compute_corono_field_2d(Apod2d,Pupil2d, LyotStop2d)
+#        corono_field_2d = self.compute_corono_field_2d(Apod2d,Pupil2d, LyotStop2d)
+        corono_field_2d = self.compute_corono_field_2d(Apod2d)
         
         if poly:
             return np.sum(np.abs(corono_field_2d)**2,0)
@@ -760,7 +772,7 @@ class Coronagraph(object):
             return np.abs(corono_field_2d)**2
 
 #%%
-    def compute_direct_field_2d_vec(self,Apod2d, Pupil2d, LyotStop2d):
+    def compute_direct_field_2d_vec(self,Apod2d):
         """
         Computes the electric field of the direct image 
         for the vectorized 2D problem.
@@ -776,13 +788,14 @@ class Coronagraph(object):
             Real and imag parts of the direct electric field :math:`\Psi_0`
             
         """        
-        test = self.compute_direct_field_2d(Apod2d, Pupil2d, LyotStop2d)
+#        test = self.compute_direct_field_2d(Apod2d, Pupil2d, LyotStop2d)
+        test = self.compute_direct_field_2d(Apod2d)
         test_re = np.reshape(test.real, (self.nlam, self.nImg2d**2))
         test_im = np.reshape(test.imag, (self.nlam, self.nImg2d**2))
         return test_re, test_im
 
 #%%
-    def compute_corono_field_2d_vec(self,Apod2d, Pupil2d, LyotStop2d):
+    def compute_corono_field_2d_vec(self,Apod2d):
         """
         Computes the electric field of the coronagraphic image 
         for the vectorized 2D problem.
@@ -798,13 +811,14 @@ class Coronagraph(object):
             Real and imag parts of the coronagraphic electric field  :math:`\Psi_D`
             
         """ 
-        test = self.compute_corono_field_2d(Apod2d, Pupil2d, LyotStop2d)
+#        test = self.compute_corono_field_2d(Apod2d, Pupil2d, LyotStop2d)
+        test = self.compute_corono_field_2d(Apod2d)
         test_re = np.reshape(test.real, (self.nlam, self.nImg2d**2))
         test_im = np.reshape(test.imag, (self.nlam, self.nImg2d**2))
         return test_re, test_im
 
 #%% generation of the direct response matrix
-    def prop_direct_matrix_2d(self, Pupil2d, LyotStop2d):
+    def prop_direct_matrix_2d(self):
         """
         Computes the response matrix of the direct image for all the points in
         the pupil for the vectorized 2D problem.
@@ -824,12 +838,13 @@ class Coronagraph(object):
             (i0, j0) = np.unravel_index(i, (self.nPup, self.nPup))
             Apod2d[i0,j0] = 1
             direct_field_t_re[i],direct_field_t_im[i] = \
-            self.compute_direct_field_2d_vec(Apod2d, Pupil2d, LyotStop2d)
+            self.compute_direct_field_2d_vec(Apod2d)
+#            self.compute_direct_field_2d_vec(Apod2d, Pupil2d, LyotStop2d)
             Apod2d[i0,j0] = 0
         return direct_field_t_re, direct_field_t_im    
 
 #%% generation of the coronagraphic response matrix        
-    def prop_corono_matrix_2d(self, Pupil2d, LyotStop2d):
+    def prop_corono_matrix_2d(self):
         """
         Computes the response matrix of the coronagraphic image for all the 
         points in the pupil for vectorized 2D problem.
@@ -848,7 +863,8 @@ class Coronagraph(object):
             (i0, j0) = np.unravel_index(i, (self.nPup, self.nPup))
             Apod2d[i0,j0] = 1            
             corono_field_t_re[i], corono_field_t_im[i] = \
-            self.compute_corono_field_2d_vec(Apod2d, Pupil2d, LyotStop2d)
+            self.compute_corono_field_2d_vec(Apod2d)
+#            self.compute_corono_field_2d_vec(Apod2d, Pupil2d, LyotStop2d)
             Apod2d[i0,j0] = 0 
         return corono_field_t_re, corono_field_t_im 
 
@@ -1384,7 +1400,7 @@ class APLC2d(Coronagraph):
         self.mD_t  = self.Fmax2d*(self.lam0/self.lam_t)
         
 #%% direct propagation (no focal plane mask)
-    def compute_direct_field_2d(self,Apod2d, Pupil2d, LyotStop2d):
+    def compute_direct_field_2d(self,Apod2d):
         r""" 
         Computes the coronagraph electric field for a classical Lyot coronagraph
         with four planes (A: entrance pupil, B: intermediate focal plane, 
@@ -1406,8 +1422,8 @@ class APLC2d(Coronagraph):
             all the wavelengths
     
         """    
-        field_A    = Apod2d*Pupil2d
-        field_L    = field_A*LyotStop2d 
+        field_A    = Apod2d*self.Pupil2d
+        field_L    = field_A*self.LyotStop2d 
         field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
                               dtype='complex128')
         for i in range(self.nlam):
@@ -1417,7 +1433,7 @@ class APLC2d(Coronagraph):
         return field_Dtmp
  
 #%%
-    def compute_corono_field_2d(self,Apod2d, Pupil2d, LyotStop2d):
+    def compute_corono_field_2d(self,Apod2d):
         """
         Computes the coronagraph electric field for a classical Lyot coronagraph
         with four planes (A: entrance pupil, B: intermediate focal plane, 
@@ -1439,7 +1455,7 @@ class APLC2d(Coronagraph):
             at all the wavelengths
             
         """        
-        field_A    = Apod2d*Pupil2d    
+        field_A    = Apod2d*self.Pupil2d    
         field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
                               dtype='complex128')
         for i in range(self.nlam):
@@ -1447,7 +1463,7 @@ class APLC2d(Coronagraph):
                                             ctr=self.ctr)
             field_C       = field_A - isft(field_B, self.nPup, self.mB_t[i], 
                                            ctr=self.ctr)
-            field_L       = field_C*LyotStop2d
+            field_L       = field_C*self.LyotStop2d
             field_Dtmp[i] = sft(field_L, self.nImg2d, self.mD_t[i], 
                       ctr=self.ctr2)
 
@@ -1486,7 +1502,7 @@ class SP2d(Coronagraph):
         self.mD_t  = self.Fmax2d*(self.lam0/self.lam_t)
         
 #%% direct propagation (no focal plane mask)
-    def compute_direct_field_2d(self,Apod2d, Pupil2d):
+    def compute_direct_field_2d(self,Apod2d):
         r""" 
         Computes the coronagraph electric field for a classical Lyot coronagraph
         with four planes (A: entrance pupil, D: final image plane).
@@ -1506,7 +1522,7 @@ class SP2d(Coronagraph):
             all the wavelengths
     
         """    
-        field_A    = Apod2d*Pupil2d
+        field_A    = Apod2d*self.Pupil2d
         field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
                               dtype='complex128')
         for i in range(self.nlam):
@@ -1516,7 +1532,7 @@ class SP2d(Coronagraph):
         return field_Dtmp
  
 #%%
-    def compute_corono_field_2d(self,Apod2d, Pupil2d):
+    def compute_corono_field_2d(self,Apod2d):
         """
         Computes the coronagraph electric field for a classical Lyot coronagraph
         with two planes (A: entrance pupil, D: final image plane).
@@ -1536,7 +1552,7 @@ class SP2d(Coronagraph):
             at all the wavelengths
             
         """        
-        field_A    = Apod2d*Pupil2d    
+        field_A    = Apod2d*self.Pupil2d    
         field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
                               dtype='complex128')
         for i in range(self.nlam):

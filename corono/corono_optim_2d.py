@@ -77,7 +77,7 @@ class ProblemMatrix(object):
     """
     default_params = get_default_params_ProblemMatrix()
   
-    def __init__(self,corono=cd.APLC2d(),Pupil2d=None, LyotStop2d=None, **kwargs):
+    def __init__(self,corono=cd.APLC2d(), **kwargs):
         r"""
         __init__ : method
             Constructor for the ProblemMatrix class
@@ -182,10 +182,8 @@ class ProblemMatrix(object):
 
 #        self.Pupil_vec = np.reshape(self.corono.Pupil2d, (self.corono.nPup**2))
 
-        if Pupil2d is None:
-            Pupil2d = self.corono.Pupil2d
 
-        self.Pupil_vec = np.reshape(Pupil2d, (self.corono.nPup**2))
+        self.Pupil_vec = np.reshape(self.corono.Pupil2d, (self.corono.nPup**2))
         
         self.pup     = (self.Pupil_vec > 0.)
         self.bbb     = np.arange(self.corono.nPup**2)
@@ -198,18 +196,15 @@ class ProblemMatrix(object):
         self.idx_dz  = list(self.aaa[self.dz])  
         self.ndz     = len(self.idx_dz)
 
-        if LyotStop2d is None:
-            LyotStop2d = self.corono.LyotStop2d
-
-        self.LyotStop_vec = np.reshape(LyotStop2d, (self.corono.nPup**2))
+        self.LyotStop_vec = np.reshape(self.corono.LyotStop2d, (self.corono.nPup**2))
         self.lys     = (self.LyotStop_vec > 0.)
         self.idx_lys = list(self.bbb[self.lys]) 
 
 
         self.direct_field_t_re, self.direct_field_t_im = \
-                self.corono.prop_direct_matrix_2d(Pupil2d, LyotStop2d)
+                self.corono.prop_direct_matrix_2d()
         self.corono_field_t_re, self.corono_field_t_im = \
-                self.corono.prop_corono_matrix_2d(Pupil2d, LyotStop2d)
+                self.corono.prop_corono_matrix_2d()
        
         self.corono_field_t2_re = np.reshape(
                 self.corono_field_t_re[:,:,self.idx_dz], 
@@ -336,6 +331,7 @@ class ProblemMatrix(object):
             Solution for the optimization problem
         
         """
+        print('solving gurobi model')
         try:
             
             self.m.Params.Method       = 2
@@ -479,6 +475,8 @@ class MaxTau(ProblemMatrix):
 #        self.c = - 2.*np.pi*(np.arange(self.corono.nPup)[self.idx_pup]+0.5)\
 #                /(2.*self.corono.nPup)**2/self.TR
 
+        print('generating A, b, c matrices')
+
         ED0 = np.zeros_like(self.corono_field_t2)
         ED0tmp = self.Pupil_vec[self.idx_pup]*self.LyotStop_vec[self.idx_pup]
         for j in range(self.corono.nlam*self.ndz*2):
@@ -522,7 +520,9 @@ class MaxTau(ProblemMatrix):
         if self.A is None or self.b is None or self.c is None:
             print('computing matrices')
             self.compute_matrices()
-            
+        
+        print('generating gurobi model')
+        
         nA = np.shape(self.A)[1]
     
         # Create a new model               
@@ -715,6 +715,8 @@ class MaxContrast(ProblemMatrix):
 #        self.b = np.concatenate((b0,b1,b2,b3,b4,b5))        
 #        self.c = np.concatenate((np.zeros(self.npp), c1), axis=0)
 
+        print('generating A, b, c matrices')
+
         if self.Lnorm == 'Linf':
             I1 = np.ones(self.ndz*self.corono.nlam*2)
             I1 = I1[None,:]
@@ -771,6 +773,8 @@ class MaxContrast(ProblemMatrix):
         if self.A is None or self.b is None or self.c is None:
             print('computing matrices')
             self.compute_matrices()
+
+        print('generating gurobi model')
                        
         nn = np.shape(self.A)[1]
         # Create a new model  
