@@ -30,7 +30,7 @@ def to_dict(**kwargs):
     return kwargs
 
 #%%
-def uniform_disk(n, radius, ctr=False):
+def uniform_disk(n, radius, ctr_btwn_pix=False):
     """
     Generates a uniform disk in a 2D array.
     
@@ -42,7 +42,7 @@ def uniform_disk(n, radius, ctr=False):
     radius : float
         radius of the disk
     
-    ctr : boolean (default=False)
+    ctr_btwn_pix : boolean (default=False)
         type of centering for the disk. If True, the disk is centered between
         four pixels.
     
@@ -53,7 +53,7 @@ def uniform_disk(n, radius, ctr=False):
         
     """
     val    = 0
-    if ctr is True:
+    if ctr_btwn_pix is True:
         val = 1/2 
     xx,yy  = np.meshgrid(np.arange(n)-n/2+val, np.arange(n)-n/2+val)
     mydist = np.hypot(yy,xx)
@@ -62,7 +62,7 @@ def uniform_disk(n, radius, ctr=False):
     return res
 
 #%%
-def sft(A2, NB, m, inv=False, ctr=False):
+def sft(A2, NB, m, inv=False, ctr_btwn_pix=False):
     """
     Slow Fourier Transform, using the theory described in [1]_. 
     Assumes the original array is square. 
@@ -81,7 +81,7 @@ def sft(A2, NB, m, inv=False, ctr=False):
     inv : boolean (default=False)
         boolean (direct or inverse) see the definition of isft()
         
-    ctr : boolean (default=False)
+    ctr_btwn_pix : boolean (default=False)
         type of centering for the disk. If True, the disk is centered between
         four pixels.
     
@@ -100,7 +100,7 @@ def sft(A2, NB, m, inv=False, ctr=False):
     
     """
     val    = 0
-    if ctr is True:
+    if ctr_btwn_pix is True:
         val = 1/2
     NA    = np.shape(A2)[0]
     coeff = m/(NA*NB)
@@ -127,7 +127,7 @@ def sft(A2, NB, m, inv=False, ctr=False):
     return coeff*B
 
 #%%
-def isft(A2, NB, m, ctr=False):
+def isft(A2, NB, m, ctr_btwn_pix=False):
     """
     Explicit inverse Slow Fourier Transform, using the theory described in [1].
 
@@ -144,7 +144,7 @@ def isft(A2, NB, m, ctr=False):
         https://www.osapublishing.org/oe/abstract.cfm?uri=oe-15-24-15935
         
     """
-    return sft(A2, NB, m, inv=True, ctr=ctr)
+    return sft(A2, NB, m, inv=True, ctr_btwn_pix=ctr_btwn_pix)
 
 #%% import Bessel function
 def besselJ0(z):

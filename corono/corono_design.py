@@ -73,11 +73,11 @@ def get_default_params_Coronagraph():
     fdir : string (default='')
         Directory
         
-    ctr : boolean (default=True)
+    ctr_btwn_pix : boolean (default=True)
         Keyword to work with pupil arrays that are centered between four pixels
         if True
         
-    ctr2 : boolean (default=False)
+    ctr_btwn_pix2 : boolean (default=False)
         Keyword to work with image arrays that are centered between four pixels
         if True           
             
@@ -110,7 +110,7 @@ def get_default_params_Coronagraph():
            'bw':0.2,'lam0':1.0,'nlam':5, 
            'R':1,
            'fdir':'',
-           'ctr':True, 'ctr2':False
+           'ctr_btwn_pix':True, 'ctr_btwn_pix2':False
            }
             
     return tmp
@@ -263,11 +263,11 @@ def get_default_params_APLC2d():
     tmp.update({'rMask':2.8,
                 'nPup':50, 'nFPM':25
                 })
-    Pupil2d      = uniform_disk(tmp['nPup'], tmp['nPup']/2., ctr=tmp['ctr'])\
-        - uniform_disk(tmp['nPup'], tmp['PupilObs']*tmp['nPup']/2., ctr=tmp['ctr'])
+    Pupil2d      = uniform_disk(tmp['nPup'], tmp['nPup']/2., ctr_btwn_pix=tmp['ctr_btwn_pix'])\
+        - uniform_disk(tmp['nPup'], tmp['PupilObs']*tmp['nPup']/2., ctr_btwn_pix=tmp['ctr_btwn_pix'])
     # Lyot stop 
-    LyotStop2d   = uniform_disk(tmp['nPup'], tmp['nPup']/2., ctr=tmp['ctr'])\
-        - uniform_disk(tmp['nPup'], tmp['LyotStopObs']*tmp['nPup']/2., ctr=tmp['ctr'])
+    LyotStop2d   = uniform_disk(tmp['nPup'], tmp['nPup']/2., ctr_btwn_pix=tmp['ctr_btwn_pix'])\
+        - uniform_disk(tmp['nPup'], tmp['LyotStopObs']*tmp['nPup']/2., ctr_btwn_pix=tmp['ctr_btwn_pix'])
     tmp.update({'Pupil2d':Pupil2d, 'LyotStop2d':LyotStop2d})
     return tmp
 
@@ -298,8 +298,8 @@ def get_default_params_SP2d():
     tmp.update({'rMask':2.8,
                 'nPup':50, 'nFPM':25
                 })
-    Pupil2d      = uniform_disk(tmp['nPup'], tmp['nPup']/2., ctr=tmp['ctr'])\
-        - uniform_disk(tmp['nPup'], tmp['PupilObs']*tmp['nPup']/2., ctr=tmp['ctr'])
+    Pupil2d      = uniform_disk(tmp['nPup'], tmp['nPup']/2., ctr_btwn_pix=tmp['ctr_btwn_pix'])\
+        - uniform_disk(tmp['nPup'], tmp['PupilObs']*tmp['nPup']/2., ctr_btwn_pix=tmp['ctr_btwn_pix'])
     tmp.update({'Pupil2d':Pupil2d})
     return tmp
 
@@ -457,15 +457,15 @@ class Coronagraph(object):
                 np.pi/self.R*self.xii[:,:,None]*self.r[None,None,:])
 
         # clear Pupil
-        self.ClearPupil2d = uniform_disk(self.nPup, self.nPup/2., ctr=self.ctr)
+        self.ClearPupil2d = uniform_disk(self.nPup, self.nPup/2., ctr_btwn_pix=self.ctr_btwn_pix)
         # Telescope aperture
-#        self.Pupil2d      = uniform_disk(self.nPup, self.nPup/2., ctr=self.ctr)\
-#        - uniform_disk(self.nPup, self.PupilObs*self.nPup/2., ctr=self.ctr)
+#        self.Pupil2d      = uniform_disk(self.nPup, self.nPup/2., ctr_btwn_pix=self.ctr_btwn_pix)\
+#        - uniform_disk(self.nPup, self.PupilObs*self.nPup/2., ctr_btwn_pix=self.ctr_btwn_pix)
         # Focal plane mask
-        self.mask2d       = uniform_disk(self.nFPM, self.nFPM/2., ctr=self.ctr)
+        self.mask2d       = uniform_disk(self.nFPM, self.nFPM/2., ctr_btwn_pix=self.ctr_btwn_pix)
         # Lyot stop 
-#        self.LyotStop2d   = uniform_disk(self.nPup, self.nPup/2., ctr=self.ctr)\
-#        - uniform_disk(self.nPup, self.LyotStopObs*self.nPup/2., ctr=self.ctr)
+#        self.LyotStop2d   = uniform_disk(self.nPup, self.nPup/2., ctr_btwn_pix=self.ctr_btwn_pix)\
+#        - uniform_disk(self.nPup, self.LyotStopObs*self.nPup/2., ctr_btwn_pix=self.ctr_btwn_pix)
 
         # Final image plane coordinate
         self.xi2d     = (np.arange(self.nImg2d//2))* self.Fmax2d/self.nImg2d
@@ -899,7 +899,7 @@ class Coronagraph(object):
     
         """
         val = 0
-        if self.ctr is True:
+        if self.ctr_btwn_pix is True:
             val = 1/2
         # array of angular distances in the final image plane
         xx,yy  = np.meshgrid(np.arange(self.nImg2d)-self.nImg2d/2+val, np.arange(self.nImg2d)-self.nImg2d/2+val)
@@ -1428,7 +1428,7 @@ class APLC2d(Coronagraph):
                               dtype='complex128')
         for i in range(self.nlam):
             field_Dtmp[i] = sft(field_L, self.nImg2d, self.mD_t[i], 
-                      ctr=self.ctr2)         
+                      ctr_btwn_pix=self.ctr_btwn_pix2)         
     
         return field_Dtmp
  
@@ -1460,12 +1460,12 @@ class APLC2d(Coronagraph):
                               dtype='complex128')
         for i in range(self.nlam):
             field_B       = self.mask2d*sft(field_A, self.nFPM, self.mB_t[i], 
-                                            ctr=self.ctr)
+                                            ctr_btwn_pix=self.ctr_btwn_pix)
             field_C       = field_A - isft(field_B, self.nPup, self.mB_t[i], 
-                                           ctr=self.ctr)
+                                           ctr_btwn_pix=self.ctr_btwn_pix)
             field_L       = field_C*self.LyotStop2d
             field_Dtmp[i] = sft(field_L, self.nImg2d, self.mD_t[i], 
-                      ctr=self.ctr2)
+                      ctr_btwn_pix=self.ctr_btwn_pix2)
 
         return field_Dtmp   
 
@@ -1527,7 +1527,7 @@ class SP2d(Coronagraph):
                               dtype='complex128')
         for i in range(self.nlam):
             field_Dtmp[i] = sft(field_A, self.nImg2d, self.mD_t[i], 
-                      ctr=self.ctr2)         
+                      ctr_btwn_pix=self.ctr_btwn_pix2)         
     
         return field_Dtmp
  
@@ -1557,7 +1557,7 @@ class SP2d(Coronagraph):
                               dtype='complex128')
         for i in range(self.nlam):
             field_Dtmp[i] = sft(field_A, self.nImg2d, self.mD_t[i], 
-                      ctr=self.ctr2)
+                      ctr_btwn_pix=self.ctr_btwn_pix2)
 
         return field_Dtmp   
 
