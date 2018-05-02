@@ -23,6 +23,14 @@ from astropy.io import fits
 """
 Parameters
 """
+#nPup = corono0.params['nPup']
+nPup = 50
+
+nImg2d = 400
+Fmax2d = 30
+
+nFPM = 100 
+
 # dark zone bounds (inner and outer edges) in lam0/D unit
 rho0 =  4.0
 rho1 = 10.0
@@ -39,21 +47,12 @@ ctr_btwn_pix2 = True
 SymPupil2d = True
 
 #nlam
-nlam=5 
+nlam=1 
 
 #%%
 """
 File reading for Pupil and Lyot stop
 """
-
-#nPup = corono0.params['nPup']
-nPup = 200
-
-nImg2d = 400
-Fmax2d = 30
-
-nFPM = 100 
-
 pupil_name = 'sbr' # 'vlt' or 'sbr'
 fdir = Path('/Users/mndiaye/Dropbox/python/pupils/')
 fname = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)

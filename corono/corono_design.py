@@ -261,7 +261,7 @@ def get_default_params_APLC2d():
     """    
     tmp = get_default_params_Coronagraph()
     tmp.update({'rMask':2.8,
-                'nPup':50, 'nFPM':25
+                'nPup':50, 'nFPM':25,
                 })
                 
     # Telescope aperture
@@ -299,7 +299,6 @@ def get_default_params_SP2d():
     tmp = get_default_params_Coronagraph()
     tmp.update({'rMask':2.8,
                 'nPup':50, 'nFPM':25,
-                'SymPupil2d':False
                 })
     # Telescope aperture
     Pupil2d      = uniform_disk(tmp['nPup'], tmp['nPup']/2., ctr_btwn_pix=tmp['ctr_btwn_pix'])\
@@ -460,6 +459,7 @@ class Coronagraph(object):
         self.hankel_kernel_all = besselJ0(
                 np.pi/self.R*self.xii[:,:,None]*self.r[None,None,:])
 
+        self.SymPupil2d = False
         # clear Pupil
         self.ClearPupil2d = uniform_disk(self.nPup, self.nPup/2., ctr_btwn_pix=self.ctr_btwn_pix)
         # Focal plane mask

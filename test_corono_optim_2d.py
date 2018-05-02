@@ -26,6 +26,10 @@ from astropy.io import fits
 """
 Parameters
 """
+
+#nPup = corono0.params['nPup']
+nPup = 50
+
 # dark zone bounds (inner and outer edges) in lam0/D unit
 rho0 =  4.0
 rho1 = 10.0
@@ -37,13 +41,13 @@ cDarkHole = 4
 tau   = 0.4
 
 # ctr_btwn_pix2
-corono_name   = 'APLC' # 'SP' or 'APLC'
+corono_name   = 'SP' # 'SP' or 'APLC'
 ctr_btwn_pix  = True
 ctr_btwn_pix2 = True
-SymPupil2d = True
+SymPupil2d = False
 
 #nlam
-nlam=5
+nlam=1
 
 do_fits = True
 
@@ -51,10 +55,6 @@ do_fits = True
 """
 File reading for Pupil and Lyot stop
 """
-
-#nPup = corono0.params['nPup']
-nPup = 200
-
 pupil_name = 'sbr' # 'vlt' or 'sbr'
 fdir = '/Users/mndiaye/Dropbox/python/pupils/'
 fname = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
@@ -151,7 +151,7 @@ if SymPupil2d == True:
 
 pl.figure(4)
 pl.clf()
-pl.imshow(corono0.Pupil2d, cmap = cm.inferno)
+pl.imshow(corono0.Pupil2d, cmap = cm.Greys_r)
 pl.title('Pupil transmission')
 
 ifig = 5
@@ -160,7 +160,7 @@ if SymPupil2d == True:
     
 pl.figure(ifig)
 pl.clf()
-pl.imshow(Apod1_2d*corono0.Pupil2d, cmap = cm.inferno)
+pl.imshow(Apod1_2d*corono0.Pupil2d, cmap = cm.Greys_r)
 pl.title('Apod 1 transmission - MaxTau problem')
 
 #pl.figure(6)
