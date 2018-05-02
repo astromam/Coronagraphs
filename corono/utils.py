@@ -62,6 +62,37 @@ def uniform_disk(n, radius, CtrBtwnPix=False):
     return res
 
 #%%
+def radius_disk(n, radius, CtrBtwnPix=False):
+    """
+    Generates a uniform disk in a 2D array.
+    
+    Parameters
+    ----------
+    n : integer
+        size of the array
+    
+    radius : float
+        radius of the disk
+    
+    CtrBtwnPix : boolean (default=False)
+        type of centering for the disk. If True, the disk is centered between
+        four pixels.
+    
+    Returns
+    ----------
+    res : array_like
+        (ys x xs) array with a uniform disk of radius "radius".
+        
+    """
+    val    = 0
+    if CtrBtwnPix is True:
+        val = 1/2 
+    xx,yy  = np.meshgrid(np.arange(n)-n/2+val, np.arange(n)-n/2+val)
+    mydist = np.hypot(yy,xx)/n
+    return mydist
+
+
+#%%
 def sft(A2, NB, m, inv=False, CtrBtwnPix=False):
     """
     Slow Fourier Transform, using the theory described in [1]_. 
