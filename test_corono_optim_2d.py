@@ -44,7 +44,7 @@ tau   = 0.4
 corono_name   = 'SP' # 'SP' or 'APLC'
 CtrBtwnPix  = True
 CtrBtwnPix2 = True
-Pupil2dSym = False
+Pupil2dSym = True
 
 #nlam
 nlam=1

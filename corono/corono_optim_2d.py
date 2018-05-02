@@ -465,29 +465,6 @@ class MaxTau(ProblemMatrix):
             
             
         """
-#        direct_field_t1_re = np.zeros((self.corono.nPup, self.corono.nlam*self.ndz))
-#        for j in range(self.corono.nlam*self.ndz):
-#            direct_field_t1_re[:,j] = \
-#            self.direct_field_t_re[:,(self.corono.nlam-1)//2,0]
-#        direct_field_t2_re = direct_field_t1_re[self.idx_pup,:]
-       
-#        A0  =  self.corono_field_t2_re \
-#                - 10**(-self.cDarkHole/2)/np.sqrt(2.)*direct_field_t2_re
-#        A1  = -self.corono_field_t2_re \
-#                - 10**(-self.cDarkHole/2)/np.sqrt(2.)*direct_field_t2_re
-#        A2  = -np.identity(self.npp)
-#        A3  =  np.identity(self.npp)
-    
-#        b0  = np.zeros((self.corono.nlam*self.ndz))
-#        b1  = np.zeros((self.corono.nlam*self.ndz))
-#        b2  = np.zeros(self.npp)
-#        b3  = np.ones(self.npp)
-    
-#        self.A = np.concatenate((A0,A1,A2,A3), axis=1)
-#        self.b = np.concatenate((b0,b1,b2,b3))
-#        self.c = - 2.*np.pi*(np.arange(self.corono.nPup)[self.idx_pup]+0.5)\
-#                /(2.*self.corono.nPup)**2/self.TR
-
         print('generating A, b, c matrices')
 
         ED0 = np.zeros_like(self.corono_field_t2)
@@ -691,43 +668,6 @@ class MaxContrast(ProblemMatrix):
 
                                 
         """
-#        if self.Lnorm == 'Linf':
-#            I1 = np.ones(self.ndz*self.corono.nlam)
-#            I1 = I1[None,:]
-#            I0 = np.ones(self.ndz)
-#            I0 = I0[None,:]
-#            N0 = np.zeros((1, self.npp))
-#            Z0 = np.zeros(1)
-#            c1 = [1]
-#        else:
-#            I0 = np.identity(self.ndz)
-#            I1 = np.hstack([I0 for k in range(self.corono.nlam)])            
-#            N0 = np.zeros((self.ndz, self.npp))
-#            Z0 = np.zeros(self.ndz)
-#            c1 = 2.*np.pi*np.array(self.idx_dz)*(self.corono.Fmax\
-#                                  /self.corono.nImg)**2
-#        
-#        A0  = np.concatenate(( self.corono_field_t2_re, -I1), axis=0)
-#        A1  = np.concatenate((-self.corono_field_t2_re, -I1), axis=0)
-#        A2  = np.concatenate((-np.identity(self.npp), N0), axis=0)
-#        A3  = np.concatenate(( np.identity(self.npp), N0), axis=0)
-#        A4  = np.concatenate((np.zeros((self.npp, self.ndz)), -I0), axis=0)
-#        A5  = np.concatenate((- 2.*np.pi*(
-#                np.arange(self.corono.nPup)[self.idx_pup]+0.5)\
-#            *self.corono.Pupil1d[self.idx_pup]/(2.*self.corono.nPup)**2/self.TR, 
-#                                  Z0))
-#        
-#        b0  = np.zeros((self.corono.nlam*self.ndz))
-#        b1  = np.zeros((self.corono.nlam*self.ndz))
-#        b2  = np.zeros(self.npp)
-#        b3  = np.ones(self.npp)
-#        b4  = np.zeros(self.ndz)
-#        b5  = [-self.tau]
-#        
-#        self.A = np.concatenate((A0,A1,A2,A3,A4,A5[:,None]), axis=1)
-#        self.b = np.concatenate((b0,b1,b2,b3,b4,b5))        
-#        self.c = np.concatenate((np.zeros(self.npp), c1), axis=0)
-
         print('generating A, b, c matrices')
 
         if self.Lnorm == 'Linf':

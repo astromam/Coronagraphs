@@ -15,7 +15,7 @@ Initialization
 import numpy as np
 #import pylab as pl
 #from astropy.io import fits
-from .utils import besselJ0, sft, isft, uniform_disk, sft_even, isft_even
+from .utils import besselJ0, sft, isft, uniform_disk, radius_disk, sft_even, isft_even
 import json
 
 #%% 
@@ -80,6 +80,9 @@ def get_default_params_Coronagraph():
     CtrBtwnPix2 : boolean (default=False)
         Keyword to work with image arrays that are centered between four pixels
         from pupil to the final image plane to if True           
+
+    Pupil2dSym : boolean (default=False)
+        Keyword to use faster computation for symmetric pupils
             
     Returns    
     ----------
@@ -110,7 +113,8 @@ def get_default_params_Coronagraph():
            'bw':0.2,'lam0':1.0,'nlam':5, 
            'R':1,
            'fdir':'',
-           'CtrBtwnPix':True, 'CtrBtwnPix2':False
+           'CtrBtwnPix':True, 'CtrBtwnPix2':False, 
+           'Pupil2dSym':False
            }
             
     return tmp
@@ -315,6 +319,92 @@ def get_default_params_SP2d():
     tmp.update({'Pupil2d':Pupil2d})
     return tmp
 
+#%%
+def get_default_params_DZPM2d():
+    r"""
+    Gets the default parameters for the DZPM1d Coronagraph subclass.
+        
+    Parameters
+    ---------- 
+    rMask1 : float (default=0.875/2)
+        Inner part of the focal plane mask radius :math:`m_1/2` in 
+        :math:`\lambda_0/D`
+        
+    rMask2 : float (default=1.453/2)
+        Outer part of the focal plane mask radius :math:`m_2/2` in 
+        :math:`\lambda_0/D`    
+        
+    OPDx1 : float (default=0.309)
+        Optical path difference :math:`\delta_1/2` in :math:`\lambda_0` 
+        for the inner part of the FPM
+        
+    OPDx2 : float (default=0.672)
+        Optical path difference :math:`\delta_2/2` in :math:`\lambda_0` 
+        for the outer part of the FPM
+        
+    ome1 : float (default=-2.340)
+        Second order term :math:`\omega_1` for an apodization with amplitude transmission 
+        polynomial function
+        
+    ome2 : float (default=2.051)
+        Forth order term :math:`\omega_2` for an apodization with amplitude transmission 
+        polynomial function
+        
+    beta : float (default=-0.236)
+        Coefficient :math:`\beta` in :math:`\lambda_0` related to a defocus shift that is applied to the 
+        focal plane mask. Equivalent to a phase entrance pupil apodization. 
+        
+    nFPM : float (default=68.82)
+        Mask sampling            
+
+    Pupil2d : array_like     
+        2D entrance pupil :math:`P_0`
+
+    LyotStop2d : array_like 
+            2D Lyot stop :math:`L`
+            
+    Returns    
+    ----------
+    tmp : dict
+        Dictionary with all the default values of the 
+        Coronagraph class and the DZPM1d subclass.
+
+    References
+    ----------
+    .. [1] R. Soummer, K. Dohlen, and C. Aime, Achromatic dual-zone phase mask 
+        stellar coronagraph, A&A 403, 1 (2003).
+        
+        https://www.aanda.org/articles/aa/abs/2003/19/aa3246/aa3246.html
+        
+    .. [2] M. N'Diaye, K. Dohlen, S. Cuevas, R. Soummer, C. Sánchez-Pérez,
+        F. Zamkotsian, Improved achromatization of phase mask coronagraphs 
+        using colored apodization, A&A 538, A55 (2012). 
+        
+        https://www.aanda.org/articles/aa/abs/2012/02/aa17661-11/aa17661-11.html
+        
+    .. [3] J. R. Delorme, M. N'Diaye, R. Galicher, K. Dohlen, P. Baudoz, 
+        A. Caillat, G. Rousset, R. Soummer, O. Dupuis, Laboratory validation of
+        the dual-zone phase mask coronagraph in broadband light at the 
+        high-contrast imaging THD testbed, A&A 592, A119 (2016). 
+        
+        https://www.aanda.org/articles/aa/abs/2016/08/aa28587-16/aa28587-16.html        
+
+    """   
+    tmp = get_default_params_Coronagraph()
+    tmp.update({'rMask1':0.875/2, 'rMask2':1.453/2.,
+           'OPDx1':0.309, 'OPDx2':0.672,
+           'ome1':-2.340, 'ome2':2.051, 'beta':-0.236,
+           'nFPM':25, 'nPup':50})
+        
+    # Telescope aperture
+    Pupil2d      = uniform_disk(tmp['nPup'], tmp['nPup']/2., CtrBtwnPix=tmp['CtrBtwnPix'])\
+        - uniform_disk(tmp['nPup'], tmp['PupilObs']*tmp['nPup']/2., CtrBtwnPix=tmp['CtrBtwnPix'])
+    # Lyot stop 
+    LyotStop2d   = uniform_disk(tmp['nPup'], tmp['nPup']/2., CtrBtwnPix=tmp['CtrBtwnPix'])\
+        - uniform_disk(tmp['nPup'], tmp['LyotStopObs']*tmp['nPup']/2., CtrBtwnPix=tmp['CtrBtwnPix'])
+    
+    tmp.update({'Pupil2d':Pupil2d, 'LyotStop2d':LyotStop2d})
+    return tmp
 
 #%%
 """
@@ -412,8 +502,7 @@ class Coronagraph(object):
             Final image plane coordinate vector centered between 4 pixels
             for 2D problem
         
-        Pupil2dSym : boolean (default=False)
-            Keyword to use faster computation for symmetric pupils
+
 
         References
         ----------
@@ -464,7 +553,6 @@ class Coronagraph(object):
         self.hankel_kernel_all = besselJ0(
                 np.pi/self.R*self.xii[:,:,None]*self.r[None,None,:])
 
-        self.Pupil2dSym = False
         # clear Pupil
         self.ClearPupil2d = uniform_disk(self.nPup, self.nPup/2., CtrBtwnPix=self.CtrBtwnPix)
         # Focal plane mask
@@ -765,7 +853,6 @@ class Coronagraph(object):
             images.
         
         """
-#        corono_field_2d = self.compute_corono_field_2d(Apod2d,Pupil2d, LyotStop2d)
         corono_field_2d = self.compute_corono_field_2d(Apod2d)
         
         if poly:
@@ -791,7 +878,6 @@ class Coronagraph(object):
             Real and imag parts of the direct electric field :math:`\Psi_0`
             
         """        
-#        test = self.compute_direct_field_2d(Apod2d, Pupil2d, LyotStop2d)
         test = self.compute_direct_field_2d(Apod2d)
         test_re = np.reshape(test.real, (self.nlam, self.nImg2d**2))
         test_im = np.reshape(test.imag, (self.nlam, self.nImg2d**2))
@@ -1261,11 +1347,11 @@ class DZPM1d(Coronagraph):
         self.eps1_t   = 1j*np.sin(self.phi1_t) + np.cos(self.phi1_t)
         self.eps2_t   = 1j*np.sin(self.phi2_t) + np.cos(self.phi2_t)
 
-        # mask size at Apod given wavelength
+        # mask size at a given wavelength
         self.rMask1_t = (self.lam0/self.lam_t)*self.rMask1
         self.rMask2_t = (self.lam0/self.lam_t)*self.rMask2
         
-        # mask sampling at Apod given wavelength and max nFPM_max 
+        # mask sampling at a given wavelength and max nFPM_max 
         self.nFPM1_t   = self.rMask1_t*self.nFPM
         self.nFPM1_max = int(np.max(self.nFPM1_t))     
         self.nFPM2_t   = self.rMask2_t*self.nFPM
@@ -1594,6 +1680,165 @@ class SP2d(Coronagraph):
         return field_Dtmp   
 
 #%%
+#%% 
+"""
+APLC 2d Coronagraph subclass        
+"""
+class DZPM2d(Coronagraph):
+    """
+    Defines the Coronagraph subclass for the Dual-Zone Phase Mask Coronagraph
+    for two-dimension geometry.
+    """
+    default_params = get_default_params_DZPM2d()
+
+    def __init__(self, **kwargs):
+        r"""
+        __init__ : method
+            Constructor for the APLC2d class.
+        
+        Attributes
+        ----------        
+        mB_t : array_like
+            Spatial frequency range within the focal plane mask (FPM) 
+            in plane B in :math:`\lambda/D` at all the wavelengths
+           
+        mD_t : array_like
+            Spatial frequency range in the final image plane D 
+            in :math:`\lambda/D` at all the wavelengths
+                
+        """      
+        super(DZPM2d,self).__init__(**kwargs)
+
+        # Optical path difference introduced by the mask
+        self.OPD1 = self.OPDx1*self.lam0
+        self.OPD2 = self.OPDx2*self.lam0
+        
+        # phase shift induced by the mask
+        self.phi1_t = 2.*np.pi*self.OPD1/self.lam_t
+        self.phi2_t = 2.*np.pi*self.OPD2/self.lam_t
+        
+        self.eps1_t = 1j*np.sin(self.phi1_t) + np.cos(self.phi1_t)
+        self.eps2_t = 1j*np.sin(self.phi2_t) + np.cos(self.phi2_t)
+        
+        # mask size at a given wavelength for SFT
+        self.mB1_t  = 2.*self.rMask1*(self.lam0/self.lam_t)
+        self.mB2_t  = 2.*self.rMask2*(self.lam0/self.lam_t)
+        self.mD_t   = self.Fmax2d*(self.lam0/self.lam_t)
+        
+        self.rr = radius_disk(self.nPup, self.nPup/2, CtrBtwnPix=self.CtrBtwnPix)
+
+        self.Apod2d_w = 1j*np.sin(2.*np.pi*(self.rr)**2*self.beta*self.lam0/self.lam_t[:,None,None])\
+        + np.cos(2.*np.pi*(self.rr)**2*self.beta*self.lam0/self.lam_t[:,None,None])
+
+        
+#%% direct propagation (no focal plane mask)
+    def compute_direct_field_2d(self,Apod2d):
+        r""" 
+        Computes the coronagraph electric field for a classical Lyot coronagraph
+        with four planes (A: entrance pupil, B: intermediate focal plane, 
+        C: relayed pupil before stop, L: relayed pupil after stop, 
+        D: final image plane).
+        Resolution element are given in :math:`\lambda_0/D` where 
+        :math:`\lambda_0` and :math:`D` denote the central and the telescope 
+        diameter.
+    
+        Parameters
+        ----------     
+        Apod2d : array_like 
+            Entrance pupil apodization :math:`\Phi`
+            
+        Returns    
+        ----------    
+        field_Dtmp : array_like
+            Direct electric field :math:`\Psi_0` in the final image plane at 
+            all the wavelengths
+    
+        """    
+ 
+        field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
+                              dtype='complex128')
+        
+        if self.Pupil2dSym == False:
+            for i in range(self.nlam):
+                field_A    = Apod2d*self.Pupil2d*self.Apod2d_w[i]
+                field_L    = field_A*self.LyotStop2d
+                field_Dtmp[i] = sft(field_L, self.nImg2d, self.mD_t[i], 
+                          CtrBtwnPix=self.CtrBtwnPix2)
+        else:
+            for i in range(self.nlam):
+                field_A    = Apod2d*self.Pupil2d*self.Apod2d_w[i]
+                field_L    = field_A*self.LyotStop2d
+                field_Dtmp[i] = sft_even(field_L, self.nImg2d, self.mD_t[i], 
+                          CtrBtwnPix=self.CtrBtwnPix2)            
+    
+        return field_Dtmp
+ 
+#%%
+    def compute_corono_field_2d(self,Apod2d):
+        """
+        Computes the coronagraph electric field for a classical Lyot coronagraph
+        with four planes (A: entrance pupil, B: intermediate focal plane, 
+        C: relayed pupil before stop, L: relayed pupil after stop, 
+        D: final image plane).
+        Resolution element are given in :math:`\lambda_0/D` where 
+        :math:`\lambda_0` and :math:`D` denote the central and the telescope 
+        diameter.
+    
+        Parameters
+        ---------- 
+        Apod2d : array_like 
+            Entrance pupil apodization :math:`\Phi`
+            
+        Returns    
+        ----------    
+        field_Dtmp : array_like
+            Coronagraphic electric field :math:`\Psi_D` in the final image plane
+            at all the wavelengths
+            
+        """        
+   
+        field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
+                              dtype='complex128')
+        
+        if self.Pupil2dSym == False: 
+            for i in range(self.nlam):
+                field_A       = Apod2d*self.Pupil2d*self.Apod2d_w[i] 
+                field_B1      = self.mask2d*sft(field_A, self.nFPM, self.mB1_t[i], 
+                                                CtrBtwnPix=self.CtrBtwnPix)
+                field_B2      = self.mask2d*sft(field_A, self.nFPM, self.mB2_t[i], 
+                                                CtrBtwnPix=self.CtrBtwnPix)
+                
+                field_C       = field_A - (self.eps2_t[i] - self.eps1_t[i])\
+                                *isft(field_B1, self.nPup, self.mB1_t[i], 
+                                               CtrBtwnPix=self.CtrBtwnPix)\
+                                        - (1.-self.eps2_t[i])\
+                                *isft(field_B2, self.nPup, self.mB2_t[i], 
+                                               CtrBtwnPix=self.CtrBtwnPix)
+                                
+                field_L       = field_C*self.LyotStop2d
+                field_Dtmp[i] = sft(field_L, self.nImg2d, self.mD_t[i], 
+                          CtrBtwnPix=self.CtrBtwnPix2)
+        else:
+            for i in range(self.nlam):
+                field_A       = Apod2d*self.Pupil2d*self.Apod2d_w[i]
+                field_B1      = self.mask2d*sft_even(field_A, self.nFPM, self.mB1_t[i], 
+                                                CtrBtwnPix=self.CtrBtwnPix)
+                field_B2      = self.mask2d*sft_even(field_A, self.nFPM, self.mB2_t[i], 
+                                                CtrBtwnPix=self.CtrBtwnPix)
+                
+                field_C       = field_A - (self.eps2_t[i] - self.eps1_t[i])\
+                                *isft_even(field_B1, self.nPup, self.mB1_t[i], 
+                                               CtrBtwnPix=self.CtrBtwnPix)\
+                                        - (1.-self.eps2_t[i])\
+                                *isft_even(field_B2, self.nPup, self.mB2_t[i], 
+                                               CtrBtwnPix=self.CtrBtwnPix)
+                                           
+                field_L       = field_C*self.LyotStop2d
+                field_Dtmp[i] = sft_even(field_L, self.nImg2d, self.mD_t[i], 
+                          CtrBtwnPix=self.CtrBtwnPix2)            
+
+        return field_Dtmp   
+
      
 
      
