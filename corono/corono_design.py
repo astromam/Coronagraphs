@@ -73,13 +73,13 @@ def get_default_params_Coronagraph():
     fdir : string (default='')
         Directory
         
-    ctr_btwn_pix : boolean (default=True)
+    CtrBtwnPix : boolean (default=True)
         Keyword to work with pupil arrays that are centered between four pixels
-        if True
+        from pupil to the coronagraph mask focal plane if True
         
-    ctr_btwn_pix2 : boolean (default=False)
+    CtrBtwnPix2 : boolean (default=False)
         Keyword to work with image arrays that are centered between four pixels
-        if True           
+        from pupil to the final image plane to if True           
             
     Returns    
     ----------
@@ -110,7 +110,7 @@ def get_default_params_Coronagraph():
            'bw':0.2,'lam0':1.0,'nlam':5, 
            'R':1,
            'fdir':'',
-           'ctr_btwn_pix':True, 'ctr_btwn_pix2':False
+           'CtrBtwnPix':True, 'CtrBtwnPix2':False
            }
             
     return tmp
@@ -265,11 +265,11 @@ def get_default_params_APLC2d():
                 })
                 
     # Telescope aperture
-    Pupil2d      = uniform_disk(tmp['nPup'], tmp['nPup']/2., ctr_btwn_pix=tmp['ctr_btwn_pix'])\
-        - uniform_disk(tmp['nPup'], tmp['PupilObs']*tmp['nPup']/2., ctr_btwn_pix=tmp['ctr_btwn_pix'])
+    Pupil2d      = uniform_disk(tmp['nPup'], tmp['nPup']/2., CtrBtwnPix=tmp['CtrBtwnPix'])\
+        - uniform_disk(tmp['nPup'], tmp['PupilObs']*tmp['nPup']/2., CtrBtwnPix=tmp['CtrBtwnPix'])
     # Lyot stop 
-    LyotStop2d   = uniform_disk(tmp['nPup'], tmp['nPup']/2., ctr_btwn_pix=tmp['ctr_btwn_pix'])\
-        - uniform_disk(tmp['nPup'], tmp['LyotStopObs']*tmp['nPup']/2., ctr_btwn_pix=tmp['ctr_btwn_pix'])
+    LyotStop2d   = uniform_disk(tmp['nPup'], tmp['nPup']/2., CtrBtwnPix=tmp['CtrBtwnPix'])\
+        - uniform_disk(tmp['nPup'], tmp['LyotStopObs']*tmp['nPup']/2., CtrBtwnPix=tmp['CtrBtwnPix'])
     tmp.update({'Pupil2d':Pupil2d, 'LyotStop2d':LyotStop2d})
     return tmp
 
@@ -301,8 +301,8 @@ def get_default_params_SP2d():
                 'nPup':50, 'nFPM':25,
                 })
     # Telescope aperture
-    Pupil2d      = uniform_disk(tmp['nPup'], tmp['nPup']/2., ctr_btwn_pix=tmp['ctr_btwn_pix'])\
-        - uniform_disk(tmp['nPup'], tmp['PupilObs']*tmp['nPup']/2., ctr_btwn_pix=tmp['ctr_btwn_pix'])
+    Pupil2d      = uniform_disk(tmp['nPup'], tmp['nPup']/2., CtrBtwnPix=tmp['CtrBtwnPix'])\
+        - uniform_disk(tmp['nPup'], tmp['PupilObs']*tmp['nPup']/2., CtrBtwnPix=tmp['CtrBtwnPix'])
     tmp.update({'Pupil2d':Pupil2d})
     return tmp
 
@@ -461,9 +461,9 @@ class Coronagraph(object):
 
         self.SymPupil2d = False
         # clear Pupil
-        self.ClearPupil2d = uniform_disk(self.nPup, self.nPup/2., ctr_btwn_pix=self.ctr_btwn_pix)
+        self.ClearPupil2d = uniform_disk(self.nPup, self.nPup/2., CtrBtwnPix=self.CtrBtwnPix)
         # Focal plane mask
-        self.mask2d       = uniform_disk(self.nFPM, self.nFPM/2., ctr_btwn_pix=self.ctr_btwn_pix)
+        self.mask2d       = uniform_disk(self.nFPM, self.nFPM/2., CtrBtwnPix=self.CtrBtwnPix)
 
         # Final image plane coordinate
         self.xi2d     = (np.arange(self.nImg2d//2))* self.Fmax2d/self.nImg2d
@@ -897,7 +897,7 @@ class Coronagraph(object):
     
         """
         val = 0
-        if self.ctr_btwn_pix is True:
+        if self.CtrBtwnPix is True:
             val = 1/2
         # array of angular distances in the final image plane
         xx,yy  = np.meshgrid(np.arange(self.nImg2d)-self.nImg2d/2+val, np.arange(self.nImg2d)-self.nImg2d/2+val)
@@ -1428,11 +1428,11 @@ class APLC2d(Coronagraph):
         if self.SymPupil2d == False:
             for i in range(self.nlam):
                 field_Dtmp[i] = sft(field_L, self.nImg2d, self.mD_t[i], 
-                          ctr_btwn_pix=self.ctr_btwn_pix2)
+                          CtrBtwnPix=self.CtrBtwnPix2)
         else:
             for i in range(self.nlam):
                 field_Dtmp[i] = sft_even(field_L, self.nImg2d, self.mD_t[i], 
-                          ctr_btwn_pix=self.ctr_btwn_pix2)            
+                          CtrBtwnPix=self.CtrBtwnPix2)            
     
         return field_Dtmp
  
@@ -1466,21 +1466,21 @@ class APLC2d(Coronagraph):
         if self.SymPupil2d == False: 
             for i in range(self.nlam):
                 field_B       = self.mask2d*sft(field_A, self.nFPM, self.mB_t[i], 
-                                                ctr_btwn_pix=self.ctr_btwn_pix)
+                                                CtrBtwnPix=self.CtrBtwnPix)
                 field_C       = field_A - isft(field_B, self.nPup, self.mB_t[i], 
-                                               ctr_btwn_pix=self.ctr_btwn_pix)
+                                               CtrBtwnPix=self.CtrBtwnPix)
                 field_L       = field_C*self.LyotStop2d
                 field_Dtmp[i] = sft(field_L, self.nImg2d, self.mD_t[i], 
-                          ctr_btwn_pix=self.ctr_btwn_pix2)
+                          CtrBtwnPix=self.CtrBtwnPix2)
         else:
             for i in range(self.nlam):
                 field_B       = self.mask2d*sft_even(field_A, self.nFPM, self.mB_t[i], 
-                                                ctr_btwn_pix=self.ctr_btwn_pix)
+                                                CtrBtwnPix=self.CtrBtwnPix)
                 field_C       = field_A - isft_even(field_B, self.nPup, self.mB_t[i], 
-                                               ctr_btwn_pix=self.ctr_btwn_pix)
+                                               CtrBtwnPix=self.CtrBtwnPix)
                 field_L       = field_C*self.LyotStop2d
                 field_Dtmp[i] = sft_even(field_L, self.nImg2d, self.mD_t[i], 
-                          ctr_btwn_pix=self.ctr_btwn_pix2)            
+                          CtrBtwnPix=self.CtrBtwnPix2)            
 
         return field_Dtmp   
 
@@ -1544,11 +1544,11 @@ class SP2d(Coronagraph):
         if self.SymPupil2d == False:        
             for i in range(self.nlam):
                 field_Dtmp[i] = sft(field_A, self.nImg2d, self.mD_t[i], 
-                      ctr_btwn_pix=self.ctr_btwn_pix2)
+                      CtrBtwnPix=self.CtrBtwnPix2)
         else:
             for i in range(self.nlam):
                 field_Dtmp[i] = sft_even(field_A, self.nImg2d, self.mD_t[i], 
-                      ctr_btwn_pix=self.ctr_btwn_pix2)
+                      CtrBtwnPix=self.CtrBtwnPix2)
                 
         return field_Dtmp
  
@@ -1580,11 +1580,11 @@ class SP2d(Coronagraph):
         if self.SymPupil2d == False:
             for i in range(self.nlam):
                 field_Dtmp[i] = sft(field_A, self.nImg2d, self.mD_t[i], 
-                      ctr_btwn_pix=self.ctr_btwn_pix2)
+                      CtrBtwnPix=self.CtrBtwnPix2)
         else:
             for i in range(self.nlam):
                 field_Dtmp[i] = sft_even(field_A, self.nImg2d, self.mD_t[i], 
-                      ctr_btwn_pix=self.ctr_btwn_pix2)
+                      CtrBtwnPix=self.CtrBtwnPix2)
                 
         return field_Dtmp   
 

@@ -42,8 +42,8 @@ cDarkHole = 4
 tau   = 0.4
 
 corono_name   = 'SP' # 'SP' or 'APLC'
-ctr_btwn_pix  = True
-ctr_btwn_pix2 = True
+CtrBtwnPix  = True
+CtrBtwnPix2 = True
 SymPupil2d = True
 
 #nlam
@@ -63,7 +63,7 @@ LyotStop2d = fits.getdata(fpath)
 
 
 params = to_dict(nPup=nPup, rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau, 
-                 ctr_btwn_pix=ctr_btwn_pix, ctr_btwn_pix2=ctr_btwn_pix2, nlam=nlam, 
+                 CtrBtwnPix=CtrBtwnPix, CtrBtwnPix2=CtrBtwnPix2, nlam=nlam, 
                  Pupil2d = Pupil2d, LyotStop2d = LyotStop2d,
                  nImg2d = nImg2d, Fmax2d = Fmax2d, nFPM = nFPM,
                  SymPupil2d = SymPupil2d)
@@ -71,7 +71,7 @@ params = to_dict(nPup=nPup, rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
 
 
 #params = to_dict(nPup=nPup, rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau, 
-#                 ctr_btwn_pix=ctr_btwn_pix, ctr_btwn_pix2=ctr_btwn_pix2, nlam=nlam)
+#                 CtrBtwnPix=CtrBtwnPix, CtrBtwnPix2=CtrBtwnPix2, nlam=nlam)
 
 
 #%%  
