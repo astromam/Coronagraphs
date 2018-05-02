@@ -8,6 +8,8 @@ Created on Wed Apr 25 17:52:23 2018
 
 import pylab as pl
 import numpy as np
+import time
+from pathlib import Path
 
 from corono import corono_design as cd
 from corono import corono_optim_2d as co2d
@@ -18,6 +20,8 @@ from matplotlib import cm
 
 from astropy.io import fits
 
+
+
 #%% parameters
 """
 Parameters
@@ -27,18 +31,21 @@ rho0 =  4.0
 rho1 = 10.0
 
 # contrast in the dark region
-cDarkHole = 4.0
+cDarkHole = 4
 
 # tau (integrated Pupil transmission)
 tau   = 0.4
 
 # ctr_btwn_pix2
+corono_name   = 'APLC' # 'SP' or 'APLC'
 ctr_btwn_pix  = True
 ctr_btwn_pix2 = True
+SymPupil2d = True
 
 #nlam
-nlam=1 
+nlam=5
 
+do_fits = True
 
 #%%
 """
@@ -56,9 +63,11 @@ fpath = fdir + fname
 Pupil2d = fits.getdata(fpath)
 LyotStop2d = fits.getdata(fpath)
 
+
 params = to_dict(nPup=nPup, rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau, 
                  ctr_btwn_pix=ctr_btwn_pix, ctr_btwn_pix2=ctr_btwn_pix2, nlam=nlam, 
-                 Pupil2d = Pupil2d, LyotStop2d = LyotStop2d)
+                 Pupil2d = Pupil2d, LyotStop2d = LyotStop2d,
+                 SymPupil2d = SymPupil2d)
 
 #params = to_dict(nPup=nPup, rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau, 
 #                 ctr_btwn_pix=ctr_btwn_pix, ctr_btwn_pix2=ctr_btwn_pix2, nlam=nlam)
@@ -67,14 +76,17 @@ params = to_dict(nPup=nPup, rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
 """ 
 Coronagraph defintion
 """
-#corono0 = cd.APLC2d(**params)
-corono0 = cd.SP2d(**params)
 
+if corono_name == 'SP':
+    corono0 = cd.SP2d(**params)
+else:
+    corono0 = cd.APLC2d(**params)
 
 #%%
 """
 Problem defintion
 """
+t0 = time.time()
 # Maximization of the integrated amplitude transmission of the apodizer
 problem1 = co2d.MaxTau(corono=corono0, **params)
 # Maximization of the contrast under L1-norm
@@ -106,6 +118,7 @@ Display of the matrices
 #pl.imshow(abs(A3.T)**0.25)
 
 #%% Gurobi model of the problems
+
 """
 Gurobi models
 """
@@ -120,6 +133,8 @@ Apodizer solutions
 Apod1 = problem1.solve_model()
 #Apod2 = problem2.solve_model()
 #Apod3 = problem3.solve_model()
+t1 = time.time()
+print('SymPupil2d:{0}, total computation time: {1:.2f}s'.format(SymPupil2d, t1-t0))
 
 #%% Display of the apodizer
 """
@@ -129,13 +144,21 @@ Apod1_2d = np.reshape(Apod1, (corono0.nPup, corono0.nPup))
 #Apod2_2d = np.reshape(Apod2, (corono0.nPup, corono0.nPup))
 #Apod3_2d = np.reshape(Apod3, (corono0.nPup, corono0.nPup))
 
+if SymPupil2d == True:
+    Apod1_2d += np.flip(Apod1_2d, axis=0)
+    Apod1_2d += np.flip(Apod1_2d, axis=1)
+    
 
 pl.figure(4)
 pl.clf()
 pl.imshow(corono0.Pupil2d, cmap = cm.inferno)
 pl.title('Pupil transmission')
 
-pl.figure(5)
+ifig = 5
+if SymPupil2d == True:
+    ifig = 25
+    
+pl.figure(ifig)
 pl.clf()
 pl.imshow(Apod1_2d*corono0.Pupil2d, cmap = cm.inferno)
 pl.title('Apod 1 transmission - MaxTau problem')
@@ -223,7 +246,15 @@ pl.legend()
 pl.show()
 
 #%%
-#from astropy.io import fits
 #
-#fpath = '/Users/mndiaye/Desktop/test.fits' 
-#fits.writeto(fpath, Apod1_2d, clobber=True)
+fdir = Path('/Users/mndiaye/Dropbox/central storage/AMPL/PupilDataFiles/2D/General/dat/')
+
+if corono_name == 'SP':
+    fname_gen  = 'SP00_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}.fits'
+else:
+    fname_gen  = 'APLC_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}.fits'
+
+fpath = fdir / pupil_name / fname_gen.format(**{key: corono0.params[key] for key in corono0.params})
+
+if do_fits is True:
+    fits.writeto(fpath, Apod1_2d, clobber=True)

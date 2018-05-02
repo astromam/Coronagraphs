@@ -10,6 +10,7 @@ Created on Thu Mar  8 23:07:48 2018
 import numpy as np
 import pylab as pl
 from corono import corono_design as cd
+from corono.utils import to_dict, uniform_disk
 
 #%% APLC1d tests   
 """
@@ -102,16 +103,56 @@ from corono import corono_design as cd
 """
 tests on APLC 2d class
 """
+corono_name   = 'SP' # 'SP' or 'APLC'
+ctr_btwn_pix  = True
+ctr_btwn_pix2 = True
+SymPupil2d    = True
+
+nPup   = 50
+nImg2d = 400
+
+
+#Pupil2dbis = uniform_disk(nPup, nPup/2., ctr_btwn_pix=ctr_btwn_pix)
+#Pupil2d = np.zeros((nPup, nPup))
+#Pupil2d[:nPup//2,:nPup//2] = Pupil2dbis[:nPup//2,:nPup//2] 
+
+Pupil2dbis = uniform_disk(nPup, nPup/2., ctr_btwn_pix=ctr_btwn_pix)
+#Pupil2d = np.zeros((nPup, nPup))
+#Pupil2d = Pupil2dbis[0:nPup,0:nPup] 
+
+
+Pupil2d = Pupil2dbis*1
+pl.figure(1)
+pl.imshow(Pupil2d)
+
+
+#%%
+
+params = to_dict(nPup=nPup, nImg2d=nImg2d, SymPupil2d = SymPupil2d, Pupil2d = Pupil2d, 
+                 ctr_btwn_pix=ctr_btwn_pix,
+                 ctr_btwn_pix2 = ctr_btwn_pix2)
+
+
+
 #a = cd.APLC2d()
-a = cd.SP2d()
+#a = cd.SP2d()
+
+if corono_name == 'SP':
+    a = cd.SP2d(**params)
+else:
+    a = cd.APLC2d(**params)
 
 Apod2d = a.Pupil2d
 
 poly_direct_intensity_2d = a.compute_direct_intensity_2d(Apod2d)
 poly_corono_intensity_2d = a.compute_corono_intensity_2d(Apod2d)
 
-direct_field_t_re, direct_field_t_im = a.prop_direct_matrix_2d()
-corono_field_t_re, corono_field_t_im = a.prop_corono_matrix_2d()
+#poly_direct_intensity_2d[nImg2d//2:,nImg2d//2:]=0
+#poly_direct_intensity_2d[nImg2d//2:,0:nImg2d//2:]=0
+#poly_direct_intensity_2d[0:nImg2d//2:,nImg2d//2:,]=0
+
+#direct_field_t_re, direct_field_t_im = a.prop_direct_matrix_2d()
+#corono_field_t_re, corono_field_t_im = a.prop_corono_matrix_2d()
 
 
 #%% plot displays
@@ -144,24 +185,24 @@ pl.legend()
 
 idx = (a.params['nlam']-1)//2
 
-pl.figure(13)
-pl.clf()
-pl.imshow(direct_field_t_re[:,idx,:], cmap = 'inferno')
-pl.title('direct response matrix for APLC 2D - real part')
-
-pl.figure(14)
-pl.clf()
-pl.imshow(direct_field_t_im[:,idx,:], cmap = 'inferno')
-pl.title('direct response matrix for APLC 2D - imaginary part')
-
-pl.figure(15)
-pl.clf()
-pl.imshow(corono_field_t_re[:,idx,:], cmap = 'inferno')
-pl.title('coronagraphic response matrix for APLC 2D - real part')
-
-pl.figure(16)
-pl.clf()
-pl.imshow(corono_field_t_im[:,idx,:], cmap = 'inferno')
+#pl.figure(13)
+#pl.clf()
+#pl.imshow(direct_field_t_re[:,idx,:], cmap = 'inferno')
+#pl.title('direct response matrix for APLC 2D - real part')
+#
+#pl.figure(14)
+#pl.clf()
+#pl.imshow(direct_field_t_im[:,idx,:], cmap = 'inferno')
+#pl.title('direct response matrix for APLC 2D - imaginary part')
+#
+#pl.figure(15)
+#pl.clf()
+#pl.imshow(corono_field_t_re[:,idx,:], cmap = 'inferno')
+#pl.title('coronagraphic response matrix for APLC 2D - real part')
+#
+#pl.figure(16)
+#pl.clf()
+#pl.imshow(corono_field_t_im[:,idx,:], cmap = 'inferno')
 pl.title('coronagraphic response matrix for APLC 2D - imaginary part')
 
 pl.show()

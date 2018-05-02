@@ -183,7 +183,13 @@ class ProblemMatrix(object):
 #        self.Pupil_vec = np.reshape(self.corono.Pupil2d, (self.corono.nPup**2))
 
 
-        self.Pupil_vec = np.reshape(self.corono.Pupil2d, (self.corono.nPup**2))
+        if self.SymPupil2d == False:
+            self.Pupil_vec = np.reshape(self.corono.Pupil2d, (self.corono.nPup**2))
+        else:
+            Pupil2dquarter = np.zeros_like(self.corono.Pupil2d)
+            Pupil2dquarter[:self.corono.nPup//2, :self.corono.nPup//2] = 1.
+            self.Pupil_vec = np.reshape(self.corono.Pupil2d*Pupil2dquarter, (self.corono.nPup**2))
+ 
         
         self.pup     = (self.Pupil_vec > 0.)
         self.bbb     = np.arange(self.corono.nPup**2)
@@ -191,7 +197,14 @@ class ProblemMatrix(object):
         self.npp     = len(self.idx_pup) 
         
         self.dz2d, self.rad2d = self.corono.generate_area()
-        self.dz      = np.reshape(self.dz2d, (self.corono.nImg2d**2))
+        
+        if self.SymPupil2d == False:        
+            self.dz      = np.reshape(self.dz2d, (self.corono.nImg2d**2))
+        else:
+            Image2dquarter = np.zeros_like(self.dz2d)
+            Image2dquarter[:self.corono.nImg2d//2, :self.corono.nImg2d//2] = 1.
+            self.dz = np.reshape(self.dz2d*Image2dquarter, (self.corono.nImg2d**2))           
+            
         self.aaa     = np.arange(self.corono.nImg2d**2)
         self.idx_dz  = list(self.aaa[self.dz])  
         self.ndz     = len(self.idx_dz)

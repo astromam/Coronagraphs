@@ -15,13 +15,13 @@ from . import corono_design
 from . import utils
 
 
-from .utils import reload, sft, isft, uniform_disk
+from .utils import reload, sft, isft, uniform_disk, sft_even
 from .utils import to_dict, write_apod1d, load_apod1d
 
 __version__ = '0.1.0b'
 
 lst_submodule = ['corono_design']
-lst_utils = ['reload', 'sft', 'isft', 'uniform_disk', 'to_dict', 'write_apod1d',
+lst_utils = ['reload', 'sft', 'isft', 'sft_even', 'uniform_disk', 'to_dict', 'write_apod1d',
              'load_apod1d']
 
 __all__ = lst_submodule + lst_utils

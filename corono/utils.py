@@ -206,3 +206,80 @@ def load_apod1d(fpath):
     Apod  = test[:,1]
     
     return rApod,Apod    
+
+#%%
+def sft_even(A2, NB, m, inv=False, ctr_btwn_pix=False):
+    """
+    Slow Fourier Transform, using the theory described in [1]_. 
+    Assumes the original array is square and the function is even. 
+
+    Parameters
+    ----------
+    A2 : array_like
+        the 2D original array
+    
+    NB : int
+        the linear size of the resulting array (integer)
+    
+    m : float
+        m/2 = maximum spatial frequency to be computed (in lam/D)
+    
+    inv : boolean (default=False)
+        boolean (direct or inverse) see the definition of isft()
+        
+    ctr_btwn_pix : boolean (default=False)
+        type of centering for the disk. If True, the disk is centered between
+        four pixels.
+    
+    Returns
+    ---------
+    res : array_like
+        Fourier transform of the array A2 within array of dimensions NBxNB
+    
+    References
+    ---------
+    
+    .. [1] Soummer, Pueyo, Sivaramakrishnan, Vanderbei, Fast computation 
+        of Lyot-style coronagraph propagation, Optics Express, vol. 15, issue 24, 
+        p. 15935 (2007).
+        https://www.osapublishing.org/oe/abstract.cfm?uri=oe-15-24-15935
+    
+    """
+    val    = 0
+    if ctr_btwn_pix is True:
+        val = 1/2
+    NA    = np.shape(A2)[0]
+    coeff = m/(NA*NB)
+    
+    U = np.zeros((1,NB))
+    X = np.zeros((1,NA))
+    
+    X[0,:] = (1./NA)*(np.arange(NA)-NA/2+val)
+    U[0,:] =  (m/NB)*(np.arange(NB)-NB/2+val)
+
+    A1 = np.cos(2.*np.pi* U.T.dot(X))    
+    A3 = np.cos(2.*np.pi* X.T.dot(U))
+    B  = (A1.dot(A2)).dot(A3)
+
+    return coeff*B
+
+#%%
+def isft_even(A2, NB, m, ctr_btwn_pix=False):
+    """
+    Explicit inverse Slow Fourier Transform, using the theory described in [1].
+
+    See Also
+    --------
+    sft_even() : Slow Fourier Transform
+        
+    References
+    ---------
+    
+    .. [1] Soummer, Pueyo, Sivaramakrishnan, Vanderbei, Fast computation 
+        of Lyot-style coronagraph propagation, Optics Express, vol. 15, issue 24, 
+        p. 15935 (2007).
+        https://www.osapublishing.org/oe/abstract.cfm?uri=oe-15-24-15935
+        
+    """
+    return sft_even(A2, NB, m, inv=True, ctr_btwn_pix=ctr_btwn_pix)
+
