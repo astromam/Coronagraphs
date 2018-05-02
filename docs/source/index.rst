@@ -29,10 +29,16 @@ corono.corono_design
 .. automodule:: corono.corono_design
    :members:
 
-corono.corono_optim
+corono.corono_optim_1d
 ------
 
-.. automodule:: corono.corono_optim
+.. automodule:: corono.corono_optim_1d
+   :members:
+
+corono.corono_optim_2d
+------
+
+.. automodule:: corono.corono_optim_2d
    :members:
 
 Indices and tables
