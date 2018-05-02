@@ -44,7 +44,7 @@ tau   = 0.4
 corono_name   = 'SP' # 'SP' or 'APLC'
 CtrBtwnPix  = True
 CtrBtwnPix2 = True
-SymPupil2d = True
+Pupil2dSym = True
 
 #nlam
 nlam=1 
@@ -66,7 +66,7 @@ params = to_dict(nPup=nPup, rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
                  CtrBtwnPix=CtrBtwnPix, CtrBtwnPix2=CtrBtwnPix2, nlam=nlam, 
                  Pupil2d = Pupil2d, LyotStop2d = LyotStop2d,
                  nImg2d = nImg2d, Fmax2d = Fmax2d, nFPM = nFPM,
-                 SymPupil2d = SymPupil2d)
+                 Pupil2dSym = Pupil2dSym)
 
 
 

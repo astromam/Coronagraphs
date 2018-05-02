@@ -183,7 +183,7 @@ class ProblemMatrix(object):
 #        self.Pupil_vec = np.reshape(self.corono.Pupil2d, (self.corono.nPup**2))
 
 
-        if self.corono.SymPupil2d == False:
+        if self.corono.Pupil2dSym == False:
             self.Pupil_vec = np.reshape(self.corono.Pupil2d, (self.corono.nPup**2))
         else:
             Pupil2dquarter = np.zeros_like(self.corono.Pupil2d)
@@ -198,7 +198,7 @@ class ProblemMatrix(object):
         
         self.dz2d, self.rad2d = self.corono.generate_area()
         
-        if self.corono.SymPupil2d == False:        
+        if self.corono.Pupil2dSym == False:        
             self.dz      = np.reshape(self.dz2d, (self.corono.nImg2d**2))
         else:
             Image2dquarter = np.zeros_like(self.dz2d)

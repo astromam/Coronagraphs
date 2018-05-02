@@ -211,7 +211,7 @@ def load_apod1d(fpath):
 def sft_even(A2, NB, m, inv=False, CtrBtwnPix=False):
     """
     Slow Fourier Transform, using the theory described in [1]_. 
-    Assumes the original array is square and the function is even. 
+    Assumes the original array is square and represents an even function. 
 
     Parameters
     ----------
@@ -267,6 +267,7 @@ def sft_even(A2, NB, m, inv=False, CtrBtwnPix=False):
 def isft_even(A2, NB, m, CtrBtwnPix=False):
     """
     Explicit inverse Slow Fourier Transform, using the theory described in [1].
+    Assumes the original array is square and represents an even function. 
 
     See Also
     --------

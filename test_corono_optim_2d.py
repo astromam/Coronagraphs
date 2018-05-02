@@ -44,7 +44,7 @@ tau   = 0.4
 corono_name   = 'SP' # 'SP' or 'APLC'
 CtrBtwnPix  = True
 CtrBtwnPix2 = True
-SymPupil2d = False
+Pupil2dSym = False
 
 #nlam
 nlam=1
@@ -67,7 +67,7 @@ LyotStop2d = fits.getdata(fpath)
 params = to_dict(nPup=nPup, rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau, 
                  CtrBtwnPix=CtrBtwnPix, CtrBtwnPix2=CtrBtwnPix2, nlam=nlam, 
                  Pupil2d = Pupil2d, LyotStop2d = LyotStop2d,
-                 SymPupil2d = SymPupil2d)
+                 Pupil2dSym = Pupil2dSym)
 
 #params = to_dict(nPup=nPup, rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau, 
 #                 CtrBtwnPix=CtrBtwnPix, CtrBtwnPix2=CtrBtwnPix2, nlam=nlam)
@@ -134,7 +134,7 @@ Apod1 = problem1.solve_model()
 #Apod2 = problem2.solve_model()
 #Apod3 = problem3.solve_model()
 t1 = time.time()
-print('SymPupil2d:{0}, total computation time: {1:.2f}s'.format(SymPupil2d, t1-t0))
+print('Pupil2dSym:{0}, total computation time: {1:.2f}s'.format(Pupil2dSym, t1-t0))
 
 #%% Display of the apodizer
 """
@@ -144,7 +144,7 @@ Apod1_2d = np.reshape(Apod1, (corono0.nPup, corono0.nPup))
 #Apod2_2d = np.reshape(Apod2, (corono0.nPup, corono0.nPup))
 #Apod3_2d = np.reshape(Apod3, (corono0.nPup, corono0.nPup))
 
-if SymPupil2d == True:
+if Pupil2dSym == True:
     Apod1_2d += np.flip(Apod1_2d, axis=0)
     Apod1_2d += np.flip(Apod1_2d, axis=1)
     
@@ -155,7 +155,7 @@ pl.imshow(corono0.Pupil2d, cmap = cm.Greys_r)
 pl.title('Pupil transmission')
 
 ifig = 5
-if SymPupil2d == True:
+if Pupil2dSym == True:
     ifig = 25
     
 pl.figure(ifig)

@@ -251,6 +251,12 @@ def get_default_params_APLC2d():
     
     nFPM : int
         Sampling across the mask diameter :math:`m`
+
+    Pupil2d : array_like     
+        2D entrance pupil :math:`P_0`
+
+    LyotStop2d : array_like 
+            2D Lyot stop :math:`L`
             
     Returns    
     ----------
@@ -288,6 +294,9 @@ def get_default_params_SP2d():
     
     nFPM : int
         Sampling across the mask diameter :math:`m`
+        
+    Pupil2d : array_like     
+        2D entrance pupil :math:`P_0`
             
     Returns    
     ----------
@@ -391,16 +400,10 @@ class Coronagraph(object):
         
         ClearPupil2d : array_like 
             2D clear pupil
-        
-        Pupil2d : array_like     
-            2D entrance pupil :math:`P_0`
-        
+             
         mask2d : array_like 
             2D focal plane mask :math:`M`
-        
-        LyotStop2d : array_like 
-            2D Lyot stop :math:`L`
-        
+                
         xi2d : array_like 
             Final image plane coordinate vector centered on a pixel
             for 2D problem
@@ -409,6 +412,8 @@ class Coronagraph(object):
             Final image plane coordinate vector centered between 4 pixels
             for 2D problem
         
+        Pupil2dSym : boolean (default=False)
+            Keyword to use faster computation for symmetric pupils
 
         References
         ----------
@@ -459,7 +464,7 @@ class Coronagraph(object):
         self.hankel_kernel_all = besselJ0(
                 np.pi/self.R*self.xii[:,:,None]*self.r[None,None,:])
 
-        self.SymPupil2d = False
+        self.Pupil2dSym = False
         # clear Pupil
         self.ClearPupil2d = uniform_disk(self.nPup, self.nPup/2., CtrBtwnPix=self.CtrBtwnPix)
         # Focal plane mask
@@ -1425,7 +1430,7 @@ class APLC2d(Coronagraph):
         field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
                               dtype='complex128')
         
-        if self.SymPupil2d == False:
+        if self.Pupil2dSym == False:
             for i in range(self.nlam):
                 field_Dtmp[i] = sft(field_L, self.nImg2d, self.mD_t[i], 
                           CtrBtwnPix=self.CtrBtwnPix2)
@@ -1463,7 +1468,7 @@ class APLC2d(Coronagraph):
         field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
                               dtype='complex128')
         
-        if self.SymPupil2d == False: 
+        if self.Pupil2dSym == False: 
             for i in range(self.nlam):
                 field_B       = self.mask2d*sft(field_A, self.nFPM, self.mB_t[i], 
                                                 CtrBtwnPix=self.CtrBtwnPix)
@@ -1541,7 +1546,7 @@ class SP2d(Coronagraph):
         field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
                               dtype='complex128')
 
-        if self.SymPupil2d == False:        
+        if self.Pupil2dSym == False:        
             for i in range(self.nlam):
                 field_Dtmp[i] = sft(field_A, self.nImg2d, self.mD_t[i], 
                       CtrBtwnPix=self.CtrBtwnPix2)
@@ -1577,7 +1582,7 @@ class SP2d(Coronagraph):
         field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
                               dtype='complex128')
         
-        if self.SymPupil2d == False:
+        if self.Pupil2dSym == False:
             for i in range(self.nlam):
                 field_Dtmp[i] = sft(field_A, self.nImg2d, self.mD_t[i], 
                       CtrBtwnPix=self.CtrBtwnPix2)
