@@ -24,7 +24,7 @@ from astropy.io import fits
 Parameters
 """
 #nPup = corono0.params['nPup']
-nPup = 50
+nPup = 200
 
 nImg2d = 400
 Fmax2d = 30
@@ -47,13 +47,13 @@ CtrBtwnPix2 = True
 Pupil2dSym = True
 
 #nlam
-nlam=1 
+nlam=5 
 
 #%%
 """
 File reading for Pupil and Lyot stop
 """
-pupil_name = 'sbr' # 'vlt' or 'sbr'
+pupil_name = 'vlt' # 'vlt' or 'sbr'
 fdir = Path('/Users/mndiaye/Dropbox/python/pupils/')
 fname = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
 fpath = fdir /  fname
@@ -109,7 +109,7 @@ pl.clf()
 pl.imshow(corono0.Pupil2d, cmap = cm.Greys_r)
 pl.title('Pupil transmission')
 
-fpath = '/users/mndiaye/Desktop/Kernel_Apod/apodisation.pdf'
+fpath = '/users/mndiaye/Desktop/Kernel_Apod/{0}_apodisation.pdf'.format(pupil_name)
 pl.figure(5)
 pl.clf()
 pl.imshow(Apod1_2d*corono0.Pupil2d, cmap = cm.Greys_r)
@@ -129,14 +129,14 @@ poly_corono_image1 = corono0.compute_corono_intensity_2d(Apod1_2d)
 
 #%% image plot
 
-fpath  = '/users/mndiaye/Desktop/Kernel_Apod/direct_image.pdf'
+fpath  = '/users/mndiaye/Desktop/Kernel_Apod/{0}_direct_image.pdf'.format(pupil_name)
 pl.figure(10)
 pl.clf()
 pl.imshow(poly_direct_image1**0.25, cmap = cm.inferno)
 pl.title('Apod1 - direct image')
 pl.savefig(fpath)
 
-fpath  = '/users/mndiaye/Desktop/Kernel_Apod/apodized_image.pdf'
+fpath  = '/users/mndiaye/Desktop/Kernel_Apod/{0}_apodized_image.pdf'.format(pupil_name)
 pl.figure(11)
 pl.clf()
 pl.imshow(poly_corono_image1**0.25, cmap = cm.inferno)
@@ -151,7 +151,7 @@ Display of the intensity profiles of the coronagraphic images
 nImg2d = corono0.params['nImg2d']
 
 
-fpath = '/users/mndiaye/Desktop/Kernel_Apod/intensity_profiles.pdf'
+fpath = '/users/mndiaye/Desktop/Kernel_Apod/{0}_intensity_profiles.pdf'.format(pupil_name)
 
 pl.figure(8)
 pl.clf()
@@ -160,7 +160,7 @@ pl.semilogy(corono0.xi2d,poly_direct_image1[nImg2d//2,nImg2d//2:]/poly_direct_im
 #pl.semilogy(corono0.xi,poly_direct_image2/poly_direct_image2.max(),label='Direct')
 #pl.semilogy(corono0.xi,poly_direct_image3/poly_direct_image3.max(),label='Direct')
 if corono_name == 'SP':
-    pl.semilogy(corono0.xi2d,poly_corono_image1[nImg2d//2,nImg2d//2:]/poly_corono_image1.max(),label='MaxTau')
+    pl.semilogy(corono0.xi2d,poly_corono_image1[nImg2d//2,nImg2d//2:]/poly_corono_image1.max(),label='Apod')
 else:
     pl.semilogy(corono0.xi2d,poly_corono_image1[nImg2d//2,nImg2d//2:]/poly_direct_image1.max(),label='MaxTau')
     

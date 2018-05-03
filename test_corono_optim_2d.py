@@ -28,7 +28,7 @@ Parameters
 """
 
 #nPup = corono0.params['nPup']
-nPup = 50
+nPup = 200
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
 rho0 =  4.0
@@ -47,7 +47,7 @@ CtrBtwnPix2 = True
 Pupil2dSym = True
 
 #nlam
-nlam=1
+nlam=5
 
 do_fits = True
 
@@ -55,7 +55,7 @@ do_fits = True
 """
 File reading for Pupil and Lyot stop
 """
-pupil_name = 'sbr' # 'vlt' or 'sbr'
+pupil_name = 'vlt' # 'vlt' or 'sbr'
 fdir = '/Users/mndiaye/Dropbox/python/pupils/'
 fname = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
 fpath = fdir + fname

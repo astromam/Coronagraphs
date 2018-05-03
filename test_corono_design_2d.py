@@ -17,9 +17,9 @@ from corono.utils import to_dict, uniform_disk, radius_disk
 tests on APLC 2d class
 """
 corono_name   = 'DZPM' # 'SP' or 'APLC' or DZPM
-CtrBtwnPix  = True
+CtrBtwnPix  = False
 CtrBtwnPix2 = False
-SymPupil2d  = True
+SymPupil2d  = False
 cDarkHole   = 6
 
 rho0   = 2.
