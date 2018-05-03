@@ -13,6 +13,8 @@ from pathlib import Path
 from corono import corono_design as cd
 from corono import corono_optim_1d as co1d
 
+import matplotlib.gridspec as gridspec
+
 from corono.utils import to_dict
 
 #%% parameters
@@ -23,16 +25,16 @@ Parameters
 bw   = 0.1
 nlam = 3
 
-PupilObs    = 0.14
+PupilObs    = 0.20
 rMask       = 4.0
-LyotStopObs = 0.28
+LyotStopObs = 0.40
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
 rho0 = 5.0
 rho1 = 10.0
 
 # contrast in the dark region
-cDarkHole = 8.0
+cDarkHole = 10.0
 
 # tau (integrated Pupil transmission)
 tau   = 0.5
@@ -50,6 +52,28 @@ params = to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
 corono_name = 'APLC' # 'APLC' or 'SP'
 
 fdir_ampl = Path('/Users/mndiaye/Dropbox/central storage/AMPL/PupilDataFiles/1D/General/dat2/')
+fdir_pyth = Path('/Users/mndiaye/Dropbox/central storage/AMPL/PupilDataFiles/1D/General/dat3/')
+
+fdir_plot = Path('/Users/mndiaye/Dropbox/central storage/AMPL/PupilDataFiles/1D/General/plot/')
+
+
+#fname_ampl = 'BPLC_obs={0:2d}_FPM={1:3d}_ls={2:2d}_IWA={3:03d}_OWA={4:03d}_BW={5:02d}_C={6:02d}_1D_N={7:04d}_nFPM={8:03d}_gurobi_apod.dat'.format(
+#                int(PupilObs*100), int(rMask*100),int(LyotStopObs*100),
+#                int(rho0*10),int(rho1*10),int(bw*100), int(cDarkHole),
+#                int(nPup), int(nFPM))
+#
+#fname_pyth = 'BPLC_obs={0:2d}_FPM={1:3d}_ls={2:2d}_IWA={3:03d}_OWA={4:03d}_BW={5:02d}_C={6:02d}_1D_N={7:04d}_nFPM={8:03d}_guropy_apod.dat'.format(
+#                int(PupilObs*100), int(rMask*100),int(LyotStopObs*100),
+#                int(rho0*10),int(rho1*10),int(bw*100), int(cDarkHole),
+#                int(nPup), int(nFPM))
+ 
+fname = 'BPLC_obs={0:2d}_FPM={1:3d}_ls={2:2d}_IWA={3:03d}_OWA={4:03d}_BW={5:02d}_C={6:02d}_1D_N={7:04d}_nFPM={8:03d}'.format(
+                int(PupilObs*100), int(rMask*100),int(LyotStopObs*100),
+                int(rho0*10),int(rho1*10),int(bw*100), int(cDarkHole),
+                int(nPup), int(nFPM))
+
+fname_ampl = fname + '_gurobi_apod.dat'
+fname_pyth = fname + '_guropy_apod.dat'
 
 #%%  
 """ 
@@ -99,39 +123,47 @@ Apod1 = problem1.solve_model()
 t1 = time.time()
 print('optimization time with gurobipy: {0:.2f}s'.format(t1-t0))
 
-#%%
-fname_ampl = 'BPLC_obs={0:2d}_FPM={1:3d}_ls={2:2d}_IWA={3:03d}_OWA={4:03d}_BW={5:02d}_C={6:02d}_1D_N={7:04d}_nFPM={8:03d}_gurobi_apod.dat'.format(
-                int(PupilObs*100), int(rMask*100),int(LyotStopObs*100),
-                int(rho0*10),int(rho1*10),int(bw*100), int(cDarkHole),
-                int(nPup), int(nFPM))
+fpath_pyth = fdir_pyth / fname_pyth
 
-#fname_ampl = 'BPLC_obs=14_FPM=280_ls=28_IWA=050_OWA=100_BW=20_C=06_1D_N=0500_gurobi_apod.dat'
-                
+test0 = np.zeros((nPup, 2))
+test0[:, 0] = corono0.r/2
+test0[:, 1] = Apod1
+
+np.savetxt(fpath_pyth, test0)
+
+#%%
+"""
+read file obtained with gurobi
+"""
 fpath_ampl = fdir_ampl / fname_ampl
 test = np.loadtxt(fpath_ampl)
 rApod2 = test[:, 0]
 Apod2  = test[:, 1] 
 
+
+
 #%% Display of the apodizer
 """
 Plot display of the apodizers
 """
-pl.figure(4)
-pl.clf()
-pl.title('Optimization comparison \n Transmission profiles of the apodizers')
-pl.plot(corono0.r, Apod1/Apod1.max(), label='gurobipy')
-pl.plot(rApod2*2, Apod2/Apod2.max(), label='ampl + gurobi')
-pl.xlabel(r'Pupil radius r')
-pl.ylabel('Apodizer amplitude transmission')
-pl.legend()
+fname_pl = fname + '_apodizers_tran.pdf'
+fpath = fdir_plot / fname_pl
 
-pl.figure(41)
+pl.figure(40)
 pl.clf()
-pl.title('Optimization comparison \n Transmission profiles of the apodizers')
-pl.plot(corono0.r, Apod1/Apod1.max() - Apod2/Apod2.max(), label='difference')
-pl.xlabel(r'Pupil radius r')
-pl.ylabel('Apodizer amplitude transmission')
-pl.legend()
+gs = gridspec.GridSpec(2, 1, height_ratios=[2, 1]) 
+ax1 = pl.subplot(gs[0])
+ax1.plot(corono0.r, Apod1/Apod1.max(), label='gurobipy')
+ax1.plot(rApod2*2, Apod2/Apod2.max(), label='ampl + gurobi')
+ax1.set_ylabel('Apodizer amplitude transmission')
+ax1.legend()
+ax2 = pl.subplot(gs[1])
+ax2.plot(corono0.r, Apod1/Apod1.max() - Apod2/Apod2.max())
+ax2.set_xlabel(r'Pupil radius r')
+ax2.set_ylabel('Difference')
+pl.tight_layout()
+pl.show()
+pl.savefig(str(fpath))
 
 #%% Signal in intensity
 """
@@ -147,9 +179,12 @@ poly_corono_image2 = corono0.compute_corono_intensity_1d(Apod2)
 """
 Display of the intensity profiles of the coronagraphic images
 """
+
+fname_pl = fname + '_intensity.pdf'
+fpath = fdir_plot / fname_pl
 pl.figure(5)
 pl.clf()
-pl.title('Optimization comparison \n Intensity profiles of the coronagraphic images')
+#pl.title('Intensity profiles of the coronagraphic images')
 #pl.semilogy(corono0.xi,poly_direct_image1/poly_direct_image1.max(),label='Direct')
 #pl.semilogy(corono0.xi,poly_direct_image2/poly_direct_image2.max(),label='Direct')
 #pl.semilogy(corono0.xi,poly_direct_image3/poly_direct_image3.max(),label='Direct')
@@ -161,7 +196,10 @@ pl.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle=
 pl.axhline(10**(-problem1.params['cDarkHole']), xmin=corono0.xi.min(), xmax=corono0.xi.max(), linewidth=1, color='k', linestyle='--')
 pl.xlabel(r'Angular separation in $\lambda_0$/D')
 pl.ylabel('Normalized intensity in log scale')
+pl.ylim(1e-12, 1e-3)
 pl.legend()
+pl.tight_layout()
+pl.savefig(str(fpath))
 
 #%%
 pl.show()
