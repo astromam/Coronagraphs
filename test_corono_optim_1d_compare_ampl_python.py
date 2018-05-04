@@ -12,7 +12,6 @@ import time
 
 from pathlib import Path
 from corono import corono_design as cd
-from corono import corono_optim_1d as co1d
 
 import matplotlib.gridspec as gridspec
 
