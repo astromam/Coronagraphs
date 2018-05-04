@@ -7,7 +7,6 @@ Created on Mon Apr 30 14:10:20 2018
 """
 
 import pylab as pl
-import numpy as np
 from pathlib import Path
 
 from corono import corono_design as cd
@@ -24,7 +23,7 @@ from astropy.io import fits
 Parameters
 """
 #nPup = corono0.params['nPup']
-nPup = 200
+nPup = 50
 
 nImg2d = 400
 Fmax2d = 30
@@ -53,8 +52,8 @@ nlam=5
 """
 File reading for Pupil and Lyot stop
 """
-pupil_name = 'vlt' # 'vlt' or 'sbr'
-fdir = Path('/Users/mndiaye/Dropbox/python/pupils/')
+pupil_name = 'sbr' # 'vlt' or 'sbr'
+fdir = Path('./pupils/2D/').resolve()
 fname = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
 fpath = fdir /  fname
 
@@ -69,27 +68,20 @@ params = to_dict(nPup=nPup, rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
                  Pupil2dSym = Pupil2dSym)
 
 
-
-#params = to_dict(nPup=nPup, rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau, 
-#                 CtrBtwnPix=CtrBtwnPix, CtrBtwnPix2=CtrBtwnPix2, nlam=nlam)
-
-
 #%%  
 """ 
 Coronagraph defintion
 """
-
 if corono_name == 'SP':
     corono0 = cd.SP2d(**params)
 else:
     corono0 = cd.APLC2d(**params)
 
-
 #%%
-#
-
-
-fdir = Path('/Users/mndiaye/Dropbox/central storage/AMPL/PupilDataFiles/2D/General/dat/')
+"""
+Read files
+"""
+fdir = Path('./results/2D').resolve()
 
 if corono_name == 'SP':
     fname_gen  = 'SP00_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}.fits'
@@ -109,18 +101,19 @@ pl.clf()
 pl.imshow(corono0.Pupil2d, cmap = cm.Greys_r)
 pl.title('Pupil transmission')
 
-fpath = '/users/mndiaye/Desktop/Kernel_Apod/{0}_apodisation.pdf'.format(pupil_name)
+fdir_pdf = Path('./results/2D/plots/').resolve()
+fname = '{0}_apodisation.pdf'.format(pupil_name)
+fpath = fdir_pdf / fname
 pl.figure(5)
 pl.clf()
 pl.imshow(Apod1_2d*corono0.Pupil2d, cmap = cm.Greys_r)
 pl.title('Apod 1 transmission - MaxTau problem')
-pl.savefig(fpath)
+pl.savefig(str(fpath))
 
 #%% Signal in intensity
 """
 Computation of the direct and coronagraphic images
 """
-
 if corono_name == 'APLC':
     poly_direct_image1 = corono0.compute_direct_intensity_2d(Apod1_2d)
 else:
@@ -128,20 +121,24 @@ else:
 poly_corono_image1 = corono0.compute_corono_intensity_2d(Apod1_2d)
 
 #%% image plot
-
-fpath  = '/users/mndiaye/Desktop/Kernel_Apod/{0}_direct_image.pdf'.format(pupil_name)
+"""
+Display direct and coronagraphic images
+"""
+fname = '{0}_direct_image.pdf'.format(pupil_name)
+fpath = fdir_pdf / fname
 pl.figure(10)
 pl.clf()
 pl.imshow(poly_direct_image1**0.25, cmap = cm.inferno)
 pl.title('Apod1 - direct image')
-pl.savefig(fpath)
+pl.savefig(str(fpath))
 
-fpath  = '/users/mndiaye/Desktop/Kernel_Apod/{0}_apodized_image.pdf'.format(pupil_name)
+fname  = '{0}_apodized_image.pdf'.format(pupil_name)
+fpath = fdir_pdf / fname
 pl.figure(11)
 pl.clf()
 pl.imshow(poly_corono_image1**0.25, cmap = cm.inferno)
 pl.title('Apod1 - apodized image')
-pl.savefig(fpath)
+pl.savefig(str(fpath))
 
 #%% Intensity profiles of the direct and coronagraphic images
 """
@@ -149,9 +146,8 @@ Display of the intensity profiles of the coronagraphic images
 """
 
 nImg2d = corono0.params['nImg2d']
-
-
-fpath = '/users/mndiaye/Desktop/Kernel_Apod/{0}_intensity_profiles.pdf'.format(pupil_name)
+fname = '{0}_intensity_profiles.pdf'.format(pupil_name)
+fpath = fdir_pdf / fname
 
 pl.figure(8)
 pl.clf()
@@ -173,15 +169,7 @@ pl.axhline(10**(-cDarkHole), xmin=corono0.xi.min(), xmax=corono0.xi.max(), linew
 pl.xlabel(r'Angular separation in $\lambda_0$/D')
 pl.ylabel('Normalized intensity in log scale')
 pl.legend()
-pl.savefig(fpath)
+pl.savefig(str(fpath))
 
 #%%
 pl.show()
-
-#%%
-#
-
-
-#fpath = '/Users/mndiaye/Desktop/test.fits' 
-#fits.writeto(fpath, Apod1_2d, clobber=True)
-
