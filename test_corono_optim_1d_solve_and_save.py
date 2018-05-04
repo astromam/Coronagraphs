@@ -37,9 +37,9 @@ cDarkHole = 8.0
 # tau (integrated Pupil transmission)
 tau   = 0.5
 
-nPup = 500
-nFPM = 200
-nImg = 110
+nPup = 1000
+nFPM = 500
+nImg = 200
 Fmax = 11
 
 params = to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
