@@ -207,8 +207,7 @@ class ProblemMatrix(object):
             self.corono_field_t_re[i], self.corono_field_t_im[i] = \
             self.corono.compute_corono_field_2d_vec(Apod2d)
             Apod2d[i0,j0] = 0  
-
-               
+        
         self.corono_field_t2_re = np.reshape(
                 self.corono_field_t_re[:,:,self.idx_dz], 
                 (self.corono.nPup**2, self.corono.nlam*self.ndz))[self.idx_pup,:]

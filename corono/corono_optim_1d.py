@@ -169,11 +169,6 @@ class ProblemMatrix(object):
         self.lys     = (self.corono.LyotStop1d > 0.)
         self.idx_lys = list(self.bbb[self.lys]) 
     
-#        self.direct_field_t_re, self.direct_field_t_im = \
-#                self.corono.prop_direct_matrix_1d()
-#        self.corono_field_t_re, self.corono_field_t_im = \
-#                self.corono.prop_corono_matrix_1d()
-
         direct_field_t = np.zeros((self.corono.nPup, self.corono.nlam, 
                                    self.corono.nImg+1), dtype='complex128')
         print('generating direct response matrices for 1D problem')
@@ -208,8 +203,6 @@ class ProblemMatrix(object):
         self.corono_field_t2    = np.concatenate((self.corono_field_t2_re,
                                                   self.corono_field_t2_im), 
                                                  axis=1)
-
-
         
         self.A       = None
         self.b       = None
