@@ -34,7 +34,7 @@ rho0 = 5.0
 rho1 = 10.0
 
 # contrast in the dark region
-cDarkHole = 10.0
+cDarkHole = 8.0
 
 # tau (integrated Pupil transmission)
 tau   = 0.5
@@ -51,28 +51,16 @@ params = to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
 
 corono_name = 'APLC' # 'APLC' or 'SP'
 
-fdir_ampl = Path('/Users/mndiaye/Dropbox/central storage/AMPL/PupilDataFiles/1D/General/dat2/')
-fdir_pyth = Path('/Users/mndiaye/Dropbox/central storage/AMPL/PupilDataFiles/1D/General/dat3/')
+fdir = Path('.').resolve()
 
-fdir_plot = Path('/Users/mndiaye/Dropbox/central storage/AMPL/PupilDataFiles/1D/General/plot/')
-
-
-#fname_ampl = 'BPLC_obs={0:2d}_FPM={1:3d}_ls={2:2d}_IWA={3:03d}_OWA={4:03d}_BW={5:02d}_C={6:02d}_1D_N={7:04d}_nFPM={8:03d}_gurobi_apod.dat'.format(
-#                int(PupilObs*100), int(rMask*100),int(LyotStopObs*100),
-#                int(rho0*10),int(rho1*10),int(bw*100), int(cDarkHole),
-#                int(nPup), int(nFPM))
-#
-#fname_pyth = 'BPLC_obs={0:2d}_FPM={1:3d}_ls={2:2d}_IWA={3:03d}_OWA={4:03d}_BW={5:02d}_C={6:02d}_1D_N={7:04d}_nFPM={8:03d}_guropy_apod.dat'.format(
-#                int(PupilObs*100), int(rMask*100),int(LyotStopObs*100),
-#                int(rho0*10),int(rho1*10),int(bw*100), int(cDarkHole),
-#                int(nPup), int(nFPM))
+fdir_pyth = fdir / 'results' / 'dat_pyth'
+fdir_plot = fdir / 'results' / 'plots'
  
 fname = 'BPLC_obs={0:2d}_FPM={1:3d}_ls={2:2d}_IWA={3:03d}_OWA={4:03d}_BW={5:02d}_C={6:02d}_1D_N={7:04d}_nFPM={8:03d}'.format(
                 int(PupilObs*100), int(rMask*100),int(LyotStopObs*100),
                 int(rho0*10),int(rho1*10),int(bw*100), int(cDarkHole),
                 int(nPup), int(nFPM))
 
-fname_ampl = fname + '_gurobi_apod.dat'
 fname_pyth = fname + '_guropy_apod.dat'
 
 #%%  
@@ -119,7 +107,7 @@ m1 = problem1.compute_gurobi_model()
 """
 Apodizer solutions
 """
-Apod1 = problem1.solve_model()
+Apod_pyth = problem1.solve_model()
 t1 = time.time()
 print('optimization time with gurobipy: {0:.2f}s'.format(t1-t0))
 
@@ -127,20 +115,9 @@ fpath_pyth = fdir_pyth / fname_pyth
 
 test0 = np.zeros((nPup, 2))
 test0[:, 0] = corono0.r/2
-test0[:, 1] = Apod1
+test0[:, 1] = Apod_pyth
 
 np.savetxt(fpath_pyth, test0)
-
-#%%
-"""
-read file obtained with gurobi
-"""
-fpath_ampl = fdir_ampl / fname_ampl
-test = np.loadtxt(fpath_ampl)
-rApod2 = test[:, 0]
-Apod2  = test[:, 1] 
-
-
 
 #%% Display of the apodizer
 """
@@ -149,18 +126,12 @@ Plot display of the apodizers
 fname_pl = fname + '_apodizers_tran.pdf'
 fpath = fdir_plot / fname_pl
 
-pl.figure(40)
+pl.figure(4)
 pl.clf()
-gs = gridspec.GridSpec(2, 1, height_ratios=[2, 1]) 
-ax1 = pl.subplot(gs[0])
-ax1.plot(corono0.r, Apod1/Apod1.max(), label='gurobipy')
-ax1.plot(rApod2*2, Apod2/Apod2.max(), label='ampl + gurobi')
-ax1.set_ylabel('Apodizer amplitude transmission')
-ax1.legend()
-ax2 = pl.subplot(gs[1])
-ax2.plot(corono0.r, Apod1/Apod1.max() - Apod2/Apod2.max())
-ax2.set_xlabel(r'Pupil radius r')
-ax2.set_ylabel('Difference')
+pl.plot(corono0.r, Apod_pyth/Apod_pyth.max(), label='gurobipy')
+pl.xlabel(r'Pupil radius r')
+pl.ylabel('Apodizer amplitude transmission')
+pl.legend()
 pl.tight_layout()
 pl.show()
 pl.savefig(str(fpath))
@@ -169,11 +140,8 @@ pl.savefig(str(fpath))
 """
 Computation of the direct and coronagraphic images
 """
-poly_direct_image1 = corono0.compute_direct_intensity_1d(Apod1)
-poly_corono_image1 = corono0.compute_corono_intensity_1d(Apod1)
-
-poly_direct_image2 = corono0.compute_direct_intensity_1d(Apod2)
-poly_corono_image2 = corono0.compute_corono_intensity_1d(Apod2)
+poly_direct_image1 = corono0.compute_direct_intensity_1d(Apod_pyth)
+poly_corono_image1 = corono0.compute_corono_intensity_1d(Apod_pyth)
 
 #%% Intensity profiles of the direct and coronagraphic images
 """
@@ -189,7 +157,6 @@ pl.clf()
 #pl.semilogy(corono0.xi,poly_direct_image2/poly_direct_image2.max(),label='Direct')
 #pl.semilogy(corono0.xi,poly_direct_image3/poly_direct_image3.max(),label='Direct')
 pl.semilogy(corono0.xi,poly_corono_image1/poly_direct_image1.max(),label='gurobipy')
-pl.semilogy(corono0.xi,poly_corono_image2/poly_direct_image2.max(),label='ampl + gurobi')
 pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
 pl.axvline(x=corono0.rho0, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
 pl.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
