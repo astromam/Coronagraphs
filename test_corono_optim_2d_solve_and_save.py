@@ -24,7 +24,7 @@ Parameters
 pupil_name = 'sbr' # 'vlt' or 'sbr'
 
 #nPup = corono0.params['nPup']
-nPup = 50
+nPup = 200
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
 rho0 =  4.0

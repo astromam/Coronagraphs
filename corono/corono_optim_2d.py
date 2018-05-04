@@ -186,17 +186,11 @@ class ProblemMatrix(object):
         self.lys     = (self.LyotStop_vec > 0.)
         self.idx_lys = list(self.bbb[self.lys]) 
 
-
-#        self.direct_field_t_re, self.direct_field_t_im = \
-#                self.corono.prop_direct_matrix_2d()
-#        self.corono_field_t_re, self.corono_field_t_im = \
-#                self.corono.prop_corono_matrix_2d()
-
         self.direct_field_t_re = np.zeros((self.corono.nPup**2, self.corono.nlam, self.corono.nImg2d**2))
         self.direct_field_t_im = np.zeros((self.corono.nPup**2, self.corono.nlam, self.corono.nImg2d**2))
         print('generating direct response matrix for 2D problem')
         Apod2d = np.zeros((self.corono.nPup, self.corono.nPup))
-        for i in np.arange(self.corono.nPup**2):  
+        for i in self.idx_pup:  
             (i0, j0) = np.unravel_index(i, (self.corono.nPup, self.corono.nPup))
             Apod2d[i0,j0] = 1
             self.direct_field_t_re[i],self.direct_field_t_im[i] = \
@@ -207,14 +201,14 @@ class ProblemMatrix(object):
         self.corono_field_t_im = np.zeros((self.corono.nPup**2, self.corono.nlam, self.corono.nImg2d**2))
         print('generating corono response matrix for 2D problem')
         Apod2d = np.zeros((self.corono.nPup, self.corono.nPup))
-        for i in np.arange(self.corono.nPup**2): 
+        for i in self.idx_pup: 
             (i0, j0) = np.unravel_index(i, (self.corono.nPup, self.corono.nPup))
             Apod2d[i0,j0] = 1            
             self.corono_field_t_re[i], self.corono_field_t_im[i] = \
             self.corono.compute_corono_field_2d_vec(Apod2d)
             Apod2d[i0,j0] = 0  
 
-       
+               
         self.corono_field_t2_re = np.reshape(
                 self.corono_field_t_re[:,:,self.idx_dz], 
                 (self.corono.nPup**2, self.corono.nlam*self.ndz))[self.idx_pup,:]

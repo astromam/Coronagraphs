@@ -169,10 +169,33 @@ class ProblemMatrix(object):
         self.lys     = (self.corono.LyotStop1d > 0.)
         self.idx_lys = list(self.bbb[self.lys]) 
     
-        self.direct_field_t_re, self.direct_field_t_im = \
-                self.corono.prop_direct_matrix_1d()
-        self.corono_field_t_re, self.corono_field_t_im = \
-                self.corono.prop_corono_matrix_1d()
+#        self.direct_field_t_re, self.direct_field_t_im = \
+#                self.corono.prop_direct_matrix_1d()
+#        self.corono_field_t_re, self.corono_field_t_im = \
+#                self.corono.prop_corono_matrix_1d()
+
+        direct_field_t = np.zeros((self.corono.nPup, self.corono.nlam, 
+                                   self.corono.nImg+1), dtype='complex128')
+        print('generating direct response matrices for 1D problem')
+        Apod1d    = np.zeros((self.corono.nPup))
+        for i in np.arange(self.corono.nPup):
+            Apod1d[i] = 1
+            direct_field_t[i] = self.corono.compute_direct_field_1d(Apod1d)
+            Apod1d[i] = 0            
+        self.direct_field_t_re = direct_field_t.real
+        self.direct_field_t_im = direct_field_t.imag    
+
+        corono_field_t = np.zeros((self.corono.nPup, self.corono.nlam, 
+                                   self.corono.nImg+1), dtype='complex128')
+        print('generating corono response matrices for 1D problem')
+        Apod1d    = np.zeros((self.corono.nPup))
+        for i in np.arange(self.corono.nPup):
+            Apod1d[i] = 1
+            corono_field_t[i] = self.corono.compute_corono_field_1d(Apod1d)
+            Apod1d[i] = 0
+        self.corono_field_t_re = corono_field_t.real
+        self.corono_field_t_im = corono_field_t.imag
+
 
         self.corono_field_t2_re = np.reshape(
                 self.corono_field_t_re[:,:,self.idx_dz], 
@@ -187,41 +210,6 @@ class ProblemMatrix(object):
                                                  axis=1)
 
 
-#        self.Pupil_vec = np.reshape(self.corono.Pupil2d, (self.corono.nPup**2))
-#        
-#        self.pup     = (self.Pupil_vec > 0.)
-#        self.bbb     = np.arange(self.corono.nPup**2)
-#        self.idx_pup = list(self.bbb[self.pup])
-#        self.npp     = len(self.idx_pup) 
-#        
-#        self.dz2d, self.rad2d = self.corono.generate_area()
-#        self.dz      = np.reshape(self.dz2d, (self.corono.nImg2d**2))
-#        self.aaa     = np.arange(self.corono.nImg2d**2)
-#        self.idx_dz  = list(self.aaa[self.dz])  
-#        self.ndz     = len(self.idx_dz)
-#
-#        self.LyotStop_vec = np.reshape(self.corono.LyotStop2d, (self.corono.nPup**2))
-#        self.lys     = (self.LyotStop_vec > 0.)
-#        self.idx_lys = list(self.bbb[self.lys]) 
-#
-#
-#        self.direct_field_t_re, self.direct_field_t_im = \
-#                self.corono.prop_direct_matrix_2d()
-#        self.corono_field_t_re, self.corono_field_t_im = \
-#                self.corono.prop_corono_matrix_2d()
-#       
-#        self.corono_field_t2_re = np.reshape(
-#                self.corono_field_t_re[:,:,self.idx_dz], 
-#                (self.corono.nPup**2, self.corono.nlam*self.ndz))[self.idx_pup,:]
-#
-#        self.corono_field_t2_im = np.reshape(
-#                self.corono_field_t_im[:,:,self.idx_dz], 
-#                (self.corono.nPup**2, self.corono.nlam*self.ndz))[self.idx_pup,:]
-#
-#        self.corono_field_t2    = np.concatenate((self.corono_field_t2_re,
-#                                                  self.corono_field_t2_im), 
-#                                                 axis=1)
-
         
         self.A       = None
         self.b       = None
@@ -234,13 +222,7 @@ class ProblemMatrix(object):
         self.TR      = np.sum(2.*np.pi*self.corono.Pupil1d *np.linspace(
                 0.5,self.corono.nPup+0.5,num=self.corono.nPup)\
                 /(2.*self.corono.nPup)**2)
-        
-#        self.Apod    = np.zeros((self.corono.nPup**2))
-#
-#        
-#        self.TR      = np.sum(self.Pupil_vec)
-        
- 
+               
 
 #%%    
     def compute_matrices(self):

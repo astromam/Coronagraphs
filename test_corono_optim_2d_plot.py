@@ -23,7 +23,7 @@ from astropy.io import fits
 Parameters
 """
 #nPup = corono0.params['nPup']
-nPup = 50
+nPup = 200
 
 nImg2d = 400
 Fmax2d = 30

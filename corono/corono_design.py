@@ -754,56 +754,6 @@ class Coronagraph(object):
             print('Warning: No normalization for multiple lambda!')
             return np.abs(corono_field)**2       
 
-#%% generation of the direct response matrix
-    def prop_direct_matrix_1d(self,):
-        """
-        Computes the response matrix of the direct image for all the points in
-        the pupil for 1D problem.
-                
-        Returns    
-        ----------
-        res : array_like, array_like
-            Real and imaginary parts of the response matrix 
-            for the direct image 
-            
-        """        
-        direct_field_t = np.zeros((self.nPup, self.nlam, self.nImg+1), 
-                                  dtype='complex128')
-        print('generating direct response matrices for 1D problem')
-        Apod1d    = np.zeros((self.nPup))
-        for i in np.arange(self.nPup):
-            Apod1d[i] = 1
-            direct_field_t[i] = self.compute_direct_field_1d(Apod1d)
-            Apod1d[i] = 0            
-        direct_field_t_re = direct_field_t.real
-        direct_field_t_im = direct_field_t.imag
-        return direct_field_t_re, direct_field_t_im    
-    
-#%% generation of the coronagraphic response matrix        
-    def prop_corono_matrix_1d(self,):
-        """
-        Computes the response matrix of the coronagraphic image for all the 
-        points in the pupil for 1D problem.
-                
-        Returns    
-        ----------
-        res : array_like, array_like
-            Real and imaginary parts of the response matrix 
-            for the coronagraphic image 
-            
-        """
-        corono_field_t = np.zeros((self.nPup, self.nlam, self.nImg+1), 
-                                  dtype='complex128')
-        print('generating corono response matrices for 1D problem')
-        Apod1d    = np.zeros((self.nPup))
-        for i in np.arange(self.nPup):
-            Apod1d[i] = 1
-            corono_field_t[i] = self.compute_corono_field_1d(Apod1d)
-            Apod1d[i] = 0
-        corono_field_t_re = corono_field_t.real
-        corono_field_t_im = corono_field_t.imag
-        return corono_field_t_re, corono_field_t_im 
-
 #%% direct signal in intensity
     def compute_direct_intensity_2d(self,Apod2d, poly=True):
         """
@@ -824,7 +774,6 @@ class Coronagraph(object):
             Intensity of the direct broadband image or monochromatic images. 
             
         """        
-#        direct_field_2d = self.compute_direct_field_2d(Apod2d,Pupil2d, LyotStop2d)
         direct_field_2d = self.compute_direct_field_2d(Apod2d)
         
         if poly:
@@ -905,57 +854,6 @@ class Coronagraph(object):
         test_re = np.reshape(test.real, (self.nlam, self.nImg2d**2))
         test_im = np.reshape(test.imag, (self.nlam, self.nImg2d**2))
         return test_re, test_im
-
-#%% generation of the direct response matrix
-#    def prop_direct_matrix_2d(self):
-#        """
-#        Computes the response matrix of the direct image for all the points in
-#        the pupil for the vectorized 2D problem.
-#                
-#        Returns    
-#        ----------
-#        res : array_like, array_like
-#            Real and imaginary parts of the direct image response matrix 
-#            
-#        """
-#        
-#        direct_field_t_re = np.zeros((self.nPup**2, self.nlam, self.nImg2d**2))
-#        direct_field_t_im = np.zeros((self.nPup**2, self.nlam, self.nImg2d**2))
-#        print('generating direct response matrix for 2D problem')
-#        Apod2d = np.zeros((self.nPup, self.nPup))
-#        for i in np.arange(self.nPup**2):  
-#            (i0, j0) = np.unravel_index(i, (self.nPup, self.nPup))
-#            Apod2d[i0,j0] = 1
-#            direct_field_t_re[i],direct_field_t_im[i] = \
-#            self.compute_direct_field_2d_vec(Apod2d)
-##            self.compute_direct_field_2d_vec(Apod2d, Pupil2d, LyotStop2d)
-#            Apod2d[i0,j0] = 0
-#        return direct_field_t_re, direct_field_t_im    
-
-#%% generation of the coronagraphic response matrix        
-#    def prop_corono_matrix_2d(self):
-#        """
-#        Computes the response matrix of the coronagraphic image for all the 
-#        points in the pupil for vectorized 2D problem.
-#                
-#        Returns    
-#        ----------
-#        res : array_like, array_like
-#            Real and imaginary parts of the coronagraphic image response matrix 
-#            
-#        """
-#        corono_field_t_re = np.zeros((self.nPup**2, self.nlam, self.nImg2d**2))
-#        corono_field_t_im = np.zeros((self.nPup**2, self.nlam, self.nImg2d**2))
-#        print('generating corono response matrix for 2D problem')
-#        Apod2d = np.zeros((self.nPup, self.nPup))
-#        for i in np.arange(self.nPup**2): 
-#            (i0, j0) = np.unravel_index(i, (self.nPup, self.nPup))
-#            Apod2d[i0,j0] = 1            
-#            corono_field_t_re[i], corono_field_t_im[i] = \
-#            self.compute_corono_field_2d_vec(Apod2d)
-##            self.compute_corono_field_2d_vec(Apod2d, Pupil2d, LyotStop2d)
-#            Apod2d[i0,j0] = 0 
-#        return corono_field_t_re, corono_field_t_im 
 
 #%%
     def generate_area(self,):
