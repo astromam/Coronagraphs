@@ -8,7 +8,6 @@ Created on Fri May  4 09:36:52 2018
 
 import numpy as np
 import pylab as pl
-import time
 
 from pathlib import Path
 from corono import corono_design as cd
