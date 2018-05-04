@@ -52,9 +52,9 @@ corono_name = 'APLC' # 'APLC' or 'SP'
 
 fdir = Path('.').resolve()
 
-fdir_ampl = fdir / 'results' / 'dat_ampl'
-fdir_pyth = fdir / 'results' / 'dat_pyth'
-fdir_plot = fdir / 'results' / 'plots'
+fdir_ampl = fdir / 'results' / '1D' / 'dat_ampl'
+fdir_pyth = fdir / 'results' / '1D' / 'dat_pyth'
+fdir_plot = fdir / 'results' / '1D' / 'plots'
 
 fname = 'BPLC_obs={0:2d}_FPM={1:3d}_ls={2:2d}_IWA={3:03d}_OWA={4:03d}_BW={5:02d}_C={6:02d}_1D_N={7:04d}_nFPM={8:03d}'.format(
                 int(PupilObs*100), int(rMask*100),int(LyotStopObs*100),

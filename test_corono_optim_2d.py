@@ -28,7 +28,7 @@ Parameters
 """
 
 #nPup = corono0.params['nPup']
-nPup = 200
+nPup = 50
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
 rho0 =  4.0
@@ -55,10 +55,10 @@ do_fits = True
 """
 File reading for Pupil and Lyot stop
 """
-pupil_name = 'vlt' # 'vlt' or 'sbr'
-fdir = '/Users/mndiaye/Dropbox/python/pupils/'
+pupil_name = 'sbr' # 'vlt' or 'sbr'
+fdir = Path('./pupils/2D/').resolve()
 fname = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
-fpath = fdir + fname
+fpath = fdir / fname
 
 Pupil2d = fits.getdata(fpath)
 LyotStop2d = fits.getdata(fpath)
@@ -247,7 +247,7 @@ pl.show()
 
 #%%
 #
-fdir = Path('/Users/mndiaye/Dropbox/central storage/AMPL/PupilDataFiles/2D/General/dat/')
+fdir = Path('./results/2D').resolve()
 
 if corono_name == 'SP':
     fname_gen  = 'SP00_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}.fits'
