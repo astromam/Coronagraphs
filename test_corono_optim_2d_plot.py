@@ -22,8 +22,11 @@ from astropy.io import fits
 """
 Parameters
 """
+# Telescope name
+pupil_name = 'vlt' # 'vlt' or 'sbr'
+
 #nPup = corono0.params['nPup']
-nPup = 300
+nPup = 50
 
 nImg2d = 300
 Fmax2d = 30
@@ -40,7 +43,7 @@ cDarkHole = 4
 # tau (integrated Pupil transmission)
 tau   = 0.4
 
-corono_name   = 'SP' # 'SP' or 'APLC'
+corono_name   = 'APLC' # 'SP' or 'APLC'
 CtrBtwnPix  = True
 CtrBtwnPix2 = True
 Pupil2dSym = True
@@ -52,7 +55,6 @@ nlam=5
 """
 File reading for Pupil and Lyot stop
 """
-pupil_name = 'sbr' # 'vlt' or 'sbr'
 fdir = Path('./pupils/2D/').resolve()
 fname = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
 fpath = fdir /  fname
@@ -81,7 +83,7 @@ else:
 """
 Read files
 """
-fdir = Path('./results/2D').resolve()
+fdir = Path('./results/2D/dat_pyth').resolve()
 
 if corono_name == 'SP':
     fname_gen  = 'SP00_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}.fits'

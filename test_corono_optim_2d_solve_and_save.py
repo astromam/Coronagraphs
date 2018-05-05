@@ -21,26 +21,29 @@ from astropy.io import fits
 Parameters
 """
 # Telescope name
-pupil_name = 'sbr' # 'vlt' or 'sbr'
+pupil_name = 'vlt' # 'vlt' or 'sbr' or 'lvr'
 
 #nPup = corono0.params['nPup']
-nPup = 300
+nPup = 50
+
+# mask radius in lam0/D unit
+#rMask = 4.0
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
 rho0 =  4.0
 rho1 = 10.0
 
 # contrast in the dark region
-cDarkHole = 4
+cDarkHole = 4.0
 
 # tau (integrated Pupil transmission)
 tau   = 0.4
 
 # CtrBtwnPix2
-corono_name   = 'SP' # 'SP' or 'APLC'
+corono_name   = 'APLC' # 'SP' or 'APLC'
 CtrBtwnPix  = True
 CtrBtwnPix2 = True
-Pupil2dSym = True
+Pupil2dSym  = True
 
 #nlam
 nlam=5
@@ -52,11 +55,17 @@ do_fits = True
 File reading for Pupil and Lyot stop
 """
 fdir = Path('./pupils/2D/').resolve()
-fname = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
-fpath = fdir / fname
+if pupil_name == 'lvr':
+    fname_pup = 'ATLAST_Aperture_nPup={0}.fits'.format(nPup,)
+    fname_lys = 'ATLAST_LyotStop_nPup={0}.fits'.format(nPup,)
+else:
+    fname_pup = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
+    fname_lys = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
 
-Pupil2d = fits.getdata(fpath)
-LyotStop2d = fits.getdata(fpath)
+fpath_pup = fdir / fname_pup
+fpath_lys = fdir / fname_lys
+Pupil2d    = fits.getdata(fpath_pup)
+LyotStop2d = fits.getdata(fpath_lys)
 
 
 params = to_dict(nPup=nPup, rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau, 
@@ -119,7 +128,7 @@ if Pupil2dSym == True:
 """
 Save apodizer
 """
-fdir = Path('./results/2D').resolve()
+fdir = Path('./results/2D/dat_pyth').resolve()
 
 if corono_name == 'SP':
     fname_gen  = 'SP00_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}.fits'
