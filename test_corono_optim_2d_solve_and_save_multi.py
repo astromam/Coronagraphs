@@ -26,8 +26,8 @@ pupil_name = 'lvr' # 'vlt' or 'sbr' or 'lvr'
 #nPup = corono0.params['nPup']
 nPup = 600
 
-Fmax2d = 11 
-nImg2d = 22
+Fmax2d = 22 
+nImg2d = 44
 
 # mask radius in lam0/D unit
 rMask = 4.0

@@ -23,52 +23,63 @@ from astropy.io import fits
 Parameters
 """
 # Telescope name
-pupil_name = 'vlt' # 'vlt' or 'sbr'
+pupil_name = 'lvr' # 'vlt' or 'sbr' or 'lvr'
 
 #nPup = corono0.params['nPup']
-nPup = 50
+nPup = 600
 
-nImg2d = 300
-Fmax2d = 30
+Fmax2d = 22 
+nImg2d = 220
 
-nFPM = 100 
+# mask radius in lam0/D unit
+rMask = 4.0
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
-rho0 =  4.0
+rho0 =  3.5
 rho1 = 10.0
 
 # contrast in the dark region
-cDarkHole = 4
+cDarkHole = 10
 
 # tau (integrated Pupil transmission)
 tau   = 0.4
 
+# CtrBtwnPix2
 corono_name   = 'APLC' # 'SP' or 'APLC'
 CtrBtwnPix  = True
 CtrBtwnPix2 = True
-Pupil2dSym = True
+Pupil2dSym  = True
 
 #nlam
-nlam=5 
+nlam = 3
+bw   = 0.1
+
+do_fits = True
 
 #%%
 """
 File reading for Pupil and Lyot stop
 """
 fdir = Path('./pupils/2D/').resolve()
-fname = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
-fpath = fdir /  fname
+if pupil_name == 'lvr':
+    fname_pup = 'ATLAST_Aperture_nPup={0}.fits'.format(nPup,)
+    fname_lys = 'ATLAST_LyotStop_nPup={0}.fits'.format(nPup,)
+else:
+    fname_pup = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
+    fname_lys = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
 
-Pupil2d = fits.getdata(fpath)
-LyotStop2d = fits.getdata(fpath)
+fpath_pup = fdir / fname_pup
+fpath_lys = fdir / fname_lys
+Pupil2d    = fits.getdata(fpath_pup)
+LyotStop2d = fits.getdata(fpath_lys)
 
 
-params = to_dict(nPup=nPup, rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau, 
-                 CtrBtwnPix=CtrBtwnPix, CtrBtwnPix2=CtrBtwnPix2, nlam=nlam, 
+params = to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d,
+                 rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau, 
+                 CtrBtwnPix=CtrBtwnPix, CtrBtwnPix2=CtrBtwnPix2, 
+                 nlam=nlam, bw=bw,
                  Pupil2d = Pupil2d, LyotStop2d = LyotStop2d,
-                 nImg2d = nImg2d, Fmax2d = Fmax2d, nFPM = nFPM,
-                 Pupil2dSym = Pupil2dSym)
-
+                 Pupil2dSym = Pupil2dSym, rMask=rMask)
 
 #%%  
 """ 
