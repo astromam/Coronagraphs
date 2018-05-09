@@ -8,6 +8,7 @@ Created on Thu May  3 10:26:11 2018
 import numpy as np
 import pylab as pl
 import time
+import os
 
 from pathlib import Path
 from corono import corono_design as cd
@@ -53,6 +54,12 @@ fdir = Path('.').resolve()
 
 fdir_pyth = fdir / 'results' / '1D' / 'dat_pyth'
 fdir_plot = fdir / 'results' / '1D' / 'plots'
+
+if not os.path.exists(fdir_plot):
+    os.makedirs(fdir_plot)
+    
+if not os.path.exists(fdir_pyth):
+    os.makedirs(fdir_pyth)    
  
 fname = 'BPLC_obs={0:2d}_FPM={1:3d}_ls={2:2d}_IWA={3:03d}_OWA={4:03d}_BW={5:02d}_C={6:02d}_1D_N={7:04d}_nFPM={8:03d}'.format(
                 int(PupilObs*100), int(rMask*100),int(LyotStopObs*100),

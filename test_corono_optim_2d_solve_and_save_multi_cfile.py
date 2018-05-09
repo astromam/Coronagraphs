@@ -16,6 +16,8 @@ from corono.utils import to_dict
 
 from astropy.io import fits
 
+import os
+
 import sys
 sys.path.insert(0, '/Users/mndiaye/Dropbox/python/APLC/optim')
 
@@ -29,7 +31,7 @@ Parameters
 pupil_name = 'sbr' # 'vlt' or 'sbr' or 'lvr'
 
 #nPup = corono0.params['nPup']
-nPup = 50
+nPup = 200
 
 Fmax2d = 22 
 nImg2d = 44
@@ -157,13 +159,8 @@ if do_fits is True:
 """
 Apodizer solutions with cython solver by Remi Flamary
 """    
-
-
 t0 = time.time()
-AA = problem1.A
-bb = problem1.b
-cc = problem1.c
-Apod2, val = stdgurobi.lp_solve(cc, A=AA, b=bb)
+Apod2tmp, val = stdgurobi.lp_solve(problem1.c, A=(problem1.A).T, b=problem1.b)
 t1 = time.time() 
 print('Pupil2dSym:{0}, total computation time: {1:.2f}s for cython'.format(Pupil2dSym, t1-t0))
 
@@ -171,6 +168,9 @@ print('Pupil2dSym:{0}, total computation time: {1:.2f}s for cython'.format(Pupil
 """
 Generation of full apodizer for quarter pupil optimization
 """
+
+Apod2 = np.zeros((corono0.nPup**2))
+Apod2[problem1.idx_pup] = Apod2tmp
 Apod2_2d = np.reshape(Apod2, (corono0.nPup, corono0.nPup))
 
 if Pupil2dSym == True:
@@ -181,15 +181,18 @@ if Pupil2dSym == True:
 """
 Save apodizer
 """
-fdir = Path('./results/2D/dat_cyth').resolve()
+fdir = Path('./results/2D/dat_cyth/' + pupil_name).resolve()
 
+if not os.path.exists(fdir):
+    os.makedirs(fdir)
+    
 if corono_name == 'SP':
     fname_gen  = 'SP00_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}.fits'
 else:
     fname_gen  = 'APLC_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}.fits'
 
-fpath = fdir / pupil_name / fname_gen.format(**{key: corono0.params[key] for key in corono0.params})
+fpath = fdir / fname_gen.format(**{key: corono0.params[key] for key in corono0.params})
 
 if do_fits is True:
-    fits.writeto(fpath, Apod1_2d, overwrite=True)
+    fits.writeto(fpath, Apod2_2d, overwrite=True)
 

@@ -8,6 +8,7 @@ Created on Wed Apr 25 17:52:23 2018
 
 import numpy as np
 import time
+import os
 from pathlib import Path
 
 from corono import corono_design as cd
@@ -135,6 +136,8 @@ if Pupil2dSym == True:
 Save apodizer
 """
 fdir = Path('./results/2D/dat_pyth').resolve()
+if not os.path.exists(fdir):
+    os.makedirs(fdir)
 
 if corono_name == 'SP':
     fname_gen  = 'SP00_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}.fits'
