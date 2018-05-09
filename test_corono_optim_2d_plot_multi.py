@@ -23,36 +23,36 @@ from astropy.io import fits
 Parameters
 """
 # Telescope name
-pupil_name = 'sbr' # 'vlt' or 'sbr' or 'lvr'
+pupil_name = 'lvr' # 'vlt' or 'sbr' or 'lvr'
 
 #nPup = corono0.params['nPup']
-nPup = 206
+nPup = 600
 
-Fmax2d = nPup/2 
-nImg2d = 256
+Fmax2d = 22 
+nImg2d = 220
 
 # mask radius in lam0/D unit
 rMask = 4.0
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
-rho0 =  4.0
+rho0 =  3.5
 rho1 = 10.0
 
 # contrast in the dark region
-cDarkHole = 4
+cDarkHole = 10
 
 # tau (integrated Pupil transmission)
 tau   = 0.4
 
 # CtrBtwnPix2
-corono_name   = 'SP' # 'SP' or 'APLC'
+corono_name   = 'APLC' # 'SP' or 'APLC'
 CtrBtwnPix  = True
 CtrBtwnPix2 = True
 Pupil2dSym  = True
 
 #nlam
-nlam = 5
-bw   = 0.2
+nlam = 3
+bw   = 0.1
 
 do_fits = True
 
@@ -103,8 +103,6 @@ else:
 
 fpath = fdir / pupil_name / fname_gen.format(**{key: corono0.params[key] for key in corono0.params})
 
-print('{0}'.format(fpath))
-
 Apod1_2d = fits.getdata(fpath,)
 
 #%% Display of the apodizer
@@ -129,21 +127,6 @@ pl.savefig(str(fpath))
 """
 Computation of the direct and coronagraphic images
 """
-
-nlam = 1
-
-params = to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d,
-                 rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau, 
-                 CtrBtwnPix=CtrBtwnPix, CtrBtwnPix2=CtrBtwnPix2, 
-                 nlam=nlam, bw=bw,
-                 Pupil2d = Pupil2d, LyotStop2d = LyotStop2d,
-                 Pupil2dSym = Pupil2dSym, rMask=rMask)
-
-if corono_name == 'SP':
-    corono0 = cd.SP2d(**params)
-else:
-    corono0 = cd.APLC2d(**params)
-
 if corono_name == 'APLC':
     poly_direct_image1 = corono0.compute_direct_intensity_2d(Apod1_2d)
 else:

@@ -18,6 +18,12 @@ from matplotlib import cm
 
 from astropy.io import fits
 
+import numpy as np
+
+shift = np.fft.fftshift
+fft   = np.fft.fft2
+ifft  = np.fft.ifft2
+
 #%% parameters
 """
 Parameters
@@ -29,7 +35,7 @@ pupil_name = 'sbr' # 'vlt' or 'sbr' or 'lvr'
 nPup = 206
 
 Fmax2d = nPup/2 
-nImg2d = 256
+nImg2d = 512
 
 # mask radius in lam0/D unit
 rMask = 4.0
@@ -125,6 +131,17 @@ pl.imshow(Apod1_2d*corono0.Pupil2d, cmap = cm.Greys_r)
 pl.title('Apod 1 transmission - MaxTau problem')
 pl.savefig(str(fpath))
 
+Pupil2d_bis = np.zeros((nImg2d, nImg2d))
+Pupil2d_bis[nImg2d//2-nPup//2:nImg2d//2+nPup//2,nImg2d//2-nPup//2:nImg2d//2+nPup//2] = corono0.Pupil2d 
+
+Apod1_2dbis = np.zeros((nImg2d, nImg2d))
+Apod1_2dbis[nImg2d//2-nPup//2:nImg2d//2+nPup//2,nImg2d//2-nPup//2:nImg2d//2+nPup//2] = Apod1_2d 
+
+#fpath = '/users/mndiaye/Desktop/apod1.pdf'
+pl.figure(20)
+pl.imshow(Apod1_2dbis)
+#pl.savefig(fpath)
+
 #%% Signal in intensity
 """
 Computation of the direct and coronagraphic images
@@ -144,11 +161,23 @@ if corono_name == 'SP':
 else:
     corono0 = cd.APLC2d(**params)
 
-if corono_name == 'APLC':
-    poly_direct_image1 = corono0.compute_direct_intensity_2d(Apod1_2d)
-else:
-    poly_direct_image1 = corono0.compute_direct_intensity_2d(corono0.Pupil2d)
-poly_corono_image1 = corono0.compute_corono_intensity_2d(Apod1_2d)
+#if corono_name == 'APLC':
+#    poly_direct_image1 = corono0.compute_direct_intensity_2d(Apod1_2d)
+#else:
+#    poly_direct_image1 = corono0.compute_direct_intensity_2d(corono0.Pupil2d)
+#poly_corono_image1 = corono0.compute_corono_intensity_2d(Apod1_2d)
+
+poly_direct_image1 = np.abs(shift(fft(shift(Pupil2d_bis))))**2
+poly_direct_image1 /= np.max(poly_direct_image1) 
+
+poly_corono_image1 = np.abs(shift(fft(shift(Apod1_2dbis))))**2
+poly_corono_image1 /= np.max(poly_corono_image1) 
+
+#fpath = '/users/mndiaye/Desktop/image1.fits'
+pl.figure(21)
+pl.imshow(poly_corono_image1)
+#fits.writeto(fpath, poly_corono_image1, overwrite=True)
+
 
 #%% image plot
 """

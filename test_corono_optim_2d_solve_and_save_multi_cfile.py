@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Apr 25 17:52:23 2018
+Created on Wed May  9 14:34:08 2018
 
 @author: mndiaye
 """
@@ -16,6 +16,11 @@ from corono.utils import to_dict
 
 from astropy.io import fits
 
+import sys
+sys.path.insert(0, '/Users/mndiaye/Dropbox/python/APLC/optim')
+
+import stdgurobi
+
 #%% parameters
 """
 Parameters
@@ -24,17 +29,20 @@ Parameters
 pupil_name = 'sbr' # 'vlt' or 'sbr' or 'lvr'
 
 #nPup = corono0.params['nPup']
-nPup = 200
+nPup = 50
+
+Fmax2d = 22 
+nImg2d = 44
 
 # mask radius in lam0/D unit
-#rMask = 4.0
+rMask = 4.0
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
 rho0 =  5.0
 rho1 = 10.0
 
 # contrast in the dark region
-cDarkHole = 7.0
+cDarkHole = 7
 
 # tau (integrated Pupil transmission)
 tau   = 0.4
@@ -46,8 +54,8 @@ CtrBtwnPix2 = True
 Pupil2dSym  = True
 
 #nlam
-nlam=3
-bw = 0.10
+nlam = 3
+bw   = 0.1
 
 do_fits = True
 
@@ -69,11 +77,12 @@ Pupil2d    = fits.getdata(fpath_pup)
 LyotStop2d = fits.getdata(fpath_lys)
 
 
-params = to_dict(nPup=nPup, rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau, 
+params = to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d,
+                 rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau, 
                  CtrBtwnPix=CtrBtwnPix, CtrBtwnPix2=CtrBtwnPix2, 
-                 nlam=nlam, bw = 0.1, 
+                 nlam=nlam, bw=bw,
                  Pupil2d = Pupil2d, LyotStop2d = LyotStop2d,
-                 Pupil2dSym = Pupil2dSym)
+                 Pupil2dSym = Pupil2dSym, rMask=rMask)
 
 #%%  
 """ 
@@ -88,7 +97,7 @@ else:
 """
 Problem defintion
 """
-t0 = time.time()
+
 # Maximization of the integrated amplitude transmission of the apodizer
 problem1 = co2d.MaxTau(corono=corono0, **params)
 # Maximization of the contrast under L1-norm
@@ -100,6 +109,7 @@ problem1 = co2d.MaxTau(corono=corono0, **params)
 """
 Gurobi models
 """
+t0 = time.time()
 m1 = problem1.compute_gurobi_model()
 #m2 = problem2.compute_gurobi_model()
 #m3 = problem3.compute_gurobi_model()
@@ -141,3 +151,45 @@ fpath = fdir / pupil_name / fname_gen.format(**{key: corono0.params[key] for key
 
 if do_fits is True:
     fits.writeto(fpath, Apod1_2d, overwrite=True)
+  
+    
+#%%
+"""
+Apodizer solutions with cython solver by Remi Flamary
+"""    
+
+
+t0 = time.time()
+AA = problem1.A
+bb = problem1.b
+cc = problem1.c
+Apod2, val = stdgurobi.lp_solve(cc, A=AA, b=bb)
+t1 = time.time() 
+print('Pupil2dSym:{0}, total computation time: {1:.2f}s for cython'.format(Pupil2dSym, t1-t0))
+
+#%% Display of the apodizer
+"""
+Generation of full apodizer for quarter pupil optimization
+"""
+Apod2_2d = np.reshape(Apod2, (corono0.nPup, corono0.nPup))
+
+if Pupil2dSym == True:
+    Apod2_2d += np.flip(Apod2_2d, axis=0)
+    Apod2_2d += np.flip(Apod2_2d, axis=1)  
+
+#%%
+"""
+Save apodizer
+"""
+fdir = Path('./results/2D/dat_cyth').resolve()
+
+if corono_name == 'SP':
+    fname_gen  = 'SP00_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}.fits'
+else:
+    fname_gen  = 'APLC_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}.fits'
+
+fpath = fdir / pupil_name / fname_gen.format(**{key: corono0.params[key] for key in corono0.params})
+
+if do_fits is True:
+    fits.writeto(fpath, Apod1_2d, overwrite=True)
+
