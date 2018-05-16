@@ -25,10 +25,13 @@ Parameters
 pupil_name = 'sbr' # 'vlt' or 'sbr' or 'lvr'
 
 #nPup = corono0.params['nPup']
-nPup = 200
+nPup = 50
+nFPM = 50
+nImg2d = 44
+Fmax2d = 22
 
 # mask radius in lam0/D unit
-#rMask = 4.0
+rMask = 2.8
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
 rho0 =  5.0
@@ -41,13 +44,13 @@ cDarkHole = 7.0
 tau   = 0.4
 
 # CtrBtwnPix2
-corono_name   = 'SP' # 'SP' or 'APLC'
+corono_name   = 'APLC' # 'SP' or 'APLC'
 CtrBtwnPix  = True
 CtrBtwnPix2 = True
 Pupil2dSym  = True
 
 #nlam
-nlam=3
+nlam=5
 bw = 0.10
 
 do_fits = True
@@ -70,9 +73,11 @@ Pupil2d    = fits.getdata(fpath_pup)
 LyotStop2d = fits.getdata(fpath_lys)
 
 
-params = to_dict(nPup=nPup, rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau, 
+params = to_dict(nPup=nPup, nFPM =nFPM, nImg2d = nImg2d, Fmax2d = Fmax2d, 
+                 rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau, 
                  CtrBtwnPix=CtrBtwnPix, CtrBtwnPix2=CtrBtwnPix2, 
-                 nlam=nlam, bw = 0.1, 
+                 nlam=nlam, bw = bw, 
+                 rMask = rMask,
                  Pupil2d = Pupil2d, LyotStop2d = LyotStop2d,
                  Pupil2dSym = Pupil2dSym)
 
@@ -126,6 +131,8 @@ Apod1_2d = np.reshape(Apod1, (corono0.nPup, corono0.nPup))
 if Pupil2dSym == True:
     Apod1_2d += np.flip(Apod1_2d, axis=0)
     Apod1_2d += np.flip(Apod1_2d, axis=1)  
+
+     
 
 #%%
 """

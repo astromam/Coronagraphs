@@ -26,33 +26,33 @@ Parameters
 pupil_name = 'sbr' # 'vlt' or 'sbr' or 'lvr'
 
 #nPup = corono0.params['nPup']
-nPup = 206
+nPup = 50
 
-Fmax2d = nPup/2 
-nImg2d = 256
+Fmax2d = 50
+nImg2d = 500
 
 # mask radius in lam0/D unit
-rMask = 4.0
+rMask = 2.8
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
-rho0 =  4.0
+rho0 =  5.0
 rho1 = 10.0
 
 # contrast in the dark region
-cDarkHole = 4
+cDarkHole = 7
 
 # tau (integrated Pupil transmission)
 tau   = 0.4
 
 # CtrBtwnPix2
-corono_name   = 'SP' # 'SP' or 'APLC'
+corono_name   = 'APLC' # 'SP' or 'APLC'
 CtrBtwnPix  = True
 CtrBtwnPix2 = True
-Pupil2dSym  = True
+Pupil2dSym  = False
 
 #nlam
-nlam = 5
-bw   = 0.2
+nlam = 3
+bw   = 0.1
 
 do_fits = True
 

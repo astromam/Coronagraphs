@@ -111,7 +111,7 @@ def get_default_params_Coronagraph():
            'nPup':200,'nImg':200,'Fmax':25,
            'nImg2d':44, 'Fmax2d':22,
            'bw':0.2,'lam0':1.0,'nlam':5, 
-           'R':1,
+           'R':1.0,
            'fdir':'',
            'CtrBtwnPix':True, 'CtrBtwnPix2':False, 
            'Pupil2dSym':False
