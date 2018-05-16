@@ -101,10 +101,10 @@ ENV/
 .mypy_cache/
 
 # python routines
-/test_corono_optim_1d_compare_ampl_python.py
-/test_corono_optim_2d_plot_for_romain.py
-/test_corono_optim_2d_compare_ampl_python.py
-/test_corono_optim_2d_compare_cfile_python.py
-/test_corono_optim_2d_plot_for_romain.py
-/test_corono_optim_2d_solve_and_save_multi_cfile.py
-/test_create_ampl_files.py
+test_corono_optim_1d_compare_ampl_python.pyc
+test_corono_optim_2d_plot_for_romain.pyc
+test_corono_optim_2d_compare_ampl_python.pyc
+test_corono_optim_2d_compare_cfile_python.pyc
+test_corono_optim_2d_plot_for_romain.pyc
+test_corono_optim_2d_solve_and_save_multi_cfile.pyc
+test_create_ampl_files.pyc
