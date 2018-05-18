@@ -889,13 +889,14 @@ class Coronagraph(object):
         if self.CtrBtwnPix is True:
             val = 1/2
         # array of angular distances in the final image plane
-        xx,yy  = np.meshgrid(np.arange(self.nImg2d)-self.nImg2d/2+val, np.arange(self.nImg2d)-self.nImg2d/2+val)
+        xx,yy  = np.meshgrid(np.arange(self.nImg2d)-self.nImg2d/2, np.arange(self.nImg2d)-self.nImg2d/2)
         mydist = (self.Fmax2d/self.nImg2d)*np.hypot(yy,xx)
-    
         # array with 1 and 0 for points inside and outside the area in the coronagraphic image
         #res    = np.zeros_like(mydist)
         #res[(mydist <= self.rho1)*(mydist >= self.rho0)] = 1.0
         res = (mydist <= self.rho1)*(mydist >= self.rho0)
+        if self.Pupil2dSym == True:
+            res *= (xx >= 0)*(yy >= 0)
         return res, mydist[res]
     
 #%% 

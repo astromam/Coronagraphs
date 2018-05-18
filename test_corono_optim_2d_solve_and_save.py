@@ -34,11 +34,11 @@ Fmax2d = 22
 rMask = 2.8
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
-rho0 =  5.0
-rho1 = 10.0
+rho0 =  5.
+rho1 = 10.
 
 # contrast in the dark region
-cDarkHole = 7.0
+cDarkHole = 6.0
 
 # tau (integrated Pupil transmission)
 tau   = 0.4
@@ -50,7 +50,7 @@ CtrBtwnPix2 = True
 Pupil2dSym  = True
 
 #nlam
-nlam=5
+nlam=3
 bw = 0.10
 
 do_fits = True

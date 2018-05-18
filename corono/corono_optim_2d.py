@@ -170,13 +170,15 @@ class ProblemMatrix(object):
         self.npp     = len(self.idx_pup) 
         
         self.dz2d, self.rad2d = self.corono.generate_area()
+
+        self.dz      = np.reshape(self.dz2d, (self.corono.nImg2d**2))
         
-        if self.corono.Pupil2dSym == False:        
-            self.dz      = np.reshape(self.dz2d, (self.corono.nImg2d**2))
-        else:
-            Image2dquarter = np.zeros_like(self.dz2d)
-            Image2dquarter[:self.corono.nImg2d//2, :self.corono.nImg2d//2] = 1.
-            self.dz = np.reshape(self.dz2d*Image2dquarter, (self.corono.nImg2d**2))           
+#        if self.corono.Pupil2dSym == False:        
+#            self.dz      = np.reshape(self.dz2d, (self.corono.nImg2d**2))
+#        else:
+#            Image2dquarter = np.zeros_like(self.dz2d)
+#            Image2dquarter[:self.corono.nImg2d//2, :self.corono.nImg2d//2] = 1.
+#            self.dz = np.reshape(self.dz2d*Image2dquarter, (self.corono.nImg2d**2))           
             
         self.aaa     = np.arange(self.corono.nImg2d**2)
         self.idx_dz  = list(self.aaa[self.dz])  
@@ -186,19 +188,19 @@ class ProblemMatrix(object):
         self.lys     = (self.LyotStop_vec > 0.)
         self.idx_lys = list(self.bbb[self.lys]) 
 
-        self.direct_field_t_re = np.zeros((self.npp, self.corono.nlam, 
-                                           self.corono.nImg2d**2))
-        self.direct_field_t_im = np.zeros((self.npp, self.corono.nlam, 
-                                           self.corono.nImg2d**2))
-        print('generating direct response matrix for 2D problem')
-        Apod2d = np.zeros((self.corono.nPup, self.corono.nPup))
-        for i in np.arange(self.npp):  
-            (i0, j0) = np.unravel_index(self.idx_pup[i], 
-            (self.corono.nPup, self.corono.nPup))
-            Apod2d[i0,j0] = 1
-            self.direct_field_t_re[i],self.direct_field_t_im[i] = \
-            self.corono.compute_direct_field_2d_vec(Apod2d)
-            Apod2d[i0,j0] = 0    
+#        self.direct_field_t_re = np.zeros((self.npp, self.corono.nlam, 
+#                                           self.corono.nImg2d**2))
+#        self.direct_field_t_im = np.zeros((self.npp, self.corono.nlam, 
+#                                           self.corono.nImg2d**2))
+#        print('generating direct response matrix for 2D problem')
+#        Apod2d = np.zeros((self.corono.nPup, self.corono.nPup))
+#        for i in np.arange(self.npp):  
+#            (i0, j0) = np.unravel_index(self.idx_pup[i], 
+#            (self.corono.nPup, self.corono.nPup))
+#            Apod2d[i0,j0] = 1
+#            self.direct_field_t_re[i],self.direct_field_t_im[i] = \
+#            self.corono.compute_direct_field_2d_vec(Apod2d)
+#            Apod2d[i0,j0] = 0    
 
         self.corono_field_t_re = np.zeros((self.npp, self.corono.nlam, 
                                            self.corono.nImg2d**2))
@@ -225,6 +227,9 @@ class ProblemMatrix(object):
         self.corono_field_t2    = np.concatenate((self.corono_field_t2_re,
                                                   self.corono_field_t2_im), 
                                                  axis=1)
+
+        
+#        self.corono_field_t2    = self.corono_field_t2_re*1.
         
         self.A       = None
         self.b       = None
@@ -457,9 +462,9 @@ class MaxTau(ProblemMatrix):
 
         ED0 = np.zeros_like(self.corono_field_t2)
         ED0tmp = self.Pupil_vec[self.idx_pup]*self.LyotStop_vec[self.idx_pup]
-        for j in range(self.corono.nlam*self.ndz*2):
+        for j in range(len(self.corono_field_t2.T)):
             ED0[:,j] = ED0tmp
-        cst = 10.**(-self.cDarkHole/2.)/np.sqrt(2.)        
+        cst = 10.**(-self.cDarkHole/2.)/np.sqrt(2.)      
         ED0 *= cst*self.corono.Fmax2d/(self.corono.nImg2d*self.corono.nPup)
 
         A0  =  self.corono_field_t2 - ED0                
@@ -467,8 +472,8 @@ class MaxTau(ProblemMatrix):
         A2  = -np.identity(self.npp)
         A3  =  np.identity(self.npp)
 
-        b0  = np.zeros((self.corono.nlam*self.ndz*2))
-        b1  = np.zeros((self.corono.nlam*self.ndz*2))
+        b0  = np.zeros((len(self.corono_field_t2.T)))
+        b1  = np.zeros((len(self.corono_field_t2.T)))
         b2  = np.zeros(self.npp)
         b3  = np.ones(self.npp)
 
