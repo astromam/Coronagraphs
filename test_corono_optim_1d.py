@@ -16,6 +16,8 @@ from corono.utils import to_dict
 """
 Parameters
 """
+
+rMask = 4.0
 # dark zone bounds (inner and outer edges) in lam0/D unit
 rho0 = 5.0
 rho1 = 10.0
@@ -26,14 +28,15 @@ cDarkHole = 8.0
 # tau (integrated Pupil transmission)
 tau   = 0.5
 
-params = to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau)
+params = to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau, 
+                 rMask =rMask)
 
 #%%  
 """ 
 Coronagraph defintion
 """
-#corono0 = cd.APLC1d()
-corono0 = cd.SP1d(**params)
+corono0 = cd.APLC1d(**params)
+#corono0 = cd.SP1d(**params)
 
 #%%
 """
@@ -114,7 +117,7 @@ poly_corono_image3 = corono0.compute_corono_intensity_1d(Apod3)
 """
 Display of the intensity profiles of the coronagraphic images
 """
-pl.figure(5)
+pl.figure(6)
 pl.clf()
 pl.title('Intensity profiles of the coronagraphic images')
 #pl.semilogy(corono0.xi,poly_direct_image1/poly_direct_image1.max(),label='Direct')
