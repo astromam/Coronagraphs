@@ -26,7 +26,7 @@ Parameters
 pupil_name = 'sbr' # 'vlt' or 'sbr' or 'lvr'
 
 #nPup = corono0.params['nPup']
-nPup = 50
+nPup = 200
 
 Fmax2d = 50
 nImg2d = 500
@@ -48,7 +48,7 @@ tau   = 0.4
 corono_name   = 'APLC' # 'SP' or 'APLC'
 CtrBtwnPix  = True
 CtrBtwnPix2 = True
-Pupil2dSym  = False
+Pupil2dSym  = True
 
 #nlam
 nlam = 3

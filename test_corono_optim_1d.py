@@ -49,8 +49,6 @@ params = to_dict(nPup=nPup,R=R,
                  rMask =rMask,
                  Pupil1d = Pupil1d, LyotStop1d = LyotStop1d)
 
-
-
 #%%  
 """ 
 Coronagraph defintion

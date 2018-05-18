@@ -923,10 +923,9 @@ class Coronagraph(object):
         #res    = np.zeros_like(mydist)
         #res[(mydist <= self.rho1)*(mydist >= self.rho0)] = 1.0
         res = (mydist <= self.rho1)*(mydist >= self.rho0)
-        respeak = (mydist == 0.)
         if self.Pupil2dSym == True:
             res *= (xx <= 0)*(yy <= 0)
-        return res, mydist[res], mydist[respeak]
+        return res, mydist[res]
     
 #%% 
 """
