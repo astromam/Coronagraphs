@@ -17,23 +17,25 @@ from corono.utils import to_dict
 """
 Parameters
 """
-R=1
-nPup=200
-PupilObs = 0.2
-LyotStopObs = 0.4
 
+# problem geometry
+R           = 1
+nPup        = 200
+PupilObs    = 0.2
+LyotStopObs = 0.4
 
 rMask = 3.0
 # dark zone bounds (inner and outer edges) in lam0/D unit
-rho0 = 5.0
-rho1 = 10.0
+rho0  = 5.0
+rho1  = 10.0
 
 # contrast in the dark region
 cDarkHole = 8.0
 
 # tau (integrated Pupil transmission)
-tau   = 0.5
+tau       = 0.5
 
+# radial coordinate
 r   = np.arange(nPup)*R/nPup+R/(2*nPup)
 # Telescope aperture
 Pupil1d      = (r>PupilObs)*1.0
