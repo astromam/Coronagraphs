@@ -139,8 +139,18 @@ def get_default_params_APLC1d():
         Coronagraph class and the APLC1d subclass
     
     """
-    tmp = get_default_params_Coronagraph()
+    tmp = get_default_params_Coronagraph()  
     tmp.update({'rMask':2.8,'nFPM':50})
+
+    # Pupil radial coordinate
+    r   = np.arange(tmp['nPup'])*tmp['R']/tmp['nPup']\
+                +tmp['R']/(2*tmp['nPup'])
+    # Telescope aperture
+    Pupil1d      = (r>tmp['PupilObs'])*1.0
+    # Lyot stop 
+    LyotStop1d   = (r>tmp['LyotStopObs'])*1.0
+    
+    tmp.update({'r':r, 'Pupil1d':Pupil1d, 'LyotStop1d':LyotStop1d})
     return tmp
 
 #%%
@@ -165,6 +175,14 @@ def get_default_params_SP1d():
     """
     tmp = get_default_params_Coronagraph()
     tmp.update({'rMask':5.0,'nFPM':50})
+
+    # Pupil radial coordinate    
+    r   = np.arange(tmp['nPup'])*tmp['R']/tmp['nPup']\
+                +tmp['R']/(2*tmp['nPup'])
+    # Telescope aperture
+    Pupil1d      = (r>tmp['PupilObs'])*1.0    
+    tmp.update({'r':r, 'Pupil1d':Pupil1d})
+    
     return tmp
 
 
@@ -238,6 +256,16 @@ def get_default_params_DZPM1d():
            'OPDx1':0.309, 'OPDx2':0.672,
            'ome1':-2.340, 'ome2':2.051, 'beta':-0.236,
            'nFPM':68.82312456985547})
+
+    # Pupil radial coordinate        
+    r   = np.arange(tmp['nPup'])*tmp['R']/tmp['nPup']\
+                +tmp['R']/(2*tmp['nPup'])
+    # Telescope aperture
+    Pupil1d      = (r>tmp['PupilObs'])*1.0
+    # Lyot stop 
+    LyotStop1d   = (r>tmp['LyotStopObs'])*1.0
+    
+    tmp.update({'r':r, 'Pupil1d':Pupil1d, 'LyotStop1d':LyotStop1d})
     return tmp
 
 #%%
@@ -536,10 +564,10 @@ class Coronagraph(object):
         
         # clear Pupil
         self.ClearPupil1d = np.ones((self.nPup))
-        # Telescope aperture
-        self.Pupil1d      = (self.r>self.PupilObs)*1.0
-        # Lyot stop 
-        self.LyotStop1d   = (self.r>self.LyotStopObs)*1.0
+#        # Telescope aperture
+#        self.Pupil1d      = (self.r>self.PupilObs)*1.0
+#        # Lyot stop 
+#        self.LyotStop1d   = (self.r>self.LyotStopObs)*1.0
         
         # Final image plane coordinate
         self.xi  = np.arange(self.nImg+1)*self.Fmax/self.nImg
@@ -561,7 +589,7 @@ class Coronagraph(object):
         # Final image plane coordinate
         self.xi2d     = (np.arange(self.nImg2d//2))* self.Fmax2d/self.nImg2d
         self.xi2d_ctr = (np.arange(self.nImg2d//2)+1/2)* self.Fmax2d/self.nImg2d
-
+        
         
 #%%        
     def save_params(self, fname):
@@ -886,18 +914,19 @@ class Coronagraph(object):
     
         """
         val = 0
-        if self.CtrBtwnPix is True:
+        if self.CtrBtwnPix2 is True:
             val = 1/2
         # array of angular distances in the final image plane
-        xx,yy  = np.meshgrid(np.arange(self.nImg2d)-self.nImg2d/2, np.arange(self.nImg2d)-self.nImg2d/2)
+        xx,yy  = np.meshgrid(np.arange(self.nImg2d)-self.nImg2d/2+val, np.arange(self.nImg2d)-self.nImg2d/2+val)
         mydist = (self.Fmax2d/self.nImg2d)*np.hypot(yy,xx)
         # array with 1 and 0 for points inside and outside the area in the coronagraphic image
         #res    = np.zeros_like(mydist)
         #res[(mydist <= self.rho1)*(mydist >= self.rho0)] = 1.0
         res = (mydist <= self.rho1)*(mydist >= self.rho0)
+        respeak = (mydist == 0.)
         if self.Pupil2dSym == True:
-            res *= (xx >= 0)*(yy >= 0)
-        return res, mydist[res]
+            res *= (xx <= 0)*(yy <= 0)
+        return res, mydist[res], mydist[respeak]
     
 #%% 
 """

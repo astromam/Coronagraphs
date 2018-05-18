@@ -6,6 +6,7 @@ Created on Fri Mar  9 17:40:02 2018
 @author: mndiaye
 """
 import pylab as pl
+import numpy as np
 
 from corono import corono_design as cd
 from corono import corono_optim_1d as co1d
@@ -16,8 +17,13 @@ from corono.utils import to_dict
 """
 Parameters
 """
+R=1
+nPup=200
+PupilObs = 0.2
+LyotStopObs = 0.4
 
-rMask = 4.0
+
+rMask = 3.0
 # dark zone bounds (inner and outer edges) in lam0/D unit
 rho0 = 5.0
 rho1 = 10.0
@@ -28,8 +34,20 @@ cDarkHole = 8.0
 # tau (integrated Pupil transmission)
 tau   = 0.5
 
-params = to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau, 
-                 rMask =rMask)
+r   = np.arange(nPup)*R/nPup+R/(2*nPup)
+# Telescope aperture
+Pupil1d      = (r>PupilObs)*1.0
+# Lyot stop 
+LyotStop1d   = (r>LyotStopObs)*1.0
+
+
+params = to_dict(nPup=nPup,R=R,
+                 rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, 
+                 tau=tau, 
+                 rMask =rMask,
+                 Pupil1d = Pupil1d, LyotStop1d = LyotStop1d)
+
+
 
 #%%  
 """ 
