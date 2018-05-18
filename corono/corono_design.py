@@ -1559,15 +1559,22 @@ class SP2d(Coronagraph):
         field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
                               dtype='complex128')
 
-        if self.Pupil2dSym == False:        
+        if self.Pupil2dSym == False:
             for i in range(self.nlam):
                 field_Dtmp[i] = sft(field_A, self.nImg2d, self.mD_t[i], 
                       CtrBtwnPix=self.CtrBtwnPix2)
         else:
+            field_Atmp = field_A[self.nPup//2:, self.nPup//2:]
+            
+            field_Dtmp0 = np.zeros((self.nImg2d//2,self.nImg2d//2), 
+                              dtype='complex128')
             for i in range(self.nlam):
-                field_Dtmp[i] = sft_even(field_A, self.nImg2d, self.mD_t[i], 
+                field_Dtmp0 = sft_even(field_Atmp, self.nImg2d//2, self.mD_t[i]/2, 
                       CtrBtwnPix=self.CtrBtwnPix2)
-                
+                field_Dtmp[i, self.nImg2d//2:, self.nImg2d//2:] = field_Dtmp0    
+                field_Dtmp[i, :self.nImg2d//2, self.nImg2d//2:] = np.flip(field_Dtmp0, axis=0)
+                field_Dtmp[i, :, :self.nImg2d//2]               = np.flip(field_Dtmp[i, :, self.nImg2d//2:], axis=1)
+                            
         return field_Dtmp
  
 #%%
@@ -1591,19 +1598,26 @@ class SP2d(Coronagraph):
             at all the wavelengths
             
         """        
-        field_A    = Apod2d*self.Pupil2d    
+        field_A    = Apod2d*self.Pupil2d
         field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
                               dtype='complex128')
-        
+
         if self.Pupil2dSym == False:
             for i in range(self.nlam):
                 field_Dtmp[i] = sft(field_A, self.nImg2d, self.mD_t[i], 
                       CtrBtwnPix=self.CtrBtwnPix2)
         else:
+            field_Atmp = field_A[self.nPup//2:, self.nPup//2:]
+            
+            field_Dtmp0 = np.zeros((self.nImg2d//2,self.nImg2d//2), 
+                              dtype='complex128')
             for i in range(self.nlam):
-                field_Dtmp[i] = sft_even(field_A, self.nImg2d, self.mD_t[i], 
+                field_Dtmp0 = sft_even(field_Atmp, self.nImg2d//2, self.mD_t[i]/2, 
                       CtrBtwnPix=self.CtrBtwnPix2)
-                
+                field_Dtmp[i, self.nImg2d//2:, self.nImg2d//2:] = field_Dtmp0    
+                field_Dtmp[i, :self.nImg2d//2, self.nImg2d//2:] = np.flip(field_Dtmp0, axis=0)
+                field_Dtmp[i, :, :self.nImg2d//2]               = np.flip(field_Dtmp[i, :, self.nImg2d//2:], axis=1)
+                             
         return field_Dtmp   
 
 #%%

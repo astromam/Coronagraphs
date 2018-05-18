@@ -279,29 +279,18 @@ def sft_even(A2, NB, m, inv=False, CtrBtwnPix=False):
     val    = 0
     if CtrBtwnPix is True:
         val = 1/2
-        
-        
+                
     NA    = np.shape(A2)[0]
     coeff = m/(NA*NB)
     
     U = np.zeros((1,NB))
     X = np.zeros((1,NA))
     
-    X[0,:] = (1./NA)*(np.arange(NA)-NA/2+val)
-    U[0,:] =  (m/NB)*(np.arange(NB)-NB/2+val)
+    X[0,:] = (1./NA)*(np.arange(NA)+val)
+    U[0,:] =  (m/NB)*(np.arange(NB)+val)
 
     A1 = np.cos(2.*np.pi* U.T.dot(X))    
     A3 = np.cos(2.*np.pi* X.T.dot(U))
-
-#    sign = -1.0
-#    if inv:
-#        sign = 1.0  
-#    
-#    A1 = sign*1j*np.sin(2.*np.pi* U.T.dot(X))
-#    A1 += np.cos(2.*np.pi* U.T.dot(X))
-#    
-#    A3 = sign*1j*np.sin(2.*np.pi* X.T.dot(U))
-#    A3 += np.cos(2.*np.pi* X.T.dot(U))
     
     B  = (A1.dot(A2)).dot(A3)
 
