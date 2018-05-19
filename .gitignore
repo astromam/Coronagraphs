@@ -106,3 +106,4 @@ test_corono_optim_2d_compare_cfile_python.py
 test_corono_optim_2d_plot_for_romain.py
 test_corono_optim_2d_solve_and_save_multi_cfile.py
 test_create_ampl_files.py
+corono/test_debug.py
