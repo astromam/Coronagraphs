@@ -15,7 +15,8 @@ Initialization
 import numpy as np
 #import pylab as pl
 #from astropy.io import fits
-from .utils import besselJ0, sft, isft, uniform_disk, radius_disk, sft_even, isft_even
+from .utils import besselJ0, sft, isft, uniform_disk, radius_disk, sft_even, isft_even, sft_quarter, isft_quarter
+
 import json
 
 #%% 
@@ -924,7 +925,7 @@ class Coronagraph(object):
         #res[(mydist <= self.rho1)*(mydist >= self.rho0)] = 1.0
         res = (mydist <= self.rho1)*(mydist >= self.rho0)
         if self.Pupil2dSym == True:
-            res *= (xx <= 0)*(yy <= 0)
+            res *= (xx >= 0)*(yy >= 0)
         return res, mydist[res]
     
 #%% 
@@ -1443,14 +1444,31 @@ class APLC2d(Coronagraph):
         field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
                               dtype='complex128')
         
+#        if self.Pupil2dSym == False:
+#            for i in range(self.nlam):
+#                field_Dtmp[i] = sft(field_L, self.nImg2d, self.mD_t[i], 
+#                          CtrBtwnPix=self.CtrBtwnPix2)
+#        else:
+#            for i in range(self.nlam):
+#                field_Dtmp[i] = sft_even(field_L, self.nImg2d, self.mD_t[i], 
+#                          CtrBtwnPix=self.CtrBtwnPix2)            
+
         if self.Pupil2dSym == False:
             for i in range(self.nlam):
                 field_Dtmp[i] = sft(field_L, self.nImg2d, self.mD_t[i], 
                           CtrBtwnPix=self.CtrBtwnPix2)
         else:
+            field_Ltmp = field_L[self.nPup//2:, self.nPup//2:]            
+            field_Dtmp0 = np.zeros((self.nImg2d//2,self.nImg2d//2), 
+                              dtype='complex128')
+            
             for i in range(self.nlam):
-                field_Dtmp[i] = sft_even(field_L, self.nImg2d, self.mD_t[i], 
-                          CtrBtwnPix=self.CtrBtwnPix2)            
+                field_Dtmp0 = 4*sft_quarter(field_Ltmp, self.nImg2d//2, self.mD_t[i]/4, 
+                          CtrBtwnPix=self.CtrBtwnPix2)
+                field_Dtmp[i, self.nImg2d//2:, self.nImg2d//2:] = field_Dtmp0    
+                field_Dtmp[i, :self.nImg2d//2, self.nImg2d//2:] = np.flip(field_Dtmp0, axis=0)
+                field_Dtmp[i, :, :self.nImg2d//2]          = np.flip(field_Dtmp[i, :, self.nImg2d//2:], axis=1)
+
     
         return field_Dtmp
  
@@ -1481,6 +1499,25 @@ class APLC2d(Coronagraph):
         field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
                               dtype='complex128')
         
+#        if self.Pupil2dSym == False: 
+#            for i in range(self.nlam):
+#                field_B       = self.mask2d*sft(field_A, self.nFPM, self.mB_t[i], 
+#                                                CtrBtwnPix=self.CtrBtwnPix)
+#                field_C       = field_A - isft(field_B, self.nPup, self.mB_t[i], 
+#                                               CtrBtwnPix=self.CtrBtwnPix)
+#                field_L       = field_C*self.LyotStop2d
+#                field_Dtmp[i] = sft(field_L, self.nImg2d, self.mD_t[i], 
+#                          CtrBtwnPix=self.CtrBtwnPix2)
+#        else:
+#            for i in range(self.nlam):
+#                field_B       = self.mask2d*sft_even(field_A, self.nFPM, self.mB_t[i], 
+#                                                CtrBtwnPix=self.CtrBtwnPix)
+#                field_C       = field_A - isft_even(field_B, self.nPup, self.mB_t[i], 
+#                                               CtrBtwnPix=self.CtrBtwnPix)
+#                field_L       = field_C*self.LyotStop2d
+#                field_Dtmp[i] = sft_even(field_L, self.nImg2d, self.mD_t[i], 
+#                          CtrBtwnPix=self.CtrBtwnPix2)            
+
         if self.Pupil2dSym == False: 
             for i in range(self.nlam):
                 field_B       = self.mask2d*sft(field_A, self.nFPM, self.mB_t[i], 
@@ -1491,14 +1528,21 @@ class APLC2d(Coronagraph):
                 field_Dtmp[i] = sft(field_L, self.nImg2d, self.mD_t[i], 
                           CtrBtwnPix=self.CtrBtwnPix2)
         else:
+            mask2dtmp = self.mask2d[self.nFPM//2:,self.nFPM//2:]
+            LyotStop2dtmp = self.LyotStop2d[self.nPup//2:,self.nPup//2:]
             for i in range(self.nlam):
-                field_B       = self.mask2d*sft_even(field_A, self.nFPM, self.mB_t[i], 
+                field_Atmp       = field_A[self.nPup//2:, self.nPup//2:]
+                field_Btmp0      = 4*mask2dtmp*sft_quarter(field_Atmp, self.nFPM//2, self.mB_t[i]/4., 
                                                 CtrBtwnPix=self.CtrBtwnPix)
-                field_C       = field_A - isft_even(field_B, self.nPup, self.mB_t[i], 
+                field_Ctmp0      = field_Atmp - 4.*isft_quarter(field_Btmp0, self.nPup//2, self.mB_t[i]/4., 
                                                CtrBtwnPix=self.CtrBtwnPix)
-                field_L       = field_C*self.LyotStop2d
-                field_Dtmp[i] = sft_even(field_L, self.nImg2d, self.mD_t[i], 
+                field_Ltmp0      = field_Ctmp0*LyotStop2dtmp
+                field_Dtmp0      = 4.*sft_quarter(field_Ltmp0, self.nImg2d//2, self.mD_t[i]/4., 
                           CtrBtwnPix=self.CtrBtwnPix2)            
+                field_Dtmp[i, self.nImg2d//2:, self.nImg2d//2:] = field_Dtmp0    
+                field_Dtmp[i, :self.nImg2d//2, self.nImg2d//2:] = np.flip(field_Dtmp0, axis=0)
+                field_Dtmp[i, :, :self.nImg2d//2]          = np.flip(field_Dtmp[i, :, self.nImg2d//2:], axis=1)
+
 
         return field_Dtmp   
 
@@ -1559,6 +1603,16 @@ class SP2d(Coronagraph):
         field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
                               dtype='complex128')
 
+#        if self.Pupil2dSym == False:
+#            for i in range(self.nlam):
+#                field_Dtmp[i] = sft(field_A, self.nImg2d, self.mD_t[i], 
+#                      CtrBtwnPix=self.CtrBtwnPix2)
+#        else:
+#            for i in range(self.nlam):
+#                field_Dtmp[i] = sft_even(field_A, self.nImg2d, self.mD_t[i], 
+#                      CtrBtwnPix=self.CtrBtwnPix2)
+
+
         if self.Pupil2dSym == False:
             for i in range(self.nlam):
                 field_Dtmp[i] = sft(field_A, self.nImg2d, self.mD_t[i], 
@@ -1569,7 +1623,7 @@ class SP2d(Coronagraph):
             field_Dtmp0 = np.zeros((self.nImg2d//2,self.nImg2d//2), 
                               dtype='complex128')
             for i in range(self.nlam):
-                field_Dtmp0 = sft_even(field_Atmp, self.nImg2d//2, self.mD_t[i]/2, 
+                field_Dtmp0 = 4.*sft_quarter(field_Atmp, self.nImg2d//2, self.mD_t[i]/4., 
                       CtrBtwnPix=self.CtrBtwnPix2)
                 field_Dtmp[i, self.nImg2d//2:, self.nImg2d//2:] = field_Dtmp0    
                 field_Dtmp[i, :self.nImg2d//2, self.nImg2d//2:] = np.flip(field_Dtmp0, axis=0)
@@ -1602,6 +1656,16 @@ class SP2d(Coronagraph):
         field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
                               dtype='complex128')
 
+#        if self.Pupil2dSym == False:
+#            for i in range(self.nlam):
+#                field_Dtmp[i] = sft(field_A, self.nImg2d, self.mD_t[i], 
+#                      CtrBtwnPix=self.CtrBtwnPix2)
+#        else:
+#            for i in range(self.nlam):
+#                field_Dtmp[i] = sft_even(field_A, self.nImg2d, self.mD_t[i], 
+#                      CtrBtwnPix=self.CtrBtwnPix2)
+
+
         if self.Pupil2dSym == False:
             for i in range(self.nlam):
                 field_Dtmp[i] = sft(field_A, self.nImg2d, self.mD_t[i], 
@@ -1612,7 +1676,7 @@ class SP2d(Coronagraph):
             field_Dtmp0 = np.zeros((self.nImg2d//2,self.nImg2d//2), 
                               dtype='complex128')
             for i in range(self.nlam):
-                field_Dtmp0 = sft_even(field_Atmp, self.nImg2d//2, self.mD_t[i]/2, 
+                field_Dtmp0 = 4.*sft_quarter(field_Atmp, self.nImg2d//2, self.mD_t[i]/4., 
                       CtrBtwnPix=self.CtrBtwnPix2)
                 field_Dtmp[i, self.nImg2d//2:, self.nImg2d//2:] = field_Dtmp0    
                 field_Dtmp[i, :self.nImg2d//2, self.nImg2d//2:] = np.flip(field_Dtmp0, axis=0)
