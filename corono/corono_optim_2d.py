@@ -162,10 +162,7 @@ class ProblemMatrix(object):
             Pupil2dquarter = np.zeros_like(self.corono.Pupil2d)
             Pupil2dquarter[self.corono.nPup//2:, self.corono.nPup//2:] = 1.
             self.Pupil_vec = np.reshape(self.corono.Pupil2d*Pupil2dquarter, (self.corono.nPup**2))
- 
-        self.Pupil_vec = np.reshape(self.corono.Pupil2d, (self.corono.nPup**2))
-
-        
+         
         self.pup     = (self.Pupil_vec > 0.)
         self.bbb     = np.arange(self.corono.nPup**2)
         self.idx_pup = list(self.bbb[self.pup])
@@ -179,8 +176,6 @@ class ProblemMatrix(object):
             Image2dquarter = np.zeros_like(self.dz2d)
             Image2dquarter[self.corono.nImg2d//2:, self.corono.nImg2d//2:] = 1.
             self.dz = np.reshape(self.dz2d*Image2dquarter, (self.corono.nImg2d**2))           
-
-#        self.dz      = np.reshape(self.dz2d, (self.corono.nImg2d**2))
 
             
         self.aaa     = np.arange(self.corono.nImg2d**2)
@@ -231,9 +226,6 @@ class ProblemMatrix(object):
                                                   self.corono_field_t2_im), 
                                                  axis=1)
 
-        
-#        self.corono_field_t2    = self.corono_field_t2_re*1.
-        
         self.A       = None
         self.b       = None
         self.c       = None
@@ -241,8 +233,7 @@ class ProblemMatrix(object):
         self.m       = None
                 
         self.Apod    = np.zeros((self.corono.nPup**2))
-
-        
+      
         self.TR      = np.sum(self.Pupil_vec)
         
  
@@ -463,8 +454,12 @@ class MaxTau(ProblemMatrix):
         """
         print('generating A, b, c matrices')
 
+        fctr = 1.
+        if self.Pupil2dSym == True:
+            fctr = 1.
+
         ED0 = np.zeros_like(self.corono_field_t2)
-        ED0tmp = self.Pupil_vec[self.idx_pup]*self.LyotStop_vec[self.idx_pup]
+        ED0tmp = fctr*self.Pupil_vec[self.idx_pup]*self.LyotStop_vec[self.idx_pup]
         for j in range(len(self.corono_field_t2.T)):
             ED0[:,j] = ED0tmp
         cst = 10.**(-self.cDarkHole/2.)/np.sqrt(2.)      
