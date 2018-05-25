@@ -345,6 +345,7 @@ class ProblemMatrix(object):
                 Apodtmp[i] = self.m.getVars()[i].x
             self.Apod[self.idx_pup] = Apodtmp
             
+            
 #            test = np.zeros((self.corono.nPup, 2))
 #            test[:,0] = self.corono.r
 #            test[:,1] = self.Apod   

@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Apr 25 17:52:23 2018
+Created on Wed May  9 14:34:08 2018
 
 @author: mndiaye
 """
 
 import numpy as np
 import time
-import os
 from pathlib import Path
 
 from corono import corono_design as cd
@@ -17,18 +16,22 @@ from corono.utils import to_dict
 
 from astropy.io import fits
 
+import os
+
+import stdgrb
+
 #%% parameters
 """
 Parameters
 """
 # Telescope name
-pupil_name = 'lvr' # 'vlt' or 'sbr' or 'lvr'
+pupil_name = 'sbr' # 'vlt' or 'sbr' or 'lvr'
 
 #nPup = corono0.params['nPup']
 nPup = 600
-
-Fmax2d = 22 
-nImg2d = 44
+nFPM = 50
+Fmax2d = 22.5 
+nImg2d = 45   
 
 # mask radius in lam0/D unit
 rMask = 4.0
@@ -38,7 +41,7 @@ rho0 =  3.5
 rho1 = 10.0
 
 # contrast in the dark region
-cDarkHole = 10
+cDarkHole = 10.0
 
 # tau (integrated Pupil transmission)
 tau   = 0.4
@@ -46,12 +49,13 @@ tau   = 0.4
 # CtrBtwnPix2
 corono_name   = 'APLC' # 'SP' or 'APLC'
 CtrBtwnPix  = True
-CtrBtwnPix2 = True
-Pupil2dSym  = True
+CtrBtwnPix2 = True # keep it True for optimization
+Pupil2dSym  = True # set it to True only for optimization
 
 #nlam
 nlam = 3
 bw   = 0.1
+
 
 do_fits = True
 
@@ -73,9 +77,9 @@ Pupil2d    = fits.getdata(fpath_pup)
 LyotStop2d = fits.getdata(fpath_lys)
 
 
-params = to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d,
+params = to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
                  rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau, 
-                 CtrBtwnPix=CtrBtwnPix, CtrBtwnPix2=CtrBtwnPix2, 
+                 CtrBtwnPix=CtrBtwnPix, CtrBtwnPix2 = CtrBtwnPix2,
                  nlam=nlam, bw=bw,
                  Pupil2d = Pupil2d, LyotStop2d = LyotStop2d,
                  Pupil2dSym = Pupil2dSym, rMask=rMask)
@@ -96,55 +100,54 @@ Problem defintion
 t0 = time.time()
 # Maximization of the integrated amplitude transmission of the apodizer
 problem1 = co2d.MaxTau(corono=corono0, **params)
+A, b, c = problem1.compute_matrices()
 # Maximization of the contrast under L1-norm
 #problem2 = co2d.MaxContrast(corono=corono0, Lnorm='L1',**params)
 # Maximization of the contrast under L-infinite norm
 #problem3 = co2d.MaxContrast(corono=corono0, Lnorm='Linf',**params)
 
-#%% Gurobi model of the problems
+    
+#%%
 """
-Gurobi models
-"""
-m1 = problem1.compute_gurobi_model()
-#m2 = problem2.compute_gurobi_model()
-#m3 = problem3.compute_gurobi_model()
-
-#%% Apodizer solution for the problems
-"""
-Apodizer solutions
-"""
-Apod1 = problem1.solve_model()
-#Apod2 = problem2.solve_model()
-#Apod3 = problem3.solve_model()
-t1 = time.time()
-print('Pupil2dSym:{0}, total computation time: {1:.2f}s'.format(Pupil2dSym, t1-t0))
+Apodizer solutions with cython solver by Remi Flamary
+"""    
+#Apod2tmp, val = stdgrb.lp_solve(problem1.c, A=(problem1.A).T, b=problem1.b)
+Apod2tmp, val = stdgrb.lp_solve(problem1.c, A=(problem1.A).T, b=problem1.b, crossover=1, logtoconsole=1)
+t1 = time.time() 
+print('Pupil2dSym:{0}, total computation time: {1:.2f}s for cython'.format(Pupil2dSym, t1-t0))
 
 #%% Display of the apodizer
 """
 Generation of full apodizer for quarter pupil optimization
 """
-Apod1_2d = np.reshape(Apod1, (corono0.nPup, corono0.nPup))
-#Apod2_2d = np.reshape(Apod2, (corono0.nPup, corono0.nPup))
-#Apod3_2d = np.reshape(Apod3, (corono0.nPup, corono0.nPup))
+
+Apod2 = np.zeros((corono0.nPup**2))
+Apod2[problem1.idx_pup] = Apod2tmp
+Apod2_2d = np.reshape(Apod2, (corono0.nPup, corono0.nPup))
 
 if Pupil2dSym == True:
-    Apod1_2d += np.flip(Apod1_2d, axis=0)
-    Apod1_2d += np.flip(Apod1_2d, axis=1)  
+#        Apod2_2d[corono0.nPup//2:, corono0.nPup//2:] = Apod2_2dtmp    
+        Apod2_2dtmp =  Apod2_2d[corono0.nPup//2:, corono0.nPup//2:]
+        Apod2_2d[:corono0.nPup//2, corono0.nPup//2:] = np.flip(Apod2_2dtmp, axis=0)
+        Apod2_2d[:, :corono0.nPup//2]          = np.flip(Apod2_2d[:, corono0.nPup//2:], axis=1)
+
 
 #%%
 """
 Save apodizer
 """
-fdir = Path('./results/2D/dat_pyth').resolve()
+fdir = Path('./results/2D/dat_cyth/' + pupil_name).resolve()
+
 if not os.path.exists(fdir):
     os.makedirs(fdir)
-
+    
 if corono_name == 'SP':
     fname_gen  = 'SP00_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}.fits'
 else:
     fname_gen  = 'APLC_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}.fits'
 
-fpath = fdir / pupil_name / fname_gen.format(**{key: corono0.params[key] for key in corono0.params})
+fpath = fdir / fname_gen.format(**{key: corono0.params[key] for key in corono0.params})
 
 if do_fits is True:
-    fits.writeto(fpath, Apod1_2d, overwrite=True)
+    fits.writeto(fpath, Apod2_2d, overwrite=True)
+

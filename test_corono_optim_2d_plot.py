@@ -5,9 +5,11 @@ Created on Mon Apr 30 14:10:20 2018
 
 @author: mndiaye
 """
-
+import numpy as np
 import pylab as pl
 from pathlib import Path
+
+import os
 
 from corono import corono_design as cd
 #from corono import corono_optim_2d as co2d
@@ -27,7 +29,7 @@ pupil_name = 'sbr' # 'vlt' or 'sbr' or 'lvr'
 
 #nPup = corono0.params['nPup']
 nPup = 200
-
+nFPM = 50
 Fmax2d = 50
 nImg2d = 500
 
@@ -39,20 +41,21 @@ rho0 =  5.0
 rho1 = 10.0
 
 # contrast in the dark region
-cDarkHole = 7
+cDarkHole = 7.0
 
 # tau (integrated Pupil transmission)
 tau   = 0.4
 
 # CtrBtwnPix2
-corono_name   = 'APLC' # 'SP' or 'APLC'
+corono_name   = 'SP' # 'SP' or 'APLC'
 CtrBtwnPix  = True
 CtrBtwnPix2 = True
-Pupil2dSym  = True
+Pupil2dSym  = False # set it True only for optimization
 
 #nlam
-nlam = 3
 bw   = 0.1
+nlam = 5
+nlambis = 11
 
 do_fits = True
 
@@ -105,7 +108,7 @@ fpath = fdir / pupil_name / fname_gen.format(**{key: corono0.params[key] for key
 
 print('{0}'.format(fpath))
 
-Apod1_2d = fits.getdata(fpath,)
+Apod_pyth = fits.getdata(fpath,)
 
 #%% Display of the apodizer
 """
@@ -117,25 +120,26 @@ pl.imshow(corono0.Pupil2d, cmap = cm.Greys_r)
 pl.title('Pupil transmission')
 
 fdir_pdf = Path('./results/2D/plots/').resolve()
-fname = '{0}_apodisation.pdf'.format(pupil_name)
+if not os.path.exists(fdir_pdf):
+    os.makedirs(fdir_pdf)
+
+fdir_pdf = Path('./results/2D/plots/').resolve()
+fname = '{0}_apodisation_ampl_nPup={1:04d}.pdf'.format(pupil_name, nPup)
 fpath = fdir_pdf / fname
 pl.figure(5)
 pl.clf()
-pl.imshow(Apod1_2d*corono0.Pupil2d, cmap = cm.Greys_r)
-pl.title('Apod 1 transmission - MaxTau problem')
+pl.imshow(Apod_pyth*corono0.Pupil2d, cmap = cm.Greys_r)
+pl.title('Apod 1 transmission - MaxTau problem - pyth')
 pl.savefig(str(fpath))
 
 #%% Signal in intensity
 """
 Computation of the direct and coronagraphic images
 """
-
-nlam = 1
-
 params = to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d,
                  rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau, 
                  CtrBtwnPix=CtrBtwnPix, CtrBtwnPix2=CtrBtwnPix2, 
-                 nlam=nlam, bw=bw,
+                 nlam=nlambis, bw=bw,
                  Pupil2d = Pupil2d, LyotStop2d = LyotStop2d,
                  Pupil2dSym = Pupil2dSym, rMask=rMask)
 
@@ -145,16 +149,16 @@ else:
     corono0 = cd.APLC2d(**params)
 
 if corono_name == 'APLC':
-    poly_direct_image1 = corono0.compute_direct_intensity_2d(Apod1_2d)
+    poly_direct_image1 = corono0.compute_direct_intensity_2d(Apod_pyth)
 else:
     poly_direct_image1 = corono0.compute_direct_intensity_2d(corono0.Pupil2d)
-poly_corono_image1 = corono0.compute_corono_intensity_2d(Apod1_2d)
+poly_corono_image1 = corono0.compute_corono_intensity_2d(Apod_pyth)
 
 #%% image plot
 """
 Display direct and coronagraphic images
 """
-fname = '{0}_direct_image.pdf'.format(pupil_name)
+fname = '{0}_direct_image_nPup={1:04d}.pdf'.format(pupil_name, nPup)
 fpath = fdir_pdf / fname
 pl.figure(10)
 pl.clf()
@@ -162,7 +166,7 @@ pl.imshow(poly_direct_image1**0.25, cmap = cm.inferno)
 pl.title('Apod1 - direct image')
 pl.savefig(str(fpath))
 
-fname  = '{0}_apodized_image.pdf'.format(pupil_name)
+fname  = '{0}_apodized_image_nPup={1:04d}.pdf'.format(pupil_name, nPup)
 fpath = fdir_pdf / fname
 pl.figure(11)
 pl.clf()
@@ -175,21 +179,39 @@ pl.savefig(str(fpath))
 Display of the intensity profiles of the coronagraphic images
 """
 
+#val = 0
+#if CtrBtwnPix2 is True:
+#    val = 1/2
+
+#val = 0
+#if nImg2d%2 == 0:
+#    val = 1/2
+#
+#xx,yy  = np.meshgrid(np.arange(nImg2d)-nImg2d//2+val, np.arange(nImg2d)-nImg2d//2+val)
+#mydist = (Fmax2d/nImg2d)*np.hypot(yy,xx)
+#xi2d = mydist[nImg2d//2,nImg2d//2:]
+
+xi2d = corono0.xi2d
+if nImg2d%2 == 0:
+    xi2d = corono0.xi2d_ctr
+
 nImg2d = corono0.params['nImg2d']
-fname = '{0}_intensity_profiles.pdf'.format(pupil_name)
+fname = '{0}_intensity_profiles_nPup={1:04d}.pdf'.format(pupil_name, nPup)
 fpath = fdir_pdf / fname
 
 pl.figure(8)
 pl.clf()
 pl.title('Radial intensity profiles of the images')
-pl.semilogy(corono0.xi2d,poly_direct_image1[nImg2d//2,nImg2d//2:]/poly_direct_image1.max(),label='Direct')
+#pl.semilogy(corono0.xi2d,poly_direct_image1[nImg2d//2,nImg2d//2:]/poly_direct_image1.max(),label='Direct - pyth')
+#pl.semilogy(corono0.xi2d,poly_direct_image2[nImg2d//2,nImg2d//2:]/poly_direct_image2.max(),label='Direct - cyth')
 #pl.semilogy(corono0.xi,poly_direct_image2/poly_direct_image2.max(),label='Direct')
 #pl.semilogy(corono0.xi,poly_direct_image3/poly_direct_image3.max(),label='Direct')
 if corono_name == 'SP':
-    pl.semilogy(corono0.xi2d,poly_corono_image1[nImg2d//2,nImg2d//2:]/poly_corono_image1.max(),label='Apod')
+#    pl.semilogy(xi2d,poly_corono_image1[nImg2d//2,nImg2d//2:]/poly_corono_image1.max(),label='Apod - pyth')
+    pl.semilogy(xi2d,poly_corono_image1[nImg2d//2,nImg2d//2:]/poly_corono_image1.max(),label='Apod - cyth')
 else:
-    pl.semilogy(corono0.xi2d,poly_corono_image1[nImg2d//2,nImg2d//2:]/poly_direct_image1.max(),label='MaxTau')
-    
+#    pl.semilogy(xi2d,poly_corono_image1[nImg2d//2,nImg2d//2:]/poly_direct_image1.max(),label='Apod - pyth')
+    pl.semilogy(xi2d,poly_corono_image1[nImg2d//2,nImg2d//2:]/poly_direct_image1.max(),label='Apod - cyth')    
 #pl.semilogy(corono0.xi2d,poly_corono_image2[nImg2d//2,nImg2d//2:]/poly_direct_image2.max(),label=r'MaxContrast, L$_1$-norm')
 #pl.semilogy(corono0.xi2d,poly_corono_image3[nImg2d//2,nImg2d//2:]/poly_direct_image3.max(),label=r'MaxContrast, L$_{\infty}$-norm')
 #pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
@@ -198,8 +220,86 @@ pl.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle=
 pl.axhline(10**(-cDarkHole), xmin=corono0.xi.min(), xmax=corono0.xi.max(), linewidth=1, color='k', linestyle='--')
 pl.xlabel(r'Angular separation in $\lambda_0$/D')
 pl.ylabel('Normalized intensity in log scale')
+pl.ylim(1e-9, 2e0)
 pl.legend()
+pl.tight_layout()
 pl.savefig(str(fpath))
+
+#%%
+pl.show()
+
+values = range(nlambis)
+colors = pl.cm.rainbow(np.linspace(0,1,nlambis))
+
+mono_direct_image1 = corono0.compute_direct_intensity_2d(Apod_pyth, poly=False)
+mono_corono_image1 = corono0.compute_corono_intensity_2d(Apod_pyth, poly=False)
+
+
+
+pl.figure(21)
+pl.clf()
+pl.title('Radial intensity profiles of the images')
+#pl.semilogy(corono0.xi2d,poly_direct_image1[nImg2d//2,nImg2d//2:]/poly_direct_image1.max(),label='Direct')
+#pl.semilogy(corono0.xi,poly_direct_image2/poly_direct_image2.max(),label='Direct')
+#pl.semilogy(corono0.xi,poly_direct_image3/poly_direct_image3.max(),label='Direct')
+for i in range(corono0.nlam):
+    if corono_name == 'SP':
+        pl.semilogy(xi2d,mono_corono_image1[i, nImg2d//2,nImg2d//2:]/mono_corono_image1.max(), '-',
+                    label='Apod - cyth',
+                    color = colors[i])
+    else:
+        pl.semilogy(xi2d,mono_corono_image1[i, nImg2d//2,nImg2d//2:]/mono_direct_image1[(corono0.nlam+1)//2].max(), 
+                    '-',
+                    label='APLC - cyth',  color = colors[i])
+#pl.semilogy(corono0.xi2d,poly_corono_image2[nImg2d//2,nImg2d//2:]/poly_direct_image2.max(),label=r'MaxContrast, L$_1$-norm')
+#pl.semilogy(corono0.xi2d,poly_corono_image3[nImg2d//2,nImg2d//2:]/poly_direct_image3.max(),label=r'MaxContrast, L$_{\infty}$-norm')
+#pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
+pl.axvline(x=corono0.rho0, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
+pl.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
+pl.axhline(10**(-cDarkHole), xmin=corono0.xi.min(), xmax=corono0.xi.max(), linewidth=1, color='k', linestyle='--')
+pl.xlabel(r'Angular separation in $\lambda_0$/D')
+pl.ylabel('Normalized intensity in log scale')
+pl.ylim(1e-9, 2e0)
+pl.legend()
+pl.tight_layout()
+
+
+#%%
+pl.show()
+
+
+
+
+##%% Intensity profiles of the direct and coronagraphic images
+#"""
+#Display of the intensity profiles of the coronagraphic images
+#"""
+#
+#nImg2d = corono0.params['nImg2d']
+#fname = '{0}_intensity_profiles.pdf'.format(pupil_name)
+#fpath = fdir_pdf / fname
+#
+#pl.figure(8)
+#pl.clf()
+#pl.title('Radial intensity profiles of the images')
+#pl.semilogy(corono0.xi2d,poly_direct_image1[nImg2d//2,nImg2d//2:]/poly_direct_image1.max(),label='Direct')
+##pl.semilogy(corono0.xi,poly_direct_image2/poly_direct_image2.max(),label='Direct')
+##pl.semilogy(corono0.xi,poly_direct_image3/poly_direct_image3.max(),label='Direct')
+#if corono_name == 'SP':
+#    pl.semilogy(corono0.xi2d,poly_corono_image1[nImg2d//2,nImg2d//2:]/poly_corono_image1.max(),label='Apod')
+#else:
+#    pl.semilogy(corono0.xi2d,poly_corono_image1[nImg2d//2,nImg2d//2:]/poly_direct_image1.max(),label='MaxTau')
+#    
+##pl.semilogy(corono0.xi2d,poly_corono_image2[nImg2d//2,nImg2d//2:]/poly_direct_image2.max(),label=r'MaxContrast, L$_1$-norm')
+##pl.semilogy(corono0.xi2d,poly_corono_image3[nImg2d//2,nImg2d//2:]/poly_direct_image3.max(),label=r'MaxContrast, L$_{\infty}$-norm')
+##pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
+#pl.axvline(x=corono0.rho0, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
+#pl.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
+#pl.axhline(10**(-cDarkHole), xmin=corono0.xi.min(), xmax=corono0.xi.max(), linewidth=1, color='k', linestyle='--')
+#pl.xlabel(r'Angular separation in $\lambda_0$/D')
+#pl.ylabel('Normalized intensity in log scale')
+#pl.legend()
+#pl.savefig(str(fpath))
 
 #%%
 pl.show()

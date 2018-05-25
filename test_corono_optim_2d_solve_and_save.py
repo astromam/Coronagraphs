@@ -27,8 +27,8 @@ pupil_name = 'sbr' # 'vlt' or 'sbr' or 'lvr'
 #nPup = corono0.params['nPup']
 nPup = 50
 nFPM = 50
-nImg2d = 44
-Fmax2d = 22
+Fmax2d = 22.5
+nImg2d = 45
 
 # mask radius in lam0/D unit
 rMask = 2.8
@@ -50,8 +50,8 @@ CtrBtwnPix2 = True
 Pupil2dSym  = True
 
 #nlam
-bw = 0.1
-nlam=3
+bw   = 0.1
+nlam = 5
 
 do_fits = True
 
@@ -73,13 +73,12 @@ Pupil2d    = fits.getdata(fpath_pup)
 LyotStop2d = fits.getdata(fpath_lys)
 
 
-params = to_dict(nPup=nPup, nFPM =nFPM, nImg2d = nImg2d, Fmax2d = Fmax2d, 
+params = to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
                  rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau, 
-                 CtrBtwnPix=CtrBtwnPix, CtrBtwnPix2=CtrBtwnPix2, 
-                 nlam=nlam, bw = bw, 
-                 rMask = rMask,
+                 CtrBtwnPix=CtrBtwnPix, CtrBtwnPix2 = CtrBtwnPix2,
+                 nlam=nlam, bw=bw,
                  Pupil2d = Pupil2d, LyotStop2d = LyotStop2d,
-                 Pupil2dSym = Pupil2dSym)
+                 Pupil2dSym = Pupil2dSym, rMask=rMask)
 
 #%%  
 """ 
@@ -120,19 +119,22 @@ Apod1 = problem1.solve_model()
 t1 = time.time()
 print('Pupil2dSym:{0}, total computation time: {1:.2f}s'.format(Pupil2dSym, t1-t0))
 
+
 #%% Display of the apodizer
 """
 Generation of full apodizer for quarter pupil optimization
 """
 Apod1_2d = np.reshape(Apod1, (corono0.nPup, corono0.nPup))
-#Apod2_2d = np.reshape(Apod2, (corono0.nPup, corono0.nPup))
-#Apod3_2d = np.reshape(Apod3, (corono0.nPup, corono0.nPup))
+##Apod2_2d = np.reshape(Apod2, (corono0.nPup, corono0.nPup))
+##Apod3_2d = np.reshape(Apod3, (corono0.nPup, corono0.nPup))
+#
 
 if Pupil2dSym == True:
-    Apod1_2d += np.flip(Apod1_2d, axis=0)
-    Apod1_2d += np.flip(Apod1_2d, axis=1)  
-
-     
+#        Apod2_2d[corono0.nPup//2:, corono0.nPup//2:] = Apod2_2dtmp    
+        Apod1_2dtmp =  Apod1_2d[corono0.nPup//2:, corono0.nPup//2:]
+        Apod1_2d[:corono0.nPup//2, corono0.nPup//2:] = np.flip(Apod1_2dtmp, axis=0)
+        Apod1_2d[:, :corono0.nPup//2]          = np.flip(Apod1_2d[:, corono0.nPup//2:], axis=1)
+        
 
 #%%
 """
