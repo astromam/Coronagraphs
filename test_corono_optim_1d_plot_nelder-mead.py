@@ -32,23 +32,24 @@ bw   = 0.1
 nlam = 3
 nlambis = 11
 
-PupilObs    = 0.20
+PupilObs    = 0.14
 rMask       = 4.0
 LyotStopObs = 0.40
+LyotStopIns = 1.0
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
-rho0 = 5.0
+rho0 = 3.0
 rho1 = 10.0
 
 # contrast in the dark region
-cDarkHole = 8.0
+cDarkHole = 10.0
 
 # tau (integrated Pupil transmission)
 tau   = 0.5
 
 r   = np.arange(nPup)*R/nPup + R/(2*nPup)
 Pupil1d      = (r>PupilObs)*1.0
-LyotStop1d   = (r>LyotStopObs)*1.0
+LyotStop1d   = (r>LyotStopObs)*(r<LyotStopIns)*1.0
 
 params = to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
                  nPup = nPup, nFPM=nFPM, nImg=nImg, Fmax = Fmax,
@@ -73,12 +74,34 @@ fname = 'BPLC_obs={0:2d}_FPM={1:3d}_ls={2:2d}_IWA={3:03d}_OWA={4:03d}_BW={5:02d}
                 int(rho0*10),int(rho1*10),int(bw*100), int(cDarkHole),
                 int(nPup), int(nFPM))
 
-fname_pyth = fname + '_guropy_apod.dat'
+fname_pyth = fname + '_guropy_apod_test.dat'
+fname_pyth_nm0 = fname + '_guropy_apod_test_nm0.dat'
 
 #%%  
 """ 
 Coronagraph defintion
 """
+
+fpath_pyth_nm0 = fdir_pyth / fname_pyth_nm0 
+x_end = np.loadtxt(fpath_pyth_nm0)
+
+rMask       = x_end[0]
+LyotStopObs = x_end[1]
+LyotStopIns = x_end[2]
+print('mask radius          : {0:.4f} lambda/D'.format(rMask))
+print('Lyot Stop obstruction: {0:.4f}'.format(LyotStopObs))
+print('Lyot Stop ins. size  : {0:.4f}'.format(LyotStopIns))
+r   = np.arange(nPup)*R/nPup + R/(2*nPup)
+Pupil1d      = (r>PupilObs)*1.0
+LyotStop1d   = (r>LyotStopObs)*(r<LyotStopIns)*1.0
+
+params = to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
+                 nPup = nPup, nFPM=nFPM, nImg=nImg, Fmax = Fmax,
+                 bw = bw, nlam = nlambis,
+                 PupilObs = PupilObs, rMask = rMask, LyotStopObs = LyotStopObs,
+                 r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d)
+
+
 if corono_name == 'APLC':
     corono0 = cd.APLC1d(**params)
 elif corono_name == 'SP':

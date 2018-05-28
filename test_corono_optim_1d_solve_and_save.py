@@ -23,9 +23,10 @@ Parameters
 corono_name = 'APLC' # 'APLC' or 'SP'
 
 nPup = 500
-nFPM = 100
-nImg = 200
+nFPM = 50
+nImg = 44
 Fmax = 11
+R    = 1
 
 bw   = 0.1
 nlam = 3

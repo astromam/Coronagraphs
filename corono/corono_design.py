@@ -107,7 +107,7 @@ def get_default_params_Coronagraph():
 
             
     """
-    tmp = {'PupilObs':0.14,'LyotStopObs':0.28,
+    tmp = {'PupilObs':0.14,'LyotStopObs':0.28,'LyotStopIns':1.0,    
            'rho0':5,'rho1':10,
            'nPup':200,'nImg':200,'Fmax':25,
            'nImg2d':44, 'Fmax2d':22,
@@ -149,7 +149,7 @@ def get_default_params_APLC1d():
     # Telescope aperture
     Pupil1d      = (r>tmp['PupilObs'])*1.0
     # Lyot stop 
-    LyotStop1d   = (r>tmp['LyotStopObs'])*1.0
+    LyotStop1d   = (r>tmp['LyotStopObs'])*(r<tmp['LyotStopIns'])*1.0
     
     tmp.update({'r':r, 'Pupil1d':Pupil1d, 'LyotStop1d':LyotStop1d})
     return tmp
@@ -264,7 +264,7 @@ def get_default_params_DZPM1d():
     # Telescope aperture
     Pupil1d      = (r>tmp['PupilObs'])*1.0
     # Lyot stop 
-    LyotStop1d   = (r>tmp['LyotStopObs'])*1.0
+    LyotStop1d   = (r>tmp['LyotStopObs'])*(r<tmp['LyotStopIns'])*1.0
     
     tmp.update({'r':r, 'Pupil1d':Pupil1d, 'LyotStop1d':LyotStop1d})
     return tmp
