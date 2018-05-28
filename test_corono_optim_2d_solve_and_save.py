@@ -22,7 +22,7 @@ from astropy.io import fits
 Parameters
 """
 # Telescope name
-pupil_name = 'sbr' # 'vlt' or 'sbr' or 'lvr'
+pupil_name = 'vlt' # 'vlt' or 'sbr' or 'lvr'
 
 #nPup = corono0.params['nPup']
 nPup = 50
@@ -31,10 +31,10 @@ Fmax2d = 22.5
 nImg2d = 45
 
 # mask radius in lam0/D unit
-rMask = 2.8
+rMask = 4.0
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
-rho0 =  5.0
+rho0 =  4.5
 rho1 = 10.0
 
 # contrast in the dark region

@@ -20,6 +20,12 @@ from corono.utils import to_dict
 """
 Parameters
 """
+corono_name = 'APLC' # 'APLC' or 'SP'
+
+nPup = 500
+nFPM = 100
+nImg = 200
+Fmax = 11
 
 bw   = 0.1
 nlam = 3
@@ -38,18 +44,18 @@ cDarkHole = 8.0
 # tau (integrated Pupil transmission)
 tau   = 0.5
 
-nPup = 1000
-nFPM = 500
-nImg = 200
-Fmax = 11
+r   = np.arange(nPup)*R/nPup + R/(2*nPup)
+Pupil1d      = (r>PupilObs)*1.0
+LyotStop1d   = (r>LyotStopObs)*1.0
 
 params = to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
                  nPup = nPup, nFPM=nFPM, nImg=nImg, Fmax = Fmax,
                  bw = bw, nlam = nlam,
-                 PupilObs = PupilObs, rMask = rMask, LyotStopObs = LyotStopObs)
+                 PupilObs = PupilObs, rMask = rMask, LyotStopObs = LyotStopObs,
+                 r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d)
 
-corono_name = 'APLC' # 'APLC' or 'SP'
 
+#%%
 fdir = Path('.').resolve()
 
 fdir_pyth = fdir / 'results' / '1D' / 'dat_pyth'
@@ -123,55 +129,3 @@ test0[:, 0] = corono0.r/2
 test0[:, 1] = Apod_pyth
 
 np.savetxt(fpath_pyth, test0)
-
-#%% Display of the apodizer
-"""
-Plot display of the apodizers
-"""
-fname_pl = fname + '_apodizers_tran.pdf'
-fpath = fdir_plot / fname_pl
-
-pl.figure(4)
-pl.clf()
-pl.plot(corono0.r, Apod_pyth/Apod_pyth.max(), label='gurobipy')
-pl.xlabel(r'Pupil radius r')
-pl.ylabel('Apodizer amplitude transmission')
-pl.legend()
-pl.tight_layout()
-pl.show()
-pl.savefig(str(fpath))
-
-#%% Signal in intensity
-"""
-Computation of the direct and coronagraphic images
-"""
-poly_direct_image1 = corono0.compute_direct_intensity_1d(Apod_pyth)
-poly_corono_image1 = corono0.compute_corono_intensity_1d(Apod_pyth)
-
-#%% Intensity profiles of the direct and coronagraphic images
-"""
-Display of the intensity profiles of the coronagraphic images
-"""
-
-fname_pl = fname + '_intensity.pdf'
-fpath = fdir_plot / fname_pl
-pl.figure(5)
-pl.clf()
-#pl.title('Intensity profiles of the coronagraphic images')
-#pl.semilogy(corono0.xi,poly_direct_image1/poly_direct_image1.max(),label='Direct')
-#pl.semilogy(corono0.xi,poly_direct_image2/poly_direct_image2.max(),label='Direct')
-#pl.semilogy(corono0.xi,poly_direct_image3/poly_direct_image3.max(),label='Direct')
-pl.semilogy(corono0.xi,poly_corono_image1/poly_direct_image1.max(),label='gurobipy')
-pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
-pl.axvline(x=corono0.rho0, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
-pl.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
-pl.axhline(10**(-problem1.params['cDarkHole']), xmin=corono0.xi.min(), xmax=corono0.xi.max(), linewidth=1, color='k', linestyle='--')
-pl.xlabel(r'Angular separation in $\lambda_0$/D')
-pl.ylabel('Normalized intensity in log scale')
-pl.ylim(1e-12, 1e-3)
-pl.legend()
-pl.tight_layout()
-pl.savefig(str(fpath))
-
-#%%
-pl.show()

@@ -25,19 +25,19 @@ from astropy.io import fits
 Parameters
 """
 # Telescope name
-pupil_name = 'sbr' # 'vlt' or 'sbr' or 'lvr'
+pupil_name = 'vlt' # 'vlt' or 'sbr' or 'lvr'
 
 #nPup = corono0.params['nPup']
-nPup = 200
+nPup = 50
 nFPM = 50
 Fmax2d = 50
 nImg2d = 500
 
 # mask radius in lam0/D unit
-rMask = 2.8
+rMask = 4.0
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
-rho0 =  5.0
+rho0 =  4.5
 rho1 = 10.0
 
 # contrast in the dark region
@@ -47,7 +47,7 @@ cDarkHole = 7.0
 tau   = 0.4
 
 # CtrBtwnPix2
-corono_name   = 'SP' # 'SP' or 'APLC'
+corono_name   = 'APLC' # 'SP' or 'APLC'
 CtrBtwnPix  = True
 CtrBtwnPix2 = True
 Pupil2dSym  = False # set it True only for optimization
