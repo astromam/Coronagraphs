@@ -20,41 +20,49 @@ from corono.utils import to_dict
 """
 Parameters
 """
-corono_name = 'APLC' # 'APLC' or 'SP'
+corono_name = 'DZPMbis' # 'APLC' or 'SP'
 
 nPup = 500
 nFPM = 50
 nImg = 110
-Fmax = 11
+Fmax = 22
 R    = 1
 
-bw   = 0.1
-nlam = 3
+bw   = 0.2
+nlam = 5
 nlambis = 11
 
 PupilObs    = 0.14
+
 rMask       = 4.0
-LyotStopObs = 0.40
+
+rMask1      = 2.0
+rMask2      = 3.0
+OPDx2       = 0.5
+
+LyotStopObs = 0.28
 LyotStopIns = 1.0
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
-rho0 = 3.0
+rho0 = 5.0
 rho1 = 10.0
 
 # contrast in the dark region
-cDarkHole = 10.0
+cDarkHole = 7.0
 
 # tau (integrated Pupil transmission)
 tau   = 0.5
 
-r   = np.arange(nPup)*R/nPup + R/(2*nPup)
+r            = np.arange(nPup)*R/nPup + R/(2*nPup)
 Pupil1d      = (r>PupilObs)*1.0
 LyotStop1d   = (r>LyotStopObs)*(r<LyotStopIns)*1.0
 
 params = to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
                  nPup = nPup, nFPM=nFPM, nImg=nImg, Fmax = Fmax,
                  bw = bw, nlam = nlambis,
-                 PupilObs = PupilObs, rMask = rMask, LyotStopObs = LyotStopObs,
+                 PupilObs = PupilObs, rMask = rMask,
+                 rMask1 = rMask1, rMask2 = rMask2, OPDx2 = OPDx2,
+                 LyotStopObs = LyotStopObs, LyotStopIns = LyotStopIns,
                  r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d)
 
 #%%
@@ -69,12 +77,23 @@ if not os.path.exists(fdir_plot):
 if not os.path.exists(fdir_pyth):
     os.makedirs(fdir_pyth)    
  
-fname = 'BPLC_obs={0:2d}_FPM={1:3d}_ls={2:2d}_IWA={3:03d}_OWA={4:03d}_BW={5:02d}_C={6:02d}_1D_N={7:04d}_nFPM={8:03d}'.format(
-                int(PupilObs*100), int(rMask*100),int(LyotStopObs*100),
+if corono_name == 'APLC' or corono_name == 'SP': 
+    corono_name_bis = 'BPLC'
+    if corono_name  == 'SP':
+        corono_name_bis = 'SP00'
+    fname = '{0}_obs={1:2d}_FPM={2:3d}_ls={3:2d}_IWA={4:03d}_OWA={5:03d}_BW={6:02d}_C={7:02d}_1D_N={8:04d}_nFPM={9:03d}'.format(
+                corono_name_bis, int(PupilObs*100), int(rMask*100),
+                int(LyotStopObs*100),
                 int(rho0*10),int(rho1*10),int(bw*100), int(cDarkHole),
                 int(nPup), int(nFPM))
+else:
+    fname = '{0}_obs={1:2d}_FPM1={2:3d}_FPM2={3:3d}_ls={4:2d}_IWA={5:03d}_OWA={6:03d}_BW={7:02d}_C={8:02d}_1D_N={9:04d}_nFPM={10:03d}'.format(
+                corono_name, int(PupilObs*100), int(rMask1*100), int(rMask2*100), 
+                int(LyotStopObs*100),
+                int(rho0*10),int(rho1*10),int(bw*100), int(cDarkHole),
+                int(nPup), int(nFPM))   
 
-fname_pyth = fname + '_guropy_apod_test.dat'
+fname_pyth     = fname + '_guropy_apod_test.dat'
 fname_pyth_nm0 = fname + '_guropy_apod_test_nm0.dat'
 
 #%%  
@@ -85,12 +104,25 @@ Coronagraph defintion
 fpath_pyth_nm0 = fdir_pyth / fname_pyth_nm0 
 x_end = np.loadtxt(fpath_pyth_nm0)
 
-rMask       = x_end[0]
-LyotStopObs = x_end[1]
-LyotStopIns = x_end[2]
-print('mask radius          : {0:.4f} lambda/D'.format(rMask))
-print('Lyot Stop obstruction: {0:.4f}'.format(LyotStopObs))
-print('Lyot Stop ins. size  : {0:.4f}'.format(LyotStopIns))
+if corono_name == 'APLC':
+    rMask       = x_end[0]
+    LyotStopObs = x_end[1]
+    LyotStopIns = x_end[2]
+    print('mask radius          : {0:.4f} lambda/D'.format(rMask))
+    print('Lyot Stop obstruction: {0:.4f}'.format(LyotStopObs))
+    print('Lyot Stop ins. size  : {0:.4f}'.format(LyotStopIns))
+else:
+    rMask1      = x_end[0]
+    rMask2      = x_end[1]
+    OPDx2       = x_end[2]
+    LyotStopObs = x_end[3]
+    LyotStopIns = x_end[4]
+    print('mask radius 1         : {0:.4f} lambda_0/D'.format(rMask1))
+    print('mask radius 2         : {0:.4f} lambda_0/D'.format(rMask2))
+    print('OPD 2                 : {0:.4f} lambda_0'.format(OPDx2))
+    print('Lyot Stop obstruction: {0:.4f}'.format(LyotStopObs))
+    print('Lyot Stop ins. size  : {0:.4f}'.format(LyotStopIns))    
+    
 r   = np.arange(nPup)*R/nPup + R/(2*nPup)
 Pupil1d      = (r>PupilObs)*1.0
 LyotStop1d   = (r>LyotStopObs)*(r<LyotStopIns)*1.0
@@ -98,8 +130,11 @@ LyotStop1d   = (r>LyotStopObs)*(r<LyotStopIns)*1.0
 params = to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
                  nPup = nPup, nFPM=nFPM, nImg=nImg, Fmax = Fmax,
                  bw = bw, nlam = nlambis,
-                 PupilObs = PupilObs, rMask = rMask, LyotStopObs = LyotStopObs,
-                 r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d)
+                 PupilObs = PupilObs, rMask = rMask, 
+                 rMask1 = rMask1, rMask2 = rMask2, OPDx2 = OPDx2,
+                 LyotStopObs = LyotStopObs,
+                 r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d,
+                 LyotStopIns = LyotStopIns)
 
 
 if corono_name == 'APLC':
@@ -107,7 +142,7 @@ if corono_name == 'APLC':
 elif corono_name == 'SP':
     corono0 = cd.SP1d(**params)
 else:
-    stop
+    corono0 = cd.DZPM1dbis(**params)
 
 
 #%% Apodizer solution for the problems
@@ -122,7 +157,7 @@ Apod_pyth = test0[:, 1]
 """
 Plot display of the apodizers
 """
-fname_pl = fname + '_apodizers_tran.pdf'
+fname_pl = fname + '_apodizers_tran_test_nm0.pdf'
 fpath = fdir_plot / fname_pl
 
 pl.figure(1)
@@ -130,6 +165,10 @@ pl.clf()
 pl.plot(corono0.r, Apod_pyth/Apod_pyth.max(), label='gurobipy')
 pl.xlabel(r'Pupil radius r')
 pl.ylabel('Apodizer amplitude transmission')
+pl.axvline(x=corono0.PupilObs, ymin=-0.5, ymax =2, linewidth=1, color='g', linestyle='--')
+pl.axvline(x=1.0, ymin=-0.5, ymax =2, linewidth=1, color='g', linestyle='--')
+pl.axvline(x=corono0.LyotStopObs, ymin=-0.5, ymax =2, linewidth=1, color='r', linestyle='--')
+pl.axvline(x=corono0.LyotStopIns, ymin=-0.5, ymax =2, linewidth=1, color='r', linestyle='--')
 pl.legend()
 pl.tight_layout()
 pl.show()
@@ -150,7 +189,7 @@ mono_corono_image1 = corono0.compute_corono_intensity_1d(Apod_pyth, poly=False)
 Display of the intensity profiles of the coronagraphic images
 """
 
-fname_pl = fname + '_intensity.pdf'
+fname_pl = fname + '_intensity_test_nm0.pdf'
 fpath = fdir_plot / fname_pl
 pl.figure(2)
 pl.clf()
@@ -159,7 +198,11 @@ pl.clf()
 #pl.semilogy(corono0.xi,poly_direct_image2/poly_direct_image2.max(),label='Direct')
 #pl.semilogy(corono0.xi,poly_direct_image3/poly_direct_image3.max(),label='Direct')
 pl.semilogy(corono0.xi,poly_corono_image1/poly_direct_image1.max(),label='gurobipy')
-pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
+if corono_name == 'APLC':
+    pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
+else:
+    pl.axvline(x=corono0.rMask1, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
+    pl.axvline(x=corono0.rMask2, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')    
 pl.axvline(x=corono0.rho0, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
 pl.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
 pl.axhline(10**(-cDarkHole), xmin=corono0.xi.min(), xmax=corono0.xi.max(), linewidth=1, color='k', linestyle='--')
@@ -178,7 +221,7 @@ Display of the monochromatic intensity profiles of the coronagraphic images
 values = range(nlambis)
 colors = pl.cm.rainbow(np.linspace(0,1,nlambis))
 
-fname_pl = fname + '_intensity_mono.pdf'
+fname_pl = fname + '_intensity_mono_test_nm0.pdf'
 fpath = fdir_plot / fname_pl
 pl.figure(3)
 pl.clf()
@@ -189,14 +232,18 @@ pl.clf()
 for i in range(corono0.nlam):
     pl.semilogy(corono0.xi,mono_corono_image1[i]/mono_direct_image1[(corono0.nlam+1)//2].max(), 
                 label=r'{0:.2f}$\lambda_0$'.format(corono0.lam_t[i]), color = colors[i])
-pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
+if corono_name == 'APLC':
+    pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
+else:
+    pl.axvline(x=corono0.rMask1, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
+    pl.axvline(x=corono0.rMask2, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--') 
 pl.axvline(x=corono0.rho0, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
 pl.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
 pl.axhline(10**(-cDarkHole), xmin=corono0.xi.min(), xmax=corono0.xi.max(), linewidth=1, color='k', linestyle='--')
 pl.xlabel(r'Angular separation in $\lambda_0$/D')
 pl.ylabel('Normalized intensity in log scale')
 pl.ylim(1e-12, 1e-3)
-pl.legend()
+pl.legend(loc=2)
 pl.tight_layout()
 pl.savefig(str(fpath))
 
