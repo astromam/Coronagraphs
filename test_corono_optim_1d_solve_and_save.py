@@ -6,7 +6,6 @@ Created on Thu May  3 10:26:11 2018
 @author: mndiaye
 """
 import numpy as np
-import pylab as pl
 import time
 import os
 
