@@ -19,6 +19,7 @@ from corono.utils import to_dict
 Parameters
 """
 corono_name = 'APLC' # 'APLC' or 'SP' or 'HDZPM' or 'HTZPM'
+problem_name = 'MaxTau' # , 'MaxContrastL1', 'MaxContrastLinf'
 
 nPup = 500
 nFPM = 50
@@ -78,29 +79,31 @@ if not os.path.exists(fdir_plot):
     
 if not os.path.exists(fdir_pyth):
     os.makedirs(fdir_pyth)    
- 
+
 if corono_name == 'APLC' or corono_name == 'SP': 
-    fname = '{0}_obs={1:2d}_FPM={2:3d}_ls={3:2d}_IWA={4:03d}_OWA={5:03d}_BW={6:02d}_C={7:02d}_1D_N={8:04d}_nFPM={9:03d}'.format(
+    fname = '{0}_obs={1:2d}_FPM={2:3d}_lsid={3:2d}_lsod={4:2d}_IWA={5:03d}_OWA={6:03d}_BW={7:02d}_C={8:02d}_1D_N={9:04d}_nFPM={10:03d}'.format(
                 corono_name, int(PupilObs*100), int(rMask*100),
-                int(LyotStopObs*100),
+                int(LyotStopObs*100), int(LyotStopIns*100),
                 int(rho0*10),int(rho1*10),int(bw*100), int(cDarkHole),
                 int(nPup), int(nFPM))
-elif corono_name == 'DZPMbis':
-    fname = '{0}_obs={1:2d}_FPM1={2:3d}_FPM2={3:3d}_ls={4:2d}_IWA={5:03d}_OWA={6:03d}_BW={7:02d}_C={8:02d}_1D_N={9:04d}_nFPM={10:03d}'.format(
+elif corono_name == 'HDZPM':
+    fname = '{0}_obs={1:2d}_FPM1={2:3d}_FPM2={3:3d}_lsid={4:2d}_lsod={5:2d}_IWA={6:03d}_OWA={7:03d}_BW={8:02d}_C={9:02d}_1D_N={10:04d}_nFPM={11:03d}'.format(
                 corono_name, int(PupilObs*100), int(rMask1*100), int(rMask2*100), 
-                int(LyotStopObs*100),
+                int(LyotStopObs*100), int(LyotStopIns*100),
+                int(rho0*10),int(rho1*10),int(bw*100), int(cDarkHole),
+                int(nPup), int(nFPM)) 
+elif corono_name == 'HTZPM':
+    fname = '{0}_obs={1:2d}_FPM1={2:3d}_FPM2={3:3d}_FPM3={4:3d}_lsid={5:2d}_lsod={6:2d}_IWA={7:03d}_OWA={8:03d}_BW={9:02d}_C={10:02d}_1D_N={11:04d}_nFPM={12:03d}'.format(
+                corono_name, int(PupilObs*100), 
+                int(rMask1*100), int(rMask2*100), int(rMask3*100), 
+                int(LyotStopObs*100), int(LyotStopIns*100),
                 int(rho0*10),int(rho1*10),int(bw*100), int(cDarkHole),
                 int(nPup), int(nFPM)) 
 else:
-    fname = '{0}_obs={1:2d}_FPM1={2:3d}_FPM2={3:3d}_FPM3={4:3d}_ls={5:2d}_IWA={6:03d}_OWA={7:03d}_BW={8:02d}_C={9:02d}_1D_N={10:04d}_nFPM={11:03d}'.format(
-                corono_name, int(PupilObs*100), 
-                int(rMask1*100), int(rMask2*100), int(rMask3*100), 
-                int(LyotStopObs*100),
-                int(rho0*10),int(rho1*10),int(bw*100), int(cDarkHole),
-                int(nPup), int(nFPM)) 
-
-fname_pyth     = fname + '_guropy_apod_test.dat'
-fname_pyth_nm0 = fname + '_guropy_apod_test_nm0.dat'
+    raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
+    
+fname_pyth     = fname + '_guropy_apod_{0}_tmp.dat'.format(problem_name)
+fname_pyth_nm0 = fname + '_guropy_apod_{0}_nm0.dat'.format(problem_name)
 
 #%%  
 """ 
@@ -128,7 +131,7 @@ elif corono_name == 'HDZPM':
     print('OPD 2                 : {0:.4f} lambda_0'.format(OPDx2))
     print('Lyot Stop obstruction: {0:.4f}'.format(LyotStopObs))
     print('Lyot Stop ins. size  : {0:.4f}'.format(LyotStopIns))    
-else: 
+elif corono_name == 'HTZPM': 
     rMask1      = x_end[0]
     rMask2      = x_end[1]
     rMask3      = x_end[2]
@@ -143,6 +146,8 @@ else:
     print('OPD 3                 : {0:.4f} lambda_0'.format(OPDx3))
     print('Lyot Stop obstruction: {0:.4f}'.format(LyotStopObs))
     print('Lyot Stop ins. size  : {0:.4f}'.format(LyotStopIns)) 
+else:
+    raise NameError('{0}: Not a correct coronagraph for NM-optimization!'.format(corono_name))    
 
     
 r   = np.arange(nPup)*R/nPup + R/(2*nPup)
@@ -166,8 +171,11 @@ elif corono_name == 'SP':
     corono0 = cd.SP1d(**params)
 elif corono_name == 'HDZPM':
     corono0 = cd.DZPM1dbis(**params)
-else:
+elif corono_name == 'HTZPM':
     corono0 = cd.TZPM1dbis(**params)
+else:
+    raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
+
     
 #%% Apodizer solution for the problems
 """

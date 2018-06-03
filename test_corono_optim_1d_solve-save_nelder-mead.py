@@ -18,13 +18,14 @@ from corono import corono_optim_1d as co1d
 
 from corono.utils import to_dict
 
-import stdgrb
+#import stdgrb
 
 #%% parameters
 """
 Parameters
 """
-corono_name = 'APLC' # 'APLC' or 'SP' or 'HDZPM' or 'HTZPM'
+corono_name  = 'APLC' # 'APLC' or 'SP' or 'HDZPM' or 'HTZPM'
+problem_name = 'MaxTau' # , 'MaxContrastL1', 'MaxContrastLinf'
 
 nPup = 500
 nFPM = 50
@@ -84,30 +85,30 @@ if not os.path.exists(fdir_plot):
 if not os.path.exists(fdir_pyth):
     os.makedirs(fdir_pyth)    
 
-
 if corono_name == 'APLC' or corono_name == 'SP': 
-    fname = '{0}_obs={1:2d}_FPM={2:3d}_ls={3:2d}_IWA={4:03d}_OWA={5:03d}_BW={6:02d}_C={7:02d}_1D_N={8:04d}_nFPM={9:03d}'.format(
+    fname = '{0}_obs={1:2d}_FPM={2:3d}_lsid={3:2d}_lsod={4:2d}_IWA={5:03d}_OWA={6:03d}_BW={7:02d}_C={8:02d}_1D_N={9:04d}_nFPM={10:03d}'.format(
                 corono_name, int(PupilObs*100), int(rMask*100),
-                int(LyotStopObs*100),
+                int(LyotStopObs*100), int(LyotStopIns*100),
                 int(rho0*10),int(rho1*10),int(bw*100), int(cDarkHole),
                 int(nPup), int(nFPM))
-elif corono_name == 'DZPMbis':
-    fname = '{0}_obs={1:2d}_FPM1={2:3d}_FPM2={3:3d}_ls={4:2d}_IWA={5:03d}_OWA={6:03d}_BW={7:02d}_C={8:02d}_1D_N={9:04d}_nFPM={10:03d}'.format(
+elif corono_name == 'HDZPM':
+    fname = '{0}_obs={1:2d}_FPM1={2:3d}_FPM2={3:3d}_lsid={4:2d}_lsod={5:2d}_IWA={6:03d}_OWA={7:03d}_BW={8:02d}_C={9:02d}_1D_N={10:04d}_nFPM={11:03d}'.format(
                 corono_name, int(PupilObs*100), int(rMask1*100), int(rMask2*100), 
-                int(LyotStopObs*100),
+                int(LyotStopObs*100), int(LyotStopIns*100),
+                int(rho0*10),int(rho1*10),int(bw*100), int(cDarkHole),
+                int(nPup), int(nFPM)) 
+elif corono_name == 'HTZPM':
+    fname = '{0}_obs={1:2d}_FPM1={2:3d}_FPM2={3:3d}_FPM3={4:3d}_lsid={5:2d}_lsod={6:2d}_IWA={7:03d}_OWA={8:03d}_BW={9:02d}_C={10:02d}_1D_N={11:04d}_nFPM={12:03d}'.format(
+                corono_name, int(PupilObs*100), 
+                int(rMask1*100), int(rMask2*100), int(rMask3*100), 
+                int(LyotStopObs*100), int(LyotStopIns*100),
                 int(rho0*10),int(rho1*10),int(bw*100), int(cDarkHole),
                 int(nPup), int(nFPM)) 
 else:
-    fname = '{0}_obs={1:2d}_FPM1={2:3d}_FPM2={3:3d}_FPM3={4:3d}_ls={5:2d}_IWA={6:03d}_OWA={7:03d}_BW={8:02d}_C={9:02d}_1D_N={10:04d}_nFPM={11:03d}'.format(
-                corono_name, int(PupilObs*100), 
-                int(rMask1*100), int(rMask2*100), int(rMask3*100), 
-                int(LyotStopObs*100),
-                int(rho0*10),int(rho1*10),int(bw*100), int(cDarkHole),
-                int(nPup), int(nFPM)) 
+    raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
     
-
-fname_pyth     = fname + '_guropy_apod_test.dat'
-fname_pyth_nm0 = fname + '_guropy_apod_test_nm0.dat'
+fname_pyth     = fname + '_guropy_apod_{0}_tmp.dat'.format(problem_name)
+fname_pyth_nm0 = fname + '_guropy_apod_{0}_nm0.dat'.format(problem_name)
 
 
 #%%  
@@ -119,29 +120,21 @@ if corono_name == 'APLC':
 elif corono_name == 'SP':
     corono0 = cd.SP1d(**params)
 elif corono_name == 'HDZPM':
-    corono0 = cd.DZPM1dbis(**params)
+    corono0 = cd.HDZPM1d(**params)
+elif corono_name == 'HTZPM':
+    corono0 = cd.HTZPM1d(**params)
 else:
-    corono0 = cd.TZPM1dbis(**params)    
+    raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
 
 #%%
 """
 Problem defintion
 """
 t0 = time.time()
-# Maximization of the integrated amplitude transmission of the apodizer
-#problem1 = co1d.MaxTau(corono=corono0, **params)
-# Maximization of the contrast under L1-norm
-#problem1 = co1d.MaxContrast(corono=corono0, Lnorm='L1',**params)
-# Maximization of the contrast under L-infinite norm
-#problem1 = co1d.MaxContrast(corono=corono0, Lnorm='Linf',**params)
-
 #%% Gurobi model of the problems
 """
-Gurobi models
+Parameter boundaries
 """
-
-
-#%%
 if corono_name == 'APLC':
     x_init = [rMask, LyotStopObs, LyotStopIns] 
     x_lb  = [2.0, 0.14, 0.8]
@@ -150,10 +143,12 @@ elif corono_name == 'HDZPM':
     x_init = [rMask1, rMask2, OPDx2, LyotStopObs, LyotStopIns] 
     x_lb  = [1.0, 2.0, 0.0, 0.14, 0.8]
     x_ub  = [3.0, 4.0, 1.0, 0.45, 1.0]    
-else: 
+elif corono_name == 'HTZPM': 
     x_init = [rMask1, rMask2, rMask3, OPDx2, OPDx3, LyotStopObs, LyotStopIns] 
     x_lb  = [1.5, 2.0, 2.5, 0.0, 0.0, 0.14, 0.8]
     x_ub  = [2.0, 2.5, 3.5, 1.0, 1.0, 0.45, 1.0] 
+else:    
+    raise NameError('{0}: Not a correct coronagraph for NM-optimization!'.format(corono_name))    
     
 #%%
 def res_energy_with_lp(x_t): 
@@ -188,7 +183,7 @@ def res_energy_with_lp(x_t):
                  LyotStopIns = LyotStopIns,
                  r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d)
 
-    else:
+    elif corono_name == 'HTZPM':
         rMask1      = x_t[0]
         rMask2      = x_t[1]
         rMask3      = x_t[2]
@@ -206,31 +201,44 @@ def res_energy_with_lp(x_t):
                  LyotStopObs = LyotStopObs,
                  LyotStopIns = LyotStopIns,
                  r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d)        
-      
+    
+    else:
+        raise NameError('{0}: Not a correct coronagraph for NM-optimization!'.format(corono_name))    
+    
     if corono_name == 'APLC':
         corono0 = cd.APLC1d(**params)
     elif corono_name == 'SP':
         corono0 = cd.SP1d(**params)
     elif corono_name == 'HDZPM':
-        corono0 = cd.DZPM1dbis(**params)
+        corono0 = cd.HDZPM1d(**params)
+    elif corono_name == 'HTZPM':
+        corono0 = cd.HTZPM1d(**params)
     else:
-        corono0 = cd.TZPM1dbis(**params)
+        raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
 
-#    corono0.params['rMask']       = rMask
-#    corono0.params['LyotStopObs'] = LyotStopObs
-#    corono0.params['LyotStopIns'] = LyotStopIns    
-#    corono0.params['LyotStop1d']  = LyotStop1d
     """
     Problem defintion
     """
-    problem1 = co1d.MaxTau(corono=corono0, **params)
-#    problem1 = co1d.MaxContrast(corono=corono0, Lnorm='L1',**params)
-#    problem1 = co1d.MaxContrast(corono=corono0, Lnorm='Linf',**params)
-    A, b, c = problem1.compute_matrices()
-    Apod_tmp, val = stdgrb.lp_solve(problem1.c, A=(problem1.A).T, b=problem1.b, crossover=1, logtoconsole=0)
+    if problem_name == 'MaxTau':
+        # Maximization of the integrated amplitude transmission of the apodizer
+        problem1 = co1d.MaxTau(corono=corono0, **params)
+    elif problem_name == 'MaxContrastL1':
+        # Maximization of the contrast under L1-norm
+        problem1 = co1d.MaxContrast(corono=corono0, Lnorm='L1',**params)
+    elif problem_name == 'MaxContrastLinf':
+        # Maximization of the contrast under L-infinite norm
+        problem1 = co1d.MaxContrast(corono=corono0, Lnorm='Linf',**params)
+    else:
+        raise NameError('{0}: Not an existing optimization problem!'.format(problem_name))
 
-    Apod_pyth = np.zeros((corono0.nPup))
-    Apod_pyth[problem1.idx_pup] = Apod_tmp
+    m1        = problem1.compute_gurobi_model()
+    Apod_pyth = problem1.solve_model()
+
+#    A, b, c = problem1.compute_matrices()
+#    Apod_tmp, val = stdgrb.lp_solve(problem1.c, A=(problem1.A).T, b=problem1.b, crossover=1, logtoconsole=0)
+
+#    Apod_pyth = np.zeros((corono0.nPup))
+#    Apod_pyth[problem1.idx_pup] = Apod_tmp
 
     fpath_pyth  = fdir_pyth / fname_pyth
     test0       = np.zeros((nPup, 2))

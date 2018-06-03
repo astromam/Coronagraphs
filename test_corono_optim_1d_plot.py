@@ -18,8 +18,8 @@ from corono.utils import to_dict
 """
 Parameters
 """
-corono_name = 'APLC' # 'APLC' or 'SP'
-problem_name = 'MaxTau' # 'MaxTau', 'MaxContrastL1', 'MaxContrastLinf'
+corono_name  = 'APLC' # 'APLC' or 'SP'
+problem_name = 'MaxTau' # , 'MaxContrastL1', 'MaxContrastLinf'
 
 nPup = 500
 nFPM = 50
