@@ -83,7 +83,7 @@ if corono_name == 'APLC':
 elif corono_name == 'SP':
     corono0 = cd.SP1d(**params)
 else:
-    stop
+    raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
 
 #%%
 """
@@ -105,17 +105,10 @@ Problem solving
 """
 print('problem solving')
 t0 = time.time()
-m1 = problem1.compute_gurobi_model()
+m1        = problem1.compute_gurobi_model()
 Apod_pyth = problem1.solve_model()
 t1 = time.time()
-
 print('optimization time             : {0:.2f}s'.format(t1-t0))
-
-import pylab as pl
-pl.figure(1)
-pl.clf()
-pl.plot(Apod_pyth)
-pl.show()
 
 
 #%% Apodizer solution for the problems

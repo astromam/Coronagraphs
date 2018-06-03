@@ -84,8 +84,7 @@ if corono_name == 'APLC':
 elif corono_name == 'SP':
     corono0 = cd.SP1d(**params)
 else:
-    stop
-
+    raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
 
 #%% Apodizer solution for the problems
 """

@@ -333,7 +333,7 @@ class ProblemMatrix(object):
             return self.Apod
 
         except NameError:
-            print('stdgrb   package not found -> solving with gurobipy package')                
+            print('stdgrb   package not found -> solving with gurobipy')                
             if self.m is not None:            
 
                 try:
