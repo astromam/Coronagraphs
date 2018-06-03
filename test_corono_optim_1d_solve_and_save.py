@@ -96,32 +96,32 @@ problem1 = co1d.MaxTau(corono=corono0, **params)
 #problem1 = co1d.MaxContrast(corono=corono0, Lnorm='L1',**params)
 # Maximization of the contrast under L-infinite norm
 #problem1 = co1d.MaxContrast(corono=corono0, Lnorm='Linf',**params)
+t1 = time.time()
+print('problem definition time       : {0:.2f}s'.format(t1-t0))
 
 #%%
 """
-Display of the matrices
+Problem solving
 """
-#A1, b1, c1 = problem1.compute_matrices()
-#
-#pl.figure(1)
-#pl.clf()
-#pl.title('Matrix for MaxTau problem')
-#pl.imshow(abs(A1.T)**0.25)
-
-#%% Gurobi model of the problems
-"""
-Gurobi models
-"""
+print('problem solving')
+t0 = time.time()
 m1 = problem1.compute_gurobi_model()
+Apod_pyth = problem1.solve_model()
+t1 = time.time()
+
+print('optimization time             : {0:.2f}s'.format(t1-t0))
+
+import pylab as pl
+pl.figure(1)
+pl.clf()
+pl.plot(Apod_pyth)
+pl.show()
+
 
 #%% Apodizer solution for the problems
 """
-Apodizer solutions
+Apodizer saving 
 """
-Apod_pyth = problem1.solve_model()
-t1 = time.time()
-print('optimization time with gurobipy: {0:.2f}s'.format(t1-t0))
-
 fpath_pyth = fdir_pyth / fname_pyth
 
 test0 = np.zeros((nPup, 2))

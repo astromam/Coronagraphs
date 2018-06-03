@@ -9,7 +9,21 @@ Created on Fri Mar  9 11:36:39 2018
 #%% Initialization problem
 import numpy as np
 import json
-import gurobipy as gb
+
+import sys    
+sys.modules['gurobipy'] = None
+sys.modules['stdgrb'] = None    
+#del sys.modules['gurobipy']
+#del sys.modules['stdgrb']
+
+try:
+    import stdgrb
+except ModuleNotFoundError:
+    try:
+        import gurobipy as gb
+    except ImportError:
+        import scipy.optimize
+    
 from corono import corono_design as cd
 
 #%%
@@ -310,32 +324,44 @@ class ProblemMatrix(object):
             Solution for the optimization problem
         
         """
-        try:
-            
-            self.m.Params.Method       = 2
-            self.m.Params.LogToConsole = 1
-            self.m.Params.Crossover    = 0
-            
-            self.m.optimize()
 
-            Apodtmp = np.zeros((self.npp))
-            for i in range(self.npp):
-                Apodtmp[i] = self.m.getVars()[i].x
+        try:
+            print('solving with stdgrb package')
+            Apodtmp, val = stdgrb.lp_solve(self.c, A=(self.A).T, b=self.b, 
+                            crossover=1, logtoconsole=1)
             self.Apod[self.idx_pup] = Apodtmp
-            
-#            test = np.zeros((self.corono.nPup, 2))
-#            test[:,0] = self.corono.r
-#            test[:,1] = self.Apod   
-#            if fpath: write_apod1d(fpath, test)    
-                
             return self.Apod
 
-        except gb.GurobiError as e:
-            print('Error code ' + str(e.errno) + ": " + str(e))
+        except NameError:
+            print('stdgrb   package not found -> solving with gurobipy package')                
+            if self.m is not None:            
 
-        except AttributeError:
-            print('Encountered an attribute error')
-
+                try:
+                    self.m.Params.Method       = 2
+                    self.m.Params.LogToConsole = 1
+                    self.m.Params.Crossover    = 0
+                    
+                    self.m.optimize()
+        
+                    Apodtmp = np.zeros((self.npp))
+                    for i in range(self.npp):
+                        Apodtmp[i] = self.m.getVars()[i].x
+                    self.Apod[self.idx_pup] = Apodtmp
+                                    
+                    return self.Apod
+        
+                except gb.GurobiError as e:
+                    print('Error code ' + str(e.errno) + ": " + str(e))
+        
+                except AttributeError:
+                    print('Encountered an attribute error')
+                        
+            else:
+                print('gurobipy package not found -> solving with scipy.optimize')
+                sol=scipy.optimize.linprog(self.c,self.A.T,self.b,
+                                           method='interior-point')
+                self.Apod[self.idx_pup]=sol.x
+                return self.Apod
         
 #%%
 """
@@ -493,24 +519,29 @@ class MaxTau(ProblemMatrix):
             Gurobi model of the MaxTau problem to solve
             
         """
-        if self.A is None or self.b is None or self.c is None:
-            print('computing matrices')
-            self.compute_matrices()
-            
-        nA = np.shape(self.A)[1]
-    
-        # Create a new model               
-        self.m = gb.Model("LP max tau new")
-        # Create variables
-        ApodTmp = self.m.addVars(self.npp, lb=0.0, ub=1.0, name="ApodTmp")
-        # Set objective
-        self.m.setObjective(gb.quicksum((self.c[i]*ApodTmp[i] 
-                for i in range(self.npp))), gb.GRB.MINIMIZE)
-        # Add constraint:                
-        self.m.addConstrs((gb.quicksum((ApodTmp[i]*self.A[i,j] 
-                for i in range(self.npp) if self.A[i,j])) <=  self.b[j] 
-                for j in range(nA)), "cpos")
-        self.m.update()            
+
+        try:
+            if self.A is None or self.b is None or self.c is None:
+                print('computing matrices')
+                self.compute_matrices()
+                
+            nA = np.shape(self.A)[1]
+        
+            # Create a new model               
+            self.m = gb.Model("LP max tau new")
+            # Create variables
+            ApodTmp = self.m.addVars(self.npp, lb=0.0, ub=1.0, name="ApodTmp")
+            # Set objective
+            self.m.setObjective(gb.quicksum((self.c[i]*ApodTmp[i] 
+                    for i in range(self.npp))), gb.GRB.MINIMIZE)
+            # Add constraint:                
+            self.m.addConstrs((gb.quicksum((ApodTmp[i]*self.A[i,j] 
+                    for i in range(self.npp) if self.A[i,j])) <=  self.b[j] 
+                    for j in range(nA)), "cpos")
+            self.m.update()  
+        
+        except NameError:
+            pass
 
 #%%
 """
@@ -742,30 +773,35 @@ class MaxContrast(ProblemMatrix):
             Gurobi model of the MaxContrast problem to solve
             
         """        
-        if self.A is None or self.b is None or self.c is None:
-            print('computing matrices')
-            self.compute_matrices()
-                       
-        nn = np.shape(self.A)[1]
-        # Create a new model  
-        self.m = gb.Model("LP max C new")
-        
-        if self.Lnorm == 'Linf':
-            self.neps = 1
-        else:
-            self.neps = self.ndz
-        # Create variables
-        ApodEpsTmp = self.m.addVars(self.npp + self.neps, lb=0.0, name="ApodEpsTmp")        
-        # Set objective
-        self.m.setObjective(gb.quicksum((self.c[i+self.npp]*ApodEpsTmp[i+self.npp] 
-                for i in range(self.neps))), gb.GRB.MINIMIZE)
-        # Add constraint:
-        self.m.addConstrs((gb.quicksum((ApodEpsTmp[i]*self.A[i,j] 
-                for i in range(self.npp + self.neps) if self.A[i,j])) <=  self.b[j] 
-                for j in np.arange(nn)), "cpos")
-        
-        self.m.update()
+
+        try:
+            if self.A is None or self.b is None or self.c is None:
+                print('computing matrices')
+                self.compute_matrices()
+                           
+            nn = np.shape(self.A)[1]
+            # Create a new model  
+            self.m = gb.Model("LP max C new")
             
-        return self.m   
+            if self.Lnorm == 'Linf':
+                self.neps = 1
+            else:
+                self.neps = self.ndz
+            # Create variables
+            ApodEpsTmp = self.m.addVars(self.npp + self.neps, lb=0.0, name="ApodEpsTmp")        
+            # Set objective
+            self.m.setObjective(gb.quicksum((self.c[i+self.npp]*ApodEpsTmp[i+self.npp] 
+                    for i in range(self.neps))), gb.GRB.MINIMIZE)
+            # Add constraint:
+            self.m.addConstrs((gb.quicksum((ApodEpsTmp[i]*self.A[i,j] 
+                    for i in range(self.npp + self.neps) if self.A[i,j])) <=  self.b[j] 
+                    for j in np.arange(nn)), "cpos")
+            
+            self.m.update()
+                
+            return self.m
+        
+        except NameError:
+            pass
 
 #%%

@@ -7,7 +7,6 @@ Created on Thu May  3 10:26:11 2018
 """
 import numpy as np
 import pylab as pl
-import time
 import os
 
 from pathlib import Path
@@ -53,7 +52,8 @@ LyotStop1d   = (r>LyotStopObs)*1.0
 params = to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
                  nPup = nPup, nFPM=nFPM, nImg=nImg, Fmax = Fmax,
                  bw = bw, nlam = nlambis,
-                 PupilObs = PupilObs, rMask = rMask, LyotStopObs = LyotStopObs,
+                 PupilObs = PupilObs, rMask = rMask, 
+                 LyotStopObs = LyotStopObs,
                  r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d)
 
 #%%
