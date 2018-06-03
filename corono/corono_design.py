@@ -270,9 +270,10 @@ def get_default_params_DZPM1d():
     return tmp
 
 #%%
-def get_default_params_DZPM1dbis():
+def get_default_params_HDZPM1d():
     r"""
     Gets the default parameters for the DZPM1d Coronagraph subclass.
+    The central part of the FPM is opaque.
         
     Parameters
     ---------- 
@@ -282,11 +283,7 @@ def get_default_params_DZPM1dbis():
         
     rMask2 : float (default=1.453/2)
         Outer part of the focal plane mask radius :math:`m_2/2` in 
-        :math:`\lambda_0/D`    
-        
-    OPDx1 : float (default=0.309)
-        Optical path difference :math:`\delta_1/2` in :math:`\lambda_0` 
-        for the inner part of the FPM
+        :math:`\lambda_0/D`            
         
     OPDx2 : float (default=0.672)
         Optical path difference :math:`\delta_2/2` in :math:`\lambda_0` 
@@ -337,6 +334,92 @@ def get_default_params_DZPM1dbis():
     tmp = get_default_params_Coronagraph()
     tmp.update({'rMask1':0.875/2, 'rMask2':1.453/2.,
            'OPDx2':0.672,
+           'nFPM':68.82312456985547})
+
+    # Pupil radial coordinate        
+    r   = np.arange(tmp['nPup'])*tmp['R']/tmp['nPup']\
+                +tmp['R']/(2*tmp['nPup'])
+    # Telescope aperture
+    Pupil1d      = (r>tmp['PupilObs'])*1.0
+    # Lyot stop 
+    LyotStop1d   = (r>tmp['LyotStopObs'])*(r<tmp['LyotStopIns'])*1.0
+    
+    tmp.update({'r':r, 'Pupil1d':Pupil1d, 'LyotStop1d':LyotStop1d})
+    return tmp
+
+#%%
+def get_default_params_HTZPM1d():
+    r"""
+    Gets the default parameters for the TZPM1d Coronagraph subclass.
+    The central part of the FPM is opaque.
+        
+    Parameters
+    ---------- 
+    rMask1 : float (default=0.875/2)
+        Inner part of the focal plane mask radius :math:`m_1/2` in 
+        :math:`\lambda_0/D`
+        
+    rMask2 : float (default=1.453/2)
+        Outer part of the focal plane mask radius :math:`m_2/2` in 
+        :math:`\lambda_0/D`    
+
+    rMask3 : float (default=1.453/2)
+        Outer part of the focal plane mask radius :math:`m_3/2` in 
+        :math:`\lambda_0/D`
+                
+    OPDx2 : float (default=0.672)
+        Optical path difference :math:`\delta_2/2` in :math:`\lambda_0` 
+        for the outer part of the FPM
+        
+    OPDx3 : float (default=0.672)
+        Optical path difference :math:`\delta_2/2` in :math:`\lambda_0` 
+        for the outer part of the FPM
+        
+    ome1 : float (default=-2.340)
+        Second order term :math:`\omega_1` for an apodization with amplitude transmission 
+        polynomial function
+        
+    ome2 : float (default=2.051)
+        Forth order term :math:`\omega_2` for an apodization with amplitude transmission 
+        polynomial function
+        
+    beta : float (default=-0.236)
+        Coefficient :math:`\beta` in :math:`\lambda_0` related to a defocus shift that is applied to the 
+        focal plane mask. Equivalent to a phase entrance pupil apodization. 
+        
+    nFPM : float (default=68.82)
+        Mask sampling            
+            
+    Returns    
+    ----------
+    tmp : dict
+        Dictionary with all the default values of the 
+        Coronagraph class and the DZPM1d subclass.
+
+    References
+    ----------
+    .. [1] R. Soummer, K. Dohlen, and C. Aime, Achromatic dual-zone phase mask 
+        stellar coronagraph, A&A 403, 1 (2003).
+        
+        https://www.aanda.org/articles/aa/abs/2003/19/aa3246/aa3246.html
+        
+    .. [2] M. N'Diaye, K. Dohlen, S. Cuevas, R. Soummer, C. Sánchez-Pérez,
+        F. Zamkotsian, Improved achromatization of phase mask coronagraphs 
+        using colored apodization, A&A 538, A55 (2012). 
+        
+        https://www.aanda.org/articles/aa/abs/2012/02/aa17661-11/aa17661-11.html
+        
+    .. [3] J. R. Delorme, M. N'Diaye, R. Galicher, K. Dohlen, P. Baudoz, 
+        A. Caillat, G. Rousset, R. Soummer, O. Dupuis, Laboratory validation of
+        the dual-zone phase mask coronagraph in broadband light at the 
+        high-contrast imaging THD testbed, A&A 592, A119 (2016). 
+        
+        https://www.aanda.org/articles/aa/abs/2016/08/aa28587-16/aa28587-16.html        
+
+    """   
+    tmp = get_default_params_Coronagraph()
+    tmp.update({'rMask1':0.875/2, 'rMask2':1.453/2., 'rMask3':2.1/2,
+           'OPDx2':0.672, 'OPDx3':0.8,
            'nFPM':68.82312456985547})
 
     # Pupil radial coordinate        
@@ -1470,12 +1553,12 @@ class DZPM1d(Coronagraph):
 """
 DZPM 1d Coronagraph class     
 """
-class DZPM1dbis(Coronagraph):
+class HDZPM1d(Coronagraph):
     """
     Defines the Coronagraph subclass for the Dual Zone Phase Mask (DZPM) 
     Coronagraph for one-dimension geometry.
     """    
-    default_params = get_default_params_DZPM1dbis()    
+    default_params = get_default_params_HDZPM1d()    
 
     def __init__(self, **kwargs):
         r"""
@@ -1575,7 +1658,7 @@ class DZPM1dbis(Coronagraph):
 
 
         """
-        super(DZPM1dbis,self).__init__(**kwargs)
+        super(HDZPM1d,self).__init__(**kwargs)
         
         # Optical path difference introduced by the mask
         self.OPD2 = self.OPDx2*self.lam0
@@ -1689,6 +1772,260 @@ class DZPM1dbis(Coronagraph):
             corono_field_tmp[i,:] = self.hankel_kernel_all[i,:,:].dot(lyot_field[i,:])
         
         return self.lam0/self.lam_t[:,None]*np.pi*corono_field_tmp*self.R/self.nPup
+
+#%% 
+"""
+DZPM 1d Coronagraph class     
+"""
+class HTZPM1d(Coronagraph):
+    """
+    Defines the Coronagraph subclass for the Dual Zone Phase Mask (DZPM) 
+    Coronagraph for one-dimension geometry.
+    """    
+    default_params = get_default_params_HTZPM1d()    
+
+    def __init__(self, **kwargs):
+        r"""
+        __init__ : method
+            Constructor for the DZPM1d class
+        
+        Attributes
+        ----------      
+        OPD1 : float
+            Optical path difference :math:`\delta_1` 
+            for the inner part of the focal plane mask (FPM)
+            
+        OPD2 : float
+            Optical path difference :math:`\delta_2` 
+            for the outer part of the mask
+            
+        phi1_t : array_like
+            Phase shift :math:`\varphi_1` induced by the inner part of the mask
+            at all the wavelengths
+
+        phi2_t : array_like
+            Phase shift :math:`\varphi_2` induced by the outer part of the mask
+            at all the wavelengths
+        
+        eps1_t : array_like
+            Phasor :math:`\varepsilon_1` induced by the inner part of the mask 
+            at all the wavelengths
+
+        eps2_t : array_like
+            Phasor :math:`\varepsilon_2` induced by the outer part of the mask 
+            at all the wavelengths
+        
+        rMask1_t : array_like
+            FPM inner part radius :math:`m_1/2` scaled with 
+            wavelength :math:`\lambda/D`
+            
+        rMask2_t : array_like
+            FPM outer part radius :math:`m_2/2` scaled with 
+            wavelength :math:`\lambda/D`
+            
+        nFPM1_t : array_like
+            Inner mask sampling at a given wavelength :math:`\lambda/D`
+        
+        nFPM2_t : array_like
+            Outer mask sampling at a given wavelength :math:`\lambda/D`
+        
+        nFPM1_max : float
+            Maximum inner mask sampling over all the wavelengths
+            
+        nFPM2_max : float
+            Maximum outer mask sampling over all the wavelengths
+        
+        mask1_lam : array_like
+            Inner focal plane mask in :math:`\lambda/D` unit
+        
+        mask2_lam : array_like
+            Outer focal plane mask in :math:`\lambda/D` unit
+        
+        xi_FPM1_lam : array_like
+            Inner focal plane mask coordinate in :math:`\lambda/D`
+        
+        xi_FPM2_lam : array_like
+            Outer focal plane mask coordinate in :math:`\lambda/D`       
+ 
+        hankel_kernel_FPM1_all : array_like
+            Hankel kernel for the inner FPM at all the wavelengths
+        
+        hankel_kernel_FPM2_all : array_like
+            Hankel kernel for the outer FPM at all the wavelengths
+        
+        hankel_kernel_iFPM1_all : array_like
+            Inverse hankel transform for the inner FPM at all the wavelengths
+            
+        hankel_kernel_iFPM2_all : array_like
+            Inverse hankel transform for the outer FPM at all the wavelengths
+            
+
+        References
+        ----------
+        .. [1] R. Soummer, K. Dohlen, and C. Aime, Achromatic dual-zone phase mask 
+            stellar coronagraph, A&A 403, 1 (2003).
+            
+            https://www.aanda.org/articles/aa/abs/2003/19/aa3246/aa3246.html
+            
+        .. [2] M. N'Diaye, K. Dohlen, S. Cuevas, R. Soummer, C. Sánchez-Pérez,
+            F. Zamkotsian, Improved achromatization of phase mask coronagraphs 
+            using colored apodization, A&A 538, A55 (2012). 
+            
+            https://www.aanda.org/articles/aa/abs/2012/02/aa17661-11/aa17661-11.html
+            
+        .. [3] J. R. Delorme, M. N'Diaye, R. Galicher, K. Dohlen, P. Baudoz, 
+            A. Caillat, G. Rousset, R. Soummer, O. Dupuis, Laboratory validation of
+            the dual-zone phase mask coronagraph in broadband light at the 
+            high-contrast imaging THD testbed, A&A 592, A119 (2016). 
+            
+            https://www.aanda.org/articles/aa/abs/2016/08/aa28587-16/aa28587-16.html        
+
+
+        """
+        super(HTZPM1d,self).__init__(**kwargs)
+        
+        # Optical path difference introduced by the mask
+        self.OPD2 = self.OPDx2*self.lam0
+        self.OPD3 = self.OPDx3*self.lam0
+        
+        # phase shift induced by the mask
+        self.phi2_t = 2.*np.pi*self.OPD2/self.lam_t
+        self.phi3_t = 2.*np.pi*self.OPD3/self.lam_t
+        
+        self.eps2_t   = 1j*np.sin(self.phi2_t) + np.cos(self.phi2_t)
+        self.eps3_t   = 1j*np.sin(self.phi3_t) + np.cos(self.phi3_t)
+
+
+        # mask size at a given wavelength
+        self.rMask1_t = (self.lam0/self.lam_t)*self.rMask1
+        self.rMask2_t = (self.lam0/self.lam_t)*self.rMask2
+        self.rMask3_t = (self.lam0/self.lam_t)*self.rMask3
+        
+        # mask sampling at a given wavelength and max nFPM_max 
+        self.nFPM1_t   = self.rMask1_t*self.nFPM
+        self.nFPM1_max = int(np.max(self.nFPM1_t))     
+        self.nFPM2_t   = self.rMask2_t*self.nFPM
+        self.nFPM2_max = int(np.max(self.nFPM2_t))
+        self.nFPM3_t   = self.rMask3_t*self.nFPM
+        self.nFPM3_max = int(np.max(self.nFPM3_t))
+
+        self.mask1_lam   = (np.arange(self.nFPM1_max+1)[None,:]\
+                            <=self.rMask1_t[:,None]*self.nFPM)
+        self.xi_FPM1_lam = np.arange(self.nFPM1_max+1)[None,:]\
+        *self.mask1_lam/self.nFPM       
+        self.mask2_lam   = (np.arange(self.nFPM2_max+1)[None,:]\
+                            <=self.rMask2_t[:,None]*self.nFPM)
+        self.xi_FPM2_lam = np.arange(self.nFPM2_max+1)[None,:]\
+        *self.mask2_lam/self.nFPM
+        self.mask3_lam   = (np.arange(self.nFPM3_max+1)[None,:]\
+                            <=self.rMask3_t[:,None]*self.nFPM)
+        self.xi_FPM3_lam = np.arange(self.nFPM3_max+1)[None,:]\
+        *self.mask3_lam/self.nFPM
+
+
+        self.hankel_kernel_FPM1_all  = besselJ0(
+                np.pi/self.R*self.xi_FPM1_lam[:,:,None]*self.r[None,None,:])
+        self.hankel_kernel_iFPM1_all = besselJ0(
+                np.pi/self.R*self.xi_FPM1_lam[:,None,:]*self.r[None,:,None])
+        self.hankel_kernel_FPM2_all  = besselJ0(
+                np.pi/self.R*self.xi_FPM2_lam[:,:,None]*self.r[None,None,:])
+        self.hankel_kernel_iFPM2_all = besselJ0(
+                np.pi/self.R*self.xi_FPM2_lam[:,None,:]*self.r[None,:,None])
+        self.hankel_kernel_FPM3_all  = besselJ0(
+                np.pi/self.R*self.xi_FPM3_lam[:,:,None]*self.r[None,None,:])
+        self.hankel_kernel_iFPM3_all = besselJ0(
+                np.pi/self.R*self.xi_FPM3_lam[:,None,:]*self.r[None,:,None])
+
+
+
+#%% direct propagation (no focal plane mask)
+    def compute_direct_field_1d(self,Apod):
+        r"""
+        Computes the electric field of the direct image with DZPM
+        for 1D problem.
+        
+        Parameters
+        ---------- 
+        Apod: array_like
+            Entrance pupil apodization :math:`\Phi`
+                
+        Returns    
+        ----------
+        res : array_like
+            Direct electric field :math:`\Phi_0` at all the wavelengths
+            
+        """
+        field = np.zeros((self.nlam,self.nImg+1), dtype='complex128')
+        for i in range(self.nlam):
+            field[i,:] = \
+            self.lam0/self.lam_t[i]*np.pi*self.hankel_kernel_all[i].dot(
+                    self.Pupil1d*Apod*self.LyotStop1d*self.r/self.R)\
+                    *self.R/self.nPup
+        return field
+
+#%% propagation through coronagraph (with focal plane mask)
+    def compute_corono_field_1d(self,Apod):
+        """
+        Computes the electric field of the coronagraphic image with DZPM
+        for 1D problem.
+        
+        Parameters
+        ---------- 
+        Apod: array_like
+            Entrance pupil apodization :math:`\Phi`
+                
+        Returns    
+        ----------
+        res : array_like
+            Coronagraphic electric field :math:`\Phi_D` at all the wavelengths
+            
+        """
+        FPM1_field = np.zeros((self.nlam, self.nFPM1_max+1), dtype='complex128')
+        for i in range(self.nlam):
+            FPM1_field[i,:] = np.pi*self.hankel_kernel_FPM1_all[i,:,:].dot(
+                    Apod*self.Pupil1d*self.r/self.R)\
+                    *(self.R/self.nPup)*self.xi_FPM1_lam[i,None]
+
+        iFPM1_field = np.zeros((self.nlam,self.nPup), dtype='complex128')
+        for i in range(self.nlam):
+            iFPM1_field[i,:]= np.pi*self.hankel_kernel_iFPM1_all[i,:,:].dot(
+                    FPM1_field[i,:])*(1/self.nFPM)
+    
+        FPM2_field = np.zeros((self.nlam, self.nFPM2_max+1), dtype='complex128')
+        for i in range(self.nlam):
+            FPM2_field[i,:] = np.pi*self.hankel_kernel_FPM2_all[i,:,:].dot(
+                    Apod*self.Pupil1d*self.r/self.R)\
+                    *(self.R/self.nPup)*self.xi_FPM2_lam[i,None]
+
+        iFPM2_field = np.zeros((self.nlam,self.nPup), dtype='complex128')
+        for i in range(self.nlam):
+            iFPM2_field[i,:]=np.pi*self.hankel_kernel_iFPM2_all[i,:,:].dot(
+                    FPM2_field[i,:])*(1/self.nFPM)
+
+        FPM3_field = np.zeros((self.nlam, self.nFPM3_max+1), dtype='complex128')
+        for i in range(self.nlam):
+            FPM3_field[i,:] = np.pi*self.hankel_kernel_FPM3_all[i,:,:].dot(
+                    Apod*self.Pupil1d*self.r/self.R)\
+                    *(self.R/self.nPup)*self.xi_FPM3_lam[i,None]
+
+        iFPM3_field = np.zeros((self.nlam,self.nPup), dtype='complex128')
+        for i in range(self.nlam):
+            iFPM3_field[i,:]=np.pi*self.hankel_kernel_iFPM3_all[i,:,:].dot(
+                    FPM3_field[i,:])*(1/self.nFPM)
+             
+        nolyot_field = (Apod[None,:]*self.Pupil1d[None,:]\
+                        -(self.eps2_t[:,None])*iFPM1_field \
+                        -(self.eps3_t[:, None]-self.eps2_t[:, None])*iFPM2_field \
+                        -(1.-self.eps3_t[:, None])*iFPM3_field )*self.r[None,:]/self.R
+    
+        lyot_field   = nolyot_field*self.LyotStop1d[None,:]
+        
+        corono_field_tmp = np.zeros((self.nlam,self.nImg+1), dtype='complex128')
+        for i in range(self.nlam):
+            corono_field_tmp[i,:] = self.hankel_kernel_all[i,:,:].dot(lyot_field[i,:])
+        
+        return self.lam0/self.lam_t[:,None]*np.pi*corono_field_tmp*self.R/self.nPup
+
 
     
 #%% 
