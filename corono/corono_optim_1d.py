@@ -328,7 +328,7 @@ class ProblemMatrix(object):
         try:
             print('solving with stdgrb package')
             Apodtmp, val = stdgrb.lp_solve(self.c, A=(self.A).T, b=self.b, 
-                            crossover=1, logtoconsole=1, method=2)
+                                           crossover=1, logtoconsole=1, method=2)
             self.Apod[self.idx_pup] = Apodtmp
             return self.Apod
 
@@ -359,7 +359,7 @@ class ProblemMatrix(object):
             else:
                 print('gurobipy package not found -> solving with scipy.optimize')
                 bds = np.zeros((self.npp+self.neps, 2))
-                bds[:,1] = 1
+                bds[:,1] = 1.
                 sol=scipy.optimize.linprog(self.c,self.A.T,self.b,
                                            method='interior-point',
                                            bounds=bds)
@@ -475,6 +475,7 @@ class MaxTau(ProblemMatrix):
         b1  = np.zeros((self.corono.nlam*self.ndz*2))
         
         if sys.modules['gurobipy'] is None and sys.modules['stdgrb'] is None:
+            print('reduced matrix shape')
             self.A = np.concatenate((A0,A1), axis=1)
             self.b = np.concatenate((b0,b1))            
         else:
@@ -693,7 +694,6 @@ class MaxContrast(ProblemMatrix):
         
         A0  = np.concatenate(( self.corono_field_t2, -I1), axis=0)
         A1  = np.concatenate((-self.corono_field_t2, -I1), axis=0)
-
         A4  = np.concatenate((np.zeros((self.npp, self.ndz)), -I0), axis=0)
         A5  = np.concatenate((- 2.*np.pi*(
                 np.arange(self.corono.nPup)[self.idx_pup]+0.5)\
