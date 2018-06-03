@@ -358,8 +358,11 @@ class ProblemMatrix(object):
                         
             else:
                 print('gurobipy package not found -> solving with scipy.optimize')
+                bds = np.zeros((self.npp+self.neps, 2))
+                bds[:,1] = 1
                 sol=scipy.optimize.linprog(self.c,self.A.T,self.b,
-                                           method='interior-point')
+                                           method='interior-point',
+                                           bounds=bds)
                 self.Apod[self.idx_pup]=sol.x
                 return self.Apod
         
@@ -379,6 +382,7 @@ class MaxTau(ProblemMatrix):
         
         """
         super(MaxTau, self).__init__(**kwargs)
+        self.neps = 0
 
 #%%        
     def compute_matrices(self):
@@ -466,39 +470,22 @@ class MaxTau(ProblemMatrix):
        
         A0  =  self.corono_field_t2 - ED0
         A1  = -self.corono_field_t2 - ED0
-        A2  = -np.identity(self.npp)
-        A3  =  np.identity(self.npp)
     
         b0  = np.zeros((self.corono.nlam*self.ndz*2))
         b1  = np.zeros((self.corono.nlam*self.ndz*2))
-        b2  = np.zeros(self.npp)
-        b3  = np.ones(self.npp)
-    
-        self.A = np.concatenate((A0,A1,A2,A3), axis=1)
-        self.b = np.concatenate((b0,b1,b2,b3))
+        
+        if sys.modules['gurobipy'] is None and sys.modules['stdgrb'] is None:
+            self.A = np.concatenate((A0,A1), axis=1)
+            self.b = np.concatenate((b0,b1))            
+        else:
+            A2  = -np.identity(self.npp)
+            A3  =  np.identity(self.npp)
+            b2  = np.zeros(self.npp)
+            b3  = np.ones(self.npp)
+            self.A = np.concatenate((A0,A1,A2,A3), axis=1)
+            self.b = np.concatenate((b0,b1,b2,b3))
         self.c = - 2.*np.pi*(np.arange(self.corono.nPup)[self.idx_pup]+0.5)\
                 /(2.*self.corono.nPup)**2/self.TR
-
-#        ED0 = np.zeros_like(self.corono_field_t2)
-#        ED0tmp = self.Pupil_vec[self.idx_pup]*self.LyotStop_vec[self.idx_pup]
-#        for j in range(self.corono.nlam*self.ndz*2):
-#            ED0[:,j] = ED0tmp
-#        cst = 10.**(-self.corono.cDarkHole/2.)/np.sqrt(2.)        
-#        ED0 *= cst*self.corono.Fmax2d/(self.corono.nImg2d*self.corono.nPup)
-#
-#        A0  =  self.corono_field_t2 - ED0                
-#        A1  = -self.corono_field_t2 - ED0       
-#        A2  = -np.identity(self.npp)
-#        A3  =  np.identity(self.npp)
-#
-#        b0  = np.zeros((self.corono.nlam*self.ndz*2))
-#        b1  = np.zeros((self.corono.nlam*self.ndz*2))
-#        b2  = np.zeros(self.npp)
-#        b3  = np.ones(self.npp)
-#
-#        self.A = np.concatenate((A0,A1,A2,A3), axis=1)
-#        self.b = np.concatenate((b0,b1,b2,b3))
-#        self.c = -self.Pupil_vec[self.idx_pup]/self.TR
         
         return self.A, self.b, self.c
 
@@ -561,6 +548,11 @@ class MaxContrast(ProblemMatrix):
         the coronagraph object.
         """
         super(MaxContrast,self).__init__(**kwargs)
+
+        if self.Lnorm == 'Linf':
+            self.neps = 1
+        else:
+            self.neps = self.ndz
 
 #%%    
     def compute_matrices(self):
@@ -701,8 +693,7 @@ class MaxContrast(ProblemMatrix):
         
         A0  = np.concatenate(( self.corono_field_t2, -I1), axis=0)
         A1  = np.concatenate((-self.corono_field_t2, -I1), axis=0)
-        A2  = np.concatenate((-np.identity(self.npp), N0), axis=0)
-        A3  = np.concatenate(( np.identity(self.npp), N0), axis=0)
+
         A4  = np.concatenate((np.zeros((self.npp, self.ndz)), -I0), axis=0)
         A5  = np.concatenate((- 2.*np.pi*(
                 np.arange(self.corono.nPup)[self.idx_pup]+0.5)\
@@ -711,48 +702,20 @@ class MaxContrast(ProblemMatrix):
         
         b0  = np.zeros((self.corono.nlam*self.ndz*2))
         b1  = np.zeros((self.corono.nlam*self.ndz*2))
-        b2  = np.zeros(self.npp)
-        b3  = np.ones(self.npp)
         b4  = np.zeros(self.ndz)
         b5  = [-self.tau]
         
-        self.A = np.concatenate((A0,A1,A2,A3,A4,A5[:,None]), axis=1)
-        self.b = np.concatenate((b0,b1,b2,b3,b4,b5))        
+        if sys.modules['gurobipy'] is None and sys.modules['stdgrb'] is None:
+            self.A = np.concatenate((A0,A1,A4,A5[:,None]), axis=1)
+            self.b = np.concatenate((b0,b1,b4,b5))            
+        else:
+            A2  = np.concatenate((-np.identity(self.npp), N0), axis=0)
+            A3  = np.concatenate(( np.identity(self.npp), N0), axis=0)
+            b2  = np.zeros(self.npp)
+            b3  = np.ones(self.npp)
+            self.A = np.concatenate((A0,A1,A2,A3,A4,A5[:,None]), axis=1)
+            self.b = np.concatenate((b0,b1,b2,b3,b4,b5))        
         self.c = np.concatenate((np.zeros(self.npp), c1), axis=0)
-
-#        if self.Lnorm == 'Linf':
-#            I1 = np.ones(self.ndz*self.corono.nlam*2)
-#            I1 = I1[None,:]
-#            I0 = np.ones(self.ndz)
-#            I0 = I0[None,:]
-#            N0 = np.zeros((1, self.npp))
-#            Z0 = np.zeros(1)
-#            c1 = [1]
-#        else:
-#            I0 = np.identity(self.ndz)
-#            I1 = np.hstack([I0 for k in range(self.corono.nlam*2)])            
-#            N0 = np.zeros((self.ndz, self.npp))
-#            Z0 = np.zeros(self.ndz)
-#            c1 = np.array(self.rad2d)
-#        
-#        A0  = np.concatenate(( self.corono_field_t2, -I1), axis=0)
-#        A1  = np.concatenate((-self.corono_field_t2, -I1), axis=0)
-#        A2  = np.concatenate((-np.identity(self.npp), N0), axis=0)
-#        A3  = np.concatenate(( np.identity(self.npp), N0), axis=0)
-#        A4  = np.concatenate((np.zeros((self.npp, self.ndz)), -I0), axis=0)
-#        A5  = np.concatenate((- self.Pupil_vec[self.idx_pup]/self.TR, 
-#                                  Z0))
-#        
-#        b0  = np.zeros((self.corono.nlam*self.ndz*2))
-#        b1  = np.zeros((self.corono.nlam*self.ndz*2))
-#        b2  = np.zeros(self.npp)
-#        b3  = np.ones(self.npp)
-#        b4  = np.zeros(self.ndz)
-#        b5  = [-self.tau]
-#        
-#        self.A = np.concatenate((A0,A1,A2,A3,A4,A5[:,None]), axis=1)
-#        self.b = np.concatenate((b0,b1,b2,b3,b4,b5))        
-#        self.c = np.concatenate((np.zeros(self.npp), c1), axis=0)
         
         return self.A, self.b, self.c
 
@@ -783,10 +746,7 @@ class MaxContrast(ProblemMatrix):
             # Create a new model  
             self.m = gb.Model("LP max C new")
             
-            if self.Lnorm == 'Linf':
-                self.neps = 1
-            else:
-                self.neps = self.ndz
+
             # Create variables
             ApodEpsTmp = self.m.addVars(self.npp + self.neps, lb=0.0, name="ApodEpsTmp")        
             # Set objective

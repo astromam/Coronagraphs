@@ -19,7 +19,7 @@ from corono.utils import to_dict
 Parameters
 """
 corono_name  = 'APLC' # 'APLC' or 'SP'
-problem_name = 'MaxTau' # , 'MaxContrastL1', 'MaxContrastLinf'
+problem_name = 'MaxContrastLinf' #'MaxTau' # ,  'MaxContrastL1', 'MaxContrastLinf'
 
 nPup = 500
 nFPM = 50
