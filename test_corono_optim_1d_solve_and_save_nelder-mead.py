@@ -6,7 +6,7 @@ Created on Thu May  3 10:26:11 2018
 @author: mndiaye
 """
 import numpy as np
-import pylab as pl
+#import pylab as pl
 import time
 import os
 
@@ -24,7 +24,7 @@ import stdgrb
 """
 Parameters
 """
-corono_name = 'DZPMbis' # 'APLC' or 'SP' or DZPMbis
+corono_name = 'APLC' # 'APLC' or 'SP' or 'HDZPM' or 'HTZPM'
 
 nPup = 500
 nFPM = 50
@@ -36,18 +36,20 @@ bw   = 0.2
 nlam = 3
 
 PupilObs    = 0.14
-rMask       = 4.0
+rMask       = 2.5
 
 rMask1      = 2.0
 rMask2      = 3.0
+rMask3      = 3.5
 OPDx2       = 0.5
+OPDx3       = 0.75
 
 LyotStopObs = 0.28
 LyotStopIns = 1.0
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
-rho0 = 5.0
-rho1 = 10.0
+rho0 = 3.0
+rho1 = 20.0
 
 # contrast in the dark region
 cDarkHole = 7.0
@@ -63,7 +65,8 @@ params = to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
                  nPup = nPup, nFPM=nFPM, nImg=nImg, Fmax = Fmax,
                  bw = bw, nlam = nlam,
                  PupilObs = PupilObs, rMask = rMask, 
-                 rMask1 = rMask1, rMask2 = rMask2, OPDx2 = OPDx2, 
+                 rMask1 = rMask1, rMask2 = rMask2, rMask3 = rMask3,
+                 OPDx2 = OPDx2, OPDx3 = OPDx3, 
                  LyotStopObs = LyotStopObs,
                  LyotStopIns = LyotStopIns,
                  r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d)
@@ -83,20 +86,25 @@ if not os.path.exists(fdir_pyth):
 
 
 if corono_name == 'APLC' or corono_name == 'SP': 
-    corono_name_bis = 'BPLC'
-    if corono_name  == 'SP':
-        corono_name_bis = 'SP00'
     fname = '{0}_obs={1:2d}_FPM={2:3d}_ls={3:2d}_IWA={4:03d}_OWA={5:03d}_BW={6:02d}_C={7:02d}_1D_N={8:04d}_nFPM={9:03d}'.format(
-                corono_name_bis, int(PupilObs*100), int(rMask*100),
+                corono_name, int(PupilObs*100), int(rMask*100),
                 int(LyotStopObs*100),
                 int(rho0*10),int(rho1*10),int(bw*100), int(cDarkHole),
                 int(nPup), int(nFPM))
-else:
+elif corono_name == 'DZPMbis':
     fname = '{0}_obs={1:2d}_FPM1={2:3d}_FPM2={3:3d}_ls={4:2d}_IWA={5:03d}_OWA={6:03d}_BW={7:02d}_C={8:02d}_1D_N={9:04d}_nFPM={10:03d}'.format(
                 corono_name, int(PupilObs*100), int(rMask1*100), int(rMask2*100), 
                 int(LyotStopObs*100),
                 int(rho0*10),int(rho1*10),int(bw*100), int(cDarkHole),
-                int(nPup), int(nFPM))   
+                int(nPup), int(nFPM)) 
+else:
+    fname = '{0}_obs={1:2d}_FPM1={2:3d}_FPM2={3:3d}_FPM3={4:3d}_ls={5:2d}_IWA={6:03d}_OWA={7:03d}_BW={8:02d}_C={9:02d}_1D_N={10:04d}_nFPM={11:03d}'.format(
+                corono_name, int(PupilObs*100), 
+                int(rMask1*100), int(rMask2*100), int(rMask3*100), 
+                int(LyotStopObs*100),
+                int(rho0*10),int(rho1*10),int(bw*100), int(cDarkHole),
+                int(nPup), int(nFPM)) 
+    
 
 fname_pyth     = fname + '_guropy_apod_test.dat'
 fname_pyth_nm0 = fname + '_guropy_apod_test_nm0.dat'
@@ -110,9 +118,10 @@ if corono_name == 'APLC':
     corono0 = cd.APLC1d(**params)
 elif corono_name == 'SP':
     corono0 = cd.SP1d(**params)
-else:
+elif corono_name == 'HDZPM':
     corono0 = cd.DZPM1dbis(**params)
-
+else:
+    corono0 = cd.TZPM1dbis(**params)    
 
 #%%
 """
@@ -136,12 +145,16 @@ Gurobi models
 if corono_name == 'APLC':
     x_init = [rMask, LyotStopObs, LyotStopIns] 
     x_lb  = [2.0, 0.14, 0.8]
-    x_ub  = [4.0, 0.45, 1.0]
-else:
+    x_ub  = [2.5, 0.45, 1.0]
+elif corono_name == 'HDZPM':
     x_init = [rMask1, rMask2, OPDx2, LyotStopObs, LyotStopIns] 
     x_lb  = [1.0, 2.0, 0.0, 0.14, 0.8]
     x_ub  = [3.0, 4.0, 1.0, 0.45, 1.0]    
-
+else: 
+    x_init = [rMask1, rMask2, rMask3, OPDx2, OPDx3, LyotStopObs, LyotStopIns] 
+    x_lb  = [1.5, 2.0, 2.5, 0.0, 0.0, 0.14, 0.8]
+    x_ub  = [2.0, 2.5, 3.5, 1.0, 1.0, 0.45, 1.0] 
+    
 #%%
 def res_energy_with_lp(x_t): 
     x_t = np.maximum(x_lb,np.minimum(x_ub,x_t))
@@ -159,7 +172,7 @@ def res_energy_with_lp(x_t):
                  LyotStopIns = LyotStopIns,
                  r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d)
         
-    else:
+    elif corono_name == 'HDZPM':
         rMask1      = x_t[0]
         rMask2      = x_t[1]
         OPDx2       = x_t[2]
@@ -174,13 +187,34 @@ def res_energy_with_lp(x_t):
                  LyotStopObs = LyotStopObs,
                  LyotStopIns = LyotStopIns,
                  r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d)
+
+    else:
+        rMask1      = x_t[0]
+        rMask2      = x_t[1]
+        rMask3      = x_t[2]
+        OPDx2       = x_t[3]
+        OPDx3       = x_t[4]
+        LyotStopObs = x_t[5]
+        LyotStopIns = x_t[6]
+        LyotStop1d  = (r>LyotStopObs)*(r<LyotStopIns)*1.0
+        params = to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
+                 nPup = nPup, nFPM=nFPM, nImg=nImg, Fmax = Fmax,
+                 bw = bw, nlam = nlam,
+                 PupilObs = PupilObs,
+                 rMask1 = rMask1, rMask2 = rMask2, rMask3 = rMask3,
+                 OPDx2 = OPDx2, OPDx3 = OPDx3,
+                 LyotStopObs = LyotStopObs,
+                 LyotStopIns = LyotStopIns,
+                 r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d)        
       
     if corono_name == 'APLC':
         corono0 = cd.APLC1d(**params)
     elif corono_name == 'SP':
         corono0 = cd.SP1d(**params)
-    else:
+    elif corono_name == 'HDZPM':
         corono0 = cd.DZPM1dbis(**params)
+    else:
+        corono0 = cd.TZPM1dbis(**params)
 
 #    corono0.params['rMask']       = rMask
 #    corono0.params['LyotStopObs'] = LyotStopObs
@@ -193,7 +227,7 @@ def res_energy_with_lp(x_t):
 #    problem1 = co1d.MaxContrast(corono=corono0, Lnorm='L1',**params)
 #    problem1 = co1d.MaxContrast(corono=corono0, Lnorm='Linf',**params)
     A, b, c = problem1.compute_matrices()
-    Apod_tmp, val = stdgrb.lp_solve(problem1.c, A=(problem1.A).T, b=problem1.b, crossover=1, logtoconsole=1)
+    Apod_tmp, val = stdgrb.lp_solve(problem1.c, A=(problem1.A).T, b=problem1.b, crossover=1, logtoconsole=0)
 
     Apod_pyth = np.zeros((corono0.nPup))
     Apod_pyth[problem1.idx_pup] = Apod_tmp
