@@ -19,7 +19,8 @@ from corono.utils import to_dict
 """
 Parameters
 """
-corono_name = 'APLC' # 'APLC' or 'SP'
+corono_name  = 'APLC' # 'APLC' or 'SP'
+problem_name = 'MaxTau' # 'MaxTau', 'MaxContrastL1', 'MaxContrastLinf'
 
 nPup = 500
 nFPM = 50
@@ -102,7 +103,7 @@ else:
     raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
 
 
-fname_pyth = fname + '_guropy_apod.dat'
+fname_pyth = fname + '_guropy_apod_{0}.dat'.format(problem_name)
 
 #%%  
 """ 
@@ -124,12 +125,18 @@ else:
 Problem defintion
 """
 t0 = time.time()
-# Maximization of the integrated amplitude transmission of the apodizer
-problem1 = co1d.MaxTau(corono=corono0, **params)
-# Maximization of the contrast under L1-norm
-#problem1 = co1d.MaxContrast(corono=corono0, Lnorm='L1',**params)
-# Maximization of the contrast under L-infinite norm
-#problem1 = co1d.MaxContrast(corono=corono0, Lnorm='Linf',**params)
+if problem_name == 'MaxTau':
+    # Maximization of the integrated amplitude transmission of the apodizer
+    problem1 = co1d.MaxTau(corono=corono0, **params)
+elif problem_name == 'MaxContrastL1':
+    # Maximization of the contrast under L1-norm
+    problem1 = co1d.MaxContrast(corono=corono0, Lnorm='L1',**params)
+elif problem_name == 'MaxContrastLinf':
+    # Maximization of the contrast under L-infinite norm
+    problem1 = co1d.MaxContrast(corono=corono0, Lnorm='Linf',**params)
+else:
+    raise NameError('{0}: Not an existing optimization problem!'.format(problem_name))
+    
 t1 = time.time()
 print('problem definition time       : {0:.2f}s'.format(t1-t0))
 

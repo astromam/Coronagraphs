@@ -19,6 +19,7 @@ from corono.utils import to_dict
 Parameters
 """
 corono_name = 'APLC' # 'APLC' or 'SP'
+problem_name = 'MaxTau' # 'MaxTau', 'MaxContrastL1', 'MaxContrastLinf'
 
 nPup = 500
 nFPM = 50
@@ -99,7 +100,7 @@ elif corono_name == 'HTZPM':
 else:
     raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
 
-fname_pyth = fname + '_guropy_apod.dat'
+fname_pyth = fname + '_guropy_apod_{0}.dat'.format(problem_name)
 
 #%%  
 """ 
@@ -181,8 +182,8 @@ pl.savefig(str(fpath))
 Display of the monochromatic intensity profiles of the coronagraphic images
 """
 
-values = range(nlambis)
-colors = pl.cm.rainbow(np.linspace(0,1,nlambis))
+values = range(nlam)
+colors = pl.cm.rainbow(np.linspace(0,1,nlam))
 
 fname_pl = fname + '_intensity_mono.pdf'
 fpath = fdir_plot / fname_pl
