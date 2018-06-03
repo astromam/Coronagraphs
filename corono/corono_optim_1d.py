@@ -171,7 +171,7 @@ class ProblemMatrix(object):
     
         direct_field_t = np.zeros((self.corono.nPup, self.corono.nlam, 
                                    self.corono.nImg+1), dtype='complex128')
-        print('generating direct response matrices for 1D problem')
+        #print('generating direct response matrices for 1D problem')
         Apod1d    = np.zeros((self.corono.nPup))
         for i in np.arange(self.corono.nPup):
             Apod1d[i] = 1
@@ -182,7 +182,7 @@ class ProblemMatrix(object):
 
         corono_field_t = np.zeros((self.corono.nPup, self.corono.nlam, 
                                    self.corono.nImg+1), dtype='complex128')
-        print('generating corono response matrices for 1D problem')
+        #print('generating corono response matrices for 1D problem')
         Apod1d    = np.zeros((self.corono.nPup))
         for i in np.arange(self.corono.nPup):
             Apod1d[i] = 1
