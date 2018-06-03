@@ -12,7 +12,7 @@ import json
 
 import sys    
 sys.modules['gurobipy'] = None
-sys.modules['stdgrb'] = None    
+sys.modules['stdgrb']   = None    
 #del sys.modules['gurobipy']
 #del sys.modules['stdgrb']
 
@@ -328,7 +328,7 @@ class ProblemMatrix(object):
         try:
             print('solving with stdgrb package')
             Apodtmp, val = stdgrb.lp_solve(self.c, A=(self.A).T, b=self.b, 
-                            crossover=1, logtoconsole=1)
+                            crossover=1, logtoconsole=1, method=2)
             self.Apod[self.idx_pup] = Apodtmp
             return self.Apod
 
