@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Thu May  3 10:26:11 2018
+Created on Fri Mar  9 17:40:02 2018
 
 @author: mndiaye
 """
-import numpy as np
 import pylab as pl
+import numpy as np
 import os
 
 from pathlib import Path
@@ -22,7 +22,7 @@ corono_name = 'APLC' # 'APLC' or 'SP'
 
 nPup = 500
 nFPM = 50
-nImg = 110
+nImg = 440
 Fmax = 11
 R    = 1
 
@@ -99,7 +99,14 @@ elif corono_name == 'HTZPM':
 else:
     raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
 
-fname_pyth = fname + '_guropy_apod.dat'
+
+fname1 = fname + '_guropy_apod_MaxTau.dat'
+fname2 = fname + '_guropy_apod_MaxContrastL1.dat'
+fname3 = fname + '_guropy_apod_MaxContrastLinf.dat'
+
+fname_A1 = fname + '_guropy_A_MaxTau.dat'
+fname_A2 = fname + '_guropy_A_MaxContrastL1.dat'
+fname_A3 = fname + '_guropy_A_MaxContrastLinf.dat'
 
 #%%  
 """ 
@@ -118,93 +125,93 @@ else:
 
 #%% Apodizer solution for the problems
 """
-Apodizer solutions
+Apodizer saving 
 """
-fpath_pyth = fdir_pyth / fname_pyth
-test0 = np.loadtxt(fpath_pyth)
-Apod_pyth = test0[:, 1]
+fpath1 = fdir_pyth / fname1
+fpath2 = fdir_pyth / fname2
+fpath3 = fdir_pyth / fname3
+
+test1 = np.loadtxt(fpath1)
+test2 = np.loadtxt(fpath2)
+test3 = np.loadtxt(fpath3)
+
+Apod1 = test1[:, 1]
+Apod2 = test2[:, 1]
+Apod3 = test3[:, 1]
+
+#%%
+"""
+Display of the matrices
+"""
+fpath_A1 = fdir_pyth / fname_A1
+fpath_A2 = fdir_pyth / fname_A2
+fpath_A3 = fdir_pyth / fname_A3
+
+A1 = np.loadtxt(fpath_A1)
+A2 = np.loadtxt(fpath_A2)
+A3 = np.loadtxt(fpath_A3)
+
+pl.figure(1)
+pl.clf()
+pl.title('Matrix for MaxTau problem')
+pl.imshow(abs(A1.T)**0.25)
+
+pl.figure(2)
+pl.clf()
+pl.title(r'Matrix for MaxContrast problem, L$_1$-norm')
+pl.imshow(abs(A2.T)**0.25)
+#
+pl.figure(3)
+pl.clf()
+pl.title(r'Matrix for MaxContrast problem, L$_\infty$-norm')
+pl.imshow(abs(A3.T)**0.25)
+
 
 #%% Display of the apodizer
 """
 Plot display of the apodizers
 """
-fname_pl = fname + '_apodizers_tran.pdf'
-fpath = fdir_plot / fname_pl
-
-pl.figure(1)
+pl.figure(4)
 pl.clf()
-pl.plot(corono0.r, Apod_pyth/Apod_pyth.max(), label='gurobipy')
+pl.title('Transmission profiles of the apodizers')
+pl.plot(corono0.r, Apod1/Apod1.max(), label='MaxTau')
+pl.plot(corono0.r, Apod2, label=r'MaxContrast, L$_1$-norm')
+pl.plot(corono0.r, Apod3, label=r'MaxContrast, L$_\infty$-norm')
 pl.xlabel(r'Pupil radius r')
 pl.ylabel('Apodizer amplitude transmission')
 pl.legend()
-pl.tight_layout()
-pl.show()
-pl.savefig(str(fpath))
 
 #%% Signal in intensity
 """
 Computation of the direct and coronagraphic images
 """
-poly_direct_image1 = corono0.compute_direct_intensity_1d(Apod_pyth)
-poly_corono_image1 = corono0.compute_corono_intensity_1d(Apod_pyth)
-
-mono_direct_image1 = corono0.compute_direct_intensity_1d(Apod_pyth, poly=False)
-mono_corono_image1 = corono0.compute_corono_intensity_1d(Apod_pyth, poly=False)
+poly_direct_image1 = corono0.compute_direct_intensity_1d(Apod1)
+poly_corono_image1 = corono0.compute_corono_intensity_1d(Apod1)
+poly_direct_image2 = corono0.compute_direct_intensity_1d(Apod2)
+poly_corono_image2 = corono0.compute_corono_intensity_1d(Apod2)
+poly_direct_image3 = corono0.compute_direct_intensity_1d(Apod3)
+poly_corono_image3 = corono0.compute_corono_intensity_1d(Apod3)
 
 #%% Intensity profiles of the direct and coronagraphic images
 """
 Display of the intensity profiles of the coronagraphic images
 """
-
-fname_pl = fname + '_intensity.pdf'
-fpath = fdir_plot / fname_pl
-pl.figure(2)
+pl.figure(6)
 pl.clf()
-#pl.title('Intensity profiles of the coronagraphic images')
+pl.title('Intensity profiles of the coronagraphic images')
 #pl.semilogy(corono0.xi,poly_direct_image1/poly_direct_image1.max(),label='Direct')
 #pl.semilogy(corono0.xi,poly_direct_image2/poly_direct_image2.max(),label='Direct')
 #pl.semilogy(corono0.xi,poly_direct_image3/poly_direct_image3.max(),label='Direct')
-pl.semilogy(corono0.xi,poly_corono_image1/poly_direct_image1.max(),label='gurobipy')
-pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
+pl.semilogy(corono0.xi,poly_corono_image1/poly_direct_image1.max(),label='MaxTau')
+pl.semilogy(corono0.xi,poly_corono_image2/poly_direct_image2.max(),label=r'MaxContrast, L$_1$-norm')
+pl.semilogy(corono0.xi,poly_corono_image3/poly_direct_image3.max(),label=r'MaxContrast, L$_{\infty}$-norm')
+#pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
 pl.axvline(x=corono0.rho0, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
 pl.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
 pl.axhline(10**(-cDarkHole), xmin=corono0.xi.min(), xmax=corono0.xi.max(), linewidth=1, color='k', linestyle='--')
 pl.xlabel(r'Angular separation in $\lambda_0$/D')
 pl.ylabel('Normalized intensity in log scale')
-pl.ylim(1e-12, 1e-3)
 pl.legend()
-pl.tight_layout()
-pl.savefig(str(fpath))
-
-#%% Intensity profiles of the direct and coronagraphic images
-"""
-Display of the monochromatic intensity profiles of the coronagraphic images
-"""
-
-values = range(nlambis)
-colors = pl.cm.rainbow(np.linspace(0,1,nlambis))
-
-fname_pl = fname + '_intensity_mono.pdf'
-fpath = fdir_plot / fname_pl
-pl.figure(3)
-pl.clf()
-#pl.title('Intensity profiles of the coronagraphic images')
-#pl.semilogy(corono0.xi,poly_direct_image1/poly_direct_image1.max(),label='Direct')
-#pl.semilogy(corono0.xi,poly_direct_image2/poly_direct_image2.max(),label='Direct')
-#pl.semilogy(corono0.xi,poly_direct_image3/poly_direct_image3.max(),label='Direct')
-for i in range(corono0.nlam):
-    pl.semilogy(corono0.xi,mono_corono_image1[i]/mono_direct_image1[(corono0.nlam+1)//2].max(), 
-                label=r'{0:.2f}$\lambda_0$'.format(corono0.lam_t[i]), color = colors[i])
-pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
-pl.axvline(x=corono0.rho0, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
-pl.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
-pl.axhline(10**(-cDarkHole), xmin=corono0.xi.min(), xmax=corono0.xi.max(), linewidth=1, color='k', linestyle='--')
-pl.xlabel(r'Angular separation in $\lambda_0$/D')
-pl.ylabel('Normalized intensity in log scale')
-pl.ylim(1e-12, 1e-3)
-pl.legend()
-pl.tight_layout()
-pl.savefig(str(fpath))
 
 #%%
 pl.show()
