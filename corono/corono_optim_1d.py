@@ -11,13 +11,14 @@ import numpy as np
 import json
 
 import sys    
-sys.modules['gurobipy'] = None
-sys.modules['stdgrb']   = None    
+#sys.modules['gurobipy'] = None
+#sys.modules['stdgrb']   = None    
 #del sys.modules['gurobipy']
 #del sys.modules['stdgrb']
 
 try:
     import stdgrb
+    import gurobipy as gb
 except ModuleNotFoundError:
     try:
         import gurobipy as gb
