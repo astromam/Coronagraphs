@@ -18,7 +18,7 @@ from corono.utils import to_dict
 """
 Parameters
 """
-corono_name = 'APLC' # 'APLC' or 'SP' or 'HDZPM' or 'HTZPM'
+corono_name = 'HTZPM' # 'APLC' or 'SP' or 'HDZPM' or 'HTZPM'
 problem_name = 'MaxTau' # , 'MaxContrastL1', 'MaxContrastLinf'
 
 nPup = 500
@@ -27,29 +27,29 @@ nImg = 110
 Fmax = 22
 R    = 1
 
-bw   = 0.2
+bw   = 0.1
 nlam = 5
 nlambis = 11
 
 PupilObs    = 0.14
 
-rMask       = 2.5
+rMask       = 2.3
 
-rMask1      = 2.0
-rMask2      = 3.0
-rMask3      = 3.5
+rMask1      = 2.5
+rMask2      = 0.25
+rMask3      = 0.25
 OPDx2       = 0.5
 OPDx3       = 0.75
 
 LyotStopObs = 0.28
-LyotStopIns = 1.0
+LyotStopIns = 0.9
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
-rho0 = 3.0
-rho1 = 20.0
+rho0 = 2.5
+rho1 = 10.0
 
 # contrast in the dark region
-cDarkHole = 7.0
+cDarkHole = 8.0
 
 # tau (integrated Pupil transmission)
 tau   = 0.5
@@ -117,35 +117,35 @@ if corono_name == 'APLC':
     rMask       = x_end[0]
     LyotStopObs = x_end[1]
     LyotStopIns = x_end[2]
-    print('mask radius          : {0:.4f} lambda/D'.format(rMask))
-    print('Lyot Stop obstruction: {0:.4f}'.format(LyotStopObs))
-    print('Lyot Stop ins. size  : {0:.4f}'.format(LyotStopIns))
+    print('mask radius          : {0:.3f} lambda/D'.format(rMask))
+    print('Lyot Stop obstruction: {0:.3f}'.format(LyotStopObs))
+    print('Lyot Stop ins. size  : {0:.3f}'.format(LyotStopIns))
 elif corono_name == 'HDZPM':
     rMask1      = x_end[0]
-    rMask2      = x_end[1]
+    rMask2      = rMask1 + x_end[1]
     OPDx2       = x_end[2]
     LyotStopObs = x_end[3]
     LyotStopIns = x_end[4]
-    print('mask radius 1         : {0:.4f} lambda_0/D'.format(rMask1))
-    print('mask radius 2         : {0:.4f} lambda_0/D'.format(rMask2))
-    print('OPD 2                 : {0:.4f} lambda_0'.format(OPDx2))
-    print('Lyot Stop obstruction: {0:.4f}'.format(LyotStopObs))
-    print('Lyot Stop ins. size  : {0:.4f}'.format(LyotStopIns))    
+    print('mask radius 1         : {0:.3f} lambda_0/D'.format(rMask1))
+    print('mask radius 2         : {0:.3f} lambda_0/D'.format(rMask2))
+    print('OPD 2                 : {0:.3f} lambda_0'.format(OPDx2))
+    print('Lyot Stop obstruction: {0:.3f}'.format(LyotStopObs))
+    print('Lyot Stop ins. size  : {0:.3f}'.format(LyotStopIns))    
 elif corono_name == 'HTZPM': 
     rMask1      = x_end[0]
-    rMask2      = x_end[1]
-    rMask3      = x_end[2]
+    rMask2      = rMask1 + x_end[1]
+    rMask3      = rMask2 + x_end[2]
     OPDx2       = x_end[3]
     OPDx3       = x_end[4]
     LyotStopObs = x_end[5]
     LyotStopIns = x_end[6]
-    print('mask radius 1         : {0:.4f} lambda_0/D'.format(rMask1))
-    print('mask radius 2         : {0:.4f} lambda_0/D'.format(rMask2))
-    print('mask radius 3         : {0:.4f} lambda_0/D'.format(rMask3))
-    print('OPD 2                 : {0:.4f} lambda_0'.format(OPDx2))
-    print('OPD 3                 : {0:.4f} lambda_0'.format(OPDx3))
-    print('Lyot Stop obstruction: {0:.4f}'.format(LyotStopObs))
-    print('Lyot Stop ins. size  : {0:.4f}'.format(LyotStopIns)) 
+    print('mask radius 1         : {0:.3f} lambda_0/D'.format(rMask1))
+    print('mask radius 2         : {0:.3f} lambda_0/D'.format(rMask2))
+    print('mask radius 3         : {0:.3f} lambda_0/D'.format(rMask3))
+    print('OPD 2                 : {0:.3f} lambda_0'.format(OPDx2))
+    print('OPD 3                 : {0:.3f} lambda_0'.format(OPDx3))
+    print('Lyot Stop obstruction: {0:.3f}'.format(LyotStopObs))
+    print('Lyot Stop ins. size  : {0:.3f}'.format(LyotStopIns)) 
 else:
     raise NameError('{0}: Not a correct coronagraph for NM-optimization!'.format(corono_name))    
 
@@ -170,9 +170,9 @@ if corono_name == 'APLC':
 elif corono_name == 'SP':
     corono0 = cd.SP1d(**params)
 elif corono_name == 'HDZPM':
-    corono0 = cd.DZPM1dbis(**params)
+    corono0 = cd.HDZPM1d(**params)
 elif corono_name == 'HTZPM':
-    corono0 = cd.TZPM1dbis(**params)
+    corono0 = cd.HTZPM1d(**params)
 else:
     raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
 
@@ -194,14 +194,14 @@ fpath = fdir_plot / fname_pl
 
 pl.figure(1)
 pl.clf()
-pl.plot(corono0.r, Apod_pyth/Apod_pyth.max(), label='gurobipy')
+pl.plot(corono0.r, Apod_pyth/Apod_pyth.max())
 pl.xlabel(r'Pupil radius r')
 pl.ylabel('Apodizer amplitude transmission')
 pl.axvline(x=corono0.PupilObs, ymin=-0.5, ymax =2, linewidth=1, color='g', linestyle='--')
 pl.axvline(x=1.0, ymin=-0.5, ymax =2, linewidth=1, color='g', linestyle='--')
 pl.axvline(x=corono0.LyotStopObs, ymin=-0.5, ymax =2, linewidth=1, color='r', linestyle='--')
 pl.axvline(x=corono0.LyotStopIns, ymin=-0.5, ymax =2, linewidth=1, color='r', linestyle='--')
-pl.legend()
+#pl.legend()
 pl.tight_layout()
 pl.show()
 pl.savefig(str(fpath))
@@ -229,12 +229,12 @@ pl.clf()
 #pl.semilogy(corono0.xi,poly_direct_image1/poly_direct_image1.max(),label='Direct')
 #pl.semilogy(corono0.xi,poly_direct_image2/poly_direct_image2.max(),label='Direct')
 #pl.semilogy(corono0.xi,poly_direct_image3/poly_direct_image3.max(),label='Direct')
-pl.semilogy(corono0.xi,poly_corono_image1/poly_direct_image1.max(),label='gurobipy')
+pl.semilogy(corono0.xi,poly_corono_image1/poly_direct_image1.max())
 if corono_name == 'APLC':
     pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
 elif corono_name == 'HDZPM':
     pl.axvline(x=corono0.rMask1, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
-    pl.axvline(x=corono0.rMask2, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')    
+    pl.axvline(x=corono0.rMask2, ymin=-12, ymax =2, linewidth=1, color='g', linestyle='--')    
 else:
     pl.axvline(x=corono0.rMask1, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
     pl.axvline(x=corono0.rMask2, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')    
@@ -246,7 +246,7 @@ pl.axhline(10**(-cDarkHole), xmin=corono0.xi.min(), xmax=corono0.xi.max(), linew
 pl.xlabel(r'Angular separation in $\lambda_0$/D')
 pl.ylabel('Normalized intensity in log scale')
 pl.ylim(1e-12, 1e-3)
-pl.legend()
+#pl.legend()
 pl.tight_layout()
 pl.savefig(str(fpath))
 
@@ -273,7 +273,7 @@ if corono_name == 'APLC':
     pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
 elif corono_name == 'HDZPM':
     pl.axvline(x=corono0.rMask1, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
-    pl.axvline(x=corono0.rMask2, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')    
+    pl.axvline(x=corono0.rMask2, ymin=-12, ymax =2, linewidth=1, color='g', linestyle='--')    
 else:
     pl.axvline(x=corono0.rMask1, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
     pl.axvline(x=corono0.rMask2, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')    

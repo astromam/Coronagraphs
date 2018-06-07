@@ -24,7 +24,7 @@ from corono.utils import to_dict
 """
 Parameters
 """
-corono_name  = 'APLC' # 'APLC' or 'SP' or 'HDZPM' or 'HTZPM'
+corono_name  = 'HTZPM' # 'APLC' or 'SP' or 'HDZPM' or 'HTZPM'
 problem_name = 'MaxTau' # , 'MaxContrastL1', 'MaxContrastLinf'
 
 nPup = 500
@@ -33,27 +33,27 @@ nImg = 88
 Fmax = 22
 R    = 1
 
-bw   = 0.2
-nlam = 3
+bw   = 0.1
+nlam = 5
 
 PupilObs    = 0.14
-rMask       = 2.5
+rMask       = 2.3
 
-rMask1      = 2.0
-rMask2      = 3.0
-rMask3      = 3.5
+rMask1      = 2.5
+rMask2      = 0.25
+rMask3      = 0.25
 OPDx2       = 0.5
 OPDx3       = 0.75
 
 LyotStopObs = 0.28
-LyotStopIns = 1.0
+LyotStopIns = 0.9
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
-rho0 = 3.0
-rho1 = 20.0
+rho0 = 2.5
+rho1 = 10.0
 
 # contrast in the dark region
-cDarkHole = 7.0
+cDarkHole = 8.0
 
 # tau (integrated Pupil transmission)
 tau   = 0.5
@@ -138,15 +138,15 @@ Parameter boundaries
 if corono_name == 'APLC':
     x_init = [rMask, LyotStopObs, LyotStopIns] 
     x_lb  = [2.0, 0.14, 0.8]
-    x_ub  = [2.5, 0.45, 1.0]
+    x_ub  = [3.0, 0.50, 1.0]
 elif corono_name == 'HDZPM':
     x_init = [rMask1, rMask2, OPDx2, LyotStopObs, LyotStopIns] 
-    x_lb  = [1.0, 2.0, 0.0, 0.14, 0.8]
-    x_ub  = [3.0, 4.0, 1.0, 0.45, 1.0]    
+    x_lb  = [1.0, 0.1, 0.0, 0.14, 0.8]
+    x_ub  = [3.0, 0.5, 1.0, 0.45, 1.0]    
 elif corono_name == 'HTZPM': 
     x_init = [rMask1, rMask2, rMask3, OPDx2, OPDx3, LyotStopObs, LyotStopIns] 
-    x_lb  = [1.5, 2.0, 2.5, 0.0, 0.0, 0.14, 0.8]
-    x_ub  = [2.0, 2.5, 3.5, 1.0, 1.0, 0.45, 1.0] 
+    x_lb  = [2.0, 0.1, 0.1, 0.0, 0.0, 0.14, 0.8]
+    x_ub  = [2.4, 0.5, 0.5, 1.0, 1.0, 0.45, 1.0] 
 else:    
     raise NameError('{0}: Not a correct coronagraph for NM-optimization!'.format(corono_name))    
     
@@ -169,7 +169,7 @@ def res_energy_with_lp(x_t):
         
     elif corono_name == 'HDZPM':
         rMask1      = x_t[0]
-        rMask2      = x_t[1]
+        rMask2      = rMask1 + x_t[1]
         OPDx2       = x_t[2]
         LyotStopObs = x_t[3]
         LyotStopIns = x_t[4]
@@ -185,8 +185,8 @@ def res_energy_with_lp(x_t):
 
     elif corono_name == 'HTZPM':
         rMask1      = x_t[0]
-        rMask2      = x_t[1]
-        rMask3      = x_t[2]
+        rMask2      = rMask1 + x_t[1]
+        rMask3      = rMask2 + x_t[2]
         OPDx2       = x_t[3]
         OPDx3       = x_t[4]
         LyotStopObs = x_t[5]
