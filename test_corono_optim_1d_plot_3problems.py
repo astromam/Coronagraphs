@@ -29,7 +29,7 @@ R    = 1
 bw   = 0.1
 nlam = 11
 
-PupilObs    = 0.14
+PupilObs    = 0.20
 rMask       = 4.0
 
 rMask1      = 2.0
@@ -38,18 +38,18 @@ rMask3      = 3.5
 OPDx2       = 0.5
 OPDx3       = 0.75
 
-LyotStopObs = 0.28
+LyotStopObs = 0.40
 LyotStopIns = 1.0
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
-rho0 = 5.0
+rho0 = 3.5
 rho1 = 10.0
 
 # contrast in the dark region
-cDarkHole = 8.0
+cDarkHole = 10.0
 
 # tau (integrated Pupil transmission)
-tau   = 0.5
+tau   = 0.4
 
 r   = np.arange(nPup)*R/nPup + R/(2*nPup)
 Pupil1d      = (r>PupilObs)*1.0
