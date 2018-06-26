@@ -110,3 +110,6 @@ corono/test_debug.py
 test_corono_optim_2d_plot_cfile.py
 test_lyot_gershberg-saxton.py
 test_lyot_propag.py
+test_corono_optim_1d_solve-save_nelder-mead_direct.py
+test_corono_optim_1d_solve-save_direct.py
+test_corono_optim_1d_plot_direct.py

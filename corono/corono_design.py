@@ -109,6 +109,7 @@ def get_default_params_Coronagraph():
     """
     tmp = {'PupilObs':0.14,'LyotStopObs':0.28,'LyotStopIns':1.0,    
            'rho0':5,'rho1':10,
+           'rho0direct':0.7, 'rho1direct':6.0,
            'nPup':200,'nImg':200,'Fmax':25,
            'nImg2d':44, 'Fmax2d':22,
            'bw':0.2,'lam0':1.0,'nlam':5, 
@@ -895,6 +896,54 @@ class Coronagraph(object):
         """
         return self.params[name]
 
+#%% # direct propagation (no focal plane mask)
+    def compute_nostop_field_1d(self):
+        """
+        Computes the electric field of the direct image with APLC
+        for the 1D problem.
+        
+        Parameters
+        ---------- 
+        Apod : array_like
+            Entrance pupil apodization :math:`\Phi`
+                
+        Returns    
+        ----------
+        res : array_like
+            Direct electric field :math:`\Psi_0` at all the wavelengths
+            
+        """
+        return self.lam0/self.lam_t[:,None]*np.pi*self.hankel_kernel_all.dot(
+                self.Pupil1d*self.r/self.R)*self.R/self.nPup
+
+
+#%% direct signal in intensity
+    def compute_nostop_intensity_1d(self,poly=True):
+        r"""
+        Computes the intensity of the direct image for the 1D problem.
+        
+        Parameters
+        ---------- 
+        Apod : array_like
+            Entrance pupil apodization :math:`\Phi`
+        
+        poly : boolean (default=True)
+            parameter to compute broadband image or monochromatic images
+            at all the wavelengths
+                
+        Returns    
+        ----------
+        res : array_like
+            Intensity of the direct broadband image or monochromatic images. 
+            
+        """
+        nostop_field = self.compute_nostop_field_1d()
+        
+        if poly:
+            return np.sum(np.abs(nostop_field)**2,0)
+        else:
+            return np.abs(nostop_field)**2
+
 #%% direct signal in intensity
     def compute_direct_intensity_1d(self,Apod,poly=True):
         r"""
@@ -1154,6 +1203,7 @@ class APLC1d(Coronagraph):
                 np.pi/self.R*self.xi_FPM_lam[:,:,None]*self.r[None,None,:])
         self.hankel_kernel_iFPM_all = besselJ0(
                 np.pi/self.R*self.xi_FPM_lam[:,None,:]*self.r[None,:,None])
+
         
 #%% # direct propagation (no focal plane mask)
     def compute_direct_field_1d(self,Apod):
@@ -1473,6 +1523,7 @@ class DZPM1d(Coronagraph):
         1j*np.sin(2.*np.pi*(self.r/2)**2*self.beta*self.lam0/self.lam_t[:,None])\
         + np.cos(2.*np.pi*(self.r/2)**2*self.beta*self.lam0/self.lam_t[:,None])
 
+
 #%% direct propagation (no focal plane mask)
     def compute_direct_field_1d(self,Apod):
         r"""
@@ -1695,6 +1746,7 @@ class HDZPM1d(Coronagraph):
                 np.pi/self.R*self.xi_FPM2_lam[:,:,None]*self.r[None,None,:])
         self.hankel_kernel_iFPM2_all = besselJ0(
                 np.pi/self.R*self.xi_FPM2_lam[:,None,:]*self.r[None,:,None])
+
 
 
 #%% direct propagation (no focal plane mask)
