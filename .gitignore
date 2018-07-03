@@ -113,3 +113,4 @@ test_lyot_propag.py
 test_corono_optim_1d_solve-save_nelder-mead_direct.py
 test_corono_optim_1d_solve-save_direct.py
 test_corono_optim_1d_plot_direct.py
+test_corono_design_2d_sphere.py

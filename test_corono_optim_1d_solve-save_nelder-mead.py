@@ -25,24 +25,24 @@ from corono.utils import to_dict
 Parameters
 """
 corono_name  = 'HTZPM' # 'APLC' or 'SP' or 'HDZPM' or 'HTZPM'
-problem_name = 'MaxTau' # , 'MaxContrastL1', 'MaxContrastLinf'
+problem_name = 'MaxTau' # 'MaxContrastLinf' # , 'MaxContrastL1' # ,
 
-nPup = 500
+nPup = 1000
 nFPM = 50
 nImg = 88
 Fmax = 22
 R    = 1
 
-bw   = 0.1
+bw   = 0.2
 nlam = 5
 
 PupilObs    = 0.14
-rMask       = 2.3
+rMask       = 4.0
 
-rMask1      = 2.5
+rMask1      = 3.0
 rMask2      = 0.25
 rMask3      = 0.25
-OPDx2       = 0.5
+OPDx2       = 0.25
 OPDx3       = 0.75
 
 LyotStopObs = 0.28
@@ -53,10 +53,10 @@ rho0 = 2.5
 rho1 = 10.0
 
 # contrast in the dark region
-cDarkHole = 8.0
+cDarkHole = 10.0
 
 # tau (integrated Pupil transmission)
-tau   = 0.5
+tau   = 0.01
 
 r   = np.arange(nPup)*R/nPup + R/(2*nPup)
 Pupil1d      = (r>PupilObs)*1.0
@@ -135,18 +135,18 @@ t0 = time.time()
 """
 Parameter boundaries
 """
-if corono_name == 'APLC':
+if corono_name   == 'APLC':
     x_init = [rMask, LyotStopObs, LyotStopIns] 
-    x_lb  = [2.0, 0.14, 0.8]
-    x_ub  = [3.0, 0.50, 1.0]
+    x_lb   = [2.0, 0.14, 0.8]
+    x_ub   = [4.5, 0.50, 1.0]
 elif corono_name == 'HDZPM':
     x_init = [rMask1, rMask2, OPDx2, LyotStopObs, LyotStopIns] 
-    x_lb  = [1.0, 0.1, 0.0, 0.14, 0.8]
-    x_ub  = [3.0, 0.5, 1.0, 0.45, 1.0]    
+    x_lb   = [1.0, 0.1, 0.0, 0.14, 0.8]
+    x_ub   = [3.0, 0.5, 1.0, 0.45, 1.0]    
 elif corono_name == 'HTZPM': 
     x_init = [rMask1, rMask2, rMask3, OPDx2, OPDx3, LyotStopObs, LyotStopIns] 
-    x_lb  = [2.0, 0.1, 0.1, 0.0, 0.0, 0.14, 0.8]
-    x_ub  = [2.4, 0.5, 0.5, 1.0, 1.0, 0.45, 1.0] 
+    x_lb   = [2.0, 0.001, 0.001, 0.0, 0.0, 0.14, 0.8]
+    x_ub   = [4.5, 0.5, 0.5, 1.0, 1.0, 0.45, 1.0] 
 else:    
     raise NameError('{0}: Not a correct coronagraph for NM-optimization!'.format(corono_name))    
     
@@ -154,7 +154,7 @@ else:
 def res_energy_with_lp(x_t): 
     x_t = np.maximum(x_lb,np.minimum(x_ub,x_t))
 
-    if corono_name == 'APLC':
+    if   corono_name == 'APLC':
         rMask       = x_t[0]
         LyotStopObs = x_t[1]
         LyotStopIns = x_t[2]
@@ -205,7 +205,7 @@ def res_energy_with_lp(x_t):
     else:
         raise NameError('{0}: Not a correct coronagraph for NM-optimization!'.format(corono_name))    
     
-    if corono_name == 'APLC':
+    if   corono_name == 'APLC':
         corono0 = cd.APLC1d(**params)
     elif corono_name == 'SP':
         corono0 = cd.SP1d(**params)
@@ -219,7 +219,7 @@ def res_energy_with_lp(x_t):
     """
     Problem defintion
     """
-    if problem_name == 'MaxTau':
+    if   problem_name == 'MaxTau':
         # Maximization of the integrated amplitude transmission of the apodizer
         problem1 = co1d.MaxTau(corono=corono0, **params)
     elif problem_name == 'MaxContrastL1':
@@ -247,11 +247,21 @@ def res_energy_with_lp(x_t):
     
     np.savetxt(fpath_pyth, test0)
     
+#    poly_direct_image_tmp = corono0.compute_direct_intensity_1d(Apod_pyth)
+#    poly_corono_image_tmp = corono0.compute_corono_intensity_1d(Apod_pyth)    
+#    poly_corono_image     = poly_corono_image_tmp/poly_direct_image_tmp.max()
+#
+#    return np.sum(poly_corono_image[problem1.idx_dz])
+
+#    TE_throughput = -100.*np.sum(np.abs(Apod_pyth*Pupil1d*LyotStop1d)**2)/np.sum(np.abs(Pupil1d*LyotStop1d)**2)
+#    return TE_throughput
+
     poly_direct_image_tmp = corono0.compute_direct_intensity_1d(Apod_pyth)
-    poly_corono_image_tmp = corono0.compute_corono_intensity_1d(Apod_pyth)    
-    poly_corono_image     = poly_corono_image_tmp/poly_direct_image_tmp.max()
-    
-    return np.sum(poly_corono_image[problem1.idx_dz])
+    poly_nostop_image_tmp = corono0.compute_nostop_intensity_1d()    
+
+    EE_idx = corono0.xi <= 0.7
+    EE_throughput = -100.*np.sum(poly_direct_image_tmp[EE_idx])/np.sum(poly_nostop_image_tmp[EE_idx])
+    return EE_throughput  
 
 
 #%%
