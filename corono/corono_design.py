@@ -479,9 +479,11 @@ def get_default_params_APLC2d():
     LyotStop2d   = uniform_disk(tmp['nPup'], tmp['nPup']/2., CtrBtwnPix=tmp['CtrBtwnPix'])\
         - uniform_disk(tmp['nPup'], tmp['LyotStopObs']*tmp['nPup']/2., CtrBtwnPix=tmp['CtrBtwnPix'])
     # OPD map
-    OPDmap2d     = None        
+    OPDmap2d     = None
+    Ampmap2d     = None        
         
-    tmp.update({'Pupil2d':Pupil2d, 'LyotStop2d':LyotStop2d, 'OPDmap2d':OPDmap2d})
+    tmp.update({'Pupil2d':Pupil2d, 'LyotStop2d':LyotStop2d, 
+                'OPDmap2d':OPDmap2d, 'Ampmap2d': Ampmap2d})
     return tmp
 
 #%%
@@ -2148,6 +2150,9 @@ class APLC2d(Coronagraph):
         
         if self.OPDmap2d is None:
             field_A    = Apod2d*self.Pupil2d
+            if self.Ampmap2d is not None:
+                field_A *= self.Ampmap2d
+            
             field_L    = field_A*self.LyotStop2d 
             field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
                                   dtype='complex128')
@@ -2164,6 +2169,8 @@ class APLC2d(Coronagraph):
             phasor_t   = 2.*np.pi*self.OPDmap2d[None, :, :]/(self.wv*self.lam_t[:, None,None]) 
             
             field_A    = Apod2d*self.Pupil2d*(1j*np.sin(phasor_t)+np.cos(phasor_t))
+            if self.Ampmap2d is not None:
+                field_A *= self.Ampmap2d
 
             field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
                                   dtype='complex128')
@@ -2207,7 +2214,9 @@ class APLC2d(Coronagraph):
         """        
 
         if self.OPDmap2d is None:
-            field_A    = Apod2d*self.Pupil2d    
+            field_A    = Apod2d*self.Pupil2d
+            if self.Ampmap2d is not None:
+                field_A *= self.Ampmap2d
             field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
                                   dtype='complex128')
             
@@ -2233,7 +2242,9 @@ class APLC2d(Coronagraph):
         else:
             phasor_t   = 2.*np.pi*self.OPDmap2d[None, :, :]/(self.wv*self.lam_t[:, None,None]) 
             
-            field_A    = Apod2d*self.Pupil2d*(1j*np.sin(phasor_t)+np.cos(phasor_t))    
+            field_A    = Apod2d*self.Pupil2d*(1j*np.sin(phasor_t)+np.cos(phasor_t))
+            if self.Ampmap2d is not None:
+                field_A *= self.Ampmap2d
             field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
                                   dtype='complex128')
             
