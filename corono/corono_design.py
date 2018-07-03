@@ -112,7 +112,7 @@ def get_default_params_Coronagraph():
            'rho0direct':0.7, 'rho1direct':6.0,
            'nPup':200,'nImg':200,'Fmax':25,
            'nImg2d':44, 'Fmax2d':22,
-           'bw':0.2,'lam0':1.0,'nlam':5, 
+           'bw':0.2,'lam0':1.0,'nlam':5, 'wv':1.593e-6,
            'R':1.0,
            'fdir':'',
            'CtrBtwnPix':True, 'CtrBtwnPix2':False, 
@@ -455,8 +455,11 @@ def get_default_params_APLC2d():
         2D entrance pupil :math:`P_0`
 
     LyotStop2d : array_like 
-            2D Lyot stop :math:`L`
-            
+        2D Lyot stop :math:`L`
+    
+    OPDmap2d : array_like
+        2D OPD phase map :math:`\delta`
+        
     Returns    
     ----------
     tmp : dict
@@ -475,7 +478,10 @@ def get_default_params_APLC2d():
     # Lyot stop 
     LyotStop2d   = uniform_disk(tmp['nPup'], tmp['nPup']/2., CtrBtwnPix=tmp['CtrBtwnPix'])\
         - uniform_disk(tmp['nPup'], tmp['LyotStopObs']*tmp['nPup']/2., CtrBtwnPix=tmp['CtrBtwnPix'])
-    tmp.update({'Pupil2d':Pupil2d, 'LyotStop2d':LyotStop2d})
+    # OPD map
+    OPDmap2d     = None        
+        
+    tmp.update({'Pupil2d':Pupil2d, 'LyotStop2d':LyotStop2d, 'OPDmap2d':OPDmap2d})
     return tmp
 
 #%%
@@ -2129,26 +2135,50 @@ class APLC2d(Coronagraph):
         Apod2d : array_like 
             Entrance pupil apodization :math:`\Phi`
             
+        OPDmap2d : array_like
+            Optical path difference (OPD) map error in m
+            
         Returns    
         ----------    
         field_Dtmp : array_like
             Direct electric field :math:`\Psi_0` in the final image plane at 
             all the wavelengths
     
-        """    
-        field_A    = Apod2d*self.Pupil2d
-        field_L    = field_A*self.LyotStop2d 
-        field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
-                              dtype='complex128')
+        """
         
-        if self.Pupil2dSym == False:
-            for i in range(self.nlam):
-                field_Dtmp[i] = sft(field_L, self.nImg2d, self.mD_t[i], 
-                          CtrBtwnPix=self.CtrBtwnPix2)
+        if self.OPDmap2d is None:
+            field_A    = Apod2d*self.Pupil2d
+            field_L    = field_A*self.LyotStop2d 
+            field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
+                                  dtype='complex128')
+            
+            if self.Pupil2dSym == False:
+                for i in range(self.nlam):
+                    field_Dtmp[i] = sft(field_L, self.nImg2d, self.mD_t[i], 
+                              CtrBtwnPix=self.CtrBtwnPix2)
+            else:
+                for i in range(self.nlam):
+                    field_Dtmp[i] = sft_even(field_L, self.nImg2d, self.mD_t[i], 
+                              CtrBtwnPix=self.CtrBtwnPix2) 
         else:
-            for i in range(self.nlam):
-                field_Dtmp[i] = sft_even(field_L, self.nImg2d, self.mD_t[i], 
-                          CtrBtwnPix=self.CtrBtwnPix2)            
+            phasor_t   = 2.*np.pi*self.OPDmap2d[None, :, :]/(self.wv*self.lam_t[:, None,None]) 
+            
+            field_A    = Apod2d*self.Pupil2d*(1j*np.sin(phasor_t)+np.cos(phasor_t))
+
+            field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
+                                  dtype='complex128')
+            
+            if self.Pupil2dSym == False:
+                for i in range(self.nlam):
+                    field_L       = field_A[i]*self.LyotStop2d 
+                    field_Dtmp[i] = sft(field_L, self.nImg2d, self.mD_t[i], 
+                              CtrBtwnPix=self.CtrBtwnPix2)
+            else:
+                for i in range(self.nlam):
+                    field_L       = field_A[i]*self.LyotStop2d
+                    field_Dtmp[i] = sft_even(field_L, self.nImg2d, self.mD_t[i], 
+                              CtrBtwnPix=self.CtrBtwnPix2)
+                    
     
         return field_Dtmp
  
@@ -2175,28 +2205,58 @@ class APLC2d(Coronagraph):
             at all the wavelengths
             
         """        
-        field_A    = Apod2d*self.Pupil2d    
-        field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
-                              dtype='complex128')
-        
-        if self.Pupil2dSym == False: 
-            for i in range(self.nlam):
-                field_B       = self.mask2d*sft(field_A, self.nFPM, self.mB_t[i], 
-                                                CtrBtwnPix=self.CtrBtwnPix)
-                field_C       = field_A - isft(field_B, self.nPup, self.mB_t[i], 
-                                               CtrBtwnPix=self.CtrBtwnPix)
-                field_L       = field_C*self.LyotStop2d
-                field_Dtmp[i] = sft(field_L, self.nImg2d, self.mD_t[i], 
-                          CtrBtwnPix=self.CtrBtwnPix2)
+
+        if self.OPDmap2d is None:
+            field_A    = Apod2d*self.Pupil2d    
+            field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
+                                  dtype='complex128')
+            
+            if self.Pupil2dSym == False: 
+                for i in range(self.nlam):
+                    field_B       = self.mask2d*sft(field_A, self.nFPM, self.mB_t[i], 
+                                                    CtrBtwnPix=self.CtrBtwnPix)
+                    field_C       = field_A - isft(field_B, self.nPup, self.mB_t[i], 
+                                                   CtrBtwnPix=self.CtrBtwnPix)
+                    field_L       = field_C*self.LyotStop2d
+                    field_Dtmp[i] = sft(field_L, self.nImg2d, self.mD_t[i], 
+                              CtrBtwnPix=self.CtrBtwnPix2)
+            else:
+                for i in range(self.nlam):
+                    field_B       = self.mask2d*sft_even(field_A, self.nFPM, self.mB_t[i], 
+                                                    CtrBtwnPix=self.CtrBtwnPix)
+                    field_C       = field_A - isft_even(field_B, self.nPup, self.mB_t[i], 
+                                                   CtrBtwnPix=self.CtrBtwnPix)
+                    field_L       = field_C*self.LyotStop2d
+                    field_Dtmp[i] = sft_even(field_L, self.nImg2d, self.mD_t[i], 
+                              CtrBtwnPix=self.CtrBtwnPix2)
+                    
         else:
-            for i in range(self.nlam):
-                field_B       = self.mask2d*sft_even(field_A, self.nFPM, self.mB_t[i], 
-                                                CtrBtwnPix=self.CtrBtwnPix)
-                field_C       = field_A - isft_even(field_B, self.nPup, self.mB_t[i], 
-                                               CtrBtwnPix=self.CtrBtwnPix)
-                field_L       = field_C*self.LyotStop2d
-                field_Dtmp[i] = sft_even(field_L, self.nImg2d, self.mD_t[i], 
-                          CtrBtwnPix=self.CtrBtwnPix2)            
+            phasor_t   = 2.*np.pi*self.OPDmap2d[None, :, :]/(self.wv*self.lam_t[:, None,None]) 
+            
+            field_A    = Apod2d*self.Pupil2d*(1j*np.sin(phasor_t)+np.cos(phasor_t))    
+            field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
+                                  dtype='complex128')
+            
+            if self.Pupil2dSym == False: 
+                for i in range(self.nlam):
+                    field_B       = self.mask2d*sft(field_A[i], self.nFPM, self.mB_t[i], 
+                                                    CtrBtwnPix=self.CtrBtwnPix)
+                    field_C       = field_A[i] - isft(field_B, self.nPup, self.mB_t[i], 
+                                                   CtrBtwnPix=self.CtrBtwnPix)
+                    field_L       = field_C*self.LyotStop2d
+                    field_Dtmp[i] = sft(field_L, self.nImg2d, self.mD_t[i], 
+                              CtrBtwnPix=self.CtrBtwnPix2)
+            else:
+                for i in range(self.nlam):
+                    field_B       = self.mask2d*sft_even(field_A[i], self.nFPM, self.mB_t[i], 
+                                                    CtrBtwnPix=self.CtrBtwnPix)
+                    field_C       = field_A[i] - isft_even(field_B, self.nPup, self.mB_t[i], 
+                                                   CtrBtwnPix=self.CtrBtwnPix)
+                    field_L       = field_C*self.LyotStop2d
+                    field_Dtmp[i] = sft_even(field_L, self.nImg2d, self.mD_t[i], 
+                              CtrBtwnPix=self.CtrBtwnPix2)            
+            
+            
 
         return field_Dtmp   
 
