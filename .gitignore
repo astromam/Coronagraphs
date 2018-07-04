@@ -113,7 +113,6 @@ test_lyot_propag.py
 test_corono_optim_1d_solve-save_nelder-mead_direct.py
 test_corono_optim_1d_solve-save_direct.py
 test_corono_optim_1d_plot_direct.py
-test_corono_design_2d_sphere.py
 pupils/2D/SPHERE/2018-04-01_ncpa_loop_700modes_2_ncpa_loop_opd.fits
 pupils/2D/SPHERE/SPHERE_APO1_field_transmission_map.fits
 pupils/2D/SPHERE/SPHERE_APO2_field_transmission_map.fits
@@ -122,5 +121,3 @@ pupils/2D/SPHERE/sphere_pupil_APO2_BH.fits
 pupils/2D/SPHERE/sphere_pupil_clear_BH_field.fits
 pupils/2D/SPHERE/sphere_pupil_sllc_BH.fits
 pupils/2D/SPHERE/sphere_stop_ST_ALC2.fits
-test_corono_design_2d_sphere_compute-save.py
-test_corono_design_2d_sphere_plot.py
