@@ -2159,24 +2159,18 @@ class APLC2d(Coronagraph):
 
         field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
                                   dtype='complex128')
-            
-        if self.Pupil2dSym == False:
-            field_L    = field_A*self.LyotStop2d
-            for i in range(self.nlam):
-                if self.OPDmap2d is not None:
-                    field_L   = field_A[i]*self.LyotStop2d                
  
+        field_L    = field_A*self.LyotStop2d
+        for i in range(self.nlam):
+            if self.OPDmap2d is not None:
+                field_L   = field_A[i]*self.LyotStop2d                
+            if self.Pupil2dSym == False:
                 field_Dtmp[i] = sft(field_L, self.nImg2d, self.mD_t[i], 
                           CtrBtwnPix=self.CtrBtwnPix2)
-        else:
-            field_L    = field_A*self.LyotStop2d
-            for i in range(self.nlam):
-                if self.OPDmap2d is not None:
-                    field_L   = field_A[i]*self.LyotStop2d                    
-                                  
+            else:
                 field_Dtmp[i] = sft_even(field_L, self.nImg2d, self.mD_t[i], 
-                          CtrBtwnPix=self.CtrBtwnPix2)                   
-    
+                          CtrBtwnPix=self.CtrBtwnPix2) 
+                                
         return field_Dtmp
  
 #%%
