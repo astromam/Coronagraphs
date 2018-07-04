@@ -2147,13 +2147,12 @@ class APLC2d(Coronagraph):
             all the wavelengths
     
         """
-        
-        if self.OPDmap2d is None:
-            field_A    = Apod2d*self.Pupil2d          
-        else:
+
+        field_A    = Apod2d*self.Pupil2d
+        if self.OPDmap2d is not None:
             phasor_t   = 2.*np.pi*self.OPDmap2d[None, :, :]/(self.wv*self.lam_t[:, None,None])             
-            field_A    = Apod2d*self.Pupil2d*(1j*np.sin(phasor_t)+np.cos(phasor_t))
-            
+            field_A   *= (1j*np.sin(phasor_t)+np.cos(phasor_t))
+
         if self.Ampmap2d is not None:
             field_A   *= self.Ampmap2d
 
@@ -2197,11 +2196,10 @@ class APLC2d(Coronagraph):
             
         """        
 
-        if self.OPDmap2d is None:
-            field_A    = Apod2d*self.Pupil2d                                
-        else:
+        field_A    = Apod2d*self.Pupil2d
+        if self.OPDmap2d is not None:
             phasor_t   = 2.*np.pi*self.OPDmap2d[None, :, :]/(self.wv*self.lam_t[:, None,None])             
-            field_A    = Apod2d*self.Pupil2d*(1j*np.sin(phasor_t)+np.cos(phasor_t))
+            field_A   *= (1j*np.sin(phasor_t)+np.cos(phasor_t))
 
         if self.Ampmap2d is not None:
             field_A *= self.Ampmap2d
