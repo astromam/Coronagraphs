@@ -2136,10 +2136,7 @@ class APLC2d(Coronagraph):
         ----------     
         Apod2d : array_like 
             Entrance pupil apodization :math:`\Phi`
-            
-        OPDmap2d : array_like
-            Optical path difference (OPD) map error in m
-            
+                        
         Returns    
         ----------    
         field_Dtmp : array_like
@@ -2150,8 +2147,8 @@ class APLC2d(Coronagraph):
 
         field_A    = Apod2d*self.Pupil2d
         if self.OPDmap2d is not None:
-            phasor_t   = 2.*np.pi*self.OPDmap2d[None, :, :]/(self.wv*self.lam_t[:, None,None])             
-            field_A   *= (1j*np.sin(phasor_t)+np.cos(phasor_t))
+            phasor_t  = 2.*np.pi*self.OPDmap2d[None, :, :]/(self.wv*self.lam_t[:, None,None])             
+            field_A   = Apod2d*self.Pupil2d*(1j*np.sin(phasor_t)+np.cos(phasor_t))
 
         if self.Ampmap2d is not None:
             field_A   *= self.Ampmap2d
@@ -2199,7 +2196,7 @@ class APLC2d(Coronagraph):
         field_A    = Apod2d*self.Pupil2d
         if self.OPDmap2d is not None:
             phasor_t   = 2.*np.pi*self.OPDmap2d[None, :, :]/(self.wv*self.lam_t[:, None,None])             
-            field_A   *= (1j*np.sin(phasor_t)+np.cos(phasor_t))
+            field_A    = Apod2d*self.Pupil2d*(1j*np.sin(phasor_t)+np.cos(phasor_t))
 
         if self.Ampmap2d is not None:
             field_A *= self.Ampmap2d
@@ -2231,7 +2228,92 @@ class APLC2d(Coronagraph):
                                    
         return field_Dtmp   
 
+#%% direct propagation (no focal plane mask)
+    def compute_direct_lyot_field_2d(self,Apod2d):
+        r""" 
+        Computes the coronagraph electric field for a classical Lyot coronagraph
+        in the Lyot plane (A: entrance pupil, B: intermediate focal plane, 
+        C: relayed pupil before stop, L: relayed pupil after stop, 
+        D: final image plane).
+        Resolution element are given in :math:`\lambda_0/D` where 
+        :math:`\lambda_0` and :math:`D` denote the central and the telescope 
+        diameter.
+    
+        Parameters
+        ----------     
+        Apod2d : array_like 
+            Entrance pupil apodization :math:`\Phi`
+            
+        Returns    
+        ----------    
+        field_L : array_like
+            Direct electric field :math:`\Psi_0` in the Lyot plane before stop 
+            at all the wavelengths if OPDmap is not None
+    
+        """
 
+        field_A    = Apod2d*self.Pupil2d
+        if self.OPDmap2d is not None:
+            phasor_t   = 2.*np.pi*self.OPDmap2d[None, :, :]/(self.wv*self.lam_t[:, None,None])             
+            field_A    = Apod2d*self.Pupil2d*(1j*np.sin(phasor_t)+np.cos(phasor_t))
+
+        if self.Ampmap2d is not None:
+            field_A   *= self.Ampmap2d
+            
+        return field_A
+
+#%%
+    def compute_corono_lyot_field_2d(self,Apod2d):
+        """
+        Computes the coronagraph electric field for a classical Lyot coronagraph
+        with four planes (A: entrance pupil, B: intermediate focal plane, 
+        C: relayed pupil before stop, L: relayed pupil after stop, 
+        D: final image plane).
+        Resolution element are given in :math:`\lambda_0/D` where 
+        :math:`\lambda_0` and :math:`D` denote the central and the telescope 
+        diameter.
+    
+        Parameters
+        ---------- 
+        Apod2d : array_like 
+            Entrance pupil apodization :math:`\Phi`
+            
+        Returns    
+        ----------    
+        field_L : array_like
+            Direct electric field :math:`\Psi_0` in the Lyot plane at 
+            all the wavelengths if OPDmap is not None
+            
+        """        
+
+        field_A    = Apod2d*self.Pupil2d
+        if self.OPDmap2d is not None:
+            phasor_t   = 2.*np.pi*self.OPDmap2d[None, :, :]/(self.wv*self.lam_t[:, None,None])             
+            field_A    = Apod2d*self.Pupil2d*(1j*np.sin(phasor_t)+np.cos(phasor_t))
+
+        if self.Ampmap2d is not None:
+            field_A *= self.Ampmap2d            
+
+        field_C    = np.zeros((self.nlam,self.nPup,self.nPup), 
+                                  dtype='complex128')
+        for i in range(self.nlam):
+            if self.OPDmap2d is None:
+                field = field_A
+            else:
+                field = field_A[i]                
+            if self.Pupil2dSym == False:
+                field_B       = self.mask2d*sft(field, self.nFPM, self.mB_t[i], 
+                                                CtrBtwnPix=self.CtrBtwnPix)
+                field_C[i]       = field - isft(field_B, self.nPup, self.mB_t[i], 
+                                               CtrBtwnPix=self.CtrBtwnPix)
+
+            else:
+                field_B       = self.mask2d*sft_even(field, self.nFPM, self.mB_t[i], 
+                                                CtrBtwnPix=self.CtrBtwnPix)
+                field_C[i]       = field - isft_even(field_B, self.nPup, self.mB_t[i], 
+                                               CtrBtwnPix=self.CtrBtwnPix)
+                                   
+        return field_C   
 
 #%% 
 """
