@@ -24,6 +24,9 @@ Parameters
 # Telescope name
 pupil_name = 'vlt' # 'vlt' or 'sbr' or 'lvr'
 
+solver     = 'gurobipy' # 'stdgrb', 'gurobipy', 'scipy.linprog'
+
+
 #nPup = corono0.params['nPup']
 nPup = 50
 nFPM = 50
@@ -44,7 +47,7 @@ cDarkHole = 7.0
 tau   = 0.4
 
 # CtrBtwnPix2
-corono_name   = 'APLC' # 'SP' or 'APLC'
+corono_name   = 'SP' # 'SP' or 'APLC'
 CtrBtwnPix  = True
 CtrBtwnPix2 = True
 Pupil2dSym  = True
@@ -72,13 +75,16 @@ fpath_lys = fdir / fname_lys
 Pupil2d    = fits.getdata(fpath_pup)
 LyotStop2d = fits.getdata(fpath_lys)
 
+if solver != 'gurobipy' and solver != 'stdgrb':
+    solver = 'scipy'
 
 params = to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
                  rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau, 
                  CtrBtwnPix=CtrBtwnPix, CtrBtwnPix2 = CtrBtwnPix2,
                  nlam=nlam, bw=bw,
                  Pupil2d = Pupil2d, LyotStop2d = LyotStop2d,
-                 Pupil2dSym = Pupil2dSym, rMask=rMask)
+                 Pupil2dSym = Pupil2dSym, rMask=rMask,
+                 solver= solver)
 
 #%%  
 """ 
@@ -145,9 +151,9 @@ if not os.path.exists(fdir):
     os.makedirs(fdir)
 
 if corono_name == 'SP':
-    fname_gen  = 'SP00_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}.fits'
+    fname_gen  = 'SP00_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}_{solver}.fits'
 else:
-    fname_gen  = 'APLC_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}.fits'
+    fname_gen  = 'APLC_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}_{solver}.fits'
 
 fpath = fdir / pupil_name / fname_gen.format(**{key: corono0.params[key] for key in corono0.params})
 

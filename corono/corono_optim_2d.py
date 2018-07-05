@@ -10,7 +10,19 @@ Created on Fri Mar  9 11:36:39 2018
 #%% Initialization problem
 import numpy as np
 import json
-import gurobipy as gb
+
+try:
+    import stdgrb
+except ModuleNotFoundError:
+    stdgrb = False
+
+try:
+    import gurobipy as gb
+except ModuleNotFoundError:
+    gb = False
+
+import scipy.optimize        
+
 from corono import corono_design as cd
 
 #%%
@@ -39,7 +51,7 @@ def get_default_params_ProblemMatrix():
         Dictionnary of parameters with their default values.
         
     """
-    tmp = {'cDarkHole':8,'tau':0.2}
+    tmp = {'cDarkHole':8,'tau':0.2, 'solver':'stdgrb'}
     return tmp
 
 #%%
@@ -331,33 +343,48 @@ class ProblemMatrix(object):
             Solution for the optimization problem
         
         """
-        print('solving gurobi model')
-        try:
-            
-            self.m.Params.Method       = 2
-            self.m.Params.LogToConsole = 1
-            self.m.Params.Crossover    = 0
-            
-            self.m.optimize()
 
-            Apodtmp = np.zeros((self.npp))
-            for i in range(self.npp):
-                Apodtmp[i] = self.m.getVars()[i].x
+        if stdgrb and self.solver == 'stdgrb':
+            print('solving with stdgrb package')
+            Apodtmp, val = stdgrb.lp_solve(self.c, A=(self.A).T, b=self.b, 
+                                           crossover=1, logtoconsole=1, method=2)
             self.Apod[self.idx_pup] = Apodtmp
-            
-            
-#            test = np.zeros((self.corono.nPup, 2))
-#            test[:,0] = self.corono.r
-#            test[:,1] = self.Apod   
-#            if fpath: write_apod1d(fpath, test)    
-                
             return self.Apod
+        
+        elif gb and self.solver == 'gurobipy':
+            print('solving with gurobipy package')        
 
-        except gb.GurobiError as e:
-            print('Error code ' + str(e.errno) + ": " + str(e))
-
-        except AttributeError:
-            print('Encountered an attribute error')
+            print('solving gurobi model')
+            try:
+                
+                self.m.Params.Method       = 2
+                self.m.Params.LogToConsole = 1
+                self.m.Params.Crossover    = 0
+                
+                self.m.optimize()
+    
+                Apodtmp = np.zeros((self.npp))
+                for i in range(self.npp):
+                    Apodtmp[i] = self.m.getVars()[i].x
+                self.Apod[self.idx_pup] = Apodtmp
+                                      
+                return self.Apod
+    
+            except gb.GurobiError as e:
+                print('Error code ' + str(e.errno) + ": " + str(e))
+    
+            except AttributeError:
+                print('Encountered an attribute error')
+                
+        else:
+            print('solving with scipy.optimize')
+            bds = np.zeros((self.npp, 2))
+            bds[:,1] = 1.
+            sol=scipy.optimize.linprog(self.c,self.A.T,self.b,
+                                       method='interior-point',
+                                       bounds=bds)
+            self.Apod[self.idx_pup]=sol.x
+            return self.Apod                
 
         
 #%%
@@ -468,16 +495,23 @@ class MaxTau(ProblemMatrix):
 
         A0  =  self.corono_field_t2 - ED0                
         A1  = -self.corono_field_t2 - ED0       
-        A2  = -np.identity(self.npp)
-        A3  =  np.identity(self.npp)
 
         b0  = np.zeros((len(self.corono_field_t2.T)))
         b1  = np.zeros((len(self.corono_field_t2.T)))
-        b2  = np.zeros(self.npp)
-        b3  = np.ones(self.npp)
 
-        self.A = np.concatenate((A0,A1,A2,A3), axis=1)
-        self.b = np.concatenate((b0,b1,b2,b3))
+        if (stdgrb and self.solver == 'stdgrb') or (gb and self.solver == 'gurobipy'):
+            print('full matrix shape')
+            A2  = -np.identity(self.npp)
+            A3  =  np.identity(self.npp)
+            b2  = np.zeros(self.npp)
+            b3  = np.ones(self.npp)
+            self.A = np.concatenate((A0,A1,A2,A3), axis=1)
+            self.b = np.concatenate((b0,b1,b2,b3))
+        else:
+            print('reduced matrix shape')
+            self.A = np.concatenate((A0,A1), axis=1)
+            self.b = np.concatenate((b0,b1))            
+            
         self.c = -self.Pupil_vec[self.idx_pup]/self.TR
         
         return self.A, self.b, self.c
@@ -679,21 +713,29 @@ class MaxContrast(ProblemMatrix):
         
         A0  = np.concatenate(( self.corono_field_t2, -I1), axis=0)
         A1  = np.concatenate((-self.corono_field_t2, -I1), axis=0)
-        A2  = np.concatenate((-np.identity(self.npp), N0), axis=0)
-        A3  = np.concatenate(( np.identity(self.npp), N0), axis=0)
+
         A4  = np.concatenate((np.zeros((self.npp, self.ndz)), -I0), axis=0)
         A5  = np.concatenate((- self.Pupil_vec[self.idx_pup]/self.TR, 
                                   Z0))
         
         b0  = np.zeros((self.corono.nlam*self.ndz*2))
         b1  = np.zeros((self.corono.nlam*self.ndz*2))
-        b2  = np.zeros(self.npp)
-        b3  = np.ones(self.npp)
+
         b4  = np.zeros(self.ndz)
         b5  = [-self.tau]
-        
-        self.A = np.concatenate((A0,A1,A2,A3,A4,A5[:,None]), axis=1)
-        self.b = np.concatenate((b0,b1,b2,b3,b4,b5))        
+
+
+        if (stdgrb and self.solver == 'stdgrb') or (gb and self.solver == 'gurobipy'):        
+            A2  = np.concatenate((-np.identity(self.npp), N0), axis=0)
+            A3  = np.concatenate(( np.identity(self.npp), N0), axis=0)
+            b2  = np.zeros(self.npp)
+            b3  = np.ones(self.npp)
+            self.A = np.concatenate((A0,A1,A2,A3,A4,A5[:,None]), axis=1)
+            self.b = np.concatenate((b0,b1,b2,b3,b4,b5))
+        else:
+            self.A = np.concatenate((A0,A1,A4,A5[:,None]), axis=1)
+            self.b = np.concatenate((b0,b1,b4,b5))
+            
         self.c = np.concatenate((np.zeros(self.npp), c1), axis=0)
         
         return self.A, self.b, self.c
