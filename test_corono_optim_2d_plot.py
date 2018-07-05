@@ -25,10 +25,9 @@ from astropy.io import fits
 Parameters
 """
 # Telescope name
-pupil_name = 'vlt' # 'vlt' or 'sbr' or 'lvr'
-
-solver     = 'gurobipy' # 'stdgrb', 'gurobipy', 'scipy.linprog'
-
+pupil_name   = 'vlt' # 'vlt' or 'sbr' or 'lvr'
+problem_name = 'MaxContrastLinf' # 'MaxContrastL1' #'MaxTau' # , 'MaxContrastL1' # #  
+solver       = 'stdgrb' # 'gurobipy' #  'gurobipy', 'scipy.linprog'
 
 #nPup = corono0.params['nPup']
 nPup = 50
@@ -88,7 +87,7 @@ params = to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d,
                  nlam=nlam, bw=bw,
                  Pupil2d = Pupil2d, LyotStop2d = LyotStop2d,
                  Pupil2dSym = Pupil2dSym, rMask=rMask,
-                 solver = solver)
+                 problem_name = problem_name, solver = solver)
 
 #%%  
 """ 
@@ -106,9 +105,9 @@ Read files
 fdir = Path('./results/2D/dat_pyth').resolve()
 
 if corono_name == 'SP':
-    fname_gen  = 'SP00_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}_{solver}.fits'
+    fname_gen  = 'SP00_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}_{problem_name}_{solver}.fits'
 else:
-    fname_gen  = 'APLC_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}_{solver}.fits'
+    fname_gen  = 'APLC_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}_{problem_name}_{solver}.fits'
 
 fpath = fdir / pupil_name / fname_gen.format(**{key: corono0.params[key] for key in corono0.params})
 

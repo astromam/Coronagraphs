@@ -22,10 +22,9 @@ from astropy.io import fits
 Parameters
 """
 # Telescope name
-pupil_name = 'vlt' # 'vlt' or 'sbr' or 'lvr'
-
-solver     = 'gurobipy' # 'stdgrb', 'gurobipy', 'scipy.linprog'
-
+pupil_name   = 'vlt' # 'vlt' or 'sbr' or 'lvr'
+problem_name = 'MaxContrastLinf' # 'MaxContrastL1' # 'MaxTau' # ,'MaxContrastL1' # #  
+solver       = 'stdgrb' #,'gurobipy' #  'gurobipy', 'scipy.linprog'
 
 #nPup = corono0.params['nPup']
 nPup = 50
@@ -47,7 +46,7 @@ cDarkHole = 7.0
 tau   = 0.4
 
 # CtrBtwnPix2
-corono_name   = 'SP' # 'SP' or 'APLC'
+corono_name = 'SP' # 'SP' or 'APLC'
 CtrBtwnPix  = True
 CtrBtwnPix2 = True
 Pupil2dSym  = True
@@ -84,7 +83,7 @@ params = to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
                  nlam=nlam, bw=bw,
                  Pupil2d = Pupil2d, LyotStop2d = LyotStop2d,
                  Pupil2dSym = Pupil2dSym, rMask=rMask,
-                 solver= solver)
+                 problem_name = problem_name, solver= solver)
 
 #%%  
 """ 
@@ -100,40 +99,43 @@ else:
 Problem defintion
 """
 t0 = time.time()
-# Maximization of the integrated amplitude transmission of the apodizer
-problem1 = co2d.MaxTau(corono=corono0, **params)
-# Maximization of the contrast under L1-norm
-#problem2 = co2d.MaxContrast(corono=corono0, Lnorm='L1',**params)
-# Maximization of the contrast under L-infinite norm
-#problem3 = co2d.MaxContrast(corono=corono0, Lnorm='Linf',**params)
+if problem_name == 'MaxTau':
+    # Maximization of the integrated amplitude transmission of the apodizer
+    problem1 = co2d.MaxTau(corono=corono0, **params)
+elif problem_name == 'MaxContrastL1':
+    # Maximization of the contrast under L1-norm
+    problem1 = co2d.MaxContrast(corono=corono0, Lnorm='L1',**params)
+elif problem_name == 'MaxContrastLinf':
+    # Maximization of the contrast under L-infinite norm
+    problem1 = co2d.MaxContrast(corono=corono0, Lnorm='Linf',**params)
+else:
+    raise NameError('{0}: Not an existing optimization problem!'.format(problem_name))
+    
+t1 = time.time()
+print('problem definition time       : {0:.2f}s'.format(t1-t0))
+
 
 #%% Gurobi model of the problems
 """
 Gurobi models
 """
+print('problem solving')
+t0 = time.time()
 m1 = problem1.compute_gurobi_model()
-#m2 = problem2.compute_gurobi_model()
-#m3 = problem3.compute_gurobi_model()
 
 #%% Apodizer solution for the problems
 """
 Apodizer solutions
 """
 Apod1 = problem1.solve_model()
-#Apod2 = problem2.solve_model()
-#Apod3 = problem3.solve_model()
 t1 = time.time()
-print('Pupil2dSym:{0}, total computation time: {1:.2f}s'.format(Pupil2dSym, t1-t0))
-
+print('optimization time             : {0:.2f}s'.format(t1-t0))
 
 #%% Display of the apodizer
 """
 Generation of full apodizer for quarter pupil optimization
 """
 Apod1_2d = np.reshape(Apod1, (corono0.nPup, corono0.nPup))
-##Apod2_2d = np.reshape(Apod2, (corono0.nPup, corono0.nPup))
-##Apod3_2d = np.reshape(Apod3, (corono0.nPup, corono0.nPup))
-#
 
 if Pupil2dSym == True:
 #        Apod2_2d[corono0.nPup//2:, corono0.nPup//2:] = Apod2_2dtmp    
@@ -151,9 +153,9 @@ if not os.path.exists(fdir):
     os.makedirs(fdir)
 
 if corono_name == 'SP':
-    fname_gen  = 'SP00_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}_{solver}.fits'
+    fname_gen  = 'SP00_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}_{problem_name}_{solver}.fits'
 else:
-    fname_gen  = 'APLC_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}_{solver}.fits'
+    fname_gen  = 'APLC_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}_{problem_name}_{solver}.fits'
 
 fpath = fdir / pupil_name / fname_gen.format(**{key: corono0.params[key] for key in corono0.params})
 
