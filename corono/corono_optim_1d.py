@@ -10,8 +10,6 @@ Created on Fri Mar  9 11:36:39 2018
 import numpy as np
 import json
 
-import sys    
-
 try:
     import stdgrb
 except ModuleNotFoundError:
