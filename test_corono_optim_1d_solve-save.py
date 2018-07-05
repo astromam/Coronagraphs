@@ -20,7 +20,9 @@ from corono.utils import to_dict
 Parameters
 """
 corono_name  = 'APLC' # 'APLC' or 'SP'
-problem_name = 'MaxTau' # ,'MaxContrastL1' #  'MaxContrastL1', 'MaxContrastLinf'
+problem_name = 'MaxContrastL1' # 'MaxContrastLinf' #'MaxContrastL1' #'MaxTau' # , #  
+solver       = 'stdgrb' # 'stdgrb', 'gurobipy', 'scipy.linprog'
+
 
 nPup = 500
 nFPM = 50
@@ -32,7 +34,7 @@ bw   = 0.1
 nlam = 5
 
 PupilObs    = 0.20
-rMask       = 4.0
+rMask       = 4.4
 
 rMask1      = 2.0
 rMask2      = 3.0
@@ -65,7 +67,8 @@ params = to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
                  OPDx2 = OPDx2, OPDx3 = OPDx3, 
                  LyotStopObs = LyotStopObs,
                  LyotStopIns = LyotStopIns,
-                 r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d)
+                 r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d,
+                 solver = solver)
 
 
 #%%
