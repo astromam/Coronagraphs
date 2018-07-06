@@ -24,6 +24,9 @@ Parameters
 """
 # Telescope name
 pupil_name = 'lvr' # 'vlt' or 'sbr' or 'lvr'
+problem_name = 'MaxContrastLinf' # 'MaxContrastL1' # 'MaxTau' # ,'MaxContrastL1' # #  
+solver       = 'stdgrb' #,'gurobipy' #  'gurobipy', 'scipy.linprog'
+
 
 #nPup = corono0.params['nPup']
 nPup = 600
@@ -79,7 +82,8 @@ params = to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d,
                  CtrBtwnPix=CtrBtwnPix, CtrBtwnPix2=CtrBtwnPix2, 
                  nlam=nlam, bw=bw,
                  Pupil2d = Pupil2d, LyotStop2d = LyotStop2d,
-                 Pupil2dSym = Pupil2dSym, rMask=rMask)
+                 Pupil2dSym = Pupil2dSym, rMask=rMask,
+                 problem_name = problem_name, solver= solver)
 
 #%%  
 """ 
@@ -87,8 +91,10 @@ Coronagraph defintion
 """
 if corono_name == 'SP':
     corono0 = cd.SP2d(**params)
-else:
+elif corono_name == 'APLC':
     corono0 = cd.APLC2d(**params)
+else:
+    raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
 
 #%%
 """
@@ -97,9 +103,9 @@ Read files
 fdir = Path('./results/2D/dat_pyth').resolve()
 
 if corono_name == 'SP':
-    fname_gen  = 'SP00_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}.fits'
+    fname_gen  = 'SP00_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}_{problem_name}_{solver}.fits'
 else:
-    fname_gen  = 'APLC_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}.fits'
+    fname_gen  = 'APLC_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}_{problem_name}_{solver}.fits'
 
 fpath = fdir / pupil_name / fname_gen.format(**{key: corono0.params[key] for key in corono0.params})
 

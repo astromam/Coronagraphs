@@ -24,10 +24,10 @@ Parameters
 # Telescope name
 pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
 problem_name = 'MaxTau' # 'MaxContrastL1' # 'MaxTau' # ,'MaxContrastL1' # #  
-solver       = 'gurobipy' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
+solver       = 'stdgrb' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
 
 #nPup = corono0.params['nPup']
-nPup = 50
+nPup = 206
 nFPM = 50
 Fmax2d = 22.5
 nImg2d = 45
@@ -36,11 +36,11 @@ nImg2d = 45
 rMask = 4.0
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
-rho0 =  5.0
+rho0 =  4.0
 rho1 = 10.0
 
 # contrast in the dark region
-cDarkHole = 7.0
+cDarkHole = 4.0
 
 # tau (integrated Pupil transmission)
 tau   = 0.4
@@ -52,8 +52,8 @@ CtrBtwnPix2 = True
 Pupil2dSym  = True
 
 #nlam
-bw   = 0.1
 nlam = 5
+bw   = 0.2
 
 do_fits = True
 
