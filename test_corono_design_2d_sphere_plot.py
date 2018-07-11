@@ -175,7 +175,18 @@ pl.clf()
 pl.imshow(LyotStop2d)
 pl.title('Lyot stop')
 
-##%%
+#%% 
+LyotStop2dth = aperture.vlt_pupil(nPup, 0.96*nPup, dead_actuator_diameter=0, spiders_thickness=4*0.008)*aperture.disc_obstructed(nPup, nPup, 0.5)
+
+pl.figure(5)
+pl.clf()
+pl.imshow(LyotStop2dth-LyotStop2d)
+pl.title('Lyot stop (th)')
+
+pl.show()
+
+#%%
+
 if corono_name != 'APLC':
     raise NameError('Check the name of the coronagraph!')
     
@@ -375,7 +386,7 @@ pl.show()
 print('ok')
 
 #%% Intensity profiles of the direct and coronagraphic images
-icase0    = 0
+icase0    = 3
 
 rad_corono = np.arange(nImg2d//2)
 colors_map = pl.cm.rainbow(np.linspace(0,1,nmap))
@@ -400,4 +411,156 @@ pl.tight_layout()
 pl.savefig(str(fpath_image_allmaps_plot))
 
 pl.show()
+
+
+#%%
+"""
+results from Paranal run
+"""
+#%%
+path_root     = Path('/Users/mndiaye/Dropbox/python/zelda/ZELDA-2018')
+path_data_int = path_root / '2018-04-03' / 'data'
+path_data_sky = path_root / '2018-04-03_night' / 'data'
+pixel_irdis = 12.25
+
+#%%
+prefix = 'aplc_internal_source'
+
+# read images for normalisation
+psf_def_img  = fits.getdata(path_data_int / '{:s}_psf_ref_image.fits'.format(prefix))
+psf_def_norm_int = psf_def_img.max()
+
+psf_zel_img = fits.getdata(path_data_int / '{:s}_psf_zel_image.fits'.format(prefix))
+psf_zel_norm_int = psf_zel_img.max()
+
+# read profiles
+psf_def_prf_int = fits.getdata(path_data_int / '{:s}_psf_ref_profile.fits'.format(prefix))
+psf_zel_prf_int = fits.getdata(path_data_int / '{:s}_psf_zel_profile.fits'.format(prefix))
+
+cor_def_prf_int = fits.getdata(path_data_int / '{:s}_coro_ref_profile_std.fits'.format(prefix))
+cor_zel_prf_int = fits.getdata(path_data_int / '{:s}_coro_zel_profile_std.fits'.format(prefix))
+
+# separations
+psf_sep_int = np.arange(len(psf_def_prf_int))*pixel_irdis
+cor_sep_int = np.arange(cor_def_prf_int.shape[1])*pixel_irdis
+
+#%%
+#
+# sky
+#
+
+prefix = 'aplc_test2'
+
+# read images for normalisation
+psf_def_img  = fits.getdata(path_data_sky / '{:s}_psf_ref_image.fits'.format(prefix))
+psf_def_norm_sky = psf_def_img.max()
+
+psf_zel_img = fits.getdata(path_data_sky / '{:s}_psf_zel_image.fits'.format(prefix))
+psf_zel_norm_sky = psf_zel_img.max()
+
+# read profiles
+psf_def_prf_sky = fits.getdata(path_data_sky / '{:s}_psf_ref_profile.fits'.format(prefix))
+psf_zel_prf_sky = fits.getdata(path_data_sky / '{:s}_psf_zel_profile.fits'.format(prefix))
+
+cor_def_prf_sky = fits.getdata(path_data_sky / '{:s}_coro_ref_profile_std.fits'.format(prefix))
+cor_zel_prf_sky = fits.getdata(path_data_sky / '{:s}_coro_zel_profile_std.fits'.format(prefix))
+
+# separations
+psf_sep_sky = np.arange(len(psf_def_prf_sky))*pixel_irdis
+cor_sep_sky = np.arange(cor_def_prf_sky.shape[1])*pixel_irdis
+
+#%%
+# plot
+fig = pl.figure(0, figsize=(5, 4))
+pl.clf()
+
+#plt.semilogy(psf_sep, psf_def_prf / psf_def_norm, color='C0', label='Default refslp')
+#plt.semilogy(psf_sep, psf_zel_prf / psf_zel_norm, color='C1', label='ZELDA refslp')
+    
+# sky
+for idx, p in enumerate(cor_def_prf_sky):
+    if idx == 0:
+        pl.semilogy(cor_sep_sky, p / psf_def_norm_sky, color='C0', alpha=1, label='Default [sky]')
+    else:
+        pl.semilogy(cor_sep_sky, p / psf_def_norm_sky, color='C0', alpha=1)
+#plt.semilogy(cor_sep, np.mean(cor_def_prf, axis=0) / psf_def_norm, color='C2', lw=3, label='Default refslp')
+#plt.semilogy(cor_sep, cor_def_prf[imin_def] / psf_def_norm, color='C2', lw=3, label='Default refslp')
+
+for idx, p in enumerate(cor_zel_prf_sky):
+    if idx == 0:
+        pl.semilogy(cor_sep_sky, p / psf_zel_norm_sky, color='C1', alpha=1, label='ZELDA [sky]')
+    else:
+        pl.semilogy(cor_sep_sky, p / psf_zel_norm_sky, color='C1', alpha=1)
+#plt.semilogy(cor_sep, np.mean(cor_zel_prf, axis=0) / psf_def_norm, color='C3', lw=3, label='ZELDA refslp')
+#plt.semilogy(cor_sep, cor_zel_prf[imin_zel] / psf_def_norm, color='C3', lw=3, label='ZELDA refslp')
+
+# internal source
+for p in cor_def_prf_int:
+    pl.semilogy(cor_sep_int, p / psf_def_norm_int, color='C2', alpha=1, lw=2, label='Default [int. source]')
+
+for p in cor_zel_prf_int:
+    pl.semilogy(cor_sep_int, p / psf_zel_norm_int, color='C3', alpha=1, lw=2, label='ZELDA [int. source]')
+
+pl.legend(loc='upper right')
+
+pl.xlim(0, 1000)
+pl.ylim(1e-6, 1e-3)
+
+pl.xlabel('Angular separation [as]')
+pl.ylabel('Contrast')
+
+pl.grid(which='both')
+pl.tight_layout()
+
+#%%
+cor_def_prf_sky_avg = np.mean(cor_def_prf_sky, axis=0)
+cor_zel_prf_sky_avg = np.mean(cor_zel_prf_sky, axis=0)
+cor_def_prf_int_avg = np.mean(cor_def_prf_int, axis=0)
+cor_zel_prf_int_avg = np.mean(cor_zel_prf_int, axis=0)
+
+pl.figure(30)
+pl.clf()
+#pl.semilogy(cor_sep_sky, cor_zel_prf_sky_avg/psf_zel_norm_sky)
+pl.semilogy(cor_sep_int, cor_zel_prf_int_avg/psf_zel_norm_int)
+
+pl.show()
+
+#%% Intensity profiles of the direct and coronagraphic images
+icase0    = 3
+imap0     = 3
+
+rad_corono = np.arange(nImg2d//2)
+colors_map = pl.cm.rainbow(np.linspace(0,1,nmap))
+
+pl.figure(32)
+pl.clf()
+for imap in {imap0}:
+    pl.semilogy(rad_corono*Fmax2d/nImg2d*1000.*(wv/dAper)/mas2rad, corono_poly_prf_std_t[icase0, imap]/direct_poly_img_t[icase0, imap].max(),
+                '--', label='simulation - map #{0}/{1}'.format(imap, nmap-1), color = colors_map[imap])
+
+#pl.semilogy(cor_sep_sky, cor_zel_prf_sky_avg/psf_zel_norm_sky)
+if imap0 == 0:    
+    pl.semilogy(cor_sep_int, cor_def_prf_int_avg/psf_def_norm_int, 'k', label='int. source (def)')
+elif imap0 == 3:
+    pl.semilogy(cor_sep_int, cor_zel_prf_int_avg/psf_zel_norm_int, 'k', label='int. source (zel)')
+else:
+    pass
+
+pl.axvline(x=rMask*1000.*(wv/dAper)/mas2rad, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
+pl.axvline(x=rho0*1000.*(wv/dAper)/mas2rad, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
+pl.axvline(x=rho1*1000.*(wv/dAper)/mas2rad, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
+pl.axhline(10**(-cDarkHole), xmin=corono00.xi2d.min(), xmax=corono00.xi2d.max(), 
+           linewidth=1, color='k', linestyle='--')
+pl.xlabel(r'Angular separation in mas')
+pl.ylabel(r'1$\sigma$ normalized intensity in log scale')
+pl.ylim(3e-8, 3e-4)
+pl.legend()
+pl.title(r'Intensity profile in broadband light ($\Delta\lambda/\lambda_0$={0:.1f}%)'.format(bw*100))
+pl.tight_layout()
+pl.savefig(str(fpath_image_allmaps_plot))
+
+pl.show()
+
+
+
 
