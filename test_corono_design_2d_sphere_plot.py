@@ -176,11 +176,15 @@ pl.imshow(LyotStop2d)
 pl.title('Lyot stop')
 
 #%% 
-LyotStop2dth = aperture.vlt_pupil(nPup, 0.96*nPup, dead_actuator_diameter=0, spiders_thickness=4*0.008)*aperture.disc_obstructed(nPup, nPup, 0.5)
+LyotStop2dth = aperture.vlt_pupil(nPup, 0.96*nPup, dead_actuator_diameter=0, spiders_thickness=4*0.008)
+
+test = aperture.annulus(nPup, 1.52*0.14*nPup/2, 0.965*nPup/2)*1.
+
+LyotStop2dth *= test.astype(LyotStop2dth.dtype) 
 
 pl.figure(5)
 pl.clf()
-pl.imshow(LyotStop2dth-LyotStop2d)
+pl.imshow(LyotStop2dth)
 pl.title('Lyot stop (th)')
 
 pl.show()
@@ -202,7 +206,7 @@ params = to_dict(nPup=nPup, nImg2d=nImg2d, Fmax2d = Fmax2d, nFPM = nFPM,
 corono00 = cd.APLC2d(**params)
 
 #%%
-label_lst  = ['all errors', 'phase errors only', 'ampl. errors only', 'no errors']
+label_lst  = ['all errors', 'phase errors only', 'ampl. errors only', 'no errors', 'no errors - th']
 
 ncase = len(label_lst)
 
@@ -318,7 +322,7 @@ pl.show()
 f1 = pl.figure(10, figsize=(8,2))
 pl.clf()
 for i in range(ncase):
-    exec('ax{0} = f1.add_subplot(14{0})'.format(i+1))
+    exec('ax{0} = f1.add_subplot(1{1}{0})'.format(i+1,ncase))
     exec('im = ax{0}.imshow(np.abs(direct_mono_lyot_t[{1}, imap0, ilam0])**2, cmap = "inferno", vmin=0, vmax=2)'.format(i+1,ncase-1-i))
     exec('ax{0}.text(nPup/2, 0.1*nPup, "{1}", fontsize=8, horizontalalignment="center", color = "white")'.format(i+1,label_lst[ncase-1-i]))
     exec('ax{0}.tick_params(axis="x", which="both", bottom="off", top="off", labelbottom="off")'.format(i+1,))
@@ -336,7 +340,7 @@ pl.suptitle('Lyot plane intensity before stop (direct field)')
 f2 = pl.figure(11, figsize=(8,4))
 pl.clf()
 for i in range(2*ncase):
-    exec('ax{0} = f2.add_subplot(24{0})'.format(i+1))
+    exec('ax{0} = f2.add_subplot(2,{1},{0})'.format(i+1,ncase))
     if i < ncase: 
         exec('im = ax{0}.imshow(np.log10(np.abs(corono_mono_lyot_t[{1}, imap0, ilam0])**2), cmap = "inferno", vmin=-3, vmax=0)'.format(i+1,ncase-1-i))
         exec('ax{0}.text(nPup/2, 0.1*nPup, "{1}", fontsize=8, horizontalalignment="center", color = "white")'.format(i+1,label_lst[ncase-1-i]))
@@ -363,7 +367,7 @@ pl.show()
 f2 = pl.figure(12)
 pl.clf()
 for i in range(ncase):
-    exec('ax{0} = f2.add_subplot(14{0})'.format(i+1))
+    exec('ax{0} = f2.add_subplot(1{1}{0})'.format(i+1,ncase))
     if i < ncase: 
         exec('im = ax{0}.imshow(np.log10(corono_poly_img_t[{1}, imap0]/direct_poly_img_t[{1}, imap0].max()), cmap = "inferno", vmin=-7.5, vmax=-3.5)'.format(i+1,ncase-1-i))
         exec('ax{0}.text(nImg2d/2, 0.1*nImg2d, "{1}", fontsize=8, horizontalalignment="center", color = "white")'.format(i+1,label_lst[ncase-1-i]))
@@ -526,7 +530,7 @@ pl.semilogy(cor_sep_int, cor_zel_prf_int_avg/psf_zel_norm_int)
 pl.show()
 
 #%% Intensity profiles of the direct and coronagraphic images
-icase0    = 3
+icase0    = 4
 imap0     = 3
 
 rad_corono = np.arange(nImg2d//2)

@@ -132,11 +132,24 @@ Ampmap2d = fits.getdata(fpath_Ampmap2d)
 #%% Lyot Stop
 LyotStop2d = fits.getdata(fpath_LyotStop2d)
 
+#%% theoretical Lyot Stop (tbc)
+LyotStop2dth = aperture.vlt_pupil(nPup, 0.96*nPup, dead_actuator_diameter=0, spiders_thickness=4*0.008)
+test = aperture.annulus(nPup, 1.52*0.14*nPup/2, 0.965*nPup/2)*1.
+LyotStop2dth *= test.astype(LyotStop2dth.dtype) 
+
+#pl.figure(5)
+#pl.clf()
+#pl.imshow(LyotStop2dth - LyotStop2d)
+#pl.title('Lyot stop (th)')
+#
+#pl.show()
+
+
 #%%
 if corono_name != 'APLC':
     raise NameError('Check the name of the coronagraph!')
 
-label_lst = ['all errors', 'phase errors only', 'amplitude errors only', 'no errors']
+label_lst = ['all errors', 'phase errors only', 'amplitude errors only', 'no errors', 'no errors - th']
 ncase = len(label_lst)
 
 direct_poly_img_t = np.zeros((ncase, nmap, nImg2d, nImg2d))
@@ -208,7 +221,18 @@ for imap in range(nmap):
                      OPDmap2d = OPDmap2d, Ampmap2d = Ampmap2d)
     corono11 = cd.APLC2d(**params)
 
-    coro_lst  = [corono11, corono01, corono10, corono00]
+    params = to_dict(nPup=nPup, nImg2d=nImg2d, Fmax2d = Fmax2d, nFPM = nFPM,
+                     rMask = rMask,
+                     SymPupil2d = SymPupil2d, 
+                     Pupil2d = Pupil2d, LyotStop2d = LyotStop2dth, 
+                     CtrBtwnPix=CtrBtwnPix,
+                     CtrBtwnPix2 = CtrBtwnPix2, 
+                     nlam=nlam, bw = bw, wv =wv,
+                     rho0   = rho0, rho1 = rho1, cDarkHole = cDarkHole,
+                     OPDmap2d = None, Ampmap2d = None)
+    corono00th = cd.APLC2d(**params)
+
+    coro_lst  = [corono11, corono01, corono10, corono00, corono00th]
     
     for icase in range(ncase):
         direct_poly_img_t[icase, imap] = coro_lst[icase].compute_direct_intensity_2d(Apod2d)
