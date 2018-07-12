@@ -348,7 +348,7 @@ class ProblemMatrix(object):
             print('solving with stdgrb package')
             Apodtmp, val = stdgrb.lp_solve(self.c, A=(self.A).T, b=self.b, 
                                            crossover=1, logtoconsole=1, method=2)
-            self.Apod[self.idx_pup] = Apodtmp
+            self.Apod[self.idx_pup] = Apodtmp[:len(self.idx_pup)]
             return self.Apod
         
         elif gb and self.solver == 'gurobipy':
