@@ -20,7 +20,7 @@ Parameters
 """
 corono_name  = 'APLC' # 'APLC' or 'SP'
 problem_name = 'MaxTau' # 'MaxContrastL1' #,'MaxContrastLinf' # 'MaxTau' # ,   
-solver       = 'yyy'
+solver      = 'gurobipy' # 'stdgrb', 'gurobipy', 'scipy.linprog'
 
 nPup = 500
 nFPM = 50
@@ -69,7 +69,7 @@ params = to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
                  LyotStopObs = LyotStopObs,
                  LyotStopIns = LyotStopIns,
                  r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d,
-                 solver = 'stdgrb')
+                 solver = solver)
 
 #%%
 fdir = Path('.').resolve()

@@ -168,7 +168,8 @@ params = to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
                  OPDx2 = OPDx2, OPDx3 = OPDx3, 
                  LyotStopObs = LyotStopObs,
                  LyotStopIns = LyotStopIns,
-                 r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d)
+                 r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d,
+                 solver = solver)
 
 
 if corono_name == 'APLC':

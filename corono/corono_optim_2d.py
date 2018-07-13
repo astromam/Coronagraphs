@@ -345,7 +345,7 @@ class ProblemMatrix(object):
         """
 
         if self.A is None or self.b is None or self.c is None:
-            print('computing matrices')
+            print('computing A, b, and c matrices')
             self.compute_matrices()
 
         if stdgrb and self.solver == 'stdgrb':
@@ -356,11 +356,10 @@ class ProblemMatrix(object):
             return self.Apod
         
         elif gb and self.solver == 'gurobipy':
+            print('generating gurobi model')
             self.compute_gurobi_model()
             
-            print('solving with gurobipy package')        
-
-            print('solving gurobi model')
+            print('solving with gurobipy package')
             try:
                 
                 self.m.Params.Method       = 2
@@ -486,8 +485,6 @@ class MaxTau(ProblemMatrix):
             
             
         """
-        print('generating A, b, c matrices')
-
         fctr = 1.
         if self.Pupil2dSym == True:
             fctr = 1.
@@ -539,8 +536,6 @@ class MaxTau(ProblemMatrix):
             Gurobi model of the MaxTau problem to solve
             
         """        
-        print('generating gurobi model')
-        
         nA = np.shape(self.A)[1]
     
         # Create a new model               
@@ -696,8 +691,6 @@ class MaxContrast(ProblemMatrix):
 
                                 
         """
-        print('generating A, b, c matrices')
-
         if self.Lnorm == 'Linf':
             I1 = np.ones(self.ndz*self.corono.nlam*2)
             I1 = I1[None,:]
@@ -759,8 +752,6 @@ class MaxContrast(ProblemMatrix):
             Gurobi model of the MaxContrast problem to solve
             
         """        
-        print('generating gurobi model')
-                       
         nn = np.shape(self.A)[1]
         # Create a new model  
         self.m = gb.Model("LP max C new")

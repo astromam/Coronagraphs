@@ -151,7 +151,6 @@ Problem solving
 """
 print('problem solving')
 t0 = time.time()
-m1        = problem1.compute_gurobi_model()
 Apod_pyth = problem1.solve_model()
 t1 = time.time()
 print('optimization time             : {0:.2f}s'.format(t1-t0))

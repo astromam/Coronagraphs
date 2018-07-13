@@ -24,10 +24,12 @@ from corono.utils import to_dict
 """
 Parameters
 """
-corono_name  = 'HTZPM' # 'APLC' or 'SP' or 'HDZPM' or 'HTZPM'
+corono_name  = 'APLC' # 'APLC' or 'SP' or 'HDZPM' or 'HTZPM'
 problem_name = 'MaxTau' # 'MaxContrastLinf' # , 'MaxContrastL1' # ,
+solver       = 'stdgrb' # 'stdgrb', 'gurobipy', 'scipy.linprog'
 
-nPup = 1000
+
+nPup = 500
 nFPM = 50
 nImg = 88
 Fmax = 22
@@ -73,7 +75,8 @@ params = to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
                  OPDx2 = OPDx2, OPDx3 = OPDx3, 
                  LyotStopObs = LyotStopObs,
                  LyotStopIns = LyotStopIns,
-                 r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d)
+                 r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d,
+                 solver = solver)
 
 
 #%%
@@ -168,7 +171,8 @@ def res_energy_with_lp(x_t):
                  PupilObs = PupilObs, rMask = rMask, 
                  LyotStopObs = LyotStopObs,
                  LyotStopIns = LyotStopIns,
-                 r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d)
+                 r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d,
+                 solver = solver)
         
     elif corono_name == 'HDZPM':
         rMask1      = x_t[0]
@@ -184,7 +188,8 @@ def res_energy_with_lp(x_t):
                  rMask1 = rMask1, rMask2 = rMask2, OPDx2 = OPDx2,
                  LyotStopObs = LyotStopObs,
                  LyotStopIns = LyotStopIns,
-                 r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d)
+                 r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d,
+                 solver = solver)
 
     elif corono_name == 'HTZPM':
         rMask1      = x_t[0]
@@ -203,7 +208,8 @@ def res_energy_with_lp(x_t):
                  OPDx2 = OPDx2, OPDx3 = OPDx3,
                  LyotStopObs = LyotStopObs,
                  LyotStopIns = LyotStopIns,
-                 r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d)        
+                 r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d,
+                 solver = solver)        
     
     else:
         raise NameError('{0}: Not a correct coronagraph for NM-optimization!'.format(corono_name))    
@@ -234,7 +240,6 @@ def res_energy_with_lp(x_t):
     else:
         raise NameError('{0}: Not an existing optimization problem!'.format(problem_name))
 
-    m1        = problem1.compute_gurobi_model()
     Apod_pyth = problem1.solve_model()
 
 #    A, b, c = problem1.compute_matrices()

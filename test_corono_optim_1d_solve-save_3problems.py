@@ -69,7 +69,7 @@ params = to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
                  LyotStopObs = LyotStopObs,
                  LyotStopIns = LyotStopIns,
                  r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d,
-                 solver)
+                 solver = solver)
 
 #%%
 fdir = Path('.').resolve()
@@ -139,14 +139,6 @@ problem1 = co1d.MaxTau(corono=corono0, **params)
 problem2 = co1d.MaxContrast(corono=corono0, Lnorm='L1',**params)
 # Maximization of the contrast under L-infinite norm
 problem3 = co1d.MaxContrast(corono=corono0, Lnorm='Linf',**params)
-
-#%% Gurobi model of the problems
-"""
-Gurobi models
-"""
-m1 = problem1.compute_gurobi_model()
-m2 = problem2.compute_gurobi_model()
-m3 = problem3.compute_gurobi_model()
 
 #%% Apodizer solution for the problems
 """
