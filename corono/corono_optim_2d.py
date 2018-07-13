@@ -344,6 +344,10 @@ class ProblemMatrix(object):
         
         """
 
+        if self.A is None or self.b is None or self.c is None:
+            print('computing matrices')
+            self.compute_matrices()
+
         if stdgrb and self.solver == 'stdgrb':
             print('solving with stdgrb package')
             Apodtmp, val = stdgrb.lp_solve(self.c, A=(self.A).T, b=self.b, 
@@ -352,6 +356,8 @@ class ProblemMatrix(object):
             return self.Apod
         
         elif gb and self.solver == 'gurobipy':
+            self.compute_gurobi_model()
+            
             print('solving with gurobipy package')        
 
             print('solving gurobi model')
@@ -532,11 +538,7 @@ class MaxTau(ProblemMatrix):
         m : gurobi model
             Gurobi model of the MaxTau problem to solve
             
-        """
-        if self.A is None or self.b is None or self.c is None:
-            print('computing matrices')
-            self.compute_matrices()
-        
+        """        
         print('generating gurobi model')
         
         nA = np.shape(self.A)[1]
@@ -757,10 +759,6 @@ class MaxContrast(ProblemMatrix):
             Gurobi model of the MaxContrast problem to solve
             
         """        
-        if self.A is None or self.b is None or self.c is None:
-            print('computing matrices')
-            self.compute_matrices()
-
         print('generating gurobi model')
                        
         nn = np.shape(self.A)[1]

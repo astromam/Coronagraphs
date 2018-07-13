@@ -27,7 +27,7 @@ Parameters
 # Telescope name
 pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
 problem_name = 'MaxTau' # 'MaxContrastL1' #'MaxTau' # , 'MaxContrastLinf' # #  
-solver       = 'xxx' # 'gurobipy' #  'gurobipy', 'scipy.linprog'
+solver       = 'gurobipy' # 'stdgrb' #  'gurobipy', 'scipy.linprog'
 
 #nPup = corono0.params['nPup']
 nPup = 50
@@ -105,13 +105,14 @@ else:
 Read files
 """
 fdir = Path('./results/2D/dat_pyth').resolve()
+fdir_sub = fdir / pupil_name
 
 if corono_name == 'SP':
     fname_gen  = 'SP00_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}_{problem_name}_{solver}.fits'
 else:
     fname_gen  = 'APLC_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}_{problem_name}_{solver}.fits'
 
-fpath = fdir / pupil_name / fname_gen.format(**{key: corono0.params[key] for key in corono0.params})
+fpath = fdir_sub / fname_gen.format(**{key: corono0.params[key] for key in corono0.params})
 
 print('{0}'.format(fpath))
 

@@ -97,14 +97,14 @@ else:
 """
 Read files obtained with gurobi
 """
-fdir_pyth = Path('./results/2D/dat_pyth').resolve()
+fdir_pyth = Path('./results/2D/dat_pyth').resolve() / pupil_name
 
 if corono_name == 'SP':
     fname_gen  = 'SP00_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}_{problem_name}_{solver}.fits'
 else:
     fname_gen  = 'APLC_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}_{problem_name}_{solver}.fits'
 
-fpath_pyth = fdir_pyth / pupil_name / fname_gen.format(**{key: corono0.params[key] for key in corono0.params})
+fpath_pyth = fdir_pyth / fname_gen.format(**{key: corono0.params[key] for key in corono0.params})
 
 print('{0}'.format(fpath_pyth))
 

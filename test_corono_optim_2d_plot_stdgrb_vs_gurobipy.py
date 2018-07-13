@@ -103,14 +103,14 @@ else:
 """
 Read files obtained with gurobi
 """
-fdir_pyth = Path('./results/2D/dat_pyth').resolve()
+fdir = Path('./results/2D/dat_pyth').resolve() / pupil_name
 
 if corono_name == 'SP':
     fname_gen  = 'SP00_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}_{problem_name}_gurobipy.fits'
 else:
     fname_gen  = 'APLC_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}_{problem_name}_gurobipy.fits'
 
-fpath_gurobipy = fdir_pyth / pupil_name / fname_gen.format(**{key: corono0.params[key] for key in corono0.params})
+fpath_gurobipy = fdir  / fname_gen.format(**{key: corono0.params[key] for key in corono0.params})
 
 print('{0}'.format(fpath_gurobipy))
 
@@ -121,14 +121,12 @@ Apod_gurobipy = fits.getdata(fpath_gurobipy,)
 """
 Read files obtained with gurobi
 """
-fdir_cyth = Path('./results/2D/dat_cyth').resolve()
-
 if corono_name == 'SP':
     fname_gen  = 'SP00_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}_{problem_name}_stdgrb.fits'
 else:
     fname_gen  = 'APLC_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}_{problem_name}_stdgrb.fits'
 
-fpath_stdgrb = fdir_pyth / pupil_name / fname_gen.format(**{key: corono0.params[key] for key in corono0.params})
+fpath_stdgrb = fdir / fname_gen.format(**{key: corono0.params[key] for key in corono0.params})
 
 print('{0}'.format(fpath_stdgrb))
 

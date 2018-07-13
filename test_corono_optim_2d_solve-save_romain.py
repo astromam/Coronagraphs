@@ -117,18 +117,12 @@ t1 = time.time()
 print('problem definition time       : {0:.2f}s'.format(t1-t0))
 
 
-#%% Gurobi model of the problems
-"""
-Gurobi models
-"""
-print('problem solving')
-t0 = time.time()
-m1 = problem1.compute_gurobi_model()
-
 #%% Apodizer solution for the problems
 """
 Apodizer solutions
 """
+print('problem solving')
+t0 = time.time()
 Apod1 = problem1.solve_model()
 t1 = time.time()
 print('optimization time             : {0:.2f}s'.format(t1-t0))
@@ -145,12 +139,11 @@ if Pupil2dSym == True:
         Apod1_2d[:corono0.nPup//2, corono0.nPup//2:] = np.flip(Apod1_2dtmp, axis=0)
         Apod1_2d[:, :corono0.nPup//2]          = np.flip(Apod1_2d[:, corono0.nPup//2:], axis=1)
         
-
 #%%
 """
 Save apodizer
 """
-fdir = Path('./results/2D/dat_pyth').resolve()
+fdir = Path('./results/2D/dat_pyth').resolve() / pupil_name
 if not os.path.exists(fdir):
     os.makedirs(fdir)
 
@@ -159,7 +152,7 @@ if corono_name == 'SP':
 else:
     fname_gen  = 'APLC_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}_{problem_name}_{solver}.fits'
 
-fpath = fdir / pupil_name / fname_gen.format(**{key: corono0.params[key] for key in corono0.params})
+fpath = fdir / fname_gen.format(**{key: corono0.params[key] for key in corono0.params})
 
 if do_fits is True:
     fits.writeto(fpath, Apod1_2d, overwrite=True)
