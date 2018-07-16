@@ -27,7 +27,7 @@ Parameters
 """
 # Telescope name
 pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
-problem_name = 'MaxContrastL1' # 'MaxContrastL1' #'MaxTau' # , 'MaxContrastLinf' # #  
+problem_name = 'MaxTau' # 'MaxContrastL1' #'MaxTau' # , 'MaxContrastLinf' # #  
 solver       = 'stdgrb' # 'stdgrb' #  'gurobipy', 'scipy.linprog'
 
 #nPup = corono0.params['nPup']
@@ -107,7 +107,6 @@ else:
 """
 Problem defintion
 """
-t0 = time.time()
 if problem_name == 'MaxTau':
     # Maximization of the integrated amplitude transmission of the apodizer
     problem1 = co2d.MaxTau(corono=corono0, **params)
@@ -119,9 +118,6 @@ elif problem_name == 'MaxContrastLinf':
     problem1 = co2d.MaxContrast(corono=corono0, Lnorm='Linf',**params)
 else:
     raise NameError('{0}: Not an existing optimization problem!'.format(problem_name))
-    
-t1 = time.time()
-print('problem definition time       : {0:.2f}s'.format(t1-t0))
 
 #%%
 """

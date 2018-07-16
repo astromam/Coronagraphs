@@ -23,7 +23,7 @@ Parameters
 """
 # Telescope name
 pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
-problem_name = 'MaxContrastL1' # 'MaxContrastL1' # 'MaxTau' # ,'MaxContrastLinf' # #  
+problem_name = 'MaxTau' # 'MaxContrastL1' # 'MaxTau' # ,'MaxContrastLinf' # #  
 solver       = 'stdgrb' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
 
 #nPup = corono0.params['nPup']
@@ -41,6 +41,7 @@ rho1 = 10.0
 
 # contrast in the dark region
 cDarkHole = 7.0
+cDarkHole_lst   = np.linspace(5., 7., num=5)
 
 # tau (integrated Pupil transmission)
 tau   = 0.4
@@ -104,36 +105,43 @@ else:
 """
 Problem defintion
 """
-t0 = time.time()
 if problem_name == 'MaxTau':
 # Maximization of the integrated amplitude transmission of the apodizer
     problem1 = co2d.MaxTau(corono=corono0, **params)
+    pb_lst   = cDarkHole_lst*1.
+    str0     = 'cDarkHole'
 elif problem_name == 'MaxContrastL1':
 # Maximization of the contrast under L1-norm
     problem1 = co2d.MaxContrast(corono=corono0, Lnorm='L1',**params)
+    pb_lst   = tau_lst*1.
+    str0     = 'tau'
 elif problem_name == 'MaxContrastLinf':
 # Maximization of the contrast under L-infinite norm
     problem1 = co2d.MaxContrast(corono=corono0, Lnorm='Linf',**params)
+    pb_lst   = tau_lst*1.
+    str0     = 'tau'
 else:
     raise NameError('{0}: Not an existing optimization problem!'.format(problem_name))
-
-t1 = time.time()
-print('problem definition time       : {0:.2f}s\n'.format(t1-t0))
           
 #%% Apodizer solution for the problems - loop
 t00 = time.time()
-for itau, tau in enumerate(tau_lst):    
-    print('iteration {0}/{1}, tau={2:.2f}'.format(itau+1, len(tau_lst), tau))
+
+for i, val in enumerate(pb_lst):    
+    print('iteration {0}/{1}, {2}={3:.2f}'.format(i+1, len(pb_lst), str0, val))
 
     """
     Apodizer solutions
     """
     t0 = time.time()
-    corono0.params['tau']=tau
-    problem1.params['tau']=tau
+    if problem_name == 'MaxTau':
+        corono0.params['cDarkHole'] = val
+        problem1.params['cDarkHole']= val
+    else:
+        corono0.params['tau'] = val
+        problem1.params['tau']= val
     Apod1 = problem1.solve_model()
     t1 = time.time()
-    print('optimization time for tau={1:.2f} : {0:.2f}s\n'.format(t1-t0, tau))
+    print('optimization time for {0}={1:.2f} : {2:.2f}s\n'.format(str0, val, t1-t0))
     
     #%% Display of the apodizer
     """

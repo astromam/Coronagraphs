@@ -244,7 +244,11 @@ class ProblemMatrix(object):
 #            self.corono.compute_direct_field_2d_vec(Apod2d)
 #            Apod2d[i0,j0] = 0    
 
-
+        self.corono_field_t_re  = None
+        self.corono_field_t_im  = None
+        self.corono_field_t2_re = None
+        self.corono_field_t2_im = None        
+        self.corono_field_t2    = None
 
         self.A       = None
         self.b       = None
@@ -347,7 +351,6 @@ class ProblemMatrix(object):
                                            self.corono.nImg2d**2))
         self.corono_field_t_im = np.zeros((self.npp, self.corono.nlam, 
                                            self.corono.nImg2d**2))
-        print('generating corono response matrix for 2D problem')
         Apod2d = np.zeros((self.corono.nPup, self.corono.nPup))
         for i in np.arange(self.npp):  
             (i0, j0) = np.unravel_index(self.idx_pup[i], 
@@ -463,8 +466,55 @@ class MaxTau(ProblemMatrix):
         """
         super(MaxTau, self).__init__(**kwargs)
 
-#%%        
+#%%    
     def compute_matrices(self):
+        r"""
+        Computes the matrices for the optimization problem that consists in 
+        maximizing the contrast in a given search area in the coronagraphic 
+        image for a set integrated apodizer transmission :math:`\tau`. In terms
+        of matrices, the optimization problem writes as
+            
+        .. math:: \max_{\tau} c^{T}.x,
+            
+        under the constraint :math:`A.x \leq b`.
+                
+        The variable :math:`x` is a concatenation of the apodizer transmission 
+        function :math:`\Phi` and an auxiliary variable :math:`\epsilon`.
+        The variable :math:`\epsilon` represents the contrast to maximize in 
+        the search area ranging between :math:`\rho_0` and :math:`\rho_1` in 
+        the coronagraphic image. It can either depend on the position 
+        :math:`\xi` in the coronagraphic image or not (:math:`L_1`-norm or 
+        :math:`L_\infty`-norm problem). 
+        The variables follow the notations of [1]_ and [2]_.
+
+        Parameters
+        -----------
+
+                         
+        Returns
+        -----------
+
+
+        References
+        ----------
+
+                                
+        """
+        if self.A is None or self.b is None or self.c is None:
+            if self.corono_field_t_re == None or self.corono_field_t_im == None or \
+            self.corono_field_t2_re == None or self.corono_field_t2_im == None or \
+            self.corono_field_t2    == None:            
+                print('computing corono response matrix for 2D problem')   
+                self.compute_response_matrices()
+            
+            print('computing A, b, and c matrices')
+            self.compute_problem_matrices()
+        else:
+            print('updating A matrix')
+            self.update_cDarkHole()
+
+#%%        
+    def compute_problem_matrices(self):
         r"""
         Computes the matrices for the optimization problem that consists in 
         maximizing the amplitude transmission of the apodizer :math:`\Phi` 
@@ -538,10 +588,7 @@ class MaxTau(ProblemMatrix):
             
             
             
-        """
-        self.compute_response_matrices()
-        print('computing A, b, and c matrices')
-        
+        """                    
         ED0 = np.zeros_like(self.corono_field_t2)
         ED0tmp = self.Pupil_vec[self.idx_pup]*self.LyotStop_vec[self.idx_pup]
         for j in range(len(self.corono_field_t2.T)):
@@ -570,9 +617,30 @@ class MaxTau(ProblemMatrix):
             
         self.c = -self.Pupil_vec[self.idx_pup]/self.TR
         
-#        self.matrices_flag = True
-        
         return self.A, self.b, self.c
+
+#%%            
+    def update_cDarkHole(self):
+        ED0 = np.zeros_like(self.corono_field_t2)
+        ED0tmp = self.Pupil_vec[self.idx_pup]*self.LyotStop_vec[self.idx_pup]
+        for j in range(len(self.corono_field_t2.T)):
+            ED0[:,j] = ED0tmp
+        cst = 10.**(-self.cDarkHole/2.)/np.sqrt(2.)      
+        ED0 *= cst*self.corono.Fmax2d/(self.corono.nImg2d*self.corono.nPup)
+
+        A0  =  self.corono_field_t2 - ED0                
+        A1  = -self.corono_field_t2 - ED0       
+
+        if (stdgrb and self.solver == 'stdgrb') or (gb and self.solver == 'gurobipy'):
+            print('full matrix shape')
+            A2  = -np.identity(self.npp)
+            A3  =  np.identity(self.npp)
+            self.A = np.concatenate((A0,A1,A2,A3), axis=1)
+        else:
+            print('reduced matrix shape')
+            self.A = np.concatenate((A0,A1), axis=1)            
+                    
+        return self.A
 
 #%%
     def compute_gurobi_model(self):
@@ -648,114 +716,32 @@ class MaxContrast(ProblemMatrix):
 
         Parameters
         -----------
-        Lnorm : string
-            Type of L-norm for the optimization problem
-            
-        I0, I1, N0, Z0, c1 : array_like
-            Intermediate matrices for the generation of the matrices A0 to A5.
-            They depend on the type of the norm (:math:`L_1` or :math:`L_\infty`) 
-            for the problem.
 
-        A0, b0 : array_like, array_like
-            Contrast constraint on the coronagraphic electric field :math:`\Psi_D`
-            that is represented the following equation:
-                
-            :math:`\Psi_D(\xi,\lambda)-\epsilon(\xi) \leq 0` 
-            if :math:`L_1`-norm constraint,
-            
-            :math:`\Psi_D(\xi,\lambda)-\epsilon    \leq 0`  
-            if :math:`L_\infty`-norm constraint,
-            
-            :math:`\xi` and :math:`\lambda` denote the image plane coordinate 
-            and wavelength.
-
-        A1, b1 : array_like, array_like
-            Contrast constraint on the coronagraphic electric field :math:`\Psi_D`
-            that is represented the following equation:
-                
-            :math:`-\Psi_D(\xi, \lambda) - \epsilon(\xi) \leq 0`
-            if :math:`L_1`-norm constraint,
-            
-            :math:`-\Psi_D(\xi,\lambda) - \epsilon    \leq 0`
-            if :math:`L_\infty`-norm constraint.
-            
-
-        A2, b2 : array_like, array_like
-            Constraint on the transmission of the amplitude apodization 
-            :math:`\Phi`
-            
-            :math:`- \Phi(r) \leq 0`,
-            in which :math:`r` represents the radial coordinate of the pupil.
-            
-        A3, b3 : array_like, array_like
-            Constraint on the transmission of the amplitude apodization 
-            :math:`\Phi`
-            
-            :math:`\Phi(r) \leq 1`.
-            
-        A4, b4 : array_like, array_like
-            Constraint on the variable epsilon that is related to contrast
-            and represented by the following equation:
-                
-            :math:`-\epsilon(\xi) \leq 0` if :math:`L_1`-norm constraint,
-            
-            :math:`-\epsilon     \leq 0` if :math:`L_\infty`-norm constraint.            
-                  
-        A5, b5 : array_like
-            Constraint on the integral of the apodization amplitude transmission, 
-            used as a proxy of the apodizer throughput. It is normalized to the
-            integral of the transmission of the pupil :math:`P_0` and is larger 
-            than a parameter :math:`\tau` set by the user.
-            
-            .. math:: - \frac{\int_{P} \Phi(r)dr}{\int_{P_0} P(r)dr} \leq \tau.
-                  
-        
+                         
         Returns
         -----------
-        A, b, c: array_like, array_like, array_like
-            The matrices for the optimization problem.
-            A and b are concatenations of the matrices for the constraints that 
-            are described above.
-            
-            The cost function c to maximize represents the contrast 
-            in the search area ranging between :math:`\rho_0` and :math:`\rho_1` 
-            inside the coronagraphic image.
-            
-            .. math:: \max_{\tau}[ - \int_{\rho_0}^{\rho_1} W(\xi)\epsilon(\xi)d\xi],
-            
-            with
-            
-            :math:`W(\xi)= \xi` if :math:`L_1`-norm constraint
-            
-            :math:`W(\xi) = 1` if :math:`L_\infty`-norm constraint
+
 
         References
         ----------
-        .. [1] M. N'Diaye, L. Pueyo, and R. Soummer, Apodized Pupil Lyot Coronagraphs for 
-            Arbitrary Apertures. IV. Reduced Inner Working Angle and Increased 
-            Robustness to Low-order Aberrations, ApJ 799, 2, 225 (2015).
-            
-            http://iopscience.iop.org/article/10.1088/0004-637X/799/2/225/meta.
-            
-        .. [2] M. N'Diaye, R. Soummer, L. Pueyo, A. Carlotti, C. Stark, M. Perrin,
-            Apodized Pupil Lyot Coronagraphs for Arbitrary Apertures. V. Hybrid
-            Shaped Pupil Designs for Imaging Earth-like planets with Future 
-            Space Observatories, ApJ 818, 2, 163 (2016). 
-            
-            http://iopscience.iop.org/article/10.3847/0004-637X/818/2/163/meta
 
                                 
         """
         if self.A is None or self.b is None or self.c is None:
+            if self.corono_field_t_re == None or self.corono_field_t_im == None or \
+            self.corono_field_t2_re == None or self.corono_field_t2_im == None or \
+            self.corono_field_t2    == None:            
+                print('computing corono response matrix for 2D problem')   
+                self.compute_response_matrices()
+            
             print('computing A, b, and c matrices')
-            self.compute_response_matrices()
-            self.compute_matrices_all()
+            self.compute_problem_matrices()
         else:
             print('updating b matrix')
             self.update_tau()
 
 #%%    
-    def compute_matrices_all(self):
+    def compute_problem_matrices(self):
         r"""
         Computes the matrices for the optimization problem that consists in 
         maximizing the contrast in a given search area in the coronagraphic 
@@ -916,11 +902,8 @@ class MaxContrast(ProblemMatrix):
             self.b = np.concatenate((b0,b1,b4,b5))
             
         self.c = np.concatenate((np.zeros(self.npp), c1), axis=0)
-
-#        self.matrices_flag = True
         
         return self.A, self.b, self.c
-
 
 #%%            
     def update_tau(self):
@@ -938,7 +921,6 @@ class MaxContrast(ProblemMatrix):
             
         return self.b
             
-
 #%%
     def compute_gurobi_model(self):
         r"""
