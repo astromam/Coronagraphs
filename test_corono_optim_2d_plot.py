@@ -104,26 +104,24 @@ else:
     raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
 
 #%%
-#"""
-#Problem defintion
-#"""
-#t0 = time.time()
-#if problem_name == 'MaxTau':
-#    # Maximization of the integrated amplitude transmission of the apodizer
-#    problem1 = co2d.MaxTau()
-#elif problem_name == 'MaxContrastL1':
-#    # Maximization of the contrast under L1-norm
-#    problem1 = co2d.MaxContrast(Lnorm='L1')
-#elif problem_name == 'MaxContrastLinf':
-#    # Maximization of the contrast under L-infinite norm
-#    problem1 = co2d.MaxContrast(Lnorm='Linf')
-#else:
-#    raise NameError('{0}: Not an existing optimization problem!'.format(problem_name))
-#
-#    
-#t1 = time.time()
-#print('problem definition time       : {0:.2f}s'.format(t1-t0))
-
+"""
+Problem defintion
+"""
+t0 = time.time()
+if problem_name == 'MaxTau':
+    # Maximization of the integrated amplitude transmission of the apodizer
+    problem1 = co2d.MaxTau(corono=corono0, **params)
+elif problem_name == 'MaxContrastL1':
+    # Maximization of the contrast under L1-norm
+    problem1 = co2d.MaxContrast(corono=corono0, Lnorm='L1',**params)
+elif problem_name == 'MaxContrastLinf':
+    # Maximization of the contrast under L-infinite norm
+    problem1 = co2d.MaxContrast(corono=corono0, Lnorm='Linf',**params)
+else:
+    raise NameError('{0}: Not an existing optimization problem!'.format(problem_name))
+    
+t1 = time.time()
+print('problem definition time       : {0:.2f}s'.format(t1-t0))
 
 #%%
 """
@@ -131,17 +129,8 @@ Read files
 """
 fdir = Path('./results/2D/dat_pyth').resolve() / pupil_name
 
-if problem_name == 'MaxTau':
-    str_opt = '_C={cDarkHole:.1f}'
-else:
-    str_opt = '_tau={tau:.3f}'
-
-fname_gen  = '{pupil_name}_{corono_name}_IWA={rho0}_OWA={rho1}_BW={bw:.2f}_nlam={nlam:02d}' + \
-        '_2D_nPup={nPup:04d}_{problem_name}' + str_opt + '_{solver}.fits'        
-
-fpath = fdir / fname_gen.format(**{key: corono0.params[key] for key in corono0.params})
-
-print('{0}'.format(fpath))
+fname = problem1.get_filename()
+fpath = fdir / fname
 
 Apod_pyth = fits.getdata(fpath,)
 

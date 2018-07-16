@@ -244,31 +244,7 @@ class ProblemMatrix(object):
 #            self.corono.compute_direct_field_2d_vec(Apod2d)
 #            Apod2d[i0,j0] = 0    
 
-        self.corono_field_t_re = np.zeros((self.npp, self.corono.nlam, 
-                                           self.corono.nImg2d**2))
-        self.corono_field_t_im = np.zeros((self.npp, self.corono.nlam, 
-                                           self.corono.nImg2d**2))
-        print('generating corono response matrix for 2D problem')
-        Apod2d = np.zeros((self.corono.nPup, self.corono.nPup))
-        for i in np.arange(self.npp):  
-            (i0, j0) = np.unravel_index(self.idx_pup[i], 
-            (self.corono.nPup, self.corono.nPup))
-            Apod2d[i0,j0] = 1            
-            self.corono_field_t_re[i], self.corono_field_t_im[i] = \
-            self.corono.compute_corono_field_2d_vec(Apod2d)
-            Apod2d[i0,j0] = 0  
-        
-        self.corono_field_t2_re = np.reshape(
-                self.corono_field_t_re[:,:,self.idx_dz], 
-                (self.npp, self.corono.nlam*self.ndz))
 
-        self.corono_field_t2_im = np.reshape(
-                self.corono_field_t_im[:,:,self.idx_dz], 
-                (self.npp, self.corono.nlam*self.ndz))
-
-        self.corono_field_t2    = np.concatenate((self.corono_field_t2_re,
-                                                  self.corono_field_t2_im), 
-                                                 axis=1)
 
         self.A       = None
         self.b       = None
@@ -363,6 +339,36 @@ class ProblemMatrix(object):
         params=json.loads(f.read())
         self.__init__(**params)
         f.close()              
+
+#%%        
+    def compute_response_matrices(self):
+
+        self.corono_field_t_re = np.zeros((self.npp, self.corono.nlam, 
+                                           self.corono.nImg2d**2))
+        self.corono_field_t_im = np.zeros((self.npp, self.corono.nlam, 
+                                           self.corono.nImg2d**2))
+        print('generating corono response matrix for 2D problem')
+        Apod2d = np.zeros((self.corono.nPup, self.corono.nPup))
+        for i in np.arange(self.npp):  
+            (i0, j0) = np.unravel_index(self.idx_pup[i], 
+            (self.corono.nPup, self.corono.nPup))
+            Apod2d[i0,j0] = 1            
+            self.corono_field_t_re[i], self.corono_field_t_im[i] = \
+            self.corono.compute_corono_field_2d_vec(Apod2d)
+            Apod2d[i0,j0] = 0  
+        
+        self.corono_field_t2_re = np.reshape(
+                self.corono_field_t_re[:,:,self.idx_dz], 
+                (self.npp, self.corono.nlam*self.ndz))
+
+        self.corono_field_t2_im = np.reshape(
+                self.corono_field_t_im[:,:,self.idx_dz], 
+                (self.npp, self.corono.nlam*self.ndz))
+
+        self.corono_field_t2    = np.concatenate((self.corono_field_t2_re,
+                                                  self.corono_field_t2_im), 
+                                                 axis=1)
+       
 
 #%%        
     def solve_model(self):
@@ -533,10 +539,9 @@ class MaxTau(ProblemMatrix):
             
             
         """
+        self.compute_response_matrices()
         print('computing A, b, and c matrices')
         
-
-
         ED0 = np.zeros_like(self.corono_field_t2)
         ED0tmp = self.Pupil_vec[self.idx_pup]*self.LyotStop_vec[self.idx_pup]
         for j in range(len(self.corono_field_t2.T)):
@@ -743,6 +748,7 @@ class MaxContrast(ProblemMatrix):
         """
         if self.A is None or self.b is None or self.c is None:
             print('computing A, b, and c matrices')
+            self.compute_response_matrices()
             self.compute_matrices_all()
         else:
             print('updating b matrix')
