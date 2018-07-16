@@ -24,7 +24,7 @@ Parameters
 # Telescope name
 pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
 problem_name = 'MaxContrastL1' # 'MaxContrastL1' # 'MaxTau' # ,'MaxContrastLinf' # #  
-solver       = 'gurobipy' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
+solver       = 'stdgrb' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
 
 #nPup = corono0.params['nPup']
 nPup = 50
@@ -83,7 +83,8 @@ params = to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
                  nlam=nlam, bw=bw,
                  Pupil2d = Pupil2d, LyotStop2d = LyotStop2d,
                  Pupil2dSym = Pupil2dSym, rMask=rMask,
-                 problem_name = problem_name, solver= solver)
+                 problem_name = problem_name, 
+                 solver = solver)
 
 #%%  
 """ 
