@@ -85,7 +85,7 @@ params = to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
                  Pupil2dSym = Pupil2dSym, rMask=rMask,
                  problem_name = problem_name, 
                  solver = solver, 
-             corono_name = corono_name, pupil_name = pupil_name)
+                 corono_name = corono_name, pupil_name = pupil_name)
 
 #%%  
 """ 

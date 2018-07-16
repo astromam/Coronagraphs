@@ -426,9 +426,11 @@ class ProblemMatrix(object):
 
         if self.problem_name == 'MaxTau':
             str_opt = '_C={cDarkHole:.1f}'
-        else:
+        elif self.problem_name == 'MaxContrastL1' or self.problem_name == 'MaxContrastLinf':
             str_opt = '_tau={tau:.3f}'
-        
+        else:
+            raise NameError('{0}: Not an existing optimization problem!'.format(self.problem_name))
+            
         fname_gen  = '{pupil_name}_{corono_name}_IWA={rho0}_OWA={rho1}_BW={bw:.2f}_nlam={nlam:02d}' + \
         '_2D_nPup={nPup:04d}_{problem_name}' + str_opt + '_{solver}.fits'        
         
@@ -533,12 +535,10 @@ class MaxTau(ProblemMatrix):
         """
         print('computing A, b, and c matrices')
         
-        fctr = 1.
-        if self.Pupil2dSym == True:
-            fctr = 1.
+
 
         ED0 = np.zeros_like(self.corono_field_t2)
-        ED0tmp = fctr*self.Pupil_vec[self.idx_pup]*self.LyotStop_vec[self.idx_pup]
+        ED0tmp = self.Pupil_vec[self.idx_pup]*self.LyotStop_vec[self.idx_pup]
         for j in range(len(self.corono_field_t2.T)):
             ED0[:,j] = ED0tmp
         cst = 10.**(-self.cDarkHole/2.)/np.sqrt(2.)      

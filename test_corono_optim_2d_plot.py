@@ -6,13 +6,14 @@ Created on Mon Apr 30 14:10:20 2018
 @author: mndiaye
 """
 import numpy as np
+import time
 import pylab as pl
 from pathlib import Path
 
 import os
 
 from corono import corono_design as cd
-#from corono import corono_optim_2d as co2d
+from corono import corono_optim_2d as co2d
 
 from corono.utils import to_dict
 
@@ -26,8 +27,8 @@ Parameters
 """
 # Telescope name
 pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
-problem_name = 'MaxTau' # 'MaxContrastL1' #'MaxTau' # , 'MaxContrastLinf' # #  
-solver       = 'gurobipy' # 'stdgrb' #  'gurobipy', 'scipy.linprog'
+problem_name = 'MaxContrastL1' # 'MaxContrastL1' #'MaxTau' # , 'MaxContrastLinf' # #  
+solver       = 'stdgrb' # 'stdgrb' #  'gurobipy', 'scipy.linprog'
 
 #nPup = corono0.params['nPup']
 nPup = 50
@@ -39,11 +40,11 @@ nImg2d = 500
 rMask = 4.0
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
-rho0 =  4.5
+rho0 =  5.0
 rho1 = 10.0
 
 # contrast in the dark region
-cDarkHole = 6.0
+cDarkHole = 7.0
 
 # tau (integrated Pupil transmission)
 tau   = 0.4
@@ -81,13 +82,15 @@ LyotStop2d = fits.getdata(fpath_lys)
 if solver != 'gurobipy' and solver != 'stdgrb':
     solver = 'scipy'
 
-params = to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d,
+params = to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
                  rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau, 
-                 CtrBtwnPix=CtrBtwnPix, CtrBtwnPix2=CtrBtwnPix2, 
+                 CtrBtwnPix=CtrBtwnPix, CtrBtwnPix2 = CtrBtwnPix2,
                  nlam=nlam, bw=bw,
                  Pupil2d = Pupil2d, LyotStop2d = LyotStop2d,
                  Pupil2dSym = Pupil2dSym, rMask=rMask,
-                 problem_name = problem_name, solver = solver)
+                 problem_name = problem_name, 
+                 solver = solver, 
+                 corono_name = corono_name, pupil_name = pupil_name)
 
 #%%  
 """ 
@@ -101,18 +104,42 @@ else:
     raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
 
 #%%
+#"""
+#Problem defintion
+#"""
+#t0 = time.time()
+#if problem_name == 'MaxTau':
+#    # Maximization of the integrated amplitude transmission of the apodizer
+#    problem1 = co2d.MaxTau()
+#elif problem_name == 'MaxContrastL1':
+#    # Maximization of the contrast under L1-norm
+#    problem1 = co2d.MaxContrast(Lnorm='L1')
+#elif problem_name == 'MaxContrastLinf':
+#    # Maximization of the contrast under L-infinite norm
+#    problem1 = co2d.MaxContrast(Lnorm='Linf')
+#else:
+#    raise NameError('{0}: Not an existing optimization problem!'.format(problem_name))
+#
+#    
+#t1 = time.time()
+#print('problem definition time       : {0:.2f}s'.format(t1-t0))
+
+
+#%%
 """
 Read files
 """
-fdir = Path('./results/2D/dat_pyth').resolve()
-fdir_sub = fdir / pupil_name
+fdir = Path('./results/2D/dat_pyth').resolve() / pupil_name
 
-if corono_name == 'SP':
-    fname_gen  = 'SP00_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}_{problem_name}_{solver}.fits'
+if problem_name == 'MaxTau':
+    str_opt = '_C={cDarkHole:.1f}'
 else:
-    fname_gen  = 'APLC_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}_{problem_name}_{solver}.fits'
+    str_opt = '_tau={tau:.3f}'
 
-fpath = fdir_sub / fname_gen.format(**{key: corono0.params[key] for key in corono0.params})
+fname_gen  = '{pupil_name}_{corono_name}_IWA={rho0}_OWA={rho1}_BW={bw:.2f}_nlam={nlam:02d}' + \
+        '_2D_nPup={nPup:04d}_{problem_name}' + str_opt + '_{solver}.fits'        
+
+fpath = fdir / fname_gen.format(**{key: corono0.params[key] for key in corono0.params})
 
 print('{0}'.format(fpath))
 
