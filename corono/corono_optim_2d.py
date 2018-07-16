@@ -51,7 +51,36 @@ def get_default_params_ProblemMatrix():
         Dictionnary of parameters with their default values.
         
     """
-    tmp = {'cDarkHole':8,'tau':0.2, 'solver':'stdgrb', 'matrices_flag':False}
+    tmp = {'cDarkHole':8, 'tau':0.2, 'solver':'stdgrb', 'matrices_flag':False,
+           'pupil_name':'sbr'}
+    return tmp
+
+#%%
+def get_default_params_MaxTauProblemMatrix():
+    r"""
+    Gets the default parameters for the Max contrast optimization problem.
+    
+    Parameters
+    ---------- 
+    tmp : dict
+        Dictionary from the get_default_matrix_pb
+        
+    Lnorm : string (default= 'L1')
+        L-norm type for the optimization problem 
+        ('Linf' : :math:`L_{\infty}` norm, 'L1' : :math:`L_1`-norm)
+    
+    problem_name : string (default= 'MaxTau')
+        name of the optimization problem
+        
+    Returns    
+    ----------
+    tmp : dict
+        Updated dictionary
+        
+    """
+    
+    tmp = get_default_params_ProblemMatrix()
+    tmp.update({'problem_name':'MaxTau'})
     return tmp
 
 #%%
@@ -67,6 +96,9 @@ def get_default_params_MaxContrastProblemMatrix():
     Lnorm : string (default= 'L1')
         L-norm type for the optimization problem 
         ('Linf' : :math:`L_{\infty}` norm, 'L1' : :math:`L_1`-norm)
+
+    problem_name : string (default= 'MaxTau')
+        name of the optimization problem
             
     Returns    
     ----------
@@ -76,7 +108,7 @@ def get_default_params_MaxContrastProblemMatrix():
     """
     
     tmp = get_default_params_ProblemMatrix()
-    tmp.update({'Lnorm':'L1'})
+    tmp.update({'Lnorm':'L1', 'problem_name':'MaxContrastL1'})
     return tmp
 
 #%%
@@ -389,6 +421,19 @@ class ProblemMatrix(object):
             self.Apod[self.idx_pup]=sol.x
             return self.Apod                
 
+#%%
+    def get_filename(self):
+
+        if self.problem_name == 'MaxTau':
+            str_opt = '_C={cDarkHole:.1f}'
+        else:
+            str_opt = '_tau={tau:.3f}'
+        
+        fname_gen  = '{pupil_name}_{corono_name}_IWA={rho0}_OWA={rho1}_BW={bw:.2f}_nlam={nlam:02d}' + \
+        '_2D_nPup={nPup:04d}_{problem_name}' + str_opt + '_{solver}.fits'        
+        
+        return fname_gen.format(**{key: self.corono.params[key] for key in self.corono.params})
+
         
 #%%
 """
@@ -400,6 +445,9 @@ class MaxTau(ProblemMatrix):
     maximizes the integrated apodizer transmission for a given contrast 
     :math:`C` in the search area inside the coronagraphic image.
     """
+
+    default_params = get_default_params_MaxTauProblemMatrix()
+
     def __init__(self, **kwargs):
         """
         Constructor for the Matrix problem with the coronagraph object
@@ -517,7 +565,7 @@ class MaxTau(ProblemMatrix):
             
         self.c = -self.Pupil_vec[self.idx_pup]/self.TR
         
-        self.matrices_flag = True
+#        self.matrices_flag = True
         
         return self.A, self.b, self.c
 
@@ -863,7 +911,7 @@ class MaxContrast(ProblemMatrix):
             
         self.c = np.concatenate((np.zeros(self.npp), c1), axis=0)
 
-        self.matrices_flag = True
+#        self.matrices_flag = True
         
         return self.A, self.b, self.c
 

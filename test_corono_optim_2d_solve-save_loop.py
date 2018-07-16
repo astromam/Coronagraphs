@@ -22,8 +22,8 @@ from astropy.io import fits
 Parameters
 """
 # Telescope name
-pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
-problem_name = 'MaxContrastL1' # 'MaxContrastL1' # 'MaxTau' # ,'MaxContrastLinf' # #  
+pupil_name   = 'vlt' # 'vlt' or 'sbr' or 'lvr'
+problem_name = 'MaxContrastLinf' # 'MaxContrastL1' # 'MaxTau' # ,'MaxContrastLinf' # #  
 solver       = 'stdgrb' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
 
 #nPup = corono0.params['nPup']
@@ -79,7 +79,6 @@ LyotStop2d = fits.getdata(fpath_lys)
 if solver != 'gurobipy' and solver != 'stdgrb':
     solver = 'scipy'
 
-
 params = to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
              rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau, 
              CtrBtwnPix=CtrBtwnPix, CtrBtwnPix2 = CtrBtwnPix2,
@@ -87,7 +86,8 @@ params = to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
              Pupil2d = Pupil2d, LyotStop2d = LyotStop2d,
              Pupil2dSym = Pupil2dSym, rMask=rMask,
              problem_name = problem_name, 
-             solver = solver)
+             solver = solver, 
+             corono_name = corono_name, pupil_name = pupil_name)
 
 #%%  
 """ 
@@ -141,8 +141,7 @@ for itau, tau in enumerate(tau_lst):
     """
     Apod1_2d = np.reshape(Apod1, (corono0.nPup, corono0.nPup))
     
-    if Pupil2dSym == True:
-    #        Apod2_2d[corono0.nPup//2:, corono0.nPup//2:] = Apod2_2dtmp    
+    if Pupil2dSym == True:    
             Apod1_2dtmp =  Apod1_2d[corono0.nPup//2:, corono0.nPup//2:]
             Apod1_2d[:corono0.nPup//2, corono0.nPup//2:] = np.flip(Apod1_2dtmp, axis=0)
             Apod1_2d[:, :corono0.nPup//2]          = np.flip(Apod1_2d[:, corono0.nPup//2:], axis=1)
@@ -150,26 +149,14 @@ for itau, tau in enumerate(tau_lst):
     #%%
     """
     Save apodizer
-    """
-    if problem_name == 'MaxTau':
-        str_opt = '_C={cDarkHole:.1f}'
-    else:
-        str_opt = '_tau={tau:.3f}'
-    
-    
+    """    
     fdir = Path('./results/2D/dat_pyth').resolve() / pupil_name
     if not os.path.exists(fdir):
         os.makedirs(fdir)
-        
-    if corono_name == 'SP':
-        fname_gen  = 'SP00_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}' + str_opt \
-        + '_2D_nPup={nPup:04d}_{problem_name}_{solver}.fits'
-    else:
-        fname_gen  = 'APLC_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}' + str_opt \
-        + '_2D_nPup={nPup:04d}_{problem_name}_{solver}.fits'
-    
-    fpath = fdir / fname_gen.format(**{key: corono0.params[key] for key in corono0.params})
-    
+
+    fname = problem1.get_filename()
+    fpath = fdir / fname
+   
     if do_fits is True:
         fits.writeto(fpath, Apod1_2d, overwrite=True)
         
