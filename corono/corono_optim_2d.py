@@ -10,6 +10,7 @@ Created on Fri Mar  9 11:36:39 2018
 #%% Initialization problem
 import numpy as np
 import json
+import time
 
 try:
     import stdgrb
@@ -241,20 +242,6 @@ class ProblemMatrix(object):
       
         self.TR      = np.sum(self.Pupil_vec)
         
- 
-
-#%%    
-    def compute_matrices(self):
-        """
-        Virtual function for the matrix computation.
-        
-        Raises
-        --------
-        res
-            Display of a warning
-        
-        """
-        print('Warning: virtual fct - no A, b and c matrices will be computed')
 
 #%%
     def __contains__(self, item):
@@ -425,27 +412,6 @@ class ProblemMatrix(object):
         
         return fname_gen.format(**{key: self.corono.params[key] for key in self.corono.params})
 
-        
-#%%
-"""
-MaxTau ProblemMatrix subclass
-"""
-class MaxTau(ProblemMatrix):
-    r"""
-    Defines the ProblemMatrix subclass for the optimization problem that 
-    maximizes the integrated apodizer transmission for a given contrast 
-    :math:`C` in the search area inside the coronagraphic image.
-    """
-
-    default_params = get_default_params_MaxTauProblemMatrix()
-
-    def __init__(self, **kwargs):
-        """
-        Constructor for the Matrix problem with the coronagraph object
-        
-        """
-        super(MaxTau, self).__init__(**kwargs)
-
 #%%    
     def compute_matrices(self):
         r"""
@@ -480,16 +446,45 @@ class MaxTau(ProblemMatrix):
 
                                 
         """
+        
+        t0 = time.time()
+        if self.corono_field_t is None:            
+            print('computing corono response matrix for 2D problem')   
+            self.compute_response_matrices()
+
         if self.A is None or self.b is None or self.c is None:
-            if self.corono_field_t is None:            
-                print('computing corono response matrix for 2D problem')   
-                self.compute_response_matrices()
-            
             print('computing A, b, and c matrices')
             self.compute_problem_matrices()
         else:
-            print('updating A matrix')
-            self.update_cDarkHole()
+            if self.problem_name == 'MaxTau':
+                print('updating A matrix')
+                self.update_cDarkHole()
+            else:
+                print('updating b matrix')
+                self.update_tau()                
+        t1 = time.time()
+        return print('matrix problem definition time : {0:.2f}s'.format(t1-t0))
+
+        
+#%%
+"""
+MaxTau ProblemMatrix subclass
+"""
+class MaxTau(ProblemMatrix):
+    r"""
+    Defines the ProblemMatrix subclass for the optimization problem that 
+    maximizes the integrated apodizer transmission for a given contrast 
+    :math:`C` in the search area inside the coronagraphic image.
+    """
+
+    default_params = get_default_params_MaxTauProblemMatrix()
+
+    def __init__(self, **kwargs):
+        """
+        Constructor for the Matrix problem with the coronagraph object
+        
+        """
+        super(MaxTau, self).__init__(**kwargs)
 
 #%%        
     def compute_problem_matrices(self):
@@ -563,8 +558,6 @@ class MaxTau(ProblemMatrix):
             Space Observatories, ApJ 818, 2, 163 (2016). 
             
             http://iopscience.iop.org/article/10.3847/0004-637X/818/2/163/meta
-            
-            
             
         """                    
         ED0 = np.zeros_like(self.corono_field_t)
@@ -668,51 +661,6 @@ class MaxContrast(ProblemMatrix):
         the coronagraph object.
         """
         super(MaxContrast,self).__init__(**kwargs)
-
-#%%    
-    def compute_matrices(self):
-        r"""
-        Computes the matrices for the optimization problem that consists in 
-        maximizing the contrast in a given search area in the coronagraphic 
-        image for a set integrated apodizer transmission :math:`\tau`. In terms
-        of matrices, the optimization problem writes as
-            
-        .. math:: \max_{\tau} c^{T}.x,
-            
-        under the constraint :math:`A.x \leq b`.
-                
-        The variable :math:`x` is a concatenation of the apodizer transmission 
-        function :math:`\Phi` and an auxiliary variable :math:`\epsilon`.
-        The variable :math:`\epsilon` represents the contrast to maximize in 
-        the search area ranging between :math:`\rho_0` and :math:`\rho_1` in 
-        the coronagraphic image. It can either depend on the position 
-        :math:`\xi` in the coronagraphic image or not (:math:`L_1`-norm or 
-        :math:`L_\infty`-norm problem). 
-        The variables follow the notations of [1]_ and [2]_.
-
-        Parameters
-        -----------
-
-                         
-        Returns
-        -----------
-
-
-        References
-        ----------
-
-                                
-        """
-        if self.A is None or self.b is None or self.c is None:
-            if self.corono_field_t is None:            
-                print('computing corono response matrix for 2D problem')   
-                self.compute_response_matrices()
-            
-            print('computing A, b, and c matrices')
-            self.compute_problem_matrices()
-        else:
-            print('updating b matrix')
-            self.update_tau()
 
 #%%    
     def compute_problem_matrices(self):
