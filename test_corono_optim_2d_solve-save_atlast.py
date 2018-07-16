@@ -78,12 +78,14 @@ LyotStop2d = fits.getdata(fpath_lys)
 
 
 params = to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
-                 rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau, 
-                 CtrBtwnPix=CtrBtwnPix, CtrBtwnPix2 = CtrBtwnPix2,
-                 nlam=nlam, bw=bw,
-                 Pupil2d = Pupil2d, LyotStop2d = LyotStop2d,
-                 Pupil2dSym = Pupil2dSym, rMask=rMask,
-                 problem_name = problem_name, solver= solver)
+             rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau, 
+             CtrBtwnPix=CtrBtwnPix, CtrBtwnPix2 = CtrBtwnPix2,
+             nlam=nlam, bw=bw,
+             Pupil2d = Pupil2d, LyotStop2d = LyotStop2d,
+             Pupil2dSym = Pupil2dSym, rMask=rMask,
+             problem_name = problem_name, 
+             solver = solver, 
+             corono_name = corono_name, pupil_name = pupil_name)
 
 #%%  
 """ 
@@ -133,7 +135,6 @@ Generation of full apodizer for quarter pupil optimization
 Apod1_2d = np.reshape(Apod1, (corono0.nPup, corono0.nPup))
 
 if Pupil2dSym == True:
-#        Apod2_2d[corono0.nPup//2:, corono0.nPup//2:] = Apod2_2dtmp    
         Apod1_2dtmp =  Apod1_2d[corono0.nPup//2:, corono0.nPup//2:]
         Apod1_2d[:corono0.nPup//2, corono0.nPup//2:] = np.flip(Apod1_2dtmp, axis=0)
         Apod1_2d[:, :corono0.nPup//2]          = np.flip(Apod1_2d[:, corono0.nPup//2:], axis=1)
@@ -146,12 +147,8 @@ fdir = Path('./results/2D/dat_pyth').resolve() / pupil_name
 if not os.path.exists(fdir):
     os.makedirs(fdir)
 
-if corono_name == 'SP':
-    fname_gen  = 'SP00_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}_{problem_name}_{solver}.fits'
-else:
-    fname_gen  = 'APLC_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}_{problem_name}_{solver}.fits'
-
-fpath = fdir / fname_gen.format(**{key: corono0.params[key] for key in corono0.params})
+fname = problem1.get_filename()
+fpath = fdir / fname
 
 if do_fits is True:
     fits.writeto(fpath, Apod1_2d, overwrite=True)
