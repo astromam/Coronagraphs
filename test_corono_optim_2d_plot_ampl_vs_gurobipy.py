@@ -6,11 +6,12 @@ Created on Mon Apr 30 14:10:20 2018
 @author: mndiaye
 """
 import numpy as np
+import time
 import pylab as pl
 from pathlib import Path
 
 from corono import corono_design as cd
-#from corono import corono_optim_2d as co2d
+from corono import corono_optim_2d as co2d
 
 from corono.utils import to_dict
 
@@ -75,14 +76,18 @@ fpath_lys = fdir / fname_lys
 Pupil2d    = fits.getdata(fpath_pup)
 LyotStop2d = fits.getdata(fpath_lys)
 
+if solver != 'gurobipy' and solver != 'stdgrb':
+    solver = 'scipy'
 
-params = to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d,
+params = to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
                  rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau, 
-                 CtrBtwnPix=CtrBtwnPix, CtrBtwnPix2=CtrBtwnPix2, 
+                 CtrBtwnPix=CtrBtwnPix, CtrBtwnPix2 = CtrBtwnPix2,
                  nlam=nlam, bw=bw,
                  Pupil2d = Pupil2d, LyotStop2d = LyotStop2d,
                  Pupil2dSym = Pupil2dSym, rMask=rMask,
-                 problem_name = problem_name, solver= solver)
+                 problem_name = problem_name, 
+                 solver = solver, 
+                 corono_name = corono_name, pupil_name = pupil_name)
 
 #%%  
 """ 
@@ -90,26 +95,54 @@ Coronagraph defintion
 """
 if corono_name == 'SP':
     corono0 = cd.SP2d(**params)
-else:
+elif corono_name == 'APLC':
     corono0 = cd.APLC2d(**params)
+else:
+    raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
+
+#%%
+"""
+Problem defintion
+"""
+t0 = time.time()
+if problem_name == 'MaxTau':
+    # Maximization of the integrated amplitude transmission of the apodizer
+    problem1 = co2d.MaxTau(corono=corono0, **params)
+elif problem_name == 'MaxContrastL1':
+    # Maximization of the contrast under L1-norm
+    problem1 = co2d.MaxContrast(corono=corono0, Lnorm='L1',**params)
+elif problem_name == 'MaxContrastLinf':
+    # Maximization of the contrast under L-infinite norm
+    problem1 = co2d.MaxContrast(corono=corono0, Lnorm='Linf',**params)
+else:
+    raise NameError('{0}: Not an existing optimization problem!'.format(problem_name))
+    
+t1 = time.time()
+print('problem definition time       : {0:.2f}s'.format(t1-t0))
 
 #%%
 """
 Read files obtained with gurobi
 """
-fdir_pyth = Path('./results/2D/dat_pyth').resolve() / pupil_name
+#fdir_pyth = Path('./results/2D/dat_pyth').resolve() / pupil_name
+#
+#if corono_name == 'SP':
+#    fname_gen  = 'SP00_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}_{problem_name}_{solver}.fits'
+#else:
+#    fname_gen  = 'APLC_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}_{problem_name}_{solver}.fits'
+#
+#fpath_pyth = fdir_pyth / fname_gen.format(**{key: corono0.params[key] for key in corono0.params})
+#
+#print('{0}'.format(fpath_pyth))
+#
+#Apod_pyth = fits.getdata(fpath_pyth,)
 
-if corono_name == 'SP':
-    fname_gen  = 'SP00_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}_{problem_name}_{solver}.fits'
-else:
-    fname_gen  = 'APLC_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}_{problem_name}_{solver}.fits'
+fdir = Path('./results/2D/dat_pyth').resolve() / pupil_name
 
-fpath_pyth = fdir_pyth / fname_gen.format(**{key: corono0.params[key] for key in corono0.params})
+fname = problem1.get_filename()
+fpath = fdir / fname
 
-print('{0}'.format(fpath_pyth))
-
-Apod_pyth = fits.getdata(fpath_pyth,)
-
+Apod_pyth = fits.getdata(fpath,)
 
 #%%
 """

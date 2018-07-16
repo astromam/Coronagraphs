@@ -12,7 +12,7 @@ from pathlib import Path
 import os
 
 from corono import corono_design as cd
-#from corono import corono_optim_2d as co2d
+from corono import corono_optim_2d as co2d
 
 from corono.utils import to_dict
 
@@ -26,7 +26,7 @@ Parameters
 """
 # Telescope name
 pupil_name = 'sbr' # 'vlt' or 'sbr' or 'lvr'
-problem_name = 'MaxTau' # 'MaxContrastL1' #'MaxTau' # , 'MaxContrastLinf' # #  
+problem_name = 'MaxContrastL1' # 'MaxContrastL1' #'MaxTau' # , 'MaxContrastLinf' # #  
 solver       = 'stdgrb' # 'gurobipy' #  'gurobipy', 'scipy.linprog'
 
 
@@ -40,11 +40,11 @@ nImg2d = 500
 rMask = 4.0
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
-rho0 =  4.5
+rho0 =  5.0
 rho1 = 10.0
 
 # contrast in the dark region
-cDarkHole = 6.0
+cDarkHole = 7.0
 
 # tau (integrated Pupil transmission)
 tau   = 0.4
@@ -79,14 +79,15 @@ fpath_lys = fdir / fname_lys
 Pupil2d    = fits.getdata(fpath_pup)
 LyotStop2d = fits.getdata(fpath_lys)
 
-
-params = to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM=nFPM,
+params = to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
                  rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau, 
-                 CtrBtwnPix=CtrBtwnPix, CtrBtwnPix2=CtrBtwnPix2, 
+                 CtrBtwnPix=CtrBtwnPix, CtrBtwnPix2 = CtrBtwnPix2,
                  nlam=nlam, bw=bw,
                  Pupil2d = Pupil2d, LyotStop2d = LyotStop2d,
                  Pupil2dSym = Pupil2dSym, rMask=rMask,
-                 problem_name = problem_name, solver = solver)
+                 problem_name = problem_name, 
+                 solver = solver, 
+                 corono_name = corono_name, pupil_name = pupil_name)
 
 #%%  
 """ 
@@ -101,34 +102,48 @@ else:
 
 #%%
 """
-Read files obtained with gurobi
+Problem defintion
+"""
+t0 = time.time()
+if problem_name == 'MaxTau':
+    # Maximization of the integrated amplitude transmission of the apodizer
+    problem1 = co2d.MaxTau(corono=corono0, **params)
+elif problem_name == 'MaxContrastL1':
+    # Maximization of the contrast under L1-norm
+    problem1 = co2d.MaxContrast(corono=corono0, Lnorm='L1',**params)
+elif problem_name == 'MaxContrastLinf':
+    # Maximization of the contrast under L-infinite norm
+    problem1 = co2d.MaxContrast(corono=corono0, Lnorm='Linf',**params)
+else:
+    raise NameError('{0}: Not an existing optimization problem!'.format(problem_name))
+    
+t1 = time.time()
+print('problem definition time       : {0:.2f}s'.format(t1-t0))
+
+
+
+#%%
+"""
+Read files obtained with gurobipy
 """
 fdir = Path('./results/2D/dat_pyth').resolve() / pupil_name
 
-if corono_name == 'SP':
-    fname_gen  = 'SP00_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}_{problem_name}_gurobipy.fits'
-else:
-    fname_gen  = 'APLC_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}_{problem_name}_gurobipy.fits'
-
-fpath_gurobipy = fdir  / fname_gen.format(**{key: corono0.params[key] for key in corono0.params})
-
-print('{0}'.format(fpath_gurobipy))
+problem1.params['solver'] = 'gurobipy'
+fname = problem1.get_filename()
+fpath_gurobipy = fdir / fname
 
 Apod_gurobipy = fits.getdata(fpath_gurobipy,)
 
 
 #%%
 """
-Read files obtained with gurobi
+Read files obtained with stdgrb
 """
-if corono_name == 'SP':
-    fname_gen  = 'SP00_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}_{problem_name}_stdgrb.fits'
-else:
-    fname_gen  = 'APLC_IWA={rho0}_OWA={rho1}_BW={bw}_nlam={nlam:02d}_C={cDarkHole:.1f}_2D_nPup={nPup:04d}_{problem_name}_stdgrb.fits'
+fdir = Path('./results/2D/dat_pyth').resolve() / pupil_name
 
-fpath_stdgrb = fdir / fname_gen.format(**{key: corono0.params[key] for key in corono0.params})
-
-print('{0}'.format(fpath_stdgrb))
+problem1.params['solver'] = 'stdgrb'
+fname = problem1.get_filename()
+fpath_stdgrb = fdir / fname
 
 Apod_stdgrb = fits.getdata(fpath_stdgrb,)
 
