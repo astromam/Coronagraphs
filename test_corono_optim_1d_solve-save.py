@@ -20,7 +20,7 @@ from corono.utils import to_dict
 Parameters
 """
 corono_name  = 'APLC' # 'APLC' or 'SP'
-problem_name = 'MaxTau' # ,'MaxContrastL1' # 'MaxContrastLinf' #'MaxContrastL1' # #  
+problem_name = 'MaxTau' # ,'MaxTau' # 'MaxContrastLinf' #'MaxContrastL1' # #  
 solver       = 'stdgrb' # 'stdgrb', 'gurobipy', 'scipy.linprog'
 
 nPup = 500
@@ -129,7 +129,6 @@ else:
 """
 Problem defintion
 """
-t0 = time.time()
 if problem_name == 'MaxTau':
     # Maximization of the integrated amplitude transmission of the apodizer
     problem1 = co1d.MaxTau(corono=corono0, **params)
@@ -142,9 +141,6 @@ elif problem_name == 'MaxContrastLinf':
 else:
     raise NameError('{0}: Not an existing optimization problem!'.format(problem_name))
     
-t1 = time.time()
-print('problem definition time       : {0:.2f}s'.format(t1-t0))
-
 #%%
 """
 Problem solving
@@ -153,7 +149,7 @@ print('problem solving')
 t0 = time.time()
 Apod_pyth = problem1.solve_model()
 t1 = time.time()
-print('optimization time             : {0:.2f}s'.format(t1-t0))
+print('optimization time              : {0:.2f}s'.format(t1-t0))
 
 
 #%% Apodizer solution for the problems

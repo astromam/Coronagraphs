@@ -9,6 +9,7 @@ Created on Fri Mar  9 11:36:39 2018
 #%% Initialization problem
 import numpy as np
 import json
+import time
 
 try:
     import stdgrb
@@ -159,11 +160,11 @@ class ProblemMatrix(object):
             Vector indexing the non zero points of the pupil in the Lyot stop
             :math:`L`
             
-        direct_field_t_re, direct_field_t_im : array_like, array_like
+        direct_field_re_t_tmp, direct_field_im_t_tmp : array_like, array_like
             Real and imaginary part of the non coronagraphic response matrix 
             for all the points in the pupil :math:`P_0` and at all the wavelengths
             
-        corono_field_t_re, corono_field_t_im : array_like, array_like
+        corono_field_re_t_tmp, corono_field_im_t_tmp : array_like, array_like
             Real and imaginary part of the coronagraphic response matrix 
             for all the points in the pupil :math:`P_0` and at all the wavelengths
          
@@ -212,53 +213,9 @@ class ProblemMatrix(object):
     
         self.lys     = (self.corono.LyotStop1d > 0.)
         self.idx_lys = list(self.bbb[self.lys]) 
-    
-        direct_field_t = np.zeros((self.corono.nPup, self.corono.nlam, 
-                                   self.corono.nImg+1), dtype='complex128')
-        #print('generating direct response matrices for 1D problem')
-        Apod1d    = np.zeros((self.corono.nPup))
-        for i in np.arange(self.corono.nPup):
-            Apod1d[i] = 1
-            direct_field_t[i] = self.corono.compute_direct_field_1d(Apod1d)
-            Apod1d[i] = 0            
-        self.direct_field_t_re = direct_field_t.real
-        self.direct_field_t_im = direct_field_t.imag    
-
-        corono_field_t = np.zeros((self.corono.nPup, self.corono.nlam, 
-                                   self.corono.nImg+1), dtype='complex128')
-        #print('generating corono response matrices for 1D problem')
-        Apod1d    = np.zeros((self.corono.nPup))
-        for i in np.arange(self.corono.nPup):
-            Apod1d[i] = 1
-            corono_field_t[i] = self.corono.compute_corono_field_1d(Apod1d)
-            Apod1d[i] = 0
-        self.corono_field_t_re = corono_field_t.real
-        self.corono_field_t_im = corono_field_t.imag
-
-
-        self.corono_field_t2_re = np.reshape(
-                self.corono_field_t_re[:,:,self.idx_dz], 
-                (self.corono.nPup, self.corono.nlam*self.ndz))[self.idx_pup,:]
-
-        self.corono_field_t2_im = np.reshape(
-                self.corono_field_t_im[:,:,self.idx_dz], 
-                (self.corono.nPup, self.corono.nlam*self.ndz))[self.idx_pup,:]
-
-        self.corono_field_t2    = np.concatenate((self.corono_field_t2_re,
-                                                  self.corono_field_t2_im), 
-                                                 axis=1)
-
-        self.direct_field_t2_re = np.reshape(
-                self.direct_field_t_re[:,:,self.idx_dzdirect], 
-                (self.corono.nPup, self.corono.nlam*self.ndzdirect))[self.idx_pup,:]
-
-        self.direct_field_t2_im = np.reshape(
-                self.direct_field_t_im[:,:,self.idx_dzdirect], 
-                (self.corono.nPup, self.corono.nlam*self.ndzdirect))[self.idx_pup,:]
-
-        self.direct_field_t2    = np.concatenate((self.direct_field_t2_re,
-                                                  self.direct_field_t2_im), 
-                                                 axis=1)
+        
+        self.corono_field_t = None
+        self.direct_field_re_t_tmp = None
         
         self.A       = None
         self.b       = None
@@ -272,20 +229,6 @@ class ProblemMatrix(object):
                 0.5,self.corono.nPup+0.5,num=self.corono.nPup)\
                 /(2.*self.corono.nPup)**2)
                
-
-#%%    
-    def compute_matrices(self):
-        """
-        Virtual function for the matrix computation.
-        
-        Raises
-        --------
-        res
-            Display of a warning
-        
-        """
-        print('Warning: virtual fct - no A, b and c matrices will be computed')
-
 #%%
     def __contains__(self, item):
         """
@@ -355,6 +298,59 @@ class ProblemMatrix(object):
         self.__init__(**params)
         f.close()              
 
+#%%
+    def compute_response_matrices(self):
+
+        direct_field_t_tmp = np.zeros((self.corono.nPup, self.corono.nlam, 
+                                   self.corono.nImg+1), dtype='complex128')
+        #print('generating direct response matrices for 1D problem')
+        Apod1d    = np.zeros((self.corono.nPup))
+        for i in np.arange(self.corono.nPup):
+            Apod1d[i] = 1
+            direct_field_t_tmp[i] = self.corono.compute_direct_field_1d(Apod1d)
+            Apod1d[i] = 0            
+        self.direct_field_re_t_tmp = direct_field_t_tmp.real
+        self.direct_field_im_t_tmp = direct_field_t_tmp.imag    
+
+        direct_field_re_t = np.reshape(
+                self.direct_field_re_t_tmp[:,:,self.idx_dzdirect], 
+                (self.corono.nPup, self.corono.nlam*self.ndzdirect))[self.idx_pup,:]
+
+        direct_field_im_t = np.reshape(
+                self.direct_field_im_t_tmp[:,:,self.idx_dzdirect], 
+                (self.corono.nPup, self.corono.nlam*self.ndzdirect))[self.idx_pup,:]
+
+        self.direct_field_t    = np.concatenate((direct_field_re_t,
+                                                 direct_field_im_t), 
+                                                 axis=1)
+
+        corono_field_t_tmp = np.zeros((self.corono.nPup, self.corono.nlam, 
+                                   self.corono.nImg+1), dtype='complex128')
+        #print('generating corono response matrices for 1D problem')
+        Apod1d    = np.zeros((self.corono.nPup))
+        for i in np.arange(self.corono.nPup):
+            Apod1d[i] = 1
+            corono_field_t_tmp[i] = self.corono.compute_corono_field_1d(Apod1d)
+            Apod1d[i] = 0
+        corono_field_re_t_tmp = corono_field_t_tmp.real
+        corono_field_im_t_tmp = corono_field_t_tmp.imag
+
+        
+        corono_field_re_t = np.reshape(
+                corono_field_re_t_tmp[:,:,self.idx_dz], 
+                (self.corono.nPup, self.corono.nlam*self.ndz))[self.idx_pup,:]
+
+        corono_field_im_t = np.reshape(
+                corono_field_im_t_tmp[:,:,self.idx_dz], 
+                (self.corono.nPup, self.corono.nlam*self.ndz))[self.idx_pup,:]
+
+        self.corono_field_t    = np.concatenate((corono_field_re_t,
+                                                  corono_field_im_t), 
+                                                  axis=1)
+
+
+
+
 #%%        
     def solve_model(self):
         """
@@ -366,12 +362,10 @@ class ProblemMatrix(object):
             Solution for the optimization problem
         
         """
-        if self.A is None or self.b is None or self.c is None:
-            print('computing A, b, and c matrices')
-            self.compute_matrices()
+        self.compute_matrices()
 
         if stdgrb and self.solver == 'stdgrb':
-            print('solving with stdgrb package')
+            print('solving problem with stdgrb package')
             Apodtmp, val = stdgrb.lp_solve(self.c, A=(self.A).T, b=self.b, 
                                            crossover=1, logtoconsole=1, method=2)
             self.Apod[self.idx_pup] = Apodtmp
@@ -381,7 +375,7 @@ class ProblemMatrix(object):
             print('generating gurobi model')
             self.compute_gurobi_model()
             
-            print('solving with gurobipy package')                
+            print('solving problem with gurobipy package')                
             try:
                 self.m.Params.Method       = 2
                 self.m.Params.LogToConsole = 1
@@ -403,7 +397,7 @@ class ProblemMatrix(object):
                 print('Encountered an attribute error')
                         
         else:
-            print('solving with scipy.optimize')
+            print('solving problem with scipy.optimize')
             bds = np.zeros((self.npp+self.neps, 2))
             bds[:,1] = 1.
             sol=scipy.optimize.linprog(self.c,self.A.T,self.b,
@@ -411,6 +405,59 @@ class ProblemMatrix(object):
                                        bounds=bds)
             self.Apod[self.idx_pup]=sol.x
             return self.Apod
+
+#%%    
+    def compute_matrices(self):
+        r"""
+        Computes the matrices for the optimization problem that consists in 
+        maximizing the contrast in a given search area in the coronagraphic 
+        image for a set integrated apodizer transmission :math:`\tau`. In terms
+        of matrices, the optimization problem writes as
+            
+        .. math:: \max_{\tau} c^{T}.x,
+            
+        under the constraint :math:`A.x \leq b`.
+                
+        The variable :math:`x` is a concatenation of the apodizer transmission 
+        function :math:`\Phi` and an auxiliary variable :math:`\epsilon`.
+        The variable :math:`\epsilon` represents the contrast to maximize in 
+        the search area ranging between :math:`\rho_0` and :math:`\rho_1` in 
+        the coronagraphic image. It can either depend on the position 
+        :math:`\xi` in the coronagraphic image or not (:math:`L_1`-norm or 
+        :math:`L_\infty`-norm problem). 
+        The variables follow the notations of [1]_ and [2]_.
+
+        Parameters
+        -----------
+
+                         
+        Returns
+        -----------
+
+
+        References
+        ----------
+
+                                
+        """
+        
+        t0 = time.time()
+        if self.corono_field_t is None:            
+            print('computing corono response matrix for 2D problem')   
+            self.compute_response_matrices()
+
+        if self.A is None or self.b is None or self.c is None:
+            print('computing A, b, and c matrices')
+            self.compute_problem_matrices()
+#        else:
+#            if self.problem_name == 'MaxTau':
+#                print('updating A matrix')
+#                self.update_cDarkHole()
+#            else:
+#                print('updating b matrix')
+#                self.update_tau()                
+        t1 = time.time()
+        return print('matrix problem definition time : {0:.2f}s'.format(t1-t0))
 
         
 #%%
@@ -432,7 +479,7 @@ class MaxTau(ProblemMatrix):
         self.neps = 0
 
 #%%        
-    def compute_matrices(self):
+    def compute_problem_matrices(self):
         r"""
         Computes the matrices for the optimization problem that consists in 
         maximizing the amplitude transmission of the apodizer :math:`\Phi` 
@@ -510,13 +557,13 @@ class MaxTau(ProblemMatrix):
         ED0tmp = np.zeros((self.corono.nPup, self.corono.nlam*self.ndz*2))
         for j in range(self.corono.nlam*self.ndz*2):
             ED0tmp[:,j] = \
-            self.direct_field_t_re[:,(self.corono.nlam-1)//2,0]
+            self.direct_field_re_t_tmp[:,(self.corono.nlam-1)//2,0]
         ED0 = ED0tmp[self.idx_pup,:]
         cst = 10.**(-self.cDarkHole/2.)/np.sqrt(2.)
         ED0 *= cst
        
-        A0  =  self.corono_field_t2 - ED0
-        A1  = -self.corono_field_t2 - ED0
+        A0  =  self.corono_field_t - ED0
+        A1  = -self.corono_field_t - ED0
     
         b0  = np.zeros((self.corono.nlam*self.ndz*2))
         b1  = np.zeros((self.corono.nlam*self.ndz*2))
@@ -597,7 +644,7 @@ class MaxContrast(ProblemMatrix):
             self.neps = self.ndz
 
 #%%    
-    def compute_matrices(self):
+    def compute_problem_matrices(self):
         r"""
         Computes the matrices for the optimization problem that consists in 
         maximizing the contrast in a given search area in the coronagraphic 
@@ -733,8 +780,8 @@ class MaxContrast(ProblemMatrix):
             c1 = 2.*np.pi*np.array(self.idx_dz)*(self.corono.Fmax\
                                   /self.corono.nImg)**2
         
-        A0  = np.concatenate(( self.corono_field_t2, -I1), axis=0)
-        A1  = np.concatenate((-self.corono_field_t2, -I1), axis=0)
+        A0  = np.concatenate(( self.corono_field_t, -I1), axis=0)
+        A1  = np.concatenate((-self.corono_field_t, -I1), axis=0)
         A4  = np.concatenate((np.zeros((self.npp, self.ndz)), -I0), axis=0)
         A5  = np.concatenate((- 2.*np.pi*(
                 np.arange(self.corono.nPup)[self.idx_pup]+0.5)\
@@ -893,7 +940,7 @@ class MaxContrast(ProblemMatrix):
 #        ED0tmp = np.zeros((self.corono.nPup, self.corono.nlam*self.ndz*2))
 #        for j in range(self.corono.nlam*self.ndz*2):
 #            ED0tmp[:,j] = \
-#            self.direct_field_t_re[:,(self.corono.nlam-1)//2,0]
+#            self.direct_field_re_t_tmp[:,(self.corono.nlam-1)//2,0]
 #        ED0 = ED0tmp[self.idx_pup,:]
 #        cst = 10.**(-self.cDarkHole/2.)/np.sqrt(2.)
 #        ED0 *= cst
@@ -901,16 +948,16 @@ class MaxContrast(ProblemMatrix):
 ##        ED0tmpbis = np.zeros((self.corono.nPup, self.corono.nlam*self.ndzdirect*2))
 ##        for j in range(self.corono.nlam*self.ndzdirect*2):
 ##            ED0tmpbis[:,j] = \
-##            self.direct_field_t_re[:,(self.corono.nlam-1)//2,0]        
+##            self.direct_field_re_t_tmp[:,(self.corono.nlam-1)//2,0]        
 ##        ED0bis = ED0tmpbis[self.idx_pup,:]
 ##        cstbis = 10.**(-self.cDarkHoledirect/2.)/np.sqrt(2.)
 ##        ED0bis *= cstbis        
 ##       
-#        A0  =  self.corono_field_t2 - ED0
-#        A1  = -self.corono_field_t2 - ED0
+#        A0  =  self.corono_field_t - ED0
+#        A1  = -self.corono_field_t - ED0
 #
-##        A0bis  =  self.direct_field_t2 - ED0bis
-##        A1bis  = -self.direct_field_t2 - ED0bis
+##        A0bis  =  self.direct_field_t - ED0bis
+##        A1bis  = -self.direct_field_t - ED0bis
 #    
 #        b0  = np.zeros((self.corono.nlam*self.ndz*2))
 #        b1  = np.zeros((self.corono.nlam*self.ndz*2))
@@ -933,9 +980,9 @@ class MaxContrast(ProblemMatrix):
 ##                /(2.*self.corono.nPup)**2/self.TR
 #
 #        print('test {0}'.format(np.array(self.idx_dzdirect)))
-#        print('test 2 {0}'.format(np.shape(self.direct_field_t2_re)))
+#        print('test 2 {0}'.format(np.shape(self.direct_field_re_t)))
 #
-#        self.c = 2.*np.pi*np.array(self.idx_dzdirect)*self.direct_field_t2_re*(self.corono.Fmax\
+#        self.c = 2.*np.pi*np.array(self.idx_dzdirect)*self.direct_field_re_t*(self.corono.Fmax\
 #                                  /self.corono.nImg)**2
 #        
 #        return self.A, self.b, self.c
@@ -1135,8 +1182,8 @@ class MaxContrast(ProblemMatrix):
 #        c1 = 2.*np.pi*np.array(self.idx_dz)*(self.corono.Fmax\
 #                              /self.corono.nImg)**2
 #        
-#        A0  = np.concatenate(( self.corono_field_t2, -I1), axis=0)
-#        A1  = np.concatenate((-self.corono_field_t2, -I1), axis=0)
+#        A0  = np.concatenate(( self.corono_field_t, -I1), axis=0)
+#        A1  = np.concatenate((-self.corono_field_t, -I1), axis=0)
 #        A4  = np.concatenate((np.zeros((self.npp, self.ndz)), -I0), axis=0)
 #        A5  = np.concatenate((- 2.*np.pi*(
 #                np.arange(self.corono.nPup)[self.idx_pup]+0.5)\
