@@ -6,7 +6,6 @@ Created on Mon Apr 30 14:10:20 2018
 @author: mndiaye
 """
 import numpy as np
-import time
 import pylab as pl
 from pathlib import Path
 
