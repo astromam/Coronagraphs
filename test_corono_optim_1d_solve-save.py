@@ -70,45 +70,8 @@ params = to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
                  LyotStopObs = LyotStopObs,
                  LyotStopIns = LyotStopIns,
                  r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d,
-                 solver = solver)
-
-
-#%%
-fdir = Path('.').resolve()
-
-fdir_pyth = fdir / 'results' / '1D' / 'dat_pyth'
-fdir_plot = fdir / 'results' / '1D' / 'plots'
-
-if not os.path.exists(fdir_plot):
-    os.makedirs(fdir_plot)
-    
-if not os.path.exists(fdir_pyth):
-    os.makedirs(fdir_pyth)    
- 
-if corono_name == 'APLC' or corono_name == 'SP': 
-    fname = '{0}_obs={1:2d}_FPM={2:3d}_lsid={3:2d}_lsod={4:2d}_IWA={5:03d}_OWA={6:03d}_BW={7:02d}_C={8:02d}_1D_N={9:04d}_nFPM={10:03d}_{11}'.format(
-                corono_name, int(PupilObs*100), int(rMask*100),
-                int(LyotStopObs*100), int(LyotStopIns*100),
-                int(rho0*10),int(rho1*10),int(bw*100), int(cDarkHole),
-                int(nPup), int(nFPM), solver)
-elif corono_name == 'HDZPM':
-    fname = '{0}_obs={1:2d}_FPM1={2:3d}_FPM2={3:3d}_lsid={4:2d}_lsod={5:2d}_IWA={6:03d}_OWA={7:03d}_BW={8:02d}_C={9:02d}_1D_N={10:04d}_nFPM={11:03d}_{12}'.format(
-                corono_name, int(PupilObs*100), int(rMask1*100), int(rMask2*100), 
-                int(LyotStopObs*100), int(LyotStopIns*100),
-                int(rho0*10),int(rho1*10),int(bw*100), int(cDarkHole),
-                int(nPup), int(nFPM), solver) 
-elif corono_name == 'HTZPM':
-    fname = '{0}_obs={1:2d}_FPM1={2:3d}_FPM2={3:3d}_FPM3={4:3d}_lsid={5:2d}_lsod={6:2d}_IWA={7:03d}_OWA={8:03d}_BW={9:02d}_C={10:02d}_1D_N={11:04d}_nFPM={12:03d}_{13}'.format(
-                corono_name, int(PupilObs*100), 
-                int(rMask1*100), int(rMask2*100), int(rMask3*100), 
-                int(LyotStopObs*100), int(LyotStopIns*100),
-                int(rho0*10),int(rho1*10),int(bw*100), int(cDarkHole),
-                int(nPup), int(nFPM), solver) 
-else:
-    raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
-
-
-fname_pyth = fname + '_guropy_apod_{0}.dat'.format(problem_name)
+                 solver = solver, problem_name = problem_name,
+                 corono_name = corono_name)
 
 #%%  
 """ 
@@ -151,15 +114,19 @@ Apod_pyth = problem1.solve_model()
 t1 = time.time()
 print('optimization time              : {0:.2f}s'.format(t1-t0))
 
-
 #%% Apodizer solution for the problems
 """
 Apodizer saving 
 """
-fpath_pyth = fdir_pyth / fname_pyth
+fdir = Path('.').resolve() / 'results' / '1D' / 'dat_pyth'
+if not os.path.exists(fdir):
+    os.makedirs(fdir)      
+
+fname = problem1.get_filename()
+fpath = fdir / fname
 
 test0 = np.zeros((nPup, 2))
 test0[:, 0] = corono0.r/2
 test0[:, 1] = Apod_pyth
 
-np.savetxt(fpath_pyth, test0)
+np.savetxt(fpath, test0)

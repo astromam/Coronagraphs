@@ -348,9 +348,6 @@ class ProblemMatrix(object):
                                                   corono_field_im_t), 
                                                   axis=1)
 
-
-
-
 #%%        
     def solve_model(self):
         """
@@ -406,6 +403,32 @@ class ProblemMatrix(object):
             self.Apod[self.idx_pup]=sol.x
             return self.Apod
 
+#%%
+    def get_filename(self):
+
+        if self.problem_name == 'MaxTau':
+            str_opt = '_C={cDarkHole:.1f}'
+        elif self.problem_name == 'MaxContrastL1' or self.problem_name == 'MaxContrastLinf':
+            str_opt = '_tau={tau:.3f}'
+        else:
+            raise NameError('{0}: Not an existing optimization problem!'.format(self.problem_name))
+
+        if self.corono.corono_name == 'APLC' or self.corono.corono_name == 'SP': 
+            str_cor = '_rMask={rMask:.3f}'
+        elif self.corono.corono_name == 'HDZPM':
+            str_cor = '_rMask1={rMask1:.3f}_rMask2={rMask2:.3f}'
+        elif self.corono.corono_name == 'HTZPM':
+            str_cor = '_rMask1={rMask1:.3f}_rMask2={rMask2:.3f}_rMask3={rMask3:.3f}'
+        else:
+            raise NameError('{0}: Not an existing coronagraph!'.format(self.corono.corono_name))
+
+        fname_gen   = '{corono_name}_obs={PupilObs:.2f}' + \
+        '_lsid={LyotStopObs:.2f}_lsod={LyotStopIns:.2f}' + \
+        '_IWA={rho0}_OWA={rho1}_BW={bw:.2f}_nlam={nlam:02d}' + \
+        '_1D_N={nPup:04d}_nFPM={nFPM:03d}'+ str_cor +  str_opt + '_{solver}.dat'
+        
+        return fname_gen.format(**{key: self.corono.params[key] for key in self.corono.params})
+    
 #%%    
     def compute_matrices(self):
         r"""
