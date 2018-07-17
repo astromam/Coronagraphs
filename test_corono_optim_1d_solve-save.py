@@ -21,7 +21,7 @@ Parameters
 """
 corono_name  = 'APLC' # 'APLC' or 'SP'
 problem_name = 'MaxTau' # ,'MaxContrastL1' # 'MaxContrastLinf' #'MaxContrastL1' # #  
-solver       = 'xxx' # 'stdgrb', 'gurobipy', 'scipy.linprog'
+solver       = 'stdgrb' # 'stdgrb', 'gurobipy', 'scipy.linprog'
 
 nPup = 500
 nFPM = 50
