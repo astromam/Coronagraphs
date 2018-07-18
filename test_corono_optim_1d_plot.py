@@ -131,7 +131,6 @@ Apod_pyth = test0[:, 1]
 """
 Plot display of the apodizers
 """
-fname_gen  = problem1.get_filename(nlam=nlambis)
 fname_pl   = fname_gen + '_apodizers_tran.pdf'
 fpath      = fdir_plot / fname_pl
 
@@ -149,7 +148,8 @@ pl.savefig(str(fpath))
 """
 Computation of the direct and coronagraphic images
 """
-params2 = update_params(params, nlam=nlambis) 
+fname_gen  = problem1.get_filename(nlam=nlambis)
+params2    = update_params(params, nlam=nlambis) 
 
 if corono_name == 'APLC':
     corono0 = cd.APLC1d(**params2)

@@ -162,7 +162,7 @@ for i, val in enumerate(pb_lst):
     if not os.path.exists(fdir):
         os.makedirs(fdir)
 
-    fname = problem1.get_filename()
+    fname = problem1.get_filename() + '.fits'
     fpath = fdir / fname
    
     if do_fits is True:

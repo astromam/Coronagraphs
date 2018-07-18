@@ -102,7 +102,6 @@ else:
 """
 Problem defintion
 """
-t0 = time.time()
 if problem_name == 'MaxTau':
     # Maximization of the integrated amplitude transmission of the apodizer
     problem1 = co2d.MaxTau(corono=corono0, **params)
@@ -114,9 +113,6 @@ elif problem_name == 'MaxContrastLinf':
     problem1 = co2d.MaxContrast(corono=corono0, Lnorm='Linf',**params)
 else:
     raise NameError('{0}: Not an existing optimization problem!'.format(problem_name))
-    
-t1 = time.time()
-print('problem definition time       : {0:.2f}s'.format(t1-t0))
     
 #%% Apodizer solution for the problems
 """
@@ -147,7 +143,7 @@ fdir = Path('./results/2D/dat_pyth').resolve() / pupil_name
 if not os.path.exists(fdir):
     os.makedirs(fdir)
 
-fname = problem1.get_filename()
+fname = problem1.get_filename() + '.fits'
 fpath = fdir / fname
 
 if do_fits is True:

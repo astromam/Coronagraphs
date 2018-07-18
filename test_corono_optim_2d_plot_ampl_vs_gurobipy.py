@@ -10,10 +10,12 @@ import time
 import pylab as pl
 from pathlib import Path
 
+import os
+
 from corono import corono_design as cd
 from corono import corono_optim_2d as co2d
 
-from corono.utils import to_dict
+from corono.utils import to_dict, update_params
 
 from matplotlib import cm
 
@@ -55,6 +57,7 @@ Pupil2dSym  = True
 
 #nlam
 nlam = 5
+nlambis = 11
 bw   = 0.1
 
 do_fits = True
@@ -89,6 +92,16 @@ params = to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
                  solver = solver, 
                  corono_name = corono_name, pupil_name = pupil_name)
 
+#%%
+"""
+Working directories
+"""
+fdir = Path('./results/2D/dat_pyth').resolve() / pupil_name
+
+fdir_pdf = Path('./results/2D/plots/').resolve()
+if not os.path.exists(fdir_pdf):
+    os.makedirs(fdir_pdf)
+
 #%%  
 """ 
 Coronagraph defintion
@@ -104,7 +117,6 @@ else:
 """
 Problem defintion
 """
-t0 = time.time()
 if problem_name == 'MaxTau':
     # Maximization of the integrated amplitude transmission of the apodizer
     problem1 = co2d.MaxTau(corono=corono0, **params)
@@ -116,18 +128,14 @@ elif problem_name == 'MaxContrastLinf':
     problem1 = co2d.MaxContrast(corono=corono0, Lnorm='Linf',**params)
 else:
     raise NameError('{0}: Not an existing optimization problem!'.format(problem_name))
-    
-t1 = time.time()
-print('problem definition time       : {0:.2f}s'.format(t1-t0))
 
 #%%
 """
 Read files obtained with gurobi
 """
-fdir = Path('./results/2D/dat_pyth').resolve() / pupil_name
-
-fname = problem1.get_filename()
-fpath = fdir / fname
+fname_gen = problem1.get_filename()
+fname     = fname_gen + '.fits'
+fpath     = fdir / fname
 
 Apod_pyth = fits.getdata(fpath,)
 
@@ -164,9 +172,9 @@ pl.clf()
 pl.imshow(corono0.Pupil2d, cmap = cm.Greys_r)
 pl.title('Pupil transmission')
 
-fdir_pdf = Path('./results/2D/plots/').resolve()
-fname = '{0}_apodisation_pyth_nPup={1:04d}_{2}.pdf'.format(pupil_name, nPup, corono_name)
+fname = fname_gen + '_apodisation_pyth.pdf'
 fpath = fdir_pdf / fname
+
 pl.figure(2)
 pl.clf()
 pl.imshow(Apod_pyth*corono0.Pupil2d, cmap = cm.Greys_r)
@@ -174,9 +182,9 @@ pl.title('Apod 1 transmission - {0}'.format(solver))
 pl.tight_layout()
 pl.savefig(str(fpath))
 
-fdir_pdf = Path('./results/2D/plots/').resolve()
-fname = '{0}_apodisation_ampl_nPup={1:04d}_{2}.pdf'.format(pupil_name, nPup, corono_name)
+fname = fname_gen + '_apodisation_ampl.pdf'
 fpath = fdir_pdf / fname
+
 pl.figure(3)
 pl.clf()
 pl.imshow(Apod_ampl*corono0.Pupil2d, cmap = cm.Greys_r)
@@ -189,16 +197,8 @@ pl.savefig(str(fpath))
 """
 Computation of the direct and coronagraphic images
 """
-
-nlam = 5
-
-params = to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d,
-                 rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau, 
-                 CtrBtwnPix=CtrBtwnPix, CtrBtwnPix2=CtrBtwnPix2, 
-                 nlam=nlam, bw=bw,
-                 Pupil2d = Pupil2d, LyotStop2d = LyotStop2d,
-                 Pupil2dSym = Pupil2dSym, rMask=rMask,
-                 problem_name = problem_name, solver= solver)
+fname_gen  = problem1.get_filename(nlam=nlambis)
+params2    = update_params(params, nlam=nlambis)
 
 if corono_name == 'SP':
     corono0 = cd.SP2d(**params)
@@ -220,8 +220,9 @@ poly_corono_image2 = corono0.compute_corono_intensity_2d(Apod_ampl)
 """
 Display direct and coronagraphic images
 """
-fname = '{0}_direct_image_nPup={1:04d}_{2}.pdf'.format(pupil_name, nPup, corono_name)
+fname = fname_gen + '_direct_image.pdf'
 fpath = fdir_pdf / fname
+
 pl.figure(10)
 pl.clf()
 pl.imshow(poly_direct_image1**0.25, cmap = cm.inferno)
@@ -236,8 +237,9 @@ pl.title('Apod1 - direct image - ampl')
 pl.tight_layout()
 pl.savefig(str(fpath))
 
-fname  = '{0}_apodized_image_pyth_nPup={1:04d}_{2}.pdf'.format(pupil_name, nPup, corono_name)
+fname  = fname_gen + '_apodized_image_pyth.pdf'
 fpath = fdir_pdf / fname
+
 pl.figure(12)
 pl.clf()
 pl.imshow(poly_corono_image1**0.25, cmap = cm.inferno)
@@ -245,8 +247,9 @@ pl.title('Apod1 - apodized image - {0}'.format(solver))
 pl.tight_layout()
 pl.savefig(str(fpath))
 
-fname  = '{0}_apodized_image_ampl_nPup={1:04d}_{2}.pdf'.format(pupil_name, nPup, corono_name)
+fname  = fname_gen + '_apodized_image_ampl.pdf'
 fpath = fdir_pdf / fname
+
 pl.figure(13)
 pl.clf()
 pl.imshow(poly_corono_image2**0.25, cmap = cm.inferno)
@@ -264,7 +267,7 @@ if CtrBtwnPix2 is False:
     xi2d = corono0.xi2d
 
 nImg2d = corono0.params['nImg2d']
-fname = '{0}_intensity_profiles_nPup={1:04d}_{2}.pdf'.format(pupil_name, nPup, corono_name)
+fname = fname_gen + '_intensity_profiles.pdf'
 fpath = fdir_pdf / fname
 
 pl.figure(20)

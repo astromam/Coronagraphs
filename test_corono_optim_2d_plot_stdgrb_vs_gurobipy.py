@@ -14,7 +14,7 @@ import os
 from corono import corono_design as cd
 from corono import corono_optim_2d as co2d
 
-from corono.utils import to_dict
+from corono.utils import to_dict, update_params
 
 from matplotlib import cm
 
@@ -25,8 +25,8 @@ from astropy.io import fits
 Parameters
 """
 # Telescope name
-pupil_name = 'sbr' # 'vlt' or 'sbr' or 'lvr'
-problem_name = 'MaxContrastL1' # 'MaxContrastL1' #'MaxTau' # , 'MaxContrastLinf' # #  
+pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
+problem_name = 'MaxTau' # 'MaxContrastL1' #'MaxTau' # , 'MaxContrastLinf' # #  
 solver       = 'stdgrb' # 'gurobipy' #  'gurobipy', 'scipy.linprog'
 
 
@@ -89,6 +89,18 @@ params = to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
                  solver = solver, 
                  corono_name = corono_name, pupil_name = pupil_name)
 
+#%%
+"""
+Working directories
+"""
+fdir = Path('./results/2D/dat_pyth').resolve() / pupil_name
+fdir_pyth = Path('./results/2D/dat_pyth').resolve() / pupil_name
+fdir_cyth = Path('./results/2D/dat_pyth').resolve() / pupil_name
+
+fdir_pdf = Path('./results/2D/plots/').resolve()
+if not os.path.exists(fdir_pdf):
+    os.makedirs(fdir_pdf)
+
 #%%  
 """ 
 Coronagraph defintion
@@ -104,7 +116,6 @@ else:
 """
 Problem defintion
 """
-t0 = time.time()
 if problem_name == 'MaxTau':
     # Maximization of the integrated amplitude transmission of the apodizer
     problem1 = co2d.MaxTau(corono=corono0, **params)
@@ -116,37 +127,28 @@ elif problem_name == 'MaxContrastLinf':
     problem1 = co2d.MaxContrast(corono=corono0, Lnorm='Linf',**params)
 else:
     raise NameError('{0}: Not an existing optimization problem!'.format(problem_name))
-    
-t1 = time.time()
-print('problem definition time       : {0:.2f}s'.format(t1-t0))
-
-
 
 #%%
 """
 Read files obtained with gurobipy
 """
-fdir = Path('./results/2D/dat_pyth').resolve() / pupil_name
-
 problem1.params['solver'] = 'gurobipy'
-fname = problem1.get_filename()
-fpath_gurobipy = fdir / fname
+fname_gen_pyth = problem1.get_filename()
+fname = fname_gen_pyth + ',fits'
+fpath_gurobipy = fdir_pyth / fname
 
 Apod_gurobipy = fits.getdata(fpath_gurobipy,)
-
 
 #%%
 """
 Read files obtained with stdgrb
 """
-fdir = Path('./results/2D/dat_pyth').resolve() / pupil_name
-
 problem1.params['solver'] = 'stdgrb'
-fname = problem1.get_filename()
-fpath_stdgrb = fdir / fname
+fname_gen_cyth = problem1.get_filename()
+fname = fname_gen_cyth + '.fits'
+fpath_stdgrb = fdir_cyth / fname
 
 Apod_stdgrb = fits.getdata(fpath_stdgrb,)
-
 
 #%% Display of the apodizer
 """
@@ -157,12 +159,9 @@ pl.clf()
 pl.imshow(corono0.Pupil2d, cmap = cm.Greys_r)
 pl.title('Pupil transmission')
 
-fdir_pdf = Path('./results/2D/plots/').resolve()
-if not os.path.exists(fdir_pdf):
-    os.makedirs(fdir_pdf)
-
-fname = '{0}_apodisation_pyth_nPup={1:04d}.pdf'.format(pupil_name, nPup)
+fname = fname_gen_pyth + '_apodisation_pyth.pdf'
 fpath = fdir_pdf / fname
+
 pl.figure(5)
 pl.clf()
 pl.imshow(Apod_gurobipy*corono0.Pupil2d, cmap = cm.Greys_r)
@@ -170,9 +169,10 @@ pl.title('Apod 1 transmission - gurobipy')
 pl.tight_layout()
 pl.savefig(str(fpath))
 
-fdir_pdf = Path('./results/2D/plots/').resolve()
-fname = '{0}_apodisation_ampl_nPup={1:04d}.pdf'.format(pupil_name, nPup)
+
+fname = fname_gen_cyth + '_apodisation_ampl.pdf'
 fpath = fdir_pdf / fname
+
 pl.figure(6)
 pl.clf()
 pl.imshow(Apod_stdgrb*corono0.Pupil2d, cmap = cm.Greys_r)
@@ -185,17 +185,13 @@ pl.savefig(str(fpath))
 """
 Computation of the direct and coronagraphic images
 """
-params = to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d,nFPM=nFPM,
-                 rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau, 
-                 CtrBtwnPix=CtrBtwnPix, CtrBtwnPix2=CtrBtwnPix2, 
-                 nlam=nlambis, bw=bw,
-                 Pupil2d = Pupil2d, LyotStop2d = LyotStop2d,
-                 Pupil2dSym = Pupil2dSym, rMask=rMask)
+fname_gen  = problem1.get_filename(nlam=nlambis)
+params2    = update_params(params, nlam=nlambis)
 
 if corono_name == 'SP':
-    corono0 = cd.SP2d(**params)
+    corono0 = cd.SP2d(**params2)
 else:
-    corono0 = cd.APLC2d(**params)
+    corono0 = cd.APLC2d(**params2)
 
 if corono_name == 'APLC':
     poly_direct_image1 = corono0.compute_direct_intensity_2d(Apod_gurobipy)
@@ -211,7 +207,7 @@ poly_corono_image2 = corono0.compute_corono_intensity_2d(Apod_stdgrb)
 """
 Display direct and coronagraphic images
 """
-fname = '{0}_direct_image_nPup={1:04d}.pdf'.format(pupil_name, nPup)
+fname = fname_gen_pyth + '_direct_image.pdf'
 fpath = fdir_pdf / fname
 pl.figure(10)
 pl.clf()
@@ -220,7 +216,7 @@ pl.title('Apod1 - direct image')
 pl.tight_layout()
 pl.savefig(str(fpath))
 
-fname = '{0}_direct_image_nPup={1:04d}.pdf'.format(pupil_name, nPup)
+fname = fname_gen_cyth + '_direct_image.pdf'
 fpath = fdir_pdf / fname
 pl.figure(11)
 pl.clf()
@@ -229,7 +225,7 @@ pl.title('Apod1 - direct image')
 pl.tight_layout()
 pl.savefig(str(fpath))
 
-fname  = '{0}_apodized_image_pyth_nPup={1:04d}.pdf'.format(pupil_name, nPup)
+fname  = fname_gen_pyth + '_apodized_image_pyth.pdf'
 fpath = fdir_pdf / fname
 pl.figure(12)
 pl.clf()
@@ -238,7 +234,7 @@ pl.title('Apod1 - apodized image - gurobipy')
 pl.tight_layout()
 pl.savefig(str(fpath))
 
-fname  = '{0}_apodized_image_ampl_nPup={1:04d}.pdf'.format(pupil_name, nPup)
+fname  = fname_gen_cyth + '_apodized_image_ampl.pdf'
 fpath = fdir_pdf / fname
 pl.figure(13)
 pl.clf()
@@ -264,7 +260,7 @@ if nImg2d%2 == 0:
     xi2d = corono0.xi2d_ctr
 
 nImg2d = corono0.params['nImg2d']
-fname = '{0}_intensity_profiles_nPup={1:04d}.pdf'.format(pupil_name, nPup)
+fname = fname_gen_pyth + '_intensity_profiles.pdf'
 fpath = fdir_pdf / fname
 
 pl.figure(8)

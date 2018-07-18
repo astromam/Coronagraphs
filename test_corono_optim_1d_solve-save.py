@@ -13,7 +13,7 @@ from pathlib import Path
 from corono import corono_design as cd
 from corono import corono_optim_1d as co1d
 
-from corono.utils import to_dict
+from corono.utils import to_dict, update_params
 
 #%% parameters
 """
@@ -73,6 +73,14 @@ params = to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
                  solver = solver, problem_name = problem_name,
                  corono_name = corono_name)
 
+#%%
+"""
+Working directory
+"""
+fdir = Path('.').resolve() / 'results' / '1D' / 'dat_pyth'
+if not os.path.exists(fdir):
+    os.makedirs(fdir)      
+
 #%%  
 """ 
 Coronagraph defintion
@@ -118,10 +126,6 @@ print('optimization time              : {0:.2f}s'.format(t1-t0))
 """
 Apodizer saving 
 """
-fdir = Path('.').resolve() / 'results' / '1D' / 'dat_pyth'
-if not os.path.exists(fdir):
-    os.makedirs(fdir)      
-
 fname = problem1.get_filename() + '.dat'
 fpath = fdir / fname
 
