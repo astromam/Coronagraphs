@@ -129,31 +129,22 @@ fpath_pyth_nm0 = fdir_pyth / fname_pyth_nm0
 x_end = np.loadtxt(fpath_pyth_nm0)
 
 if corono_name == 'APLC':
-    rMask       = x_end[0]
-    LyotStopObs = x_end[1]
-    LyotStopIns = x_end[2]
+    rMask, LyotStopObs, LyotStopIns = [x_end[i] for i in range(3)]
     print('mask radius          : {0:.3f} lambda/D'.format(rMask))
     print('Lyot Stop obstruction: {0:.3f}'.format(LyotStopObs))
     print('Lyot Stop ins. size  : {0:.3f}'.format(LyotStopIns))
 elif corono_name == 'HDZPM':
-    rMask1      = x_end[0]
+    rMask1, OPDx2, LyotStopObs, LyotStopIns = [x_end[i] for i in {0,2,3,4}]
     rMask2      = rMask1 + x_end[1]
-    OPDx2       = x_end[2]
-    LyotStopObs = x_end[3]
-    LyotStopIns = x_end[4]
     print('mask radius 1         : {0:.3f} lambda_0/D'.format(rMask1))
     print('mask radius 2         : {0:.3f} lambda_0/D'.format(rMask2))
     print('OPD 2                 : {0:.3f} lambda_0'.format(OPDx2))
     print('Lyot Stop obstruction: {0:.3f}'.format(LyotStopObs))
     print('Lyot Stop ins. size  : {0:.3f}'.format(LyotStopIns))    
 elif corono_name == 'HTZPM': 
-    rMask1      = x_end[0]
+    rMask1, OPDx2, OPDx3, LyotStopObs, LyotStopIns = [x_end[i] for i in {0,3,4,5,6}]
     rMask2      = rMask1 + x_end[1]
     rMask3      = rMask2 + x_end[2]
-    OPDx2       = x_end[3]
-    OPDx3       = x_end[4]
-    LyotStopObs = x_end[5]
-    LyotStopIns = x_end[6]
     print('mask radius 1         : {0:.3f} lambda_0/D'.format(rMask1))
     print('mask radius 2         : {0:.3f} lambda_0/D'.format(rMask2))
     print('mask radius 3         : {0:.3f} lambda_0/D'.format(rMask3))
