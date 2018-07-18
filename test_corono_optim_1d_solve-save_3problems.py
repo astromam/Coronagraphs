@@ -12,7 +12,7 @@ from pathlib import Path
 from corono import corono_design as cd
 from corono import corono_optim_1d as co1d
 
-from corono.utils import to_dict
+from corono.utils import to_dict, update_params
 
 #%% parameters
 """
@@ -69,50 +69,16 @@ params = to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
                  LyotStopObs = LyotStopObs,
                  LyotStopIns = LyotStopIns,
                  r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d,
-                 solver = solver)
+                 solver = solver, 
+                 corono_name = corono_name)
 
 #%%
-fdir = Path('.').resolve()
-
-fdir_pyth = fdir / 'results' / '1D' / 'dat_pyth'
-fdir_plot = fdir / 'results' / '1D' / 'plots'
-
-if not os.path.exists(fdir_plot):
-    os.makedirs(fdir_plot)
-    
-if not os.path.exists(fdir_pyth):
-    os.makedirs(fdir_pyth)    
- 
-if corono_name == 'APLC' or corono_name == 'SP': 
-    fname = '{0}_obs={1:2d}_FPM={2:3d}_lsid={3:2d}_lsod={4:2d}_IWA={5:03d}_OWA={6:03d}_BW={7:02d}_C={8:02d}_1D_N={9:04d}_nFPM={10:03d}_{11}'.format(
-                corono_name, int(PupilObs*100), int(rMask*100),
-                int(LyotStopObs*100), int(LyotStopIns*100),
-                int(rho0*10),int(rho1*10),int(bw*100), int(cDarkHole),
-                int(nPup), int(nFPM), solver)
-elif corono_name == 'HDZPM':
-    fname = '{0}_obs={1:2d}_FPM1={2:3d}_FPM2={3:3d}_lsid={4:2d}_lsod={5:2d}_IWA={6:03d}_OWA={7:03d}_BW={8:02d}_C={9:02d}_1D_N={10:04d}_nFPM={11:03d}_{12}'.format(
-                corono_name, int(PupilObs*100), int(rMask1*100), int(rMask2*100), 
-                int(LyotStopObs*100), int(LyotStopIns*100),
-                int(rho0*10),int(rho1*10),int(bw*100), int(cDarkHole),
-                int(nPup), int(nFPM), solver) 
-elif corono_name == 'HTZPM':
-    fname = '{0}_obs={1:2d}_FPM1={2:3d}_FPM2={3:3d}_FPM3={4:3d}_lsid={5:2d}_lsod={6:2d}_IWA={7:03d}_OWA={8:03d}_BW={9:02d}_C={10:02d}_1D_N={11:04d}_nFPM={12:03d}_{13}'.format(
-                corono_name, int(PupilObs*100), 
-                int(rMask1*100), int(rMask2*100), int(rMask3*100), 
-                int(LyotStopObs*100), int(LyotStopIns*100),
-                int(rho0*10),int(rho1*10),int(bw*100), int(cDarkHole),
-                int(nPup), int(nFPM), solver) 
-else:
-    raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
-
-
-fname1 = fname + '_guropy_apod_MaxTau.dat'
-fname2 = fname + '_guropy_apod_MaxContrastL1.dat'
-fname3 = fname + '_guropy_apod_MaxContrastLinf.dat'
-
-fname_A1 = fname + '_guropy_A_MaxTau.dat'
-fname_A2 = fname + '_guropy_A_MaxContrastL1.dat'
-fname_A3 = fname + '_guropy_A_MaxContrastLinf.dat'
+"""
+Working directory
+"""
+fdir = Path('.').resolve() / 'results' / '1D' / 'dat_pyth'
+if not os.path.exists(fdir):
+    os.makedirs(fdir)      
 
 #%%  
 """ 
@@ -134,10 +100,13 @@ else:
 Problem defintion
 """
 # Maximization of the integrated amplitude transmission of the apodizer
+params  = update_params(params, problem_name = 'MaxTau')
 problem1 = co1d.MaxTau(corono=corono0, **params)
 # Maximization of the contrast under L1-norm
+params  = update_params(params, problem_name = 'MaxContrastL1')
 problem2 = co1d.MaxContrast(corono=corono0, Lnorm='L1',**params)
 # Maximization of the contrast under L-infinite norm
+params  = update_params(params, problem_name = 'MaxContrastLinf')
 problem3 = co1d.MaxContrast(corono=corono0, Lnorm='Linf',**params)
 
 #%% Apodizer solution for the problems
@@ -152,9 +121,13 @@ Apod3 = problem3.solve_model()
 """
 Apodizer saving 
 """
-fpath1 = fdir_pyth / fname1
-fpath2 = fdir_pyth / fname2
-fpath3 = fdir_pyth / fname3
+fname1 = problem1.get_filename() + '.dat'
+fname2 = problem2.get_filename() + '.dat'
+fname3 = problem3.get_filename() + '.dat'
+
+fpath1 = fdir / fname1
+fpath2 = fdir / fname2
+fpath3 = fdir / fname3
 
 test1 = np.zeros((nPup, 2))
 test1[:, 0] = corono0.r/2
@@ -180,9 +153,13 @@ A1 = problem1.A
 A2 = problem2.A
 A3 = problem3.A
 
-fpath_A1 = fdir_pyth / fname_A1
-fpath_A2 = fdir_pyth / fname_A2
-fpath_A3 = fdir_pyth / fname_A3
+fname_A1 = problem1.get_filename() + '_A.dat'
+fname_A2 = problem2.get_filename() + '_A.dat'
+fname_A3 = problem3.get_filename() + '_A.dat'
+
+fpath_A1 = fdir / fname_A1
+fpath_A2 = fdir / fname_A2
+fpath_A3 = fdir / fname_A3
 
 np.savetxt(fpath_A1, A1)
 np.savetxt(fpath_A2, A2)

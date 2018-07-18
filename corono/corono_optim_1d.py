@@ -422,7 +422,7 @@ class ProblemMatrix(object):
             
         
         """
-        params = self.corono.params.copy()
+        params = self.params.copy()
         params = update_params(params, **kwargs)
 
         if self.problem_name == 'MaxTau':
@@ -444,7 +444,7 @@ class ProblemMatrix(object):
         fname_gen   = '{corono_name}_obs={PupilObs:.2f}' + \
         '_lsid={LyotStopObs:.2f}_lsod={LyotStopIns:.2f}' + \
         '_IWA={rho0}_OWA={rho1}_BW={bw:.2f}_nlam={nlam:02d}' + \
-        '_1D_N={nPup:04d}_nFPM={nFPM:03d}'+ str_cor +  str_opt + '_{solver}'
+        '_1D_N={nPup:04d}_nFPM={nFPM:03d}'+ str_cor + '_{problem_name}' + str_opt + '_{solver}'
         
         return fname_gen.format(**{key: params[key] for key in params})
     
