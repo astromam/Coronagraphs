@@ -24,6 +24,7 @@ except ModuleNotFoundError:
 import scipy.optimize        
     
 from corono import corono_design as cd
+from corono.utils import update_params
 
 #%%
 """
@@ -405,9 +406,24 @@ class ProblemMatrix(object):
 
 #%%
     def get_filename(self, **kwargs):
+        """
+        Generate a string of characters to define a filename with all the 
+        parameters
         
+        Parameters
+        --------
+        kwargs : dict
+            parameters given by the user for the keys with the values to update
+        
+        Returns
+        --------
+        fname_gen : str
+            generic string of characters for a filename
+            
+        
+        """
         params = self.corono.params.copy()
-        params = params.update(kwargs)
+        params = update_params(params, **kwargs)
 
         if self.problem_name == 'MaxTau':
             str_opt = '_C={cDarkHole:.1f}'
@@ -428,9 +444,9 @@ class ProblemMatrix(object):
         fname_gen   = '{corono_name}_obs={PupilObs:.2f}' + \
         '_lsid={LyotStopObs:.2f}_lsod={LyotStopIns:.2f}' + \
         '_IWA={rho0}_OWA={rho1}_BW={bw:.2f}_nlam={nlam:02d}' + \
-        '_1D_N={nPup:04d}_nFPM={nFPM:03d}'+ str_cor +  str_opt + '_{solver}.dat'
+        '_1D_N={nPup:04d}_nFPM={nFPM:03d}'+ str_cor +  str_opt + '_{solver}'
         
-        return fname_gen.format(**{key: self.corono.params[key] for key in self.corono.params})
+        return fname_gen.format(**{key: params[key] for key in params})
     
 #%%    
     def compute_matrices(self):

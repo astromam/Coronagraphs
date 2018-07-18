@@ -122,7 +122,7 @@ fdir = Path('.').resolve() / 'results' / '1D' / 'dat_pyth'
 if not os.path.exists(fdir):
     os.makedirs(fdir)      
 
-fname = problem1.get_filename()
+fname = problem1.get_filename() + '.dat'
 fpath = fdir / fname
 
 test0 = np.zeros((nPup, 2))

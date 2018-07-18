@@ -31,7 +31,7 @@ R    = 1
 
 bw   = 0.1
 nlam = 5
-nlambis = 11
+nlambis = 9
 
 PupilObs    = 0.20
 rMask       = 4.4
@@ -121,7 +121,8 @@ else:
 """
 Apodizer solutions
 """
-fname_pyth = problem1.get_filename()
+fname_gen  = problem1.get_filename()
+fname_pyth = fname_gen + '.dat'
 fpath_pyth = fdir_pyth / fname_pyth
 test0 = np.loadtxt(fpath_pyth)
 Apod_pyth = test0[:, 1]
@@ -130,9 +131,9 @@ Apod_pyth = test0[:, 1]
 """
 Plot display of the apodizers
 """
-fname = fname_pyth.replace('.dat', '')
-fname_pl = fname + '_apodizers_tran.pdf'
-fpath = fdir_plot / fname_pl
+fname_gen  = problem1.get_filename(nlam=nlambis)
+fname_pl   = fname_gen + '_apodizers_tran.pdf'
+fpath      = fdir_plot / fname_pl
 
 pl.figure(1)
 pl.clf()
@@ -148,21 +149,7 @@ pl.savefig(str(fpath))
 """
 Computation of the direct and coronagraphic images
 """
-#params = to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
-#                 nPup = nPup, nFPM=nFPM, nImg=nImg, Fmax = Fmax,
-#                 bw = bw, nlam = nlambis,
-#                 PupilObs = PupilObs, rMask = rMask, 
-#                 rMask1 = rMask1, rMask2 = rMask2, rMask3 = rMask3,
-#                 OPDx2 = OPDx2, OPDx3 = OPDx3, 
-#                 LyotStopObs = LyotStopObs,
-#                 LyotStopIns = LyotStopIns,
-#                 r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d,
-#                 solver = solver, problem_name = problem_name,
-#                 corono_name = corono_name)
-
 params2 = update_params(params, nlam=nlambis) 
-#params2 = params.copy()
-#params2['nlam'] = nlambis
 
 if corono_name == 'APLC':
     corono0 = cd.APLC1d(**params2)
@@ -186,8 +173,8 @@ mono_corono_image1 = corono0.compute_corono_intensity_1d(Apod_pyth, poly=False)
 Display of the intensity profiles of the coronagraphic images
 """
 
-fname_pl = fname + '_intensity.pdf'
-fpath = fdir_plot / fname_pl
+fname_pl = fname_gen + '_intensity.pdf'
+fpath    = fdir_plot / fname_pl
 pl.figure(2)
 pl.clf()
 #pl.title('Intensity profiles of the coronagraphic images')
@@ -214,8 +201,8 @@ Display of the monochromatic intensity profiles of the coronagraphic images
 values = range(nlambis)
 colors = pl.cm.rainbow(np.linspace(0,1,nlambis))
 
-fname_pl = fname + '_intensity_mono.pdf'
-fpath = fdir_plot / fname_pl
+fname_pl = fname_gen + '_intensity_mono.pdf'
+fpath    = fdir_plot / fname_pl
 pl.figure(3)
 pl.clf()
 #pl.title('Intensity profiles of the coronagraphic images')
