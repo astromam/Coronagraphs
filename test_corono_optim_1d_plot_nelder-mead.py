@@ -11,19 +11,20 @@ import os
 
 from pathlib import Path
 from corono import corono_design as cd
+from corono import corono_optim_1d as co1d
 
-from corono.utils import to_dict
+from corono.utils import to_dict, update_params
 
 #%% parameters
 """
 Parameters
 """
-corono_name = 'HTZPM' # 'APLC' or 'SP' or 'HDZPM' or 'HTZPM'
+corono_name = 'APLC' # 'APLC' or 'SP' or 'HDZPM' or 'HTZPM'
 problem_name = 'MaxTau'#'MaxContrastLinf' # ,'MaxContrastL1' # #  'MaxContrastL1', 
 solver       = 'stdgrb' # 'stdgrb', 'gurobipy', 'scipy.linprog'
 
 
-nPup = 1000
+nPup = 500
 nFPM = 50
 nImg = 220
 Fmax = 22
@@ -72,11 +73,14 @@ params = to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
                  LyotStopObs = LyotStopObs,
                  LyotStopIns = LyotStopIns,
                  r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d,
-                 solver = solver)
+                 solver = solver, problem_name = problem_name,
+                 corono_name = corono_name)
 
 #%%
+"""
+Working directory
+"""
 fdir = Path('.').resolve()
-
 fdir_pyth = fdir / 'results' / '1D' / 'dat_pyth'
 fdir_plot = fdir / 'results' / '1D' / 'plots'
 
@@ -84,38 +88,43 @@ if not os.path.exists(fdir_plot):
     os.makedirs(fdir_plot)
     
 if not os.path.exists(fdir_pyth):
-    os.makedirs(fdir_pyth)    
-
-if corono_name == 'APLC' or corono_name == 'SP': 
-    fname = '{0}_obs={1:2d}_FPM={2:3d}_lsid={3:2d}_lsod={4:2d}_IWA={5:03d}_OWA={6:03d}_BW={7:02d}_C={8:02d}_1D_N={9:04d}_nFPM={10:03d}_{11}'.format(
-                corono_name, int(PupilObs*100), int(rMask*100),
-                int(LyotStopObs*100), int(LyotStopIns*100),
-                int(rho0*10),int(rho1*10),int(bw*100), int(cDarkHole),
-                int(nPup), int(nFPM), solver)
-elif corono_name == 'HDZPM':
-    fname = '{0}_obs={1:2d}_FPM1={2:3d}_FPM2={3:3d}_lsid={4:2d}_lsod={5:2d}_IWA={6:03d}_OWA={7:03d}_BW={8:02d}_C={9:02d}_1D_N={10:04d}_nFPM={11:03d}_{12}'.format(
-                corono_name, int(PupilObs*100), int(rMask1*100), int(rMask2*100), 
-                int(LyotStopObs*100), int(LyotStopIns*100),
-                int(rho0*10),int(rho1*10),int(bw*100), int(cDarkHole),
-                int(nPup), int(nFPM), solver) 
-elif corono_name == 'HTZPM':
-    fname = '{0}_obs={1:2d}_FPM1={2:3d}_FPM2={3:3d}_FPM3={4:3d}_lsid={5:2d}_lsod={6:2d}_IWA={7:03d}_OWA={8:03d}_BW={9:02d}_C={10:02d}_1D_N={11:04d}_nFPM={12:03d}_{13}'.format(
-                corono_name, int(PupilObs*100), 
-                int(rMask1*100), int(rMask2*100), int(rMask3*100), 
-                int(LyotStopObs*100), int(LyotStopIns*100),
-                int(rho0*10),int(rho1*10),int(bw*100), int(cDarkHole),
-                int(nPup), int(nFPM), solver) 
-else:
-    raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
-    
-fname_pyth     = fname + '_guropy_apod_{0}_tmp.dat'.format(problem_name)
-fname_pyth_nm0 = fname + '_guropy_apod_{0}_nm0.dat'.format(problem_name)
+    os.makedirs(fdir_pyth)   
 
 #%%  
 """ 
 Coronagraph defintion
 """
 
+if corono_name == 'APLC':
+    corono0 = cd.APLC1d(**params)
+elif corono_name == 'SP':
+    corono0 = cd.SP1d(**params)
+elif corono_name == 'HDZPM':
+    corono0 = cd.HDZPM1d(**params)
+elif corono_name == 'HTZPM':
+    corono0 = cd.HTZPM1d(**params)
+else:
+    raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
+
+#%%
+"""
+Problem defintion
+"""
+if problem_name == 'MaxTau':
+    # Maximization of the integrated amplitude transmission of the apodizer
+    problem0 = co1d.MaxTau(corono=corono0, **params)
+elif problem_name == 'MaxContrastL1':
+    # Maximization of the contrast under L1-norm
+    problem0 = co1d.MaxContrast(corono=corono0, Lnorm='L1',**params)
+elif problem_name == 'MaxContrastLinf':
+    # Maximization of the contrast under L-infinite norm
+    problem0 = co1d.MaxContrast(corono=corono0, Lnorm='Linf',**params)
+else:
+    raise NameError('{0}: Not an existing optimization problem!'.format(problem_name))
+
+#%%
+fname_gen = problem0.get_filename()
+fname_pyth_nm0 = fname_gen + '_nm0.dat'
 fpath_pyth_nm0 = fdir_pyth / fname_pyth_nm0 
 x_end = np.loadtxt(fpath_pyth_nm0)
 
@@ -162,32 +171,21 @@ LyotStop1d   = (r>LyotStopObs)*(r<LyotStopIns)*1.0
 
 params = to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
                  nPup = nPup, nFPM=nFPM, nImg=nImg, Fmax = Fmax,
-                 bw = bw, nlam = nlambis,
+                 bw = bw, nlam = nlam,
                  PupilObs = PupilObs, rMask = rMask, 
                  rMask1 = rMask1, rMask2 = rMask2, rMask3 = rMask3,
                  OPDx2 = OPDx2, OPDx3 = OPDx3, 
                  LyotStopObs = LyotStopObs,
                  LyotStopIns = LyotStopIns,
                  r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d,
-                 solver = solver)
-
-
-if corono_name == 'APLC':
-    corono0 = cd.APLC1d(**params)
-elif corono_name == 'SP':
-    corono0 = cd.SP1d(**params)
-elif corono_name == 'HDZPM':
-    corono0 = cd.HDZPM1d(**params)
-elif corono_name == 'HTZPM':
-    corono0 = cd.HTZPM1d(**params)
-else:
-    raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
-
+                 solver = solver, problem_name = problem_name,
+                 corono_name = corono_name)
     
 #%% Apodizer solution for the problems
 """
 Apodizer solutions
 """
+fname_pyth = problem0.get_filename() + '_tmp.dat'
 fpath_pyth = fdir_pyth / fname_pyth
 test0 = np.loadtxt(fpath_pyth)
 Apod_pyth = test0[:, 1]
@@ -197,7 +195,6 @@ Apod_pyth = test0[:, 1]
 """
 Computationn of the coronagraph transmission
 """
-
 corono_throughput = 100.*np.sum(np.abs(Apod_pyth*Pupil1d*LyotStop1d)**2)/np.sum(np.abs(Pupil1d*LyotStop1d)**2)
 
 print('Transmitted Energy (T.E.) throughput: {0:.1f}%'.format(corono_throughput))
@@ -207,8 +204,8 @@ print('Transmitted Energy (T.E.) throughput: {0:.1f}%'.format(corono_throughput)
 """
 Plot display of the apodizers
 """
-fname_pl = fname + '_apodizers_tran_test_nm0.pdf'
-fpath = fdir_plot / fname_pl
+fname_pl = fname_gen + '_apodizers_tran_test_nm0.pdf'
+fpath    = fdir_plot / fname_pl
 
 pl.figure(1)
 pl.clf()
@@ -228,6 +225,20 @@ pl.savefig(str(fpath))
 """
 Computation of the direct and coronagraphic images
 """
+fname_gen  = problem0.get_filename(nlam=nlambis)
+params2    = update_params(params, nlam=nlambis) 
+
+if corono_name == 'APLC':
+    corono0 = cd.APLC1d(**params2)
+elif corono_name == 'SP':
+    corono0 = cd.SP1d(**params2)
+elif corono_name == 'HDZPM':
+    corono0 = cd.HDZPM1d(**params2)
+elif corono_name == 'HTZPM':
+    corono0 = cd.HTZPM1d(**params2)
+else:
+    raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
+
 poly_nostop_image1 = corono0.compute_nostop_intensity_1d()
 poly_direct_image1 = corono0.compute_direct_intensity_1d(Apod_pyth)
 poly_corono_image1 = corono0.compute_corono_intensity_1d(Apod_pyth)
@@ -254,7 +265,7 @@ print('Encircled Energy (E.E.) throughput: {0:.1f}%'.format(rel_Airy_throughput)
 Display of the intensity profiles of the coronagraphic images
 """
 
-fname_pl = fname + '_intensity_test_nm0.pdf'
+fname_pl = fname_gen + '_intensity_test_nm0.pdf'
 fpath = fdir_plot / fname_pl
 pl.figure(2)
 pl.clf()
@@ -291,7 +302,7 @@ Display of the monochromatic intensity profiles of the coronagraphic images
 values = range(nlambis)
 colors = pl.cm.rainbow(np.linspace(0,1,nlambis))
 
-fname_pl = fname + '_intensity_mono_test_nm0.pdf'
+fname_pl = fname_gen + '_intensity_mono_test_nm0.pdf'
 fpath = fdir_plot / fname_pl
 pl.figure(3)
 pl.clf()
