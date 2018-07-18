@@ -404,7 +404,10 @@ class ProblemMatrix(object):
             return self.Apod
 
 #%%
-    def get_filename(self):
+    def get_filename(self, **kwargs):
+        
+        params = self.corono.params.copy()
+        params = params.update(kwargs)
 
         if self.problem_name == 'MaxTau':
             str_opt = '_C={cDarkHole:.1f}'

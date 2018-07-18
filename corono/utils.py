@@ -8,6 +8,7 @@ Created on Mon Mar  5 16:10:51 2018
 
 import numpy as np
 import scipy.special
+import copy
 
 #%% check python version
 """
@@ -316,3 +317,29 @@ def isft_even(A2, NB, m, CtrBtwnPix=False):
         
     """
     return sft_even(A2, NB, m, inv=True, CtrBtwnPix=CtrBtwnPix)
+
+#%%
+def update_params(params, **kwargs):
+    """
+    Update a dictionary of parameters
+    
+    Parameters
+    --------
+    params : dict
+        the original dictionary
+    
+    kwargs : dict
+        parameters given by the user for the keys with the values to update
+    
+    Returns
+    --------
+    params : dict
+        a copy of the original dictionary with an update of the parameters
+        given by the user
+    
+    """
+    params2 = copy.deepcopy(params)
+    if len(kwargs) != 0:
+        for key, value in kwargs.items():
+            params2[key] = value
+    return params2

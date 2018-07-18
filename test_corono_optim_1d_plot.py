@@ -13,7 +13,7 @@ from pathlib import Path
 from corono import corono_design as cd
 from corono import corono_optim_1d as co1d
 
-from corono.utils import to_dict
+from corono.utils import to_dict, update_params
 
 #%% parameters
 """
@@ -148,26 +148,30 @@ pl.savefig(str(fpath))
 """
 Computation of the direct and coronagraphic images
 """
-params = to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
-                 nPup = nPup, nFPM=nFPM, nImg=nImg, Fmax = Fmax,
-                 bw = bw, nlam = nlambis,
-                 PupilObs = PupilObs, rMask = rMask, 
-                 rMask1 = rMask1, rMask2 = rMask2, rMask3 = rMask3,
-                 OPDx2 = OPDx2, OPDx3 = OPDx3, 
-                 LyotStopObs = LyotStopObs,
-                 LyotStopIns = LyotStopIns,
-                 r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d,
-                 solver = solver, problem_name = problem_name,
-                 corono_name = corono_name)
+#params = to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
+#                 nPup = nPup, nFPM=nFPM, nImg=nImg, Fmax = Fmax,
+#                 bw = bw, nlam = nlambis,
+#                 PupilObs = PupilObs, rMask = rMask, 
+#                 rMask1 = rMask1, rMask2 = rMask2, rMask3 = rMask3,
+#                 OPDx2 = OPDx2, OPDx3 = OPDx3, 
+#                 LyotStopObs = LyotStopObs,
+#                 LyotStopIns = LyotStopIns,
+#                 r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d,
+#                 solver = solver, problem_name = problem_name,
+#                 corono_name = corono_name)
+
+params2 = update_params(params, nlam=nlambis) 
+#params2 = params.copy()
+#params2['nlam'] = nlambis
 
 if corono_name == 'APLC':
-    corono0 = cd.APLC1d(**params)
+    corono0 = cd.APLC1d(**params2)
 elif corono_name == 'SP':
-    corono0 = cd.SP1d(**params)
+    corono0 = cd.SP1d(**params2)
 elif corono_name == 'HDZPM':
-    corono0 = cd.HDZPM1d(**params)
+    corono0 = cd.HDZPM1d(**params2)
 elif corono_name == 'HTZPM':
-    corono0 = cd.HTZPM1d(**params)
+    corono0 = cd.HTZPM1d(**params2)
 else:
     raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
 
