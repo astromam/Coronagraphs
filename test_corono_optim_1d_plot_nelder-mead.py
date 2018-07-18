@@ -169,17 +169,12 @@ r   = np.arange(nPup)*R/nPup + R/(2*nPup)
 Pupil1d      = (r>PupilObs)*1.0
 LyotStop1d   = (r>LyotStopObs)*(r<LyotStopIns)*1.0
 
-params = to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
-                 nPup = nPup, nFPM=nFPM, nImg=nImg, Fmax = Fmax,
-                 bw = bw, nlam = nlam,
-                 PupilObs = PupilObs, rMask = rMask, 
-                 rMask1 = rMask1, rMask2 = rMask2, rMask3 = rMask3,
-                 OPDx2 = OPDx2, OPDx3 = OPDx3, 
-                 LyotStopObs = LyotStopObs,
-                 LyotStopIns = LyotStopIns,
-                 r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d,
-                 solver = solver, problem_name = problem_name,
-                 corono_name = corono_name)
+params = update_params(params, rMask = rMask, 
+                       rMask1 = rMask1, rMask2 = rMask2, rMask3 = rMask3,
+                        OPDx2 = OPDx2, OPDx3 = OPDx3,
+                        LyotStopObs = LyotStopObs, LyotStopIns = LyotStopIns,
+                        r = r, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d,)
+
     
 #%% Apodizer solution for the problems
 """
@@ -190,7 +185,6 @@ fpath_pyth = fdir_pyth / fname_pyth
 test0 = np.loadtxt(fpath_pyth)
 Apod_pyth = test0[:, 1]
 
-
 #%%
 """
 Computationn of the coronagraph transmission
@@ -198,7 +192,6 @@ Computationn of the coronagraph transmission
 corono_throughput = 100.*np.sum(np.abs(Apod_pyth*Pupil1d*LyotStop1d)**2)/np.sum(np.abs(Pupil1d*LyotStop1d)**2)
 
 print('Transmitted Energy (T.E.) throughput: {0:.1f}%'.format(corono_throughput))
-
 
 #%% Display of the apodizer
 """
@@ -257,8 +250,6 @@ EE_idx = corono0.xi <= 0.7
 rel_Airy_throughput = 100.*np.sum(poly_direct_image1[EE_idx])/np.sum(poly_nostop_image1[EE_idx])
 
 print('Encircled Energy (E.E.) throughput: {0:.1f}%'.format(rel_Airy_throughput))
-
-
 
 #%% Intensity profiles of the direct and coronagraphic images
 """

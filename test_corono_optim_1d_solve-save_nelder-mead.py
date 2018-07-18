@@ -26,7 +26,6 @@ corono_name  = 'APLC' # 'APLC' or 'SP' or 'HDZPM' or 'HTZPM'
 problem_name = 'MaxTau' # 'MaxContrastLinf' # , 'MaxContrastL1' # ,
 solver       = 'stdgrb' # 'stdgrb', 'gurobipy', 'scipy.linprog'
 
-
 nPup = 500
 nFPM = 50
 nImg = 88
@@ -86,36 +85,6 @@ fdir_pyth = fdir / 'results' / '1D' / 'dat_pyth'
 if not os.path.exists(fdir):
     os.makedirs(fdir)      
 
-
-#%%
-#  
-#
-#if corono_name == 'APLC' or corono_name == 'SP': 
-#    fname = '{0}_obs={1:2d}_FPM={2:3d}_lsid={3:2d}_lsod={4:2d}_IWA={5:03d}_OWA={6:03d}_BW={7:02d}_C={8:02d}_1D_N={9:04d}_nFPM={10:03d}_{11}'.format(
-#                corono_name, int(PupilObs*100), int(rMask*100),
-#                int(LyotStopObs*100), int(LyotStopIns*100),
-#                int(rho0*10),int(rho1*10),int(bw*100), int(cDarkHole),
-#                int(nPup), int(nFPM), solver)
-#elif corono_name == 'HDZPM':
-#    fname = '{0}_obs={1:2d}_FPM1={2:3d}_FPM2={3:3d}_lsid={4:2d}_lsod={5:2d}_IWA={6:03d}_OWA={7:03d}_BW={8:02d}_C={9:02d}_1D_N={10:04d}_nFPM={11:03d}_{12}'.format(
-#                corono_name, int(PupilObs*100), int(rMask1*100), int(rMask2*100), 
-#                int(LyotStopObs*100), int(LyotStopIns*100),
-#                int(rho0*10),int(rho1*10),int(bw*100), int(cDarkHole),
-#                int(nPup), int(nFPM), solver) 
-#elif corono_name == 'HTZPM':
-#    fname = '{0}_obs={1:2d}_FPM1={2:3d}_FPM2={3:3d}_FPM3={4:3d}_lsid={5:2d}_lsod={6:2d}_IWA={7:03d}_OWA={8:03d}_BW={9:02d}_C={10:02d}_1D_N={11:04d}_nFPM={12:03d}_{13}'.format(
-#                corono_name, int(PupilObs*100), 
-#                int(rMask1*100), int(rMask2*100), int(rMask3*100), 
-#                int(LyotStopObs*100), int(LyotStopIns*100),
-#                int(rho0*10),int(rho1*10),int(bw*100), int(cDarkHole),
-#                int(nPup), int(nFPM), solver) 
-#else:
-#    raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
-    
-#fname_pyth     = fname + '_guropy_apod_{0}_tmp.dat'.format(problem_name)
-#fname_pyth_nm0 = fname + '_guropy_apod_{0}_nm0.dat'.format(problem_name)
-
-
 #%%  
 """ 
 Coronagraph defintion
@@ -147,6 +116,8 @@ elif problem_name == 'MaxContrastLinf':
 else:
     raise NameError('{0}: Not an existing optimization problem!'.format(problem_name))
 
+fname_pyth = problem0.get_filename() + '_tmp.dat'
+fpath_pyth = fdir_pyth / fname_pyth
 
 #%%
 """
@@ -177,69 +148,30 @@ def res_energy_with_lp(x_t):
     x_t = np.maximum(x_lb,np.minimum(x_ub,x_t))
 
     if   corono_name == 'APLC':
-        rMask       = x_t[0]
-        LyotStopObs = x_t[1]
-        LyotStopIns = x_t[2]
+        rMask, LyotStopObs, LyotStopIns = [x_t[i] for i in range(3)]
         LyotStop1d  = (r>LyotStopObs)*(r<LyotStopIns)*1.0
-#        params = to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
-#                 nPup = nPup, nFPM=nFPM, nImg=nImg, Fmax = Fmax,
-#                 bw = bw, nlam = nlam,
-#                 PupilObs = PupilObs, rMask = rMask, 
-#                 LyotStopObs = LyotStopObs,
-#                 LyotStopIns = LyotStopIns,
-#                 r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d,
-#                 solver = solver)
-        params2 = update_params(params, rMask = rMask,
-                                LyotStopObs = LyotStopObs, LyotStopIns = LyotStopIns,
-                                LyotStop1d = LyotStop1d)
+        params2 = update_params(params, rMask = rMask)
         
     elif corono_name == 'HDZPM':
-        rMask1      = x_t[0]
+        rMask1, OPDx2, LyotStopObs, LyotStopIns = [x_t[i] for i in {0,2,3,4}]
         rMask2      = rMask1 + x_t[1]
-        OPDx2       = x_t[2]
-        LyotStopObs = x_t[3]
-        LyotStopIns = x_t[4]
         LyotStop1d  = (r>LyotStopObs)*(r<LyotStopIns)*1.0
-#        params = to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
-#                 nPup = nPup, nFPM=nFPM, nImg=nImg, Fmax = Fmax,
-#                 bw = bw, nlam = nlam,
-#                 PupilObs = PupilObs,
-#                 rMask1 = rMask1, rMask2 = rMask2, OPDx2 = OPDx2,
-#                 LyotStopObs = LyotStopObs,
-#                 LyotStopIns = LyotStopIns,
-#                 r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d,
-#                 solver = solver)
-        params2 = update_params(params, rMask1 = rMask1, rMask2 = rMask2,
-                                OPDx2 = OPDx2,
-                                LyotStopObs = LyotStopObs, LyotStopIns = LyotStopIns,
-                                LyotStop1d = LyotStop1d)
-
+        params2 = update_params(params, OPDx2 = OPDx2, 
+                                rMask1 = rMask1, rMask2 = rMask2,)
+        
     elif corono_name == 'HTZPM':
-        rMask1      = x_t[0]
+        rMask1, OPDx2, OPDx3, LyotStopObs, LyotStopIns = [x_t[i] for i in {0,3,4,5,6}]
         rMask2      = rMask1 + x_t[1]
         rMask3      = rMask2 + x_t[2]
-        OPDx2       = x_t[3]
-        OPDx3       = x_t[4]
-        LyotStopObs = x_t[5]
-        LyotStopIns = x_t[6]
         LyotStop1d  = (r>LyotStopObs)*(r<LyotStopIns)*1.0
-#        params = to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
-#                 nPup = nPup, nFPM=nFPM, nImg=nImg, Fmax = Fmax,
-#                 bw = bw, nlam = nlam,
-#                 PupilObs = PupilObs,
-#                 rMask1 = rMask1, rMask2 = rMask2, rMask3 = rMask3,
-#                 OPDx2 = OPDx2, OPDx3 = OPDx3,
-#                 LyotStopObs = LyotStopObs,
-#                 LyotStopIns = LyotStopIns,
-#                 r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d,
-#                 solver = solver)        
-        params2 = update_params(params, rMask1 = rMask1, rMask2 = rMask2, rMask3 = rMask3,
-                                OPDx2 = OPDx2, OPDx3 = OPDx3,
-                                LyotStopObs = LyotStopObs, LyotStopIns = LyotStopIns,
-                                LyotStop1d = LyotStop1d)
-
+        params2 = update_params(params, OPDx2 = OPDx2, OPDx3 = OPDx3,
+                        rMask1 = rMask1, rMask2 = rMask2, rMask3 = rMask3)
+        
     else:
         raise NameError('{0}: Not a correct coronagraph for NM-optimization!'.format(corono_name))    
+
+    params2 = update_params(params2, LyotStop1d = LyotStop1d,
+                        LyotStopObs = LyotStopObs, LyotStopIns = LyotStopIns)
     
     if   corono_name == 'APLC':
         corono0 = cd.APLC1d(**params2)
@@ -275,9 +207,6 @@ def res_energy_with_lp(x_t):
 #    Apod_pyth = np.zeros((corono0.nPup))
 #    Apod_pyth[problem1.idx_pup] = Apod_tmp
 
-    fname_pyth = problem0.get_filename() + '_tmp.dat'
-    fpath_pyth = fdir_pyth / fname_pyth
-    
     test0       = np.zeros((nPup, 2))
     test0[:, 0] = corono0.r/2
     test0[:, 1] = Apod_pyth
