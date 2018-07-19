@@ -53,8 +53,9 @@ def get_default_params_ProblemMatrix():
         Dictionnary of parameters with their default values.
         
     """
-    tmp = {'cDarkHole':8, 'tau':0.2, 'solver':'stdgrb', 'matrices_flag':False,
-           'pupil_name':'sbr'}
+    tmp = {'cDarkHole':8, 'tau':0.2, 'solver':'stdgrb', 
+           'pupil_name':'sbr', 
+           'slvCrossover':0, 'slvLogToConsole':1, 'slvMethod':2}
     return tmp
 
 #%%
@@ -355,23 +356,24 @@ class ProblemMatrix(object):
 
         self.compute_matrices()
 
+        t0 = time.time()
+
         if stdgrb and self.solver == 'stdgrb':
             print('solving problem with stdgrb package')
             Apodtmp, val = stdgrb.lp_solve(self.c, A=(self.A).T, b=self.b, 
-                                           crossover=1, logtoconsole=1, method=2)
+                                           crossover=self.slvCrossover, 
+                                           logtoconsole=self.slvLogToConsole, method=self.slvMethod)
             self.Apod[self.idx_pup] = Apodtmp[:self.npp]
-            return self.Apod
         
         elif gb and self.solver == 'gurobipy':
             print('generating gurobi model')
             self.compute_gurobi_model()
             
             print('solving problem with gurobipy package')
-            try:
-                
-                self.m.Params.Method       = 2
-                self.m.Params.LogToConsole = 1
-                self.m.Params.Crossover    = 0
+            try:                
+                self.m.Params.Method       = self.slvMethod
+                self.m.Params.LogToConsole = self.slvLogToConsole
+                self.m.Params.Crossover    = self.slvCrossover
                 
                 self.m.optimize()
     
@@ -379,9 +381,7 @@ class ProblemMatrix(object):
                 for i in range(self.npp):
                     Apodtmp[i] = self.m.getVars()[i].x
                 self.Apod[self.idx_pup] = Apodtmp
-                                      
-                return self.Apod
-    
+                                          
             except gb.GurobiError as e:
                 print('Error code ' + str(e.errno) + ": " + str(e))
     
@@ -396,7 +396,10 @@ class ProblemMatrix(object):
                                        method='interior-point',
                                        bounds=bds)
             self.Apod[self.idx_pup]=sol.x
-            return self.Apod                
+
+        t1 = time.time()
+        print('solving time: {0:.2f}s\n'.format(t1-t0))
+        return self.Apod                
 
 #%%
     def get_filename(self, **kwargs):
@@ -466,12 +469,15 @@ class ProblemMatrix(object):
                                 
         """
         
-        t0 = time.time()
-        if self.corono_field_t is None:            
+        t00 = time.time() 
+        if self.corono_field_t is None:           
             print('computing corono response matrix for 2D problem')   
             self.compute_response_matrices()
+            t11 = time.time()
+            print('computing time (response matrices): {0:.2f}s\n'.format(t11-t00))
 
-        if self.A is None or self.b is None or self.c is None:
+        t00 = time.time()
+        if self.A is None or self.b is None or self.c is None: 
             print('computing A, b, and c matrices')
             self.compute_problem_matrices()
         else:
@@ -480,10 +486,9 @@ class ProblemMatrix(object):
                 self.update_cDarkHole()
             else:
                 print('updating b matrix')
-                self.update_tau()                
-        t1 = time.time()
-        return print('matrix problem definition time : {0:.2f}s'.format(t1-t0))
-
+                self.update_tau()
+        t11 = time.time()                
+        print('computing time (Abc matrices): {0:.2f}s\n'.format(t11-t00))
         
 #%%
 """
@@ -593,7 +598,6 @@ class MaxTau(ProblemMatrix):
         b1  = np.zeros((len(self.corono_field_t.T)))
 
         if (stdgrb and self.solver == 'stdgrb') or (gb and self.solver == 'gurobipy'):
-            print('full matrix shape')
             A2  = -np.identity(self.npp)
             A3  =  np.identity(self.npp)
             b2  = np.zeros(self.npp)
@@ -601,7 +605,6 @@ class MaxTau(ProblemMatrix):
             self.A = np.concatenate((A0,A1,A2,A3), axis=1)
             self.b = np.concatenate((b0,b1,b2,b3))
         else:
-            print('reduced matrix shape')
             self.A = np.concatenate((A0,A1), axis=1)
             self.b = np.concatenate((b0,b1))            
             
@@ -622,12 +625,10 @@ class MaxTau(ProblemMatrix):
         A1  = -self.corono_field_t - ED0       
 
         if (stdgrb and self.solver == 'stdgrb') or (gb and self.solver == 'gurobipy'):
-            print('full matrix shape')
             A2  = -np.identity(self.npp)
             A3  =  np.identity(self.npp)
             self.A = np.concatenate((A0,A1,A2,A3), axis=1)
         else:
-            print('reduced matrix shape')
             self.A = np.concatenate((A0,A1), axis=1)            
 
 #%%

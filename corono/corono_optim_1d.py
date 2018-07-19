@@ -371,9 +371,6 @@ class ProblemMatrix(object):
                                            crossover=self.slvCrossover, 
                                            logtoconsole=self.slvLogToConsole, method=self.slvMethod)
             self.Apod[self.idx_pup] = Apodtmp
-#            t1 = time.time()
-#            print('solving time: {0:.2f}s\n'.format(t1-t0))
-#            return self.Apod
 
         elif gb and self.solver == 'gurobipy':
             print('generating gurobi model')
@@ -391,11 +388,7 @@ class ProblemMatrix(object):
                 for i in range(self.npp):
                     Apodtmp[i] = self.m.getVars()[i].x
                 self.Apod[self.idx_pup] = Apodtmp
-                
-#                t1 = time.time()
-#                print('solving time: {0:.2f}s\n'.format(t1-t0))                
-#                return self.Apod
-    
+                    
             except gb.GurobiError as e:
                 print('Error code ' + str(e.errno) + ": " + str(e))
     

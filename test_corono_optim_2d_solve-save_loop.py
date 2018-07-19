@@ -25,6 +25,9 @@ Parameters
 pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
 problem_name = 'MaxContrastL1' # 'MaxContrastL1' # 'MaxTau' # ,'MaxContrastLinf' # #  
 solver       = 'stdgrb' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
+slvLogToConsole = 0
+slvCrossover    = 0
+slvMethod       = 2
 
 #nPup = corono0.params['nPup']
 nPup = 50
@@ -88,7 +91,9 @@ params = to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
              Pupil2dSym = Pupil2dSym, rMask=rMask,
              problem_name = problem_name, 
              solver = solver, 
-             corono_name = corono_name, pupil_name = pupil_name)
+             corono_name = corono_name, pupil_name = pupil_name,
+             slvLogToConsole = slvLogToConsole,
+             slvCrossover = slvCrossover, slvMethod = slvMethod)
 
 #%%  
 """ 

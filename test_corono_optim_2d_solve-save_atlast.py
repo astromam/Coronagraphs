@@ -26,6 +26,9 @@ Parameters
 pupil_name   = 'lvr' # 'vlt' or 'sbr' or 'lvr'
 problem_name = 'MaxContrastLinf' # 'MaxContrastL1' # 'MaxTau' # ,'MaxContrastL1' # #  
 solver       = 'stdgrb' #,'gurobipy' #  'gurobipy', 'scipy.linprog'
+slvLogToConsole = 0
+slvCrossover    = 0
+slvMethod       = 2
 
 #nPup = corono0.params['nPup']
 nPup = 600
@@ -85,7 +88,9 @@ params = to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
              Pupil2dSym = Pupil2dSym, rMask=rMask,
              problem_name = problem_name, 
              solver = solver, 
-             corono_name = corono_name, pupil_name = pupil_name)
+             corono_name = corono_name, pupil_name = pupil_name,
+             slvLogToConsole = slvLogToConsole,
+             slvCrossover = slvCrossover, slvMethod = slvMethod)
 
 #%%  
 """ 
@@ -118,7 +123,6 @@ else:
 """
 Apodizer solutions
 """
-print('problem solving')
 t0 = time.time()
 Apod1 = problem1.solve_model()
 t1 = time.time()
