@@ -20,7 +20,9 @@ Parameters
 """
 corono_name = 'APLC' # 'APLC' or 'SP'
 solver      = 'stdgrb' # 'stdgrb', 'gurobipy', 'scipy.linprog'
-
+slvLogToConsole = 0
+slvCrossover    = 0
+slvMethod       = 2
 
 nPup = 500
 nFPM = 50
@@ -70,7 +72,8 @@ params = to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
                  LyotStopIns = LyotStopIns,
                  r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d,
                  solver = solver, 
-                 corono_name = corono_name)
+                 corono_name = corono_name, slvLogToConsole = slvLogToConsole,
+                 slvCrossover = slvCrossover, slvMethod = slvMethod)
 
 #%%
 """
