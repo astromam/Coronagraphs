@@ -22,8 +22,11 @@ Parameters
 corono_name  = 'APLC' # 'APLC' or 'SP'
 problem_name = 'MaxTau' # ,'MaxTau' # 'MaxContrastLinf' #'MaxContrastL1' # #  
 solver       = 'gurobipy' # 'stdgrb', 'gurobipy', 'scipy.linprog'
+slvLogToConsole = 0
+slvCrossover    = 1
+slvMethod       = 2
 
-nPup = 500
+nPup = 1000
 nFPM = 50
 nImg = 44
 Fmax = 11
@@ -71,7 +74,8 @@ params = to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
                  LyotStopIns = LyotStopIns,
                  r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d,
                  solver = solver, problem_name = problem_name,
-                 corono_name = corono_name)
+                 corono_name = corono_name, slvLogToConsole = slvLogToConsole,
+                 slvCrossover = slvCrossover, slvMethod = slvMethod)
 
 #%%
 """
@@ -116,7 +120,6 @@ else:
 """
 Problem solving
 """
-print('problem solving')
 t0 = time.time()
 Apod_pyth = problem1.solve_model()
 t1 = time.time()
