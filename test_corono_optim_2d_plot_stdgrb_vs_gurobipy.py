@@ -134,7 +134,7 @@ Read files obtained with gurobipy
 """
 problem1.params['solver'] = 'gurobipy'
 fname_gen_pyth = problem1.get_filename()
-fname = fname_gen_pyth + ',fits'
+fname = fname_gen_pyth + '.fits'
 fpath_gurobipy = fdir_pyth / fname
 
 Apod_gurobipy = fits.getdata(fpath_gurobipy,)
