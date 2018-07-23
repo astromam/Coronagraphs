@@ -597,12 +597,9 @@ class MaxTau(ProblemMatrix):
             Space Observatories, ApJ 818, 2, 163 (2016). 
             
             http://iopscience.iop.org/article/10.3847/0004-637X/818/2/163/meta
-            
-            
+                      
             
         """
-        ED0tmp = np.zeros((self.corono.nPup, self.corono.nlam*self.ndz*2))
-        for j in range(self.corono.nlam*self.ndz*2):
         cst = 10.**(-self.cDarkHole/2.)/np.sqrt(2.)
         ED0 = [cst*self.direct_field_re_t_tmp[:,(self.corono.nlam-1)//2,0]] \
         * self.corono.nlam*self.ndz*2
