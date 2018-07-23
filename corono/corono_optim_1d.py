@@ -815,7 +815,7 @@ class MaxContrast(ProblemMatrix):
             I1 = np.hstack([I0 for k in range(self.corono.nlam*2)])            
             N0 = np.zeros((self.ndz, self.npp))
             Z0 = np.zeros(self.ndz)
-            c1 = 2.*np.pi*np.array(self.idx_dz)*(self.corono.Fmax\
+            c1 = 2.*np.pi*np.asarray(self.idx_dz)*(self.corono.Fmax\
                                   /self.corono.nImg)**2
         
         A0  = np.concatenate(( self.corono_field_t, -I1), axis=0)

@@ -20,7 +20,7 @@ from corono.utils import to_dict, update_params
 Parameters
 """
 corono_name  = 'APLC' # 'APLC' or 'SP'
-problem_name = 'MaxTau' # 'MaxContrastL1' #,'MaxContrastLinf' # 'MaxTau' # ,   
+problem_name = 'MaxContrastLinf' # 'MaxContrastL1' #,'MaxContrastLinf' # 'MaxTau' # ,   
 solver       = 'stdgrb' # 'stdgrb', 'gurobipy', 'scipy.linprog'
 
 nPup = 500
