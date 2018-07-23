@@ -19,7 +19,7 @@ from corono.utils import to_dict, update_params
 """
 Parameters
 """
-corono_name = 'APLC' # 'APLC' or 'SP' or 'HDZPM' or 'HTZPM'
+corono_name  = 'APLC' # 'APLC' or 'SP' or 'HDZPM' or 'HTZPM'
 problem_name = 'MaxTau'#'MaxContrastLinf' # ,'MaxContrastL1' # #  'MaxContrastL1', 
 solver       = 'stdgrb' # 'stdgrb', 'gurobipy', 'scipy.linprog'
 

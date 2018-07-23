@@ -744,10 +744,6 @@ class Coronagraph(object):
         
         # clear Pupil
         self.ClearPupil1d = np.ones((self.nPup))
-#        # Telescope aperture
-#        self.Pupil1d      = (self.r>self.PupilObs)*1.0
-#        # Lyot stop 
-#        self.LyotStop1d   = (self.r>self.LyotStopObs)*1.0
         
         # Final image plane coordinate
         self.xi  = np.arange(self.nImg+1)*self.Fmax/self.nImg
@@ -1291,7 +1287,7 @@ class SP1d(Coronagraph):
     def __init__(self, **kwargs):
         """
         __init__ : method
-            Builds the constructor for the APLC1d class
+            Builds the constructor for the SP1d class
         
         Attributes:
         ----------  

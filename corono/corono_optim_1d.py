@@ -23,6 +23,7 @@ except ModuleNotFoundError:
 
 import scipy.optimize        
     
+from .utils import besselJ0
 from corono import corono_design as cd
 from corono.utils import update_params
 
@@ -303,52 +304,48 @@ class ProblemMatrix(object):
 #%%
     def compute_response_matrices(self):
 
-        direct_field_t_tmp = np.zeros((self.corono.nPup, self.corono.nlam, 
+        if self.problem_name == 'MaxTau':
+            direct_field_t_tmp = np.zeros((self.npp, self.corono.nlam, 
+                                       self.corono.nImg+1), dtype='complex128')
+            print('generating direct response matrices for 1D problem')
+            t0 = time.time()
+            Apod1d    = np.zeros((self.corono.nPup))
+            for i, val in enumerate(self.idx_pup):
+                Apod1d[val] = 1
+                direct_field_t_tmp[i] = self.corono.compute_direct_field_1d(Apod1d)
+                Apod1d[val] = 0            
+            self.direct_field_re_t_tmp = direct_field_t_tmp.real
+    #        self.direct_field_im_t_tmp = direct_field_t_tmp.imag    
+            t1 = time.time()
+            print('direct matrix computation time: {0:.2f}s'.format(t1-t0))
+
+
+        corono_field_t_tmp = np.zeros((self.npp, self.corono.nlam, 
                                    self.corono.nImg+1), dtype='complex128')
-        #print('generating direct response matrices for 1D problem')
+
+        t0 = time.time()
         Apod1d    = np.zeros((self.corono.nPup))
-        for i in np.arange(self.corono.nPup):
-            Apod1d[i] = 1
-            direct_field_t_tmp[i] = self.corono.compute_direct_field_1d(Apod1d)
-            Apod1d[i] = 0            
-        self.direct_field_re_t_tmp = direct_field_t_tmp.real
-        self.direct_field_im_t_tmp = direct_field_t_tmp.imag    
-
-        direct_field_re_t = np.reshape(
-                self.direct_field_re_t_tmp[:,:,self.idx_dzdirect], 
-                (self.corono.nPup, self.corono.nlam*self.ndzdirect))[self.idx_pup,:]
-
-        direct_field_im_t = np.reshape(
-                self.direct_field_im_t_tmp[:,:,self.idx_dzdirect], 
-                (self.corono.nPup, self.corono.nlam*self.ndzdirect))[self.idx_pup,:]
-
-        self.direct_field_t    = np.concatenate((direct_field_re_t,
-                                                 direct_field_im_t), 
-                                                 axis=1)
-
-        corono_field_t_tmp = np.zeros((self.corono.nPup, self.corono.nlam, 
-                                   self.corono.nImg+1), dtype='complex128')
-        #print('generating corono response matrices for 1D problem')
-        Apod1d    = np.zeros((self.corono.nPup))
-        for i in np.arange(self.corono.nPup):
-            Apod1d[i] = 1
+        for i, val in enumerate(self.idx_pup):
+            Apod1d[val] = 1
             corono_field_t_tmp[i] = self.corono.compute_corono_field_1d(Apod1d)
-            Apod1d[i] = 0
+            Apod1d[val] = 0
         corono_field_re_t_tmp = corono_field_t_tmp.real
         corono_field_im_t_tmp = corono_field_t_tmp.imag
-
+        t1 = time.time()
+        print('corono matrix computation time: {0:.2f}s'.format(t1-t0))
         
         corono_field_re_t = np.reshape(
                 corono_field_re_t_tmp[:,:,self.idx_dz], 
-                (self.corono.nPup, self.corono.nlam*self.ndz))[self.idx_pup,:]
+                (self.npp, self.corono.nlam*self.ndz))
 
         corono_field_im_t = np.reshape(
                 corono_field_im_t_tmp[:,:,self.idx_dz], 
-                (self.corono.nPup, self.corono.nlam*self.ndz))[self.idx_pup,:]
+                (self.npp, self.corono.nlam*self.ndz))
 
         self.corono_field_t    = np.concatenate((corono_field_re_t,
                                                   corono_field_im_t), 
                                                   axis=1)
+
 
 #%%        
     def solve_model(self):
@@ -490,7 +487,7 @@ class ProblemMatrix(object):
         
         if self.corono_field_t is None:
             t00 = time.time()            
-            print('computing corono response matrix for 2D problem')   
+            print('computing response matrices for 1D problem')   
             self.compute_response_matrices()
             t11 = time.time()
             print('computing time (response matrices): {0:.2f}s\n'.format(t11-t00))
@@ -606,11 +603,10 @@ class MaxTau(ProblemMatrix):
         """
         ED0tmp = np.zeros((self.corono.nPup, self.corono.nlam*self.ndz*2))
         for j in range(self.corono.nlam*self.ndz*2):
-            ED0tmp[:,j] = \
-            self.direct_field_re_t_tmp[:,(self.corono.nlam-1)//2,0]
-        ED0 = ED0tmp[self.idx_pup,:]
         cst = 10.**(-self.cDarkHole/2.)/np.sqrt(2.)
-        ED0 *= cst
+        ED0 = [cst*self.direct_field_re_t_tmp[:,(self.corono.nlam-1)//2,0]] \
+        * self.corono.nlam*self.ndz*2
+        ED0 = np.asarray(ED0).T
        
         A0  =  self.corono_field_t - ED0
         A1  = -self.corono_field_t - ED0
@@ -892,8 +888,9 @@ class MaxContrast(ProblemMatrix):
         return self.m
 
 #%%
+##%%
 #"""
-#MaxTau ProblemMatrix subclass
+#MaxTauDirect ProblemMatrix subclass
 #"""
 #class MaxTauDirect(ProblemMatrix):
 #    r"""
@@ -908,9 +905,9 @@ class MaxContrast(ProblemMatrix):
 #        """
 #        super(MaxTauDirect, self).__init__(**kwargs)
 #        self.neps = 0
-
-#%%        
-#    def compute_matrices(self):
+#
+##%%        
+#    def compute_problem_matrices(self):
 #        r"""
 #        Computes the matrices for the optimization problem that consists in 
 #        maximizing the amplitude transmission of the apodizer :math:`\Phi` 
@@ -1034,8 +1031,8 @@ class MaxContrast(ProblemMatrix):
 #                                  /self.corono.nImg)**2
 #        
 #        return self.A, self.b, self.c
-
-#%%
+#
+##%%
 #    def compute_gurobi_model(self):
 #        """
 #        Generates the gurobi solver model for the MaxTau problem.
@@ -1080,7 +1077,7 @@ class MaxContrast(ProblemMatrix):
 
 
 
-#%%
+##%%
 #"""
 #MaxContrast ProblemMatrix subclass
 #"""
@@ -1303,6 +1300,6 @@ class MaxContrast(ProblemMatrix):
 #        
 #        except NameError:
 #            pass
-
-#%%            
-        
+#
+##%%            
+#        
