@@ -26,8 +26,8 @@ Parameters
 """
 # Telescope name
 pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
-problem_name = 'MaxTau' # 'MaxContrastL1' #'MaxTau' # , 'MaxContrastLinf' # #  
-solver       = 'stdgrb' # 'stdgrb' #  'gurobipy', 'scipy.linprog'
+problem_name = 'MaxContrastL1' # 'MaxContrastL1' #'MaxTau' # , 'MaxContrastLinf' # #  
+solver       = 'gurobipy' # 'stdgrb' #  'gurobipy', 'scipy.linprog'
 
 #nPup = corono0.params['nPup']
 nPup = 50
@@ -150,7 +150,7 @@ pl.title('Pupil transmission')
 fname = fname_gen + '_apodisation_ampl.pdf'
 fpath = fdir_pdf / fname
 
-pl.figure(15)
+pl.figure(5)
 pl.clf()
 pl.imshow(Apod_pyth*corono0.Pupil2d, cmap = cm.Greys_r)
 pl.title('Apod 1 transmission - MaxTau problem - pyth')
