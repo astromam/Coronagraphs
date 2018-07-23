@@ -138,42 +138,50 @@ class Coronagraph(object):
 
         
         """
+
+        """
+        Array dimensions:
+            nPup -> number of samples across pupil
+            nImg -> number of samples across detector plane
+            nlam -> number of wavelengths
+            nFPM -> number of samples across occulter
+        """
         self.params      = kwargs 
         self.check_params()
         
-        # wavelengths        
+        # wavelengths [shape: (nlam,)]
         self.dlam       = self.bw*self.lam0
         self.lam_t      = np.linspace(
                 self.lam0-self.dlam/2*(self.nlam>1),
                 self.lam0+self.dlam/2,self.nlam)
 
-        # Pupil radial coordinate 
+        # Pupil radial coordinate [shape: (nPup,)]
         self.r          = np.arange(self.nPup)*self.R/self.nPup\
                 +self.R/(2*self.nPup)
         
-        # clear Pupil
+        # clear Pupil [shape: (nPup,)]
         self.ClearPupil1d = np.ones((self.nPup))
 
         # Telescope aperture
         if self.Pupil1d is None:
             self.Pupil1d      = (self.r>self.PupilID)*1.0
         
-        # Final image plane coordinate
+        # Final image plane coordinate [shape: (nImg,)]
         self.xi  = np.arange(self.nImg+1)*self.Fmax/self.nImg
-        # final image plane coordinate weighted with wavelength
+
+        # final image plane coordinate weighted with wavelength [shape: (nlam, nImg)]
         self.xii = self.xi[None,:]*self.lam0/self.lam_t[:,None]
 
-        # Hankel kernel (no wavelength variation)
+        # Hankel kernel (no wavelength variation) [shape: (nImg, nPup)]
         self.hankel_kernel     = besselJ0(
                 np.pi/self.R*self.xi[:,None]*self.r[None,:])
-        # Hankel kernel (including wavelength variation)
+        # Hankel kernel (including wavelength variation) [shape: (nlam, nImg, nPup)]
         self.hankel_kernel_all = besselJ0(
                 np.pi/self.R*self.xii[:,:,None]*self.r[None,None,:])
 
-        # clear Pupil
+        # clear Pupil [shape: (nPup,)]
         self.ClearPupil2d = uniform_disk(self.nPup, self.nPup/2., CtrBtwnPix=self.CtrBtwnPix)
-
-        # Focal plane mask
+        # Focal plane mask [shape: (nFPM,)]
         self.mask2d       = uniform_disk(self.nFPM, self.nFPM/2., CtrBtwnPix=self.CtrBtwnPix)
 
         # Final image plane coordinate
@@ -634,21 +642,21 @@ class APLC1d(Coronagraph):
         """      
         super(APLC1d,self).__init__(**kwargs)      
         
-        # mask size at Apod given wavelength
+        # mask size at Apod given wavelength [shape: (nlam,)]
         self.rMask_t    = (self.lam0/self.lam_t)*self.rMask
         
-        # mask sampling at Apod given wavelength and max nFPM_max 
+        # mask sampling at Apod given wavelength and max nFPM_max [shape: (nlam,)]
         self.nFPM_t     = self.rMask_t*self.nFPM
         self.nFPM_max   = int(np.max(self.nFPM_t))
         self.mask_lam   = (np.arange(self.nFPM_max+1)[None,:]\
-                           <self.rMask_t[:,None]*self.nFPM)
+                           <self.rMask_t[:,None]*self.nFPM)  # [shape: (nlam, nFPM_max + 1)]
         self.xi_FPM_lam = np.arange(self.nFPM_max+1)[None,:]\
-                *self.mask_lam/self.nFPM
+                *self.mask_lam/self.nFPM  # [shape: (nlam, nFPM_max + 1)]
 
         # Hankel kernel for the focal plane mask (FPM) 
-        self.hankel_kernel_FPM_all  = besselJ0(
+        self.hankel_kernel_FPM_all  = besselJ0(  # [shape: nlam, nFPM_max + 1, nPup]
                 np.pi/self.R*self.xi_FPM_lam[:,:,None]*self.r[None,None,:])
-        self.hankel_kernel_iFPM_all = besselJ0(
+        self.hankel_kernel_iFPM_all = besselJ0(  # [shape: nlam, nPup, nFPM_max + 1]
                 np.pi/self.R*self.xi_FPM_lam[:,None,:]*self.r[None,:,None])
                 
         # Lyot stop 
@@ -673,6 +681,12 @@ class APLC1d(Coronagraph):
             Direct electric field :math:`\Psi_0` at all the wavelengths
             
         """
+        # lam0 / lam_t[:, None] broadcasts into a row vector with scaling coeffs for each wavelength
+        # hankel_kernel_all . (Pupil1d * Apod * LyotStop1d * r/R) has dimensions
+        #           (nlam, nImg, nPup) x (nPup) -> (nlam, nImg)
+        # R / nPup is the Riemann sum scaling factor (dx in the 2D case)
+        # r / R is the stand-in for the radial term inside the integral of the Hankel transform
+        # TODO: why scale r by 1/R? What does this do?
         return self.lam0/self.lam_t[:,None]*np.pi*self.hankel_kernel_all.dot(
                 self.Pupil1d*Apod*self.LyotStop1d*self.r/self.R)*self.R/self.nPup
 
@@ -720,9 +734,10 @@ class APLC1dAnalytical(APLC1d):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        # Build Fourier kernels for analytical APLC propagation- don't assume rotational symmetry
-        self.fourier_kernel_FPM_all = None
-        self.fourier_kernel_iFPM_all = None
+        # # Build Fourier kernels for analytical APLC propagation- don't assume rotational symmetry
+        # self.fourier_kernel_FPM_all = None
+        # self.fourier_kernel_iFPM_all = None
+        self.Q_coarse = 4  # Focal-plane oversampling factor for the large-FOV (coarse) field
 
     def compute_direct_field_1d(self, Apod):
         pass
