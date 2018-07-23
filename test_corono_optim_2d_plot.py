@@ -150,7 +150,7 @@ pl.title('Pupil transmission')
 fname = fname_gen + '_apodisation_ampl.pdf'
 fpath = fdir_pdf / fname
 
-pl.figure(5)
+pl.figure(15)
 pl.clf()
 pl.imshow(Apod_pyth*corono0.Pupil2d, cmap = cm.Greys_r)
 pl.title('Apod 1 transmission - MaxTau problem - pyth')

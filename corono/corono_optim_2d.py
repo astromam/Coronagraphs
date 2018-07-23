@@ -329,6 +329,13 @@ class ProblemMatrix(object):
             corono_field_re_t_tmp[i], corono_field_im_t_tmp[i] = \
             self.corono.compute_corono_field_2d_vec(Apod2d)
             Apod2d[i0,j0] = 0  
+
+#        for i, val in enumerate(self.idx_pup):  
+#            (i0,j0) = np.unravel_index(val, (self.corono.nPup, self.corono.nPup))
+#            Apod2d[i0,j0] = 1            
+#            corono_field_re_t_tmp[i], corono_field_im_t_tmp[i] = \
+#            self.corono.compute_corono_field_2d_vec(Apod2d)
+#            Apod2d[i0,j0] = 0 
         
         corono_field_re_t = np.reshape(
                 corono_field_re_t_tmp[:,:,self.idx_dz], 
