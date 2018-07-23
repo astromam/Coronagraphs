@@ -379,7 +379,7 @@ class ProblemMatrix(object):
     
                 for i, val in enumerate(self.idx_pup):
                     self.Apod[val] = self.m.getVars()[i].x
-                                          
+                
             except gb.GurobiError as e:
                 print('Error code ' + str(e.errno) + ": " + str(e))
     

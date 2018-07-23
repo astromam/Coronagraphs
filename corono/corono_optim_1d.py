@@ -381,10 +381,8 @@ class ProblemMatrix(object):
                 
                 self.m.optimize()
     
-                Apodtmp = np.zeros((self.npp))
-                for i in range(self.npp):
-                    Apodtmp[i] = self.m.getVars()[i].x
-                self.Apod[self.idx_pup] = Apodtmp
+                for i, val in enumerate(self.idx_pup):
+                    self.Apod[val] = self.m.getVars()[i].x
                     
             except gb.GurobiError as e:
                 print('Error code ' + str(e.errno) + ": " + str(e))
