@@ -1327,12 +1327,6 @@ class SP1d(Coronagraph):
                            <self.rMask_t[:,None]*self.nFPM)
         self.xi_FPM_lam = np.arange(self.nFPM_max+1)[None,:]\
                 *self.mask_lam/self.nFPM
-
-        # Hankel kernel for the focal plane mask (FPM) 
-#        self.hankel_kernel_FPM_all  = besselJ0(
-#                np.pi/self.R*self.xi_FPM_lam[:,:,None]*self.r[None,None,:])
-#        self.hankel_kernel_iFPM_all = besselJ0(
-#                np.pi/self.R*self.xi_FPM_lam[:,None,:]*self.r[None,:,None])
         
 #%% # direct propagation (no focal plane mask)
     def compute_direct_field_1d(self,Apod):
