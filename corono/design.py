@@ -715,6 +715,22 @@ class APLC1d(Coronagraph):
         return self.lam0/self.lam_t[:,None]*np.pi\
             *corono_field_tmp*self.R/self.nPup
             
+
+class APLC1dAnalytical(APLC1d):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        # Build Fourier kernels for analytical APLC propagation- don't assume rotational symmetry
+        self.fourier_kernel_FPM_all = None
+        self.fourier_kernel_iFPM_all = None
+
+    def compute_direct_field_1d(self, Apod):
+        pass
+
+    def compute_corono_field_1d(self, Apod):
+        pass
+
+
 #%% 
 """
 SP 1d Coronagraph subclass
