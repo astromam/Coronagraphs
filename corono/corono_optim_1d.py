@@ -618,10 +618,9 @@ class MaxTau(ProblemMatrix):
             self.b = np.concatenate((b0,b1,b2,b3))
         else:
             self.A = np.concatenate((A0,A1), axis=1)
-            self.b = np.concatenate((b0,b1))
-        self.c = - 2.*np.pi*(np.arange(self.corono.nPup)[self.idx_pup]+0.5)\
-                /(2.*self.corono.nPup)**2/self.TR                
-                
+            self.b = np.concatenate((b0,b1))               
+        self.c = - 2.*np.pi*(np.asarray(self.idx_pup)+0.5)\
+                /(2.*self.corono.nPup)**2/self.TR                 
         
         return self.A, self.b, self.c
 
