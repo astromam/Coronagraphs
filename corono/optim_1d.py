@@ -597,14 +597,9 @@ class MaxTau(ProblemMatrix):
             
         """
         cst = 10.**(-self.cDarkHole/2.)/np.sqrt(2.)
-        ED0 = [cst*self.direct_field_re_t_tmp[:,(self.corono.nlam-1)//2,0]] \
-        * self.corono.nlam*self.ndz*2
-        ED0 = np.asarray(ED0).T
-       
-        # use np.tile
-        
-        A0  =  self.corono_field_t - ED0
-        A1  = -self.corono_field_t - ED0
+
+        A0  =  self.corono_field_t - cst*self.direct_field_re_t_tmp[:,(self.corono.nlam-1)//2,0, None]
+        A1  = -self.corono_field_t - cst*self.direct_field_re_t_tmp[:,(self.corono.nlam-1)//2,0, None]
     
         b0  = np.zeros((self.corono.nlam*self.ndz*2))
         b1  = np.zeros((self.corono.nlam*self.ndz*2))
