@@ -24,9 +24,7 @@ except ModuleNotFoundError:
 
 import scipy.optimize        
 
-
-from corono import corono_design as cd
-from corono.utils import update_params
+import corono as coro
 
 #%%
 """
@@ -125,7 +123,7 @@ class ProblemMatrix(object):
     """
     default_params = get_default_params_ProblemMatrix()
   
-    def __init__(self,corono=cd.APLC2d(), **kwargs):
+    def __init__(self,corono=coro.design.APLC2d(), **kwargs):
         r"""
         __init__ : method
             Constructor for the ProblemMatrix class
@@ -419,7 +417,7 @@ class ProblemMatrix(object):
         
         """
         params = self.corono.params.copy()
-        params = update_params(params, **kwargs)
+        params = coro.update_params(params, **kwargs)
                 
         if self.problem_name == 'MaxTau':
             str_opt = '_C={cDarkHole:.1f}'

@@ -10,10 +10,7 @@ import numpy as np
 import os
 
 from pathlib import Path
-from corono import corono_design as cd
-from corono import corono_optim_1d as co1d
-
-from corono.utils import to_dict, update_params
+import corono as coro
 
 #%% parameters
 """
@@ -21,7 +18,6 @@ Parameters
 """
 corono_name = 'APLC' # 'APLC' or 'SP'
 solver      = 'stdgrb' # 'stdgrb', 'gurobipy', 'scipy.linprog'
-
 
 nPup = 500
 nFPM = 50
@@ -62,7 +58,7 @@ LyotStop1d   = (r>LyotStopObs)*(r<LyotStopIns)*1.0
 if solver != 'gurobipy' and solver != 'stdgrb':
     solver = 'scipy'
 
-params = to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
+params = coro.to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
                  nPup = nPup, nFPM=nFPM, nImg=nImg, Fmax = Fmax,
                  bw = bw, nlam = nlam,
                  PupilObs = PupilObs, rMask = rMask, 
@@ -93,13 +89,13 @@ if not os.path.exists(fdir_plot):
 Coronagraph defintion
 """
 if corono_name == 'APLC':
-    corono0 = cd.APLC1d(**params)
+    corono0 = coro.design.APLC1d(**params)
 elif corono_name == 'SP':
-    corono0 = cd.SP1d(**params)
+    corono0 = coro.design.SP1d(**params)
 elif corono_name == 'HDZPM':
-    corono0 = cd.HDZPM1d(**params)
+    corono0 = coro.design.HDZPM1d(**params)
 elif corono_name == 'HTZPM':
-    corono0 = cd.HTZPM1d(**params)
+    corono0 = coro.design.HTZPM1d(**params)
 else:
     raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
 
@@ -108,14 +104,14 @@ else:
 Problem defintion
 """
 # Maximization of the integrated amplitude transmission of the apodizer
-params  = update_params(params, problem_name = 'MaxTau')
-problem1 = co1d.MaxTau(corono=corono0, **params)
+params  = coro.update_params(params, problem_name = 'MaxTau')
+problem1 = coro.optim_1d.MaxTau(corono=corono0, **params)
 # Maximization of the contrast under L1-norm
-params  = update_params(params, problem_name = 'MaxContrastL1')
-problem2 = co1d.MaxContrast(corono=corono0, Lnorm='L1',**params)
+params  = coro.update_params(params, problem_name = 'MaxContrastL1')
+problem2 = coro.optim_1d.MaxContrast(corono=corono0, Lnorm='L1',**params)
 # Maximization of the contrast under L-infinite norm
-params  = update_params(params, problem_name = 'MaxContrastLinf')
-problem3 = co1d.MaxContrast(corono=corono0, Lnorm='Linf',**params)
+params  = coro.update_params(params, problem_name = 'MaxContrastLinf')
+problem3 = coro.optim_1d.MaxContrast(corono=corono0, Lnorm='Linf',**params)
 
 
 #%% Apodizer solution for the problems
@@ -189,16 +185,16 @@ pl.legend()
 Computation of the direct and coronagraphic images
 """
 fname_gen  = problem1.get_filename(nlam=nlambis)
-params2    = update_params(params, nlam=nlambis) 
+params2    = coro.update_params(params, nlam=nlambis) 
 
 if corono_name == 'APLC':
-    corono0 = cd.APLC1d(**params2)
+    corono0 = coro.design.APLC1d(**params2)
 elif corono_name == 'SP':
-    corono0 = cd.SP1d(**params2)
+    corono0 = coro.design.SP1d(**params2)
 elif corono_name == 'HDZPM':
-    corono0 = cd.HDZPM1d(**params2)
+    corono0 = coro.design.HDZPM1d(**params2)
 elif corono_name == 'HTZPM':
-    corono0 = cd.HTZPM1d(**params2)
+    corono0 = coro.design.HTZPM1d(**params2)
 else:
     raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
 

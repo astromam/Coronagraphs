@@ -13,10 +13,7 @@ import os
 from scipy.optimize import minimize
 
 from pathlib import Path
-from corono import corono_design as cd
-from corono import corono_optim_1d as co1d
-
-from corono.utils import to_dict, update_params
+import corono as coro
 
 #%% parameters
 """
@@ -67,7 +64,7 @@ LyotStop1d   = (r>LyotStopObs)*(r<LyotStopIns)*1.0
 if solver != 'gurobipy' and solver != 'stdgrb':
     solver = 'scipy'
 
-params = to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
+params = coro.to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
                  nPup = nPup, nFPM=nFPM, nImg=nImg, Fmax = Fmax,
                  bw = bw, nlam = nlam,
                  PupilObs = PupilObs, rMask = rMask, 
@@ -94,13 +91,13 @@ if not os.path.exists(fdir):
 Coronagraph defintion
 """
 if corono_name == 'APLC':
-    corono0 = cd.APLC1d(**params)
+    corono0 = coro.design.APLC1d(**params)
 elif corono_name == 'SP':
-    corono0 = cd.SP1d(**params)
+    corono0 = coro.design.SP1d(**params)
 elif corono_name == 'HDZPM':
-    corono0 = cd.HDZPM1d(**params)
+    corono0 = coro.design.HDZPM1d(**params)
 elif corono_name == 'HTZPM':
-    corono0 = cd.HTZPM1d(**params)
+    corono0 = coro.design.HTZPM1d(**params)
 else:
     raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
 
@@ -110,13 +107,13 @@ Problem defintion
 """
 if problem_name == 'MaxTau':
     # Maximization of the integrated amplitude transmission of the apodizer
-    problem0 = co1d.MaxTau(corono=corono0, **params)
+    problem0 = coro.optim_1d.MaxTau(corono=corono0, **params)
 elif problem_name == 'MaxContrastL1':
     # Maximization of the contrast under L1-norm
-    problem0 = co1d.MaxContrast(corono=corono0, Lnorm='L1',**params)
+    problem0 = coro.optim_1d.MaxContrast(corono=corono0, Lnorm='L1',**params)
 elif problem_name == 'MaxContrastLinf':
     # Maximization of the contrast under L-infinite norm
-    problem0 = co1d.MaxContrast(corono=corono0, Lnorm='Linf',**params)
+    problem0 = coro.optim_1d.MaxContrast(corono=corono0, Lnorm='Linf',**params)
 else:
     raise NameError('{0}: Not an existing optimization problem!'.format(problem_name))
 
@@ -154,13 +151,13 @@ def res_energy_with_lp(x_t):
     if   corono_name == 'APLC':
         rMask, LyotStopObs, LyotStopIns = [x_t[i] for i in range(3)]
         LyotStop1d  = (r>LyotStopObs)*(r<LyotStopIns)*1.0
-        params2 = update_params(params, rMask = rMask)
+        params2 = coro.update_params(params, rMask = rMask)
         
     elif corono_name == 'HDZPM':
         rMask1, OPDx2, LyotStopObs, LyotStopIns = [x_t[i] for i in {0,2,3,4}]
         rMask2      = rMask1 + x_t[1]
         LyotStop1d  = (r>LyotStopObs)*(r<LyotStopIns)*1.0
-        params2 = update_params(params, OPDx2 = OPDx2, 
+        params2 = coro.update_params(params, OPDx2 = OPDx2, 
                                 rMask1 = rMask1, rMask2 = rMask2,)
         
     elif corono_name == 'HTZPM':
@@ -168,23 +165,23 @@ def res_energy_with_lp(x_t):
         rMask2      = rMask1 + x_t[1]
         rMask3      = rMask2 + x_t[2]
         LyotStop1d  = (r>LyotStopObs)*(r<LyotStopIns)*1.0
-        params2 = update_params(params, OPDx2 = OPDx2, OPDx3 = OPDx3,
+        params2 = coro.update_params(params, OPDx2 = OPDx2, OPDx3 = OPDx3,
                         rMask1 = rMask1, rMask2 = rMask2, rMask3 = rMask3)
         
     else:
         raise NameError('{0}: Not a correct coronagraph for NM-optimization!'.format(corono_name))    
 
-    params2 = update_params(params2, LyotStop1d = LyotStop1d,
+    params2 = coro.update_params(params2, LyotStop1d = LyotStop1d,
                         LyotStopObs = LyotStopObs, LyotStopIns = LyotStopIns)
     
     if   corono_name == 'APLC':
-        corono0 = cd.APLC1d(**params2)
+        corono0 = coro.design.APLC1d(**params2)
     elif corono_name == 'SP':
-        corono0 = cd.SP1d(**params2)
+        corono0 = coro.design.SP1d(**params2)
     elif corono_name == 'HDZPM':
-        corono0 = cd.HDZPM1d(**params2)
+        corono0 = coro.design.HDZPM1d(**params2)
     elif corono_name == 'HTZPM':
-        corono0 = cd.HTZPM1d(**params2)
+        corono0 = coro.design.HTZPM1d(**params2)
     else:
         raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
 
@@ -193,13 +190,13 @@ def res_energy_with_lp(x_t):
     """
     if   problem_name == 'MaxTau':
         # Maximization of the integrated amplitude transmission of the apodizer
-        problem1 = co1d.MaxTau(corono=corono0, **params2)
+        problem1 = coro.optim_1d.MaxTau(corono=corono0, **params2)
     elif problem_name == 'MaxContrastL1':
         # Maximization of the contrast under L1-norm
-        problem1 = co1d.MaxContrast(corono=corono0, Lnorm='L1',**params2)
+        problem1 = coro.optim_1d.MaxContrast(corono=corono0, Lnorm='L1',**params2)
     elif problem_name == 'MaxContrastLinf':
         # Maximization of the contrast under L-infinite norm
-        problem1 = co1d.MaxContrast(corono=corono0, Lnorm='Linf',**params2)
+        problem1 = coro.optim_1d.MaxContrast(corono=corono0, Lnorm='Linf',**params2)
     else:
         raise NameError('{0}: Not an existing optimization problem!'.format(problem_name))
 
