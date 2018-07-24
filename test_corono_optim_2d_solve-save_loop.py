@@ -10,12 +10,8 @@ import numpy as np
 import time
 import os
 from pathlib import Path
-
-from corono import corono_design as cd
-from corono import corono_optim_2d as co2d
-from corono.utils import to_dict
-
 from astropy.io import fits
+import corono as coro
 
 #%% parameters
 """
@@ -83,7 +79,7 @@ LyotStop2d = fits.getdata(fpath_lys)
 if solver != 'gurobipy' and solver != 'stdgrb':
     solver = 'scipy'
 
-params = to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
+params = coro.to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
              rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau, 
              CtrBtwnPix=CtrBtwnPix, CtrBtwnPix2 = CtrBtwnPix2,
              nlam=nlam, bw=bw,
@@ -100,9 +96,9 @@ params = to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
 Coronagraph defintion
 """
 if corono_name == 'SP':
-    corono0 = cd.SP2d(**params)
+    corono0 = coro.design.SP2d(**params)
 elif corono_name == 'APLC':
-    corono0 = cd.APLC2d(**params)
+    corono0 = coro.design.APLC2d(**params)
 else:
     raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
 
@@ -112,17 +108,17 @@ Problem defintion
 """
 if problem_name == 'MaxTau':
 # Maximization of the integrated amplitude transmission of the apodizer
-    problem1 = co2d.MaxTau(corono=corono0, **params)
+    problem1 = coro.optim_2d.MaxTau(corono=corono0, **params)
     pb_lst   = cDarkHole_lst*1.
     str0     = 'cDarkHole'
 elif problem_name == 'MaxContrastL1':
 # Maximization of the contrast under L1-norm
-    problem1 = co2d.MaxContrast(corono=corono0, Lnorm='L1',**params)
+    problem1 = coro.optim_2d.MaxContrast(corono=corono0, Lnorm='L1',**params)
     pb_lst   = tau_lst*1.
     str0     = 'tau'
 elif problem_name == 'MaxContrastLinf':
 # Maximization of the contrast under L-infinite norm
-    problem1 = co2d.MaxContrast(corono=corono0, Lnorm='Linf',**params)
+    problem1 = coro.optim_2d.MaxContrast(corono=corono0, Lnorm='Linf',**params)
     pb_lst   = tau_lst*1.
     str0     = 'tau'
 else:

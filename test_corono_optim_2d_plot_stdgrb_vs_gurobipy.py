@@ -10,15 +10,9 @@ import pylab as pl
 from pathlib import Path
 
 import os
-
-from corono import corono_design as cd
-from corono import corono_optim_2d as co2d
-
-from corono.utils import to_dict, update_params
-
 from matplotlib import cm
-
 from astropy.io import fits
+import corono as coro
 
 #%% parameters
 """
@@ -79,7 +73,7 @@ fpath_lys = fdir / fname_lys
 Pupil2d    = fits.getdata(fpath_pup)
 LyotStop2d = fits.getdata(fpath_lys)
 
-params = to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
+params = coro.to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
                  rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau, 
                  CtrBtwnPix=CtrBtwnPix, CtrBtwnPix2 = CtrBtwnPix2,
                  nlam=nlam, bw=bw,
@@ -106,9 +100,9 @@ if not os.path.exists(fdir_pdf):
 Coronagraph defintion
 """
 if corono_name == 'SP':
-    corono0 = cd.SP2d(**params)
+    corono0 = coro.design.SP2d(**params)
 elif corono_name == 'APLC':
-    corono0 = cd.APLC2d(**params)
+    corono0 = coro.design.APLC2d(**params)
 else:
     raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
 
@@ -118,13 +112,13 @@ Problem defintion
 """
 if problem_name == 'MaxTau':
     # Maximization of the integrated amplitude transmission of the apodizer
-    problem1 = co2d.MaxTau(corono=corono0, **params)
+    problem1 = coro.optim_2d.MaxTau(corono=corono0, **params)
 elif problem_name == 'MaxContrastL1':
     # Maximization of the contrast under L1-norm
-    problem1 = co2d.MaxContrast(corono=corono0, Lnorm='L1',**params)
+    problem1 = coro.optim_2d.MaxContrast(corono=corono0, Lnorm='L1',**params)
 elif problem_name == 'MaxContrastLinf':
     # Maximization of the contrast under L-infinite norm
-    problem1 = co2d.MaxContrast(corono=corono0, Lnorm='Linf',**params)
+    problem1 = coro.optim_2d.MaxContrast(corono=corono0, Lnorm='Linf',**params)
 else:
     raise NameError('{0}: Not an existing optimization problem!'.format(problem_name))
 
@@ -186,12 +180,12 @@ pl.savefig(str(fpath))
 Computation of the direct and coronagraphic images
 """
 fname_gen  = problem1.get_filename(nlam=nlambis)
-params2    = update_params(params, nlam=nlambis)
+params2    = coro.update_params(params, nlam=nlambis)
 
 if corono_name == 'SP':
-    corono0 = cd.SP2d(**params2)
+    corono0 = coro.design.SP2d(**params2)
 else:
-    corono0 = cd.APLC2d(**params2)
+    corono0 = coro.design.APLC2d(**params2)
 
 if corono_name == 'APLC':
     poly_direct_image1 = corono0.compute_direct_intensity_2d(Apod_gurobipy)
