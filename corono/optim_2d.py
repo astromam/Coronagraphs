@@ -581,15 +581,10 @@ class MaxTau(ProblemMatrix):
             http://iopscience.iop.org/article/10.3847/0004-637X/818/2/163/meta
             
         """                    
-        ED0 = np.zeros_like(self.corono_field_t)
-        ED0tmp = self.Pupil_vec[self.idx_pup]*self.LyotStop_vec[self.idx_pup]
-        for j in range(len(self.corono_field_t.T)):
-            ED0[:,j] = ED0tmp
-        cst = 10.**(-self.cDarkHole/2.)/np.sqrt(2.)      
-        ED0 *= cst*self.corono.Fmax2d/(self.corono.nImg2d*self.corono.nPup)
+        cst = (10.**(-self.cDarkHole/2.)/np.sqrt(2.))*self.corono.Fmax2d/(self.corono.nImg2d*self.corono.nPup)
 
-        A0  =  self.corono_field_t - ED0                
-        A1  = -self.corono_field_t - ED0       
+        A0  =  self.corono_field_t - cst*self.Pupil_vec[self.idx_pup, None]*self.LyotStop_vec[self.idx_pup, None]            
+        A1  = -self.corono_field_t - cst*self.Pupil_vec[self.idx_pup, None]*self.LyotStop_vec[self.idx_pup, None]    
 
         b0  = np.zeros((len(self.corono_field_t.T)))
         b1  = np.zeros((len(self.corono_field_t.T)))
