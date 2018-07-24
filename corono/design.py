@@ -16,6 +16,7 @@ import numpy as np
 #import pylab as pl
 #from astropy.io import fits
 from .utils import besselJ0, sft, isft, uniform_disk, radius_disk, sft_even, isft_even
+import time
 
 import json
 
@@ -1208,10 +1209,20 @@ class APLC1d(Coronagraph):
                 *self.mask_lam/self.nFPM
 
         # Hankel kernel for the focal plane mask (FPM) 
+#        t0 = time.time()
+#        self.hankel_kernel_FPM_all  = besselJ0(
+#                np.pi/self.R*self.xi_FPM_lam[:,:,None]*self.r[None,None,:])
+#        self.hankel_kernel_iFPM_all = besselJ0(
+#                np.pi/self.R*self.xi_FPM_lam[:,None,:]*self.r[None,:,None])
+        
         self.hankel_kernel_FPM_all  = besselJ0(
-                np.pi/self.R*self.xi_FPM_lam[:,:,None]*self.r[None,None,:])
+                np.pi/self.R*np.einsum('ij,k -> ijk', self.xi_FPM_lam, self.r))
         self.hankel_kernel_iFPM_all = besselJ0(
-                np.pi/self.R*self.xi_FPM_lam[:,None,:]*self.r[None,:,None])
+                np.pi/self.R*np.einsum('ik,j -> ijk', self.xi_FPM_lam, self.r))
+#        print(np.shape(self.hankel_kernel_FPM_all))
+#        print(np.shape(self.hankel_kernel_iFPM_all))
+#        t1 = time.time()
+#        print('computation of hankel kernel: {0:.2f}s'.format(t1-t0))
 
         
 #%% # direct propagation (no focal plane mask)
@@ -1272,6 +1283,39 @@ class APLC1d(Coronagraph):
         
         return self.lam0/self.lam_t[:,None]*np.pi\
             *corono_field_tmp*self.R/self.nPup
+
+#%% # propagation through coronagraph (with focal plane mask)
+    def compute_corono_field_1d0(self,Apod):
+        """
+        Computes the electric field of the coronagraphic image with APLC
+        for the 1D problem.
+        
+        Parameters
+        ---------- 
+        Apod : array_like
+            Entrance pupil apodization :math:`\Phi`
+                
+        Returns    
+        ----------
+        res : array_like
+            Coronagraphic electric field :math:`\Psi_D` at all the wavelengths
+            
+        """
+        FPM_field  = np.pi*self.hankel_kernel_FPM_all.dot(
+                Apod*self.Pupil1d*self.r/self.R)\
+                *(self.R/self.nPup)*self.xi_FPM_lam
+                
+        iFPM_field = np.pi*(1/self.nFPM)*np.einsum('ijk,ik -> ij', 
+                           self.hankel_kernel_iFPM_all, FPM_field)
+                
+        lyot_field = (Apod[None,:]*self.Pupil1d[None,:]-iFPM_field)\
+                *self.r[None,:]/self.R*self.LyotStop1d[None, :]
+                
+        corono_field_tmp = np.einsum('ij,ikj -> ik', lyot_field, self.hankel_kernel_all)
+        
+        return self.lam0/self.lam_t[:,None]*np.pi\
+            *corono_field_tmp*self.R/self.nPup
+
             
 #%% 
 """
