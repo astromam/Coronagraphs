@@ -24,6 +24,7 @@ except ModuleNotFoundError:
 
 import scipy.optimize        
 
+
 from corono import corono_design as cd
 from corono.utils import update_params
 

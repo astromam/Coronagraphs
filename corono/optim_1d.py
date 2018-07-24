@@ -22,10 +22,8 @@ except ModuleNotFoundError:
     gb = False
 
 import scipy.optimize        
-    
-from .utils import besselJ0
-from corono import corono_design as cd
-from corono.utils import update_params
+import corono as coro
+
 
 #%%
 """
@@ -118,7 +116,7 @@ class ProblemMatrix(object):
     """
     default_params = get_default_params_ProblemMatrix()
   
-    def __init__(self,corono=cd.APLC1d(),**kwargs):
+    def __init__(self,corono=coro.design.APLC1d(),**kwargs):
         r"""
         __init__ : method
             Constructor for the ProblemMatrix class
@@ -423,7 +421,7 @@ class ProblemMatrix(object):
         
         """
         params = self.params.copy()
-        params = update_params(params, **kwargs)
+        params = coro.update_params(params, **kwargs)
 
         if self.problem_name == 'MaxTau':
             str_opt = '_C={cDarkHole:.1f}'
@@ -446,7 +444,7 @@ class ProblemMatrix(object):
         '_IWA={rho0}_OWA={rho1}_BW={bw:.2f}_nlam={nlam:02d}' + \
         '_1D_N={nPup:04d}_nFPM={nFPM:03d}'+ str_cor + '_{problem_name}' + str_opt + '_{solver}'
         
-        return fname_gen.format(**{key: params[key] for key in params})
+        return fname_gen.format(**params)
     
 #%%    
     def compute_matrices(self):
@@ -603,6 +601,8 @@ class MaxTau(ProblemMatrix):
         * self.corono.nlam*self.ndz*2
         ED0 = np.asarray(ED0).T
        
+        # use np.tile
+        
         A0  =  self.corono_field_t - ED0
         A1  = -self.corono_field_t - ED0
     
