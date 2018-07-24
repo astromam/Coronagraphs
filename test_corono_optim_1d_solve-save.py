@@ -135,4 +135,4 @@ test0 = np.zeros((nPup, 2))
 test0[:, 0] = corono0.r/2
 test0[:, 1] = Apod_pyth
 
-#np.savetxt(fpath, test0)
+np.savetxt(fpath, test0)

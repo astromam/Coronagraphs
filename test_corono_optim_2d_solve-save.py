@@ -26,7 +26,7 @@ solver       = 'stdgrb' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
 slvLogToConsole = 0
 slvCrossover    = 0
 slvMethod       = 2
-
+allLogToConsole = 0
 
 #nPup = corono0.params['nPup']
 nPup = 50
@@ -89,7 +89,8 @@ params = coro.to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
                  solver = solver, 
                  corono_name = corono_name, pupil_name = pupil_name,
                  slvLogToConsole = slvLogToConsole,
-                 slvCrossover = slvCrossover, slvMethod = slvMethod)
+                 slvCrossover = slvCrossover, slvMethod = slvMethod,
+                 allLogToConsole = allLogToConsole)
 
 #%%  
 """ 

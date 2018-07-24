@@ -20,7 +20,6 @@ corono_name  = 'APLC' # 'APLC' or 'SP' or 'HDZPM' or 'HTZPM'
 problem_name = 'MaxTau'#'MaxContrastLinf' # ,'MaxContrastL1' # #  'MaxContrastL1', 
 solver       = 'stdgrb' # 'stdgrb', 'gurobipy', 'scipy.linprog'
 
-
 nPup = 500
 nFPM = 50
 nImg = 220
