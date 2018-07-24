@@ -53,7 +53,8 @@ def get_default_params_ProblemMatrix():
     """
     tmp = {'cDarkHole':8,'tau':0.2,
            'cDarkHoledirect':2, 'solver':'stdgrb', 
-           'slvCrossover':0, 'slvLogToConsole':1, 'slvMethod':2}
+           'slvCrossover':0, 'slvLogToConsole':1, 'slvMethod':2,
+           'allLogToConsole':0}
     return tmp
 
 #%%
@@ -305,7 +306,7 @@ class ProblemMatrix(object):
         if self.problem_name == 'MaxTau':
             direct_field_t_tmp = np.zeros((self.npp, self.corono.nlam, 
                                        self.corono.nImg+1), dtype='complex128')
-            print('generating direct response matrices for 1D problem')
+            self.print_log('generating direct response matrices for 1D problem')
             t0 = time.time()
             Apod1d    = np.zeros((self.corono.nPup))
             for i, val in enumerate(self.idx_pup):
@@ -315,7 +316,7 @@ class ProblemMatrix(object):
             self.direct_field_re_t_tmp = direct_field_t_tmp.real
     #        self.direct_field_im_t_tmp = direct_field_t_tmp.imag    
             t1 = time.time()
-            print('direct matrix computation time: {0:.2f}s'.format(t1-t0))
+            self.print_log('direct matrix computation time: {0:.2f}s'.format(t1-t0))
 
 
         corono_field_t_tmp = np.zeros((self.npp, self.corono.nlam, 
@@ -330,7 +331,7 @@ class ProblemMatrix(object):
         corono_field_re_t_tmp = corono_field_t_tmp.real
         corono_field_im_t_tmp = corono_field_t_tmp.imag
         t1 = time.time()
-        print('corono matrix computation time: {0:.2f}s'.format(t1-t0))
+        self.print_log('corono matrix computation time: {0:.2f}s'.format(t1-t0))
         
         corono_field_re_t = np.reshape(
                 corono_field_re_t_tmp[:,:,self.idx_dz], 
@@ -361,17 +362,17 @@ class ProblemMatrix(object):
         t0 = time.time()
         
         if stdgrb and self.solver == 'stdgrb':
-            print('solving problem with stdgrb package')
+            self.print_log('solving problem with stdgrb package')
             Apodtmp, val = stdgrb.lp_solve(self.c, A=(self.A).T, b=self.b, 
                                            crossover=self.slvCrossover, 
                                            logtoconsole=self.slvLogToConsole, method=self.slvMethod)
             self.Apod[self.idx_pup] = Apodtmp
 
         elif gb and self.solver == 'gurobipy':
-            print('generating gurobi model')
+            self.print_log('generating gurobi model')
             self.compute_gurobi_model()
             
-            print('solving problem with gurobipy package')                
+            self.print_log('solving problem with gurobipy package')                
             try:
                 self.m.Params.Method       = self.slvMethod
                 self.m.Params.LogToConsole = self.slvLogToConsole
@@ -389,7 +390,7 @@ class ProblemMatrix(object):
                 print('Encountered an attribute error')
                         
         else:
-            print('solving problem with scipy.optimize')
+            self.print_log('solving problem with scipy.optimize')
             bds = np.zeros((self.npp+self.neps, 2))
             bds[:,1] = 1.
             sol=scipy.optimize.linprog(self.c,self.A.T,self.b,
@@ -398,7 +399,7 @@ class ProblemMatrix(object):
             self.Apod[self.idx_pup]=sol.x
             
         t1 = time.time()
-        print('solving time: {0:.2f}s\n'.format(t1-t0))
+        self.print_log('solving time: {0:.2f}s\n'.format(t1-t0))
         return self.Apod
 
 
@@ -483,17 +484,17 @@ class ProblemMatrix(object):
         
         if self.corono_field_t is None:
             t00 = time.time()            
-            print('computing response matrices for 1D problem')   
+            self.print_log('computing response matrices for 1D problem')   
             self.compute_response_matrices()
             t11 = time.time()
-            print('computing time (response matrices): {0:.2f}s\n'.format(t11-t00))
+            self.print_log('computing time (response matrices): {0:.2f}s\n'.format(t11-t00))
 
         if self.A is None or self.b is None or self.c is None:
             t00 = time.time()
-            print('computing A, b, and c matrices')
+            self.print_log('computing A, b, and c matrices')
             self.compute_problem_matrices()
             t11 = time.time()
-            print('computing time (Abc matrices): {0:.2f}s\n'.format(t11-t00))
+            self.print_log('computing time (Abc matrices): {0:.2f}s\n'.format(t11-t00))
 #        else:
 #            if self.problem_name == 'MaxTau':
 #                print('updating A matrix')
@@ -501,6 +502,26 @@ class ProblemMatrix(object):
 #            else:
 #                print('updating b matrix')
 #                self.update_tau()                
+
+#%%
+    def print_log(self, string):
+        r"""
+        Print a given log on the console depending on the value of 
+        allLogtoConsole parameter
+        
+        Parameters:
+        --------
+        string: string
+            string to be displayed on the console
+            
+        Returns:
+        --------
+        string: string
+            string given by the user
+        
+        """
+        if self.allLogToConsole == 1:
+            return print(string)
 
         
 #%%

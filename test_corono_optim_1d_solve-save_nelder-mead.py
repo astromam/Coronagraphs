@@ -25,6 +25,7 @@ solver       = 'stdgrb' # 'stdgrb', 'gurobipy', 'scipy.linprog'
 slvLogToConsole = 0
 slvCrossover    = 0
 slvMethod       = 2
+allLogToConsole = 0
 
 nPup = 500
 nFPM = 50
@@ -75,7 +76,8 @@ params = coro.to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
                  r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d,
                  solver = solver, problem_name = problem_name,
                  corono_name = corono_name, slvLogToConsole = slvLogToConsole,
-                 slvCrossover = slvCrossover, slvMethod = slvMethod)
+                 slvCrossover = slvCrossover, slvMethod = slvMethod,
+                 allLogToConsole = allLogToConsole)
 
 #%%
 """

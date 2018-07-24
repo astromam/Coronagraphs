@@ -124,3 +124,4 @@ pupils/2D/SPHERE/sphere_pupil_sllc_BH.fits
 pupils/2D/SPHERE/sphere_stop_ST_ALC2.fits
 test_corono_design_2d_sphere_compute-save.py
 test_corono_design_2d_sphere_plot.py
+test_print.py
