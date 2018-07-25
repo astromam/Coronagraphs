@@ -17,7 +17,7 @@ import corono as coro
 Parameters
 """
 corono_name  = 'APLC' # 'APLC' or 'SP'
-problem_name = 'MaxTau' # ,'MaxTau' # 'MaxContrastLinf' #'MaxContrastL1' # #  
+problem_name = 'MaxContrastL1' # ,'MaxTau' # 'MaxContrastLinf' #'MaxContrastL1' # #  
 solver       = 'stdgrb' # 'stdgrb', 'gurobipy', 'scipy.linprog'
 slvLogToConsole = 0
 slvCrossover    = 0
@@ -26,8 +26,8 @@ allLogToConsole = 0
 
 FirstDer    = True
 SecondDer   = True
-FirstDerLim = 0.001
-SecondDerLim= 0.0001 
+FirstDerLim = 0.01
+SecondDerLim= 0.001 
 
 nPup = 500
 nFPM = 50

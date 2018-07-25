@@ -650,15 +650,13 @@ class MaxTau(ProblemMatrix):
             self.b = np.concatenate((b0,b1))
 
         if self.FirstDer is True:
-            A4  = np.identity(self.npp) - np.eye(self.npp, k=1)
-            A4  = A4[:, :self.npp-1]
+            A4  = np.diff(np.identity(self.npp), axis=1)
             b4  = self.FirstDerLim*np.ones(self.npp)
             self.A = np.concatenate((self.A, A4, -A4), axis=1)
             self.b = np.concatenate((self.b, b4, b4))
 
         if self.SecondDer is True:
-            A5  = np.identity(self.npp) -2*np.eye(self.npp, k=1)+ np.eye(self.npp, k=2)
-            A5  = A5[:, :self.npp-2]
+            A5  = np.diff(np.diff(np.identity(self.npp), axis=1), axis=1)
             b5  = self.SecondDerLim*np.ones(self.npp)
             self.A = np.concatenate((self.A, A5, -A5), axis=1)
             self.b = np.concatenate((self.b, b5, b5))        
@@ -887,17 +885,15 @@ class MaxContrast(ProblemMatrix):
             self.b = np.concatenate((b0,b1,b6,b7))
             
         if self.FirstDer is True:
-            A4  = np.identity(self.npp) - np.eye(self.npp, k=1)
-            A4  = np.concatenate((A4, N0), axis = 0)
-            A4  = A4[:, :self.npp-1]
+            A4  = np.diff(np.identity(self.npp), axis=1)
+            A4  = np.concatenate((A4, N0[:, :self.npp-1]), axis=0)
             b4  = self.FirstDerLim*np.ones(self.npp)
             self.A = np.concatenate((self.A, A4, -A4), axis=1)
             self.b = np.concatenate((self.b, b4, b4))
 
         if self.SecondDer is True:
-            A5  = np.identity(self.npp) -2*np.eye(self.npp, k=1)+ np.eye(self.npp, k=2)
-            A5  = np.concatenate((A5, N0), axis = 0)
-            A5  = A5[:, :self.npp-2]
+            A5  = np.diff(np.diff(np.identity(self.npp), axis=1), axis=1)
+            A5  = np.concatenate((A5, N0[:, :self.npp-2]), axis=0)
             b5  = self.SecondDerLim*np.ones(self.npp)
             self.A = np.concatenate((self.A, A5, -A5), axis=1)
             self.b = np.concatenate((self.b, b5, b5))     
