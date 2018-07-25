@@ -56,7 +56,7 @@ def get_default_params_ProblemMatrix():
            'slvCrossover':0, 'slvLogToConsole':1, 'slvMethod':2,
            'allLogToConsole':0, 
            'FirstDer':False, 'SecondDer': False,
-           'FirstDerivLim':0.01, 'SecondDerivLim':0.0001}
+           'FirstDerLim':0.01, 'SecondDerLim':0.0001}
     return tmp
 
 #%%
@@ -659,7 +659,7 @@ class MaxTau(ProblemMatrix):
         if self.SecondDer is True:
             A5  = np.identity(self.npp) -2*np.eye(self.npp, k=1)+ np.eye(self.npp, k=2)
             A5  = A5[:, :self.npp-2]
-            b5  = self.FirstDerLim*np.ones(self.npp)
+            b5  = self.SecondDerLim*np.ones(self.npp)
             self.A = np.concatenate((self.A, A5, -A5), axis=1)
             self.b = np.concatenate((self.b, b5, b5))        
                
@@ -898,7 +898,7 @@ class MaxContrast(ProblemMatrix):
             A5  = np.identity(self.npp) -2*np.eye(self.npp, k=1)+ np.eye(self.npp, k=2)
             A5  = np.concatenate((A5, N0), axis = 0)
             A5  = A5[:, :self.npp-2]
-            b5  = self.FirstDerLim*np.ones(self.npp)
+            b5  = self.SecondDerLim*np.ones(self.npp)
             self.A = np.concatenate((self.A, A5, -A5), axis=1)
             self.b = np.concatenate((self.b, b5, b5))     
             
