@@ -10,8 +10,21 @@ Created on Fri Mar  9 11:36:39 2018
 #%% Initialization problem
 import numpy as np
 import json
-import gurobipy as gb
-from corono import corono_design as cd
+import time
+
+try:
+    import stdgrb
+except ModuleNotFoundError:
+    stdgrb = False
+
+try:
+    import gurobipy as gb
+except ModuleNotFoundError:
+    gb = False
+
+import scipy.optimize        
+
+import corono as coro
 
 #%%
 """
@@ -39,7 +52,37 @@ def get_default_params_ProblemMatrix():
         Dictionnary of parameters with their default values.
         
     """
-    tmp = {'cDarkHole':8,'tau':0.2}
+    tmp = {'cDarkHole':8, 'tau':0.2, 'solver':'stdgrb', 
+           'pupil_name':'sbr', 
+           'slvCrossover':0, 'slvLogToConsole':1, 'slvMethod':2}
+    return tmp
+
+#%%
+def get_default_params_MaxTauProblemMatrix():
+    r"""
+    Gets the default parameters for the Max contrast optimization problem.
+    
+    Parameters
+    ---------- 
+    tmp : dict
+        Dictionary from the get_default_matrix_pb
+        
+    Lnorm : string (default= 'L1')
+        L-norm type for the optimization problem 
+        ('Linf' : :math:`L_{\infty}` norm, 'L1' : :math:`L_1`-norm)
+    
+    problem_name : string (default= 'MaxTau')
+        name of the optimization problem
+        
+    Returns    
+    ----------
+    tmp : dict
+        Updated dictionary
+        
+    """
+    
+    tmp = get_default_params_ProblemMatrix()
+    tmp.update({'problem_name':'MaxTau'})
     return tmp
 
 #%%
@@ -55,6 +98,9 @@ def get_default_params_MaxContrastProblemMatrix():
     Lnorm : string (default= 'L1')
         L-norm type for the optimization problem 
         ('Linf' : :math:`L_{\infty}` norm, 'L1' : :math:`L_1`-norm)
+
+    problem_name : string (default= 'MaxTau')
+        name of the optimization problem
             
     Returns    
     ----------
@@ -64,7 +110,7 @@ def get_default_params_MaxContrastProblemMatrix():
     """
     
     tmp = get_default_params_ProblemMatrix()
-    tmp.update({'Lnorm':'L1'})
+    tmp.update({'Lnorm':'L1', 'problem_name':'MaxContrastL1'})
     return tmp
 
 #%%
@@ -77,7 +123,7 @@ class ProblemMatrix(object):
     """
     default_params = get_default_params_ProblemMatrix()
   
-    def __init__(self,corono=cd.APLC2d(), **kwargs):
+    def __init__(self,corono=coro.design.APLC2d(), **kwargs):
         r"""
         __init__ : method
             Constructor for the ProblemMatrix class
@@ -126,11 +172,11 @@ class ProblemMatrix(object):
             Real and imaginary part of the non coronagraphic response matrix 
             for all the points in the pupil :math:`P_0` and at all the wavelengths
             
-        corono_field_t_re, corono_field_t_im : array_like, array_like
+        corono_field_re_t_tmp, corono_field_im_t_tmp : array_like, array_like
             Real and imaginary part of the coronagraphic response matrix 
             for all the points in the pupil :math:`P_0` and at all the wavelengths
          
-        corono_field_t_re2 : array_like
+        corono_field_re_t : array_like
             Real part of the coronagraphic response matrix 
             for all the non zero points in the pupil and at all the wavelengths
                                 
@@ -176,7 +222,6 @@ class ProblemMatrix(object):
             Image2dquarter = np.zeros_like(self.dz2d)
             Image2dquarter[self.corono.nImg2d//2:, self.corono.nImg2d//2:] = 1.
             self.dz = np.reshape(self.dz2d*Image2dquarter, (self.corono.nImg2d**2))           
-
             
         self.aaa     = np.arange(self.corono.nImg2d**2)
         self.idx_dz  = list(self.aaa[self.dz])  
@@ -185,46 +230,8 @@ class ProblemMatrix(object):
         self.LyotStop_vec = np.reshape(self.corono.LyotStop2d, (self.corono.nPup**2))
         self.lys     = (self.LyotStop_vec > 0.)
         self.idx_lys = list(self.bbb[self.lys]) 
-
-#        self.direct_field_t_re = np.zeros((self.npp, self.corono.nlam, 
-#                                           self.corono.nImg2d**2))
-#        self.direct_field_t_im = np.zeros((self.npp, self.corono.nlam, 
-#                                           self.corono.nImg2d**2))
-#        print('generating direct response matrix for 2D problem')
-#        Apod2d = np.zeros((self.corono.nPup, self.corono.nPup))
-#        for i in np.arange(self.npp):  
-#            (i0, j0) = np.unravel_index(self.idx_pup[i], 
-#            (self.corono.nPup, self.corono.nPup))
-#            Apod2d[i0,j0] = 1
-#            self.direct_field_t_re[i],self.direct_field_t_im[i] = \
-#            self.corono.compute_direct_field_2d_vec(Apod2d)
-#            Apod2d[i0,j0] = 0    
-
-        self.corono_field_t_re = np.zeros((self.npp, self.corono.nlam, 
-                                           self.corono.nImg2d**2))
-        self.corono_field_t_im = np.zeros((self.npp, self.corono.nlam, 
-                                           self.corono.nImg2d**2))
-        print('generating corono response matrix for 2D problem')
-        Apod2d = np.zeros((self.corono.nPup, self.corono.nPup))
-        for i in np.arange(self.npp):  
-            (i0, j0) = np.unravel_index(self.idx_pup[i], 
-            (self.corono.nPup, self.corono.nPup))
-            Apod2d[i0,j0] = 1            
-            self.corono_field_t_re[i], self.corono_field_t_im[i] = \
-            self.corono.compute_corono_field_2d_vec(Apod2d)
-            Apod2d[i0,j0] = 0  
-        
-        self.corono_field_t2_re = np.reshape(
-                self.corono_field_t_re[:,:,self.idx_dz], 
-                (self.npp, self.corono.nlam*self.ndz))
-
-        self.corono_field_t2_im = np.reshape(
-                self.corono_field_t_im[:,:,self.idx_dz], 
-                (self.npp, self.corono.nlam*self.ndz))
-
-        self.corono_field_t2    = np.concatenate((self.corono_field_t2_re,
-                                                  self.corono_field_t2_im), 
-                                                 axis=1)
+       
+        self.corono_field_t    = None
 
         self.A       = None
         self.b       = None
@@ -236,20 +243,6 @@ class ProblemMatrix(object):
       
         self.TR      = np.sum(self.Pupil_vec)
         
- 
-
-#%%    
-    def compute_matrices(self):
-        """
-        Virtual function for the matrix computation.
-        
-        Raises
-        --------
-        res
-            Display of a warning
-        
-        """
-        print('Warning: virtual fct - no A, b and c matrices will be computed')
 
 #%%
     def __contains__(self, item):
@@ -321,6 +314,33 @@ class ProblemMatrix(object):
         f.close()              
 
 #%%        
+    def compute_response_matrices(self):
+        
+        corono_field_re_t_tmp = np.zeros((self.npp, self.corono.nlam, 
+                                           self.corono.nImg2d**2))
+        corono_field_im_t_tmp = np.zeros((self.npp, self.corono.nlam, 
+                                           self.corono.nImg2d**2))
+        Apod2d = np.zeros((self.corono.nPup, self.corono.nPup))
+        for i, val in enumerate(self.idx_pup):  
+            (i0,j0) = np.unravel_index(val, (self.corono.nPup, self.corono.nPup))
+            Apod2d[i0,j0] = 1            
+            corono_field_re_t_tmp[i], corono_field_im_t_tmp[i] = \
+            self.corono.compute_corono_field_2d_vec(Apod2d)
+            Apod2d[i0,j0] = 0 
+        
+        corono_field_re_t = np.reshape(
+                corono_field_re_t_tmp[:,:,self.idx_dz], 
+                (self.npp, self.corono.nlam*self.ndz))
+
+        corono_field_im_t = np.reshape(
+                corono_field_im_t_tmp[:,:,self.idx_dz], 
+                (self.npp, self.corono.nlam*self.ndz))
+
+        self.corono_field_t    = np.concatenate((corono_field_re_t,
+                                                  corono_field_im_t), 
+                                                 axis=1)       
+
+#%%        
     def solve_model(self):
         """
         Solves the optimization problem for the model using the gurobi solver.
@@ -331,33 +351,161 @@ class ProblemMatrix(object):
             Solution for the optimization problem
         
         """
-        print('solving gurobi model')
-        try:
-            
-            self.m.Params.Method       = 2
-            self.m.Params.LogToConsole = 1
-            self.m.Params.Crossover    = 0
-            
-            self.m.optimize()
 
-            Apodtmp = np.zeros((self.npp))
-            for i in range(self.npp):
-                Apodtmp[i] = self.m.getVars()[i].x
-            self.Apod[self.idx_pup] = Apodtmp
+        self.compute_matrices()
+
+        t0 = time.time()
+
+        if stdgrb and self.solver == 'stdgrb':
+            self.print_log('solving problem with stdgrb package')
+            Apodtmp, val = stdgrb.lp_solve(self.c, A=(self.A).T, b=self.b, 
+                                           crossover=self.slvCrossover, 
+                                           logtoconsole=self.slvLogToConsole, 
+                                           method=self.slvMethod)
+            self.Apod[self.idx_pup] = Apodtmp[:self.npp]
+        
+        elif gb and self.solver == 'gurobipy':
+            self.print_log('generating gurobi model')
+            self.compute_gurobi_model()
             
-            
-#            test = np.zeros((self.corono.nPup, 2))
-#            test[:,0] = self.corono.r
-#            test[:,1] = self.Apod   
-#            if fpath: write_apod1d(fpath, test)    
+            self.print_log('solving problem with gurobipy package')
+            try:                
+                self.m.Params.Method       = self.slvMethod
+                self.m.Params.LogToConsole = self.slvLogToConsole
+                self.m.Params.Crossover    = self.slvCrossover
                 
-            return self.Apod
+                self.m.optimize()
+    
+                for i, val in enumerate(self.idx_pup):
+                    self.Apod[val] = self.m.getVars()[i].x
+                
+            except gb.GurobiError as e:
+                print('Error code ' + str(e.errno) + ": " + str(e))
+    
+            except AttributeError:
+                print('Encountered an attribute error')
+                
+        else:
+            self.print_log('solving problem with scipy.optimize')
+            bds = np.zeros((self.npp, 2))
+            bds[:,1] = 1.
+            sol=scipy.optimize.linprog(self.c,self.A.T,self.b,
+                                       method='interior-point',
+                                       bounds=bds)
+            self.Apod[self.idx_pup]=sol.x
 
-        except gb.GurobiError as e:
-            print('Error code ' + str(e.errno) + ": " + str(e))
+        t1 = time.time()
+        self.print_log('solving time: {0:.2f}s\n'.format(t1-t0))
+        return self.Apod                
 
-        except AttributeError:
-            print('Encountered an attribute error')
+#%%
+    def get_filename(self, **kwargs):
+        """
+        Generate a string of characters to define a filename with all the 
+        parameters
+        
+        Parameters
+        --------
+        kwargs : dict
+            parameters given by the user for the keys with the values to update
+        
+        Returns
+        --------
+        fname_gen : str
+            generic string of characters for a filename
+            
+        
+        """
+        params = self.corono.params.copy()
+        params = coro.update_params(params, **kwargs)
+                
+        if self.problem_name == 'MaxTau':
+            str_opt = '_C={cDarkHole:.1f}'
+        elif self.problem_name == 'MaxContrastL1' or self.problem_name == 'MaxContrastLinf':
+            str_opt = '_tau={tau:.3f}'
+        else:
+            raise NameError('{0}: Not an existing optimization problem!'.format(self.problem_name))
+            
+        fname_gen  = '{pupil_name}_{corono_name}_IWA={rho0}_OWA={rho1}_BW={bw:.2f}_nlam={nlam:02d}' + \
+        '_2D_nPup={nPup:04d}_{problem_name}' + str_opt + '_{solver}'        
+        
+        return fname_gen.format(**{key: params[key] for key in params})
+
+#%%    
+    def compute_matrices(self):
+        r"""
+        Computes the matrices for the optimization problem that consists in 
+        maximizing the contrast in a given search area in the coronagraphic 
+        image for a set integrated apodizer transmission :math:`\tau`. In terms
+        of matrices, the optimization problem writes as
+            
+        .. math:: \max_{\tau} c^{T}.x,
+            
+        under the constraint :math:`A.x \leq b`.
+                
+        The variable :math:`x` is a concatenation of the apodizer transmission 
+        function :math:`\Phi` and an auxiliary variable :math:`\epsilon`.
+        The variable :math:`\epsilon` represents the contrast to maximize in 
+        the search area ranging between :math:`\rho_0` and :math:`\rho_1` in 
+        the coronagraphic image. It can either depend on the position 
+        :math:`\xi` in the coronagraphic image or not (:math:`L_1`-norm or 
+        :math:`L_\infty`-norm problem). 
+        The variables follow the notations of [1]_ and [2]_.
+
+        Parameters
+        -----------
+
+                         
+        Returns
+        -----------
+
+
+        References
+        ----------
+
+                                
+        """
+        
+        t00 = time.time() 
+        if self.corono_field_t is None:           
+            self.print_log('computing corono response matrix for 2D problem')   
+            self.compute_response_matrices()
+            t11 = time.time()
+            self.print_log('computing time (response matrices): {0:.2f}s\n'.format(t11-t00))
+
+        t00 = time.time()
+        if self.A is None or self.b is None or self.c is None: 
+            self.print_log('computing A, b, and c matrices')
+            self.compute_problem_matrices()
+        else:
+            if self.problem_name == 'MaxTau':
+                self.print_log('updating A matrix')
+                self.update_cDarkHole()
+            else:
+                self.print_log('updating b matrix')
+                self.update_tau()
+        t11 = time.time()                
+        self.print_log('computing time (Abc matrices): {0:.2f}s\n'.format(t11-t00))
+
+#%%
+    def print_log(self, string):
+        r"""
+        Print a given log on the console depending on the value of 
+        allLogtoConsole parameter
+        
+        Parameters:
+        --------
+        string: string
+            string to be displayed on the console
+            
+        Returns:
+        --------
+        string: string
+            string given by the user
+        
+        """
+        if self.allLogToConsole == 1:
+            return print(string)
 
         
 #%%
@@ -370,6 +518,9 @@ class MaxTau(ProblemMatrix):
     maximizes the integrated apodizer transmission for a given contrast 
     :math:`C` in the search area inside the coronagraphic image.
     """
+
+    default_params = get_default_params_MaxTauProblemMatrix()
+
     def __init__(self, **kwargs):
         """
         Constructor for the Matrix problem with the coronagraph object
@@ -378,7 +529,7 @@ class MaxTau(ProblemMatrix):
         super(MaxTau, self).__init__(**kwargs)
 
 #%%        
-    def compute_matrices(self):
+    def compute_problem_matrices(self):
         r"""
         Computes the matrices for the optimization problem that consists in 
         maximizing the amplitude transmission of the apodizer :math:`\Phi` 
@@ -450,37 +601,48 @@ class MaxTau(ProblemMatrix):
             
             http://iopscience.iop.org/article/10.3847/0004-637X/818/2/163/meta
             
-            
-            
-        """
-        print('generating A, b, c matrices')
+        """                    
+        cst = (10.**(-self.cDarkHole/2.)/np.sqrt(2.))*self.corono.Fmax2d/(self.corono.nImg2d*self.corono.nPup)
 
-        fctr = 1.
-        if self.Pupil2dSym == True:
-            fctr = 1.
+        A0  =  self.corono_field_t - cst*self.Pupil_vec[self.idx_pup, None]*self.LyotStop_vec[self.idx_pup, None]            
+        A1  = -self.corono_field_t - cst*self.Pupil_vec[self.idx_pup, None]*self.LyotStop_vec[self.idx_pup, None]    
 
-        ED0 = np.zeros_like(self.corono_field_t2)
-        ED0tmp = fctr*self.Pupil_vec[self.idx_pup]*self.LyotStop_vec[self.idx_pup]
-        for j in range(len(self.corono_field_t2.T)):
+        b0  = np.zeros((len(self.corono_field_t.T)))
+        b1  = np.zeros((len(self.corono_field_t.T)))
+
+        if (stdgrb and self.solver == 'stdgrb') or (gb and self.solver == 'gurobipy'):
+            A2  = -np.identity(self.npp)
+            A3  =  np.identity(self.npp)
+            b2  = np.zeros(self.npp)
+            b3  = np.ones(self.npp)
+            self.A = np.concatenate((A0,A1,A2,A3), axis=1)
+            self.b = np.concatenate((b0,b1,b2,b3))
+        else:
+            self.A = np.concatenate((A0,A1), axis=1)
+            self.b = np.concatenate((b0,b1))            
+            
+        self.c = -self.Pupil_vec[self.idx_pup]/self.TR
+        
+        return self.A, self.b, self.c
+
+#%%            
+    def update_cDarkHole(self):
+        ED0 = np.zeros_like(self.corono_field_t)
+        ED0tmp = self.Pupil_vec[self.idx_pup]*self.LyotStop_vec[self.idx_pup]
+        for j in range(len(self.corono_field_t.T)):
             ED0[:,j] = ED0tmp
         cst = 10.**(-self.cDarkHole/2.)/np.sqrt(2.)      
         ED0 *= cst*self.corono.Fmax2d/(self.corono.nImg2d*self.corono.nPup)
 
-        A0  =  self.corono_field_t2 - ED0                
-        A1  = -self.corono_field_t2 - ED0       
-        A2  = -np.identity(self.npp)
-        A3  =  np.identity(self.npp)
+        A0  =  self.corono_field_t - ED0                
+        A1  = -self.corono_field_t - ED0       
 
-        b0  = np.zeros((len(self.corono_field_t2.T)))
-        b1  = np.zeros((len(self.corono_field_t2.T)))
-        b2  = np.zeros(self.npp)
-        b3  = np.ones(self.npp)
-
-        self.A = np.concatenate((A0,A1,A2,A3), axis=1)
-        self.b = np.concatenate((b0,b1,b2,b3))
-        self.c = -self.Pupil_vec[self.idx_pup]/self.TR
-        
-        return self.A, self.b, self.c
+        if (stdgrb and self.solver == 'stdgrb') or (gb and self.solver == 'gurobipy'):
+            A2  = -np.identity(self.npp)
+            A3  =  np.identity(self.npp)
+            self.A = np.concatenate((A0,A1,A2,A3), axis=1)
+        else:
+            self.A = np.concatenate((A0,A1), axis=1)            
 
 #%%
     def compute_gurobi_model(self):
@@ -498,13 +660,7 @@ class MaxTau(ProblemMatrix):
         m : gurobi model
             Gurobi model of the MaxTau problem to solve
             
-        """
-        if self.A is None or self.b is None or self.c is None:
-            print('computing matrices')
-            self.compute_matrices()
-        
-        print('generating gurobi model')
-        
+        """        
         nA = np.shape(self.A)[1]
     
         # Create a new model               
@@ -540,7 +696,7 @@ class MaxContrast(ProblemMatrix):
         super(MaxContrast,self).__init__(**kwargs)
 
 #%%    
-    def compute_matrices(self):
+    def compute_problem_matrices(self):
         r"""
         Computes the matrices for the optimization problem that consists in 
         maximizing the contrast in a given search area in the coronagraphic 
@@ -659,9 +815,7 @@ class MaxContrast(ProblemMatrix):
             http://iopscience.iop.org/article/10.3847/0004-637X/818/2/163/meta
 
                                 
-        """
-        print('generating A, b, c matrices')
-
+        """           
         if self.Lnorm == 'Linf':
             I1 = np.ones(self.ndz*self.corono.nlam*2)
             I1 = I1[None,:]
@@ -677,27 +831,49 @@ class MaxContrast(ProblemMatrix):
             Z0 = np.zeros(self.ndz)
             c1 = np.array(self.rad2d)
         
-        A0  = np.concatenate(( self.corono_field_t2, -I1), axis=0)
-        A1  = np.concatenate((-self.corono_field_t2, -I1), axis=0)
-        A2  = np.concatenate((-np.identity(self.npp), N0), axis=0)
-        A3  = np.concatenate(( np.identity(self.npp), N0), axis=0)
+        A0  = np.concatenate(( self.corono_field_t, -I1), axis=0)
+        A1  = np.concatenate((-self.corono_field_t, -I1), axis=0)
+
         A4  = np.concatenate((np.zeros((self.npp, self.ndz)), -I0), axis=0)
         A5  = np.concatenate((- self.Pupil_vec[self.idx_pup]/self.TR, 
                                   Z0))
         
         b0  = np.zeros((self.corono.nlam*self.ndz*2))
         b1  = np.zeros((self.corono.nlam*self.ndz*2))
-        b2  = np.zeros(self.npp)
-        b3  = np.ones(self.npp)
+
         b4  = np.zeros(self.ndz)
         b5  = [-self.tau]
-        
-        self.A = np.concatenate((A0,A1,A2,A3,A4,A5[:,None]), axis=1)
-        self.b = np.concatenate((b0,b1,b2,b3,b4,b5))        
+
+
+        if (stdgrb and self.solver == 'stdgrb') or (gb and self.solver == 'gurobipy'):        
+            A2  = np.concatenate((-np.identity(self.npp), N0), axis=0)
+            A3  = np.concatenate(( np.identity(self.npp), N0), axis=0)
+            b2  = np.zeros(self.npp)
+            b3  = np.ones(self.npp)
+            self.A = np.concatenate((A0,A1,A2,A3,A4,A5[:,None]), axis=1)
+            self.b = np.concatenate((b0,b1,b2,b3,b4,b5))
+        else:
+            self.A = np.concatenate((A0,A1,A4,A5[:,None]), axis=1)
+            self.b = np.concatenate((b0,b1,b4,b5))
+            
         self.c = np.concatenate((np.zeros(self.npp), c1), axis=0)
         
         return self.A, self.b, self.c
 
+#%%            
+    def update_tau(self):
+        b0  = np.zeros((self.corono.nlam*self.ndz*2))
+        b1  = np.zeros((self.corono.nlam*self.ndz*2))        
+        b4  = np.zeros(self.ndz)
+        b5  = [-self.tau]
+
+        if (stdgrb and self.solver == 'stdgrb') or (gb and self.solver == 'gurobipy'):        
+            b2  = np.zeros(self.npp)
+            b3  = np.ones(self.npp)
+            self.b = np.concatenate((b0,b1,b2,b3,b4,b5))
+        else:
+            self.b = np.concatenate((b0,b1,b4,b5))
+            
 #%%
     def compute_gurobi_model(self):
         r"""
@@ -715,12 +891,6 @@ class MaxContrast(ProblemMatrix):
             Gurobi model of the MaxContrast problem to solve
             
         """        
-        if self.A is None or self.b is None or self.c is None:
-            print('computing matrices')
-            self.compute_matrices()
-
-        print('generating gurobi model')
-                       
         nn = np.shape(self.A)[1]
         # Create a new model  
         self.m = gb.Model("LP max C new")

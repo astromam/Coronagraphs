@@ -10,15 +10,14 @@ import numpy as np
 import os
 
 from pathlib import Path
-from corono import corono_design as cd
-
-from corono.utils import to_dict
+import corono as coro
 
 #%% parameters
 """
 Parameters
 """
 corono_name = 'APLC' # 'APLC' or 'SP'
+solver      = 'stdgrb' # 'stdgrb', 'gurobipy', 'scipy.linprog'
 
 nPup = 500
 nFPM = 50
@@ -27,7 +26,8 @@ Fmax = 11
 R    = 1
 
 bw   = 0.1
-nlam = 11
+nlam = 5
+nlambis =11
 
 PupilObs    = 0.20
 rMask       = 4.0
@@ -55,7 +55,10 @@ r   = np.arange(nPup)*R/nPup + R/(2*nPup)
 Pupil1d      = (r>PupilObs)*1.0
 LyotStop1d   = (r>LyotStopObs)*(r<LyotStopIns)*1.0
 
-params = to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
+if solver != 'gurobipy' and solver != 'stdgrb':
+    solver = 'scipy'
+
+params = coro.to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
                  nPup = nPup, nFPM=nFPM, nImg=nImg, Fmax = Fmax,
                  bw = bw, nlam = nlam,
                  PupilObs = PupilObs, rMask = rMask, 
@@ -63,70 +66,62 @@ params = to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
                  OPDx2 = OPDx2, OPDx3 = OPDx3, 
                  LyotStopObs = LyotStopObs,
                  LyotStopIns = LyotStopIns,
-                 r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d)
+                 r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d,
+                 solver = solver, 
+                 corono_name = corono_name)
 
 #%%
-fdir = Path('.').resolve()
+"""
+Working directory
+"""
+fdir = Path('.').resolve() / 'results' / '1D'
+fdir_pyth = fdir  / 'dat_pyth'
+fdir_plot = fdir  / 'plots'
 
-fdir_pyth = fdir / 'results' / '1D' / 'dat_pyth'
-fdir_plot = fdir / 'results' / '1D' / 'plots'
+if not os.path.exists(fdir_pyth):
+    os.makedirs(fdir_pyth)      
 
 if not os.path.exists(fdir_plot):
-    os.makedirs(fdir_plot)
-    
-if not os.path.exists(fdir_pyth):
-    os.makedirs(fdir_pyth)    
- 
-if corono_name == 'APLC' or corono_name == 'SP': 
-    fname = '{0}_obs={1:2d}_FPM={2:3d}_lsid={3:2d}_lsod={4:2d}_IWA={5:03d}_OWA={6:03d}_BW={7:02d}_C={8:02d}_1D_N={9:04d}_nFPM={10:03d}'.format(
-                corono_name, int(PupilObs*100), int(rMask*100),
-                int(LyotStopObs*100), int(LyotStopIns*100),
-                int(rho0*10),int(rho1*10),int(bw*100), int(cDarkHole),
-                int(nPup), int(nFPM))
-elif corono_name == 'HDZPM':
-    fname = '{0}_obs={1:2d}_FPM1={2:3d}_FPM2={3:3d}_lsid={4:2d}_lsod={5:2d}_IWA={6:03d}_OWA={7:03d}_BW={8:02d}_C={9:02d}_1D_N={10:04d}_nFPM={11:03d}'.format(
-                corono_name, int(PupilObs*100), int(rMask1*100), int(rMask2*100), 
-                int(LyotStopObs*100), int(LyotStopIns*100),
-                int(rho0*10),int(rho1*10),int(bw*100), int(cDarkHole),
-                int(nPup), int(nFPM)) 
-elif corono_name == 'HTZPM':
-    fname = '{0}_obs={1:2d}_FPM1={2:3d}_FPM2={3:3d}_FPM3={4:3d}_lsid={5:2d}_lsod={6:2d}_IWA={7:03d}_OWA={8:03d}_BW={9:02d}_C={10:02d}_1D_N={11:04d}_nFPM={12:03d}'.format(
-                corono_name, int(PupilObs*100), 
-                int(rMask1*100), int(rMask2*100), int(rMask3*100), 
-                int(LyotStopObs*100), int(LyotStopIns*100),
-                int(rho0*10),int(rho1*10),int(bw*100), int(cDarkHole),
-                int(nPup), int(nFPM)) 
-else:
-    raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
-
-
-fname1 = fname + '_guropy_apod_MaxTau.dat'
-fname2 = fname + '_guropy_apod_MaxContrastL1.dat'
-fname3 = fname + '_guropy_apod_MaxContrastLinf.dat'
-
-fname_A1 = fname + '_guropy_A_MaxTau.dat'
-fname_A2 = fname + '_guropy_A_MaxContrastL1.dat'
-fname_A3 = fname + '_guropy_A_MaxContrastLinf.dat'
+    os.makedirs(fdir_plot)  
 
 #%%  
 """ 
 Coronagraph defintion
 """
 if corono_name == 'APLC':
-    corono0 = cd.APLC1d(**params)
+    corono0 = coro.design.APLC1d(**params)
 elif corono_name == 'SP':
-    corono0 = cd.SP1d(**params)
+    corono0 = coro.design.SP1d(**params)
 elif corono_name == 'HDZPM':
-    corono0 = cd.HDZPM1d(**params)
+    corono0 = coro.design.HDZPM1d(**params)
 elif corono_name == 'HTZPM':
-    corono0 = cd.HTZPM1d(**params)
+    corono0 = coro.design.HTZPM1d(**params)
 else:
     raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
+
+#%%
+"""
+Problem defintion
+"""
+# Maximization of the integrated amplitude transmission of the apodizer
+params  = coro.update_params(params, problem_name = 'MaxTau')
+problem1 = coro.optim_1d.MaxTau(corono=corono0, **params)
+# Maximization of the contrast under L1-norm
+params  = coro.update_params(params, problem_name = 'MaxContrastL1')
+problem2 = coro.optim_1d.MaxContrast(corono=corono0, Lnorm='L1',**params)
+# Maximization of the contrast under L-infinite norm
+params  = coro.update_params(params, problem_name = 'MaxContrastLinf')
+problem3 = coro.optim_1d.MaxContrast(corono=corono0, Lnorm='Linf',**params)
+
 
 #%% Apodizer solution for the problems
 """
 Apodizer saving 
 """
+fname1 = problem1.get_filename() + '.dat'
+fname2 = problem2.get_filename() + '.dat'
+fname3 = problem3.get_filename() + '.dat'
+
 fpath1 = fdir_pyth / fname1
 fpath2 = fdir_pyth / fname2
 fpath3 = fdir_pyth / fname3
@@ -143,6 +138,10 @@ Apod3 = test3[:, 1]
 """
 Display of the matrices
 """
+fname_A1 = problem1.get_filename() + '_A.dat'
+fname_A2 = problem2.get_filename() + '_A.dat'
+fname_A3 = problem3.get_filename() + '_A.dat'
+
 fpath_A1 = fdir_pyth / fname_A1
 fpath_A2 = fdir_pyth / fname_A2
 fpath_A3 = fdir_pyth / fname_A3
@@ -185,6 +184,21 @@ pl.legend()
 """
 Computation of the direct and coronagraphic images
 """
+fname_gen  = problem1.get_filename(nlam=nlambis)
+params2    = coro.update_params(params, nlam=nlambis) 
+
+if corono_name == 'APLC':
+    corono0 = coro.design.APLC1d(**params2)
+elif corono_name == 'SP':
+    corono0 = coro.design.SP1d(**params2)
+elif corono_name == 'HDZPM':
+    corono0 = coro.design.HDZPM1d(**params2)
+elif corono_name == 'HTZPM':
+    corono0 = coro.design.HTZPM1d(**params2)
+else:
+    raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
+
+
 poly_direct_image1 = corono0.compute_direct_intensity_1d(Apod1)
 poly_corono_image1 = corono0.compute_corono_intensity_1d(Apod1)
 poly_direct_image2 = corono0.compute_direct_intensity_1d(Apod2)

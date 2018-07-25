@@ -16,6 +16,7 @@ import numpy as np
 #import pylab as pl
 #from astropy.io import fits
 from .utils import besselJ0, sft, isft, uniform_disk, radius_disk, sft_even, isft_even
+import time
 
 import json
 
@@ -142,7 +143,7 @@ def get_default_params_APLC1d():
     
     """
     tmp = get_default_params_Coronagraph()  
-    tmp.update({'rMask':2.8,'nFPM':50})
+    tmp.update({'rMask':2.8,'nFPM':50, 'corono_name':'APLC'})
 
     # Pupil radial coordinate
     r   = np.arange(tmp['nPup'])*tmp['R']/tmp['nPup']\
@@ -176,7 +177,7 @@ def get_default_params_SP1d():
     
     """
     tmp = get_default_params_Coronagraph()
-    tmp.update({'rMask':5.0,'nFPM':50})
+    tmp.update({'rMask':5.0,'nFPM':50, 'corono_name':'SP'})
 
     # Pupil radial coordinate    
     r   = np.arange(tmp['nPup'])*tmp['R']/tmp['nPup']\
@@ -257,7 +258,8 @@ def get_default_params_DZPM1d():
     tmp.update({'rMask1':0.875/2, 'rMask2':1.453/2.,
            'OPDx1':0.309, 'OPDx2':0.672,
            'ome1':-2.340, 'ome2':2.051, 'beta':-0.236,
-           'nFPM':68.82312456985547})
+           'nFPM':68.82312456985547,
+           'corono_name':'DZPM'})
 
     # Pupil radial coordinate        
     r   = np.arange(tmp['nPup'])*tmp['R']/tmp['nPup']\
@@ -335,7 +337,8 @@ def get_default_params_HDZPM1d():
     tmp = get_default_params_Coronagraph()
     tmp.update({'rMask1':0.875/2, 'rMask2':1.453/2.,
            'OPDx2':0.672,
-           'nFPM':68.82312456985547})
+           'nFPM':68.82312456985547,
+           'corono_name':'HDZPM'})
 
     # Pupil radial coordinate        
     r   = np.arange(tmp['nPup'])*tmp['R']/tmp['nPup']\
@@ -421,7 +424,8 @@ def get_default_params_HTZPM1d():
     tmp = get_default_params_Coronagraph()
     tmp.update({'rMask1':0.875/2, 'rMask2':1.453/2., 'rMask3':2.1/2,
            'OPDx2':0.672, 'OPDx3':0.8,
-           'nFPM':68.82312456985547})
+           'nFPM':68.82312456985547,
+           'corono_name':'HTZPM'})
 
     # Pupil radial coordinate        
     r   = np.arange(tmp['nPup'])*tmp['R']/tmp['nPup']\
@@ -470,7 +474,7 @@ def get_default_params_APLC2d():
     tmp = get_default_params_Coronagraph()
     tmp.update({'rMask':2.8,
                 'nPup':50, 'nFPM':25,
-                })
+                'corono_name':'APLC'})
                 
     # Telescope aperture
     Pupil2d      = uniform_disk(tmp['nPup'], tmp['nPup']/2., CtrBtwnPix=tmp['CtrBtwnPix'])\
@@ -514,7 +518,8 @@ def get_default_params_SP2d():
     """    
     tmp = get_default_params_Coronagraph()
     tmp.update({'rMask':2.8,
-                'nPup':50, 'nFPM':25,
+                'nPup':50, 'nFPM':25, 
+                'corono_name':'SP'
                 })
     # Telescope aperture
     Pupil2d      = uniform_disk(tmp['nPup'], tmp['nPup']/2., CtrBtwnPix=tmp['CtrBtwnPix'])\
@@ -597,7 +602,8 @@ def get_default_params_DZPM2d():
     tmp.update({'rMask1':0.875/2, 'rMask2':1.453/2.,
            'OPDx1':0.309, 'OPDx2':0.672,
            'ome1':-2.340, 'ome2':2.051, 'beta':-0.236,
-           'nFPM':25, 'nPup':50})
+           'nFPM':25, 'nPup':50,
+           'corono_name':'DZPM'})
         
     # Telescope aperture
     Pupil2d      = uniform_disk(tmp['nPup'], tmp['nPup']/2., CtrBtwnPix=tmp['CtrBtwnPix'])\
@@ -739,10 +745,6 @@ class Coronagraph(object):
         
         # clear Pupil
         self.ClearPupil1d = np.ones((self.nPup))
-#        # Telescope aperture
-#        self.Pupil1d      = (self.r>self.PupilObs)*1.0
-#        # Lyot stop 
-#        self.LyotStop1d   = (self.r>self.LyotStopObs)*1.0
         
         # Final image plane coordinate
         self.xi  = np.arange(self.nImg+1)*self.Fmax/self.nImg
@@ -1207,10 +1209,20 @@ class APLC1d(Coronagraph):
                 *self.mask_lam/self.nFPM
 
         # Hankel kernel for the focal plane mask (FPM) 
+#        t0 = time.time()
+#        self.hankel_kernel_FPM_all  = besselJ0(
+#                np.pi/self.R*self.xi_FPM_lam[:,:,None]*self.r[None,None,:])
+#        self.hankel_kernel_iFPM_all = besselJ0(
+#                np.pi/self.R*self.xi_FPM_lam[:,None,:]*self.r[None,:,None])
+        
         self.hankel_kernel_FPM_all  = besselJ0(
-                np.pi/self.R*self.xi_FPM_lam[:,:,None]*self.r[None,None,:])
+                np.pi/self.R*np.einsum('ij,k -> ijk', self.xi_FPM_lam, self.r))
         self.hankel_kernel_iFPM_all = besselJ0(
-                np.pi/self.R*self.xi_FPM_lam[:,None,:]*self.r[None,:,None])
+                np.pi/self.R*np.einsum('ik,j -> ijk', self.xi_FPM_lam, self.r))
+#        print(np.shape(self.hankel_kernel_FPM_all))
+#        print(np.shape(self.hankel_kernel_iFPM_all))
+#        t1 = time.time()
+#        print('computation of hankel kernel: {0:.2f}s'.format(t1-t0))
 
         
 #%% # direct propagation (no focal plane mask)
@@ -1271,6 +1283,39 @@ class APLC1d(Coronagraph):
         
         return self.lam0/self.lam_t[:,None]*np.pi\
             *corono_field_tmp*self.R/self.nPup
+
+#%% # propagation through coronagraph (with focal plane mask)
+    def compute_corono_field_1d0(self,Apod):
+        """
+        Computes the electric field of the coronagraphic image with APLC
+        for the 1D problem.
+        
+        Parameters
+        ---------- 
+        Apod : array_like
+            Entrance pupil apodization :math:`\Phi`
+                
+        Returns    
+        ----------
+        res : array_like
+            Coronagraphic electric field :math:`\Psi_D` at all the wavelengths
+            
+        """
+        FPM_field  = np.pi*self.hankel_kernel_FPM_all.dot(
+                Apod*self.Pupil1d*self.r/self.R)\
+                *(self.R/self.nPup)*self.xi_FPM_lam
+                
+        iFPM_field = np.pi*(1/self.nFPM)*np.einsum('ijk,ik -> ij', 
+                           self.hankel_kernel_iFPM_all, FPM_field)
+                
+        lyot_field = (Apod[None,:]*self.Pupil1d[None,:]-iFPM_field)\
+                *self.r[None,:]/self.R*self.LyotStop1d[None, :]
+                
+        corono_field_tmp = np.einsum('ij,ikj -> ik', lyot_field, self.hankel_kernel_all)
+        
+        return self.lam0/self.lam_t[:,None]*np.pi\
+            *corono_field_tmp*self.R/self.nPup
+
             
 #%% 
 """
@@ -1286,7 +1331,7 @@ class SP1d(Coronagraph):
     def __init__(self, **kwargs):
         """
         __init__ : method
-            Builds the constructor for the APLC1d class
+            Builds the constructor for the SP1d class
         
         Attributes:
         ----------  
@@ -1326,12 +1371,6 @@ class SP1d(Coronagraph):
                            <self.rMask_t[:,None]*self.nFPM)
         self.xi_FPM_lam = np.arange(self.nFPM_max+1)[None,:]\
                 *self.mask_lam/self.nFPM
-
-        # Hankel kernel for the focal plane mask (FPM) 
-#        self.hankel_kernel_FPM_all  = besselJ0(
-#                np.pi/self.R*self.xi_FPM_lam[:,:,None]*self.r[None,None,:])
-#        self.hankel_kernel_iFPM_all = besselJ0(
-#                np.pi/self.R*self.xi_FPM_lam[:,None,:]*self.r[None,:,None])
         
 #%% # direct propagation (no focal plane mask)
     def compute_direct_field_1d(self,Apod):
