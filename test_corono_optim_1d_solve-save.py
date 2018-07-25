@@ -17,12 +17,17 @@ import corono as coro
 Parameters
 """
 corono_name  = 'APLC' # 'APLC' or 'SP'
-problem_name = 'MaxTau' # ,'MaxTau' # 'MaxContrastLinf' #'MaxContrastL1' # #  
-solver       = 'xxx' # 'stdgrb', 'gurobipy', 'scipy.linprog'
+problem_name = 'MaxContrastLinf' # ,'MaxTau' # 'MaxContrastLinf' #'MaxContrastL1' # #  
+solver       = 'stdgrb' # 'stdgrb', 'gurobipy', 'scipy.linprog'
 slvLogToConsole = 0
 slvCrossover    = 0
 slvMethod       = 2
 allLogToConsole = 0
+
+FirstDer    = True
+SecondDer   = True
+FirstDerLim = 0.01
+SecondDerLim= 0.0001 
 
 nPup = 500
 nFPM = 50
@@ -74,7 +79,9 @@ params = coro.to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
                  solver = solver, problem_name = problem_name,
                  corono_name = corono_name, slvLogToConsole = slvLogToConsole,
                  slvCrossover = slvCrossover, slvMethod = slvMethod,
-                 allLogToConsole = allLogToConsole)
+                 allLogToConsole = allLogToConsole,
+                 FirstDer = FirstDer, SecondDer = SecondDer,
+                 FirstDerLim = FirstDerLim, SecondDerLim = SecondDerLim)
 
 #%%
 """

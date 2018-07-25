@@ -1210,19 +1210,15 @@ class APLC1d(Coronagraph):
 
         # Hankel kernel for the focal plane mask (FPM) 
 #        t0 = time.time()
-#        self.hankel_kernel_FPM_all  = besselJ0(
-#                np.pi/self.R*self.xi_FPM_lam[:,:,None]*self.r[None,None,:])
-#        self.hankel_kernel_iFPM_all = besselJ0(
-#                np.pi/self.R*self.xi_FPM_lam[:,None,:]*self.r[None,:,None])
-        
         self.hankel_kernel_FPM_all  = besselJ0(
-                np.pi/self.R*np.einsum('ij,k -> ijk', self.xi_FPM_lam, self.r))
+                np.pi/self.R*self.xi_FPM_lam[:,:,None]*self.r[None,None,:])
         self.hankel_kernel_iFPM_all = besselJ0(
-                np.pi/self.R*np.einsum('ik,j -> ijk', self.xi_FPM_lam, self.r))
-#        print(np.shape(self.hankel_kernel_FPM_all))
-#        print(np.shape(self.hankel_kernel_iFPM_all))
-#        t1 = time.time()
-#        print('computation of hankel kernel: {0:.2f}s'.format(t1-t0))
+                np.pi/self.R*self.xi_FPM_lam[:,None,:]*self.r[None,:,None])
+        
+#        self.hankel_kernel_FPM_all  = besselJ0(
+#                np.pi/self.R*np.einsum('ij,k -> ijk', self.xi_FPM_lam, self.r))
+#        self.hankel_kernel_iFPM_all = besselJ0(
+#                np.pi/self.R*np.einsum('ik,j -> ijk', self.xi_FPM_lam, self.r))
 
         
 #%% # direct propagation (no focal plane mask)

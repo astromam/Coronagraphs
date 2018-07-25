@@ -54,7 +54,9 @@ def get_default_params_ProblemMatrix():
     tmp = {'cDarkHole':8,'tau':0.2,
            'cDarkHoledirect':2, 'solver':'stdgrb', 
            'slvCrossover':0, 'slvLogToConsole':1, 'slvMethod':2,
-           'allLogToConsole':0}
+           'allLogToConsole':0, 
+           'FirstDer':False, 'SecondDer': False,
+           'FirstDerivLim':0.01, 'SecondDerivLim':0.0001}
     return tmp
 
 #%%
@@ -439,11 +441,22 @@ class ProblemMatrix(object):
             str_cor = '_rMask1={rMask1:.3f}_rMask2={rMask2:.3f}_rMask3={rMask3:.3f}'
         else:
             raise NameError('{0}: Not an existing coronagraph!'.format(self.corono.corono_name))
+        
+        if self.FirstDer is True:
+            str_FirstDer = '_der1st={FirstDerLim}'
+        else:
+            str_FirstDer = ''
 
+        if self.SecondDer is True:
+            str_SecondDer = '_der2nd={SecondDerLim}'
+        else:
+            str_SecondDer = ''
+                    
         fname_gen   = '{corono_name}_obs={PupilObs:.2f}' + \
         '_lsid={LyotStopObs:.2f}_lsod={LyotStopIns:.2f}' + \
         '_IWA={rho0}_OWA={rho1}_BW={bw:.2f}_nlam={nlam:02d}' + \
-        '_1D_N={nPup:04d}_nFPM={nFPM:03d}'+ str_cor + '_{problem_name}' + str_opt + '_{solver}'
+        '_1D_N={nPup:04d}_nFPM={nFPM:03d}'+ str_cor + '_{problem_name}' + str_opt + \
+        str_FirstDer + str_SecondDer + '_{solver}'
         
         return fname_gen.format(**params)
     
@@ -634,7 +647,22 @@ class MaxTau(ProblemMatrix):
             self.b = np.concatenate((b0,b1,b2,b3))
         else:
             self.A = np.concatenate((A0,A1), axis=1)
-            self.b = np.concatenate((b0,b1))               
+            self.b = np.concatenate((b0,b1))
+
+        if self.FirstDer is True:
+            A4  = np.identity(self.npp) - np.eye(self.npp, k=1)
+            A4  = A4[:, :self.npp-1]
+            b4  = self.FirstDerLim*np.ones(self.npp)
+            self.A = np.concatenate((self.A, A4, -A4), axis=1)
+            self.b = np.concatenate((self.b, b4, b4))
+
+        if self.SecondDer is True:
+            A5  = np.identity(self.npp) -2*np.eye(self.npp, k=1)+ np.eye(self.npp, k=2)
+            A5  = A5[:, :self.npp-2]
+            b5  = self.FirstDerLim*np.ones(self.npp)
+            self.A = np.concatenate((self.A, A5, -A5), axis=1)
+            self.b = np.concatenate((self.b, b5, b5))        
+               
         self.c = - 2.*np.pi*(np.asarray(self.idx_pup)+0.5)\
                 /(2.*self.corono.nPup)**2/self.TR                 
         
@@ -836,27 +864,44 @@ class MaxContrast(ProblemMatrix):
         
         A0  = np.concatenate(( self.corono_field_t, -I1), axis=0)
         A1  = np.concatenate((-self.corono_field_t, -I1), axis=0)
-        A4  = np.concatenate((np.zeros((self.npp, self.ndz)), -I0), axis=0)
-        A5  = np.concatenate((- 2.*np.pi*(
+        A6  = np.concatenate((np.zeros((self.npp, self.ndz)), -I0), axis=0)
+        A7  = np.concatenate((- 2.*np.pi*(
                 np.arange(self.corono.nPup)[self.idx_pup]+0.5)\
             *self.corono.Pupil1d[self.idx_pup]/(2.*self.corono.nPup)**2/self.TR, 
                                   Z0))
         
         b0  = np.zeros((self.corono.nlam*self.ndz*2))
         b1  = np.zeros((self.corono.nlam*self.ndz*2))
-        b4  = np.zeros(self.ndz)
-        b5  = [-self.tau]
+        b6  = np.zeros(self.ndz)
+        b7  = [-self.tau]
                         
         if (stdgrb and self.solver == 'stdgrb') or (gb and self.solver == 'gurobipy'):
             A2  = np.concatenate((-np.identity(self.npp), N0), axis=0)
             A3  = np.concatenate(( np.identity(self.npp), N0), axis=0)
             b2  = np.zeros(self.npp)
             b3  = np.ones(self.npp)
-            self.A = np.concatenate((A0,A1,A2,A3,A4,A5[:,None]), axis=1)
-            self.b = np.concatenate((b0,b1,b2,b3,b4,b5))
+            self.A = np.concatenate((A0,A1,A2,A3,A6,A7[:,None]), axis=1)
+            self.b = np.concatenate((b0,b1,b2,b3,b6,b7))
         else:
-            self.A = np.concatenate((A0,A1,A4,A5[:,None]), axis=1)
-            self.b = np.concatenate((b0,b1,b4,b5))
+            self.A = np.concatenate((A0,A1,A6,A7[:,None]), axis=1)
+            self.b = np.concatenate((b0,b1,b6,b7))
+            
+        if self.FirstDer is True:
+            A4  = np.identity(self.npp) - np.eye(self.npp, k=1)
+            A4  = np.concatenate((A4, N0), axis = 0)
+            A4  = A4[:, :self.npp-1]
+            b4  = self.FirstDerLim*np.ones(self.npp)
+            self.A = np.concatenate((self.A, A4, -A4), axis=1)
+            self.b = np.concatenate((self.b, b4, b4))
+
+        if self.SecondDer is True:
+            A5  = np.identity(self.npp) -2*np.eye(self.npp, k=1)+ np.eye(self.npp, k=2)
+            A5  = np.concatenate((A5, N0), axis = 0)
+            A5  = A5[:, :self.npp-2]
+            b5  = self.FirstDerLim*np.ones(self.npp)
+            self.A = np.concatenate((self.A, A5, -A5), axis=1)
+            self.b = np.concatenate((self.b, b5, b5))     
+            
         self.c = np.concatenate((np.zeros(self.npp), c1), axis=0)        
         
         return self.A, self.b, self.c

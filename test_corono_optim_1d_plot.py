@@ -17,8 +17,13 @@ import corono as coro
 Parameters
 """
 corono_name  = 'APLC' # 'APLC' or 'SP'
-problem_name = 'MaxTau' # 'MaxContrastL1' #,'MaxContrastLinf' # 'MaxTau' # ,   
+problem_name = 'MaxContrastLinf' # 'MaxContrastL1' #,'MaxContrastLinf' # 'MaxTau' # ,   
 solver       = 'stdgrb' # 'stdgrb', 'gurobipy', 'scipy.linprog'
+
+FirstDer    = True
+SecondDer   = True
+FirstDerLim = 0.01
+SecondDerLim= 0.0001 
 
 nPup = 500
 nFPM = 50
@@ -69,7 +74,9 @@ params = coro.to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
                  LyotStopIns = LyotStopIns,
                  r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d,
                  solver = solver, problem_name = problem_name,
-                 corono_name = corono_name)
+                 corono_name = corono_name,
+                 FirstDer = FirstDer, SecondDer = SecondDer,
+                 FirstDerLim = FirstDerLim, SecondDerLim = SecondDerLim)
 
 #%%
 fdir = Path('.').resolve()
