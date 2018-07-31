@@ -734,10 +734,14 @@ class APLC1dAnalyticalHankel(APLC1d):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        # # Build Fourier kernels for analytical APLC propagation- don't assume rotational symmetry
-        # self.fourier_kernel_FPM_all = None
-        # self.fourier_kernel_iFPM_all = None
-        self.Q_coarse = 4  # Focal-plane oversampling factor for the large-FOV (coarse) field
+        self.radius_field_stop = kwargs.get('field_stop_radius')
+
+        # Hankel kernel for the focal plane mask (FPM)
+        self.hankel_kernel_FPM_all  = besselJ0(  # [shape: nlam, nFPM_max + 1, nPup]
+                np.pi / self.R * self.xi_FPM_lam[:, :, None] * self.r[None, None, :])
+        self.hankel_kernel_iFPM_all = besselJ0(  # [shape: nlam, nPup, nFPM_max + 1]
+                np.pi / self.R * self.xi_FPM_lam[:, None, :] * self.r[None, :, None])
+
 
     def compute_direct_field_1d(self, Apod):
         pass
