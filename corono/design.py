@@ -733,8 +733,15 @@ class APLC1d(Coronagraph):
 class APLC1dAnalyticalHankel(APLC1d):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        """
+        Notes on parameters from parent classes:
 
-        self.radius_field_stop = kwargs.get('field_stop_radius')
+        rMask : float
+            Occulter radius in lam0/D units
+        nFPM : int
+            Number of samples across occulter at center wavelength lam0
+        lam_t : array_like (nlam,)
+            Vector of wavelengths in physical units (i.e. meters)
 
         # Hankel kernel for the focal plane mask (FPM)
         self.hankel_kernel_FPM_all  = besselJ0(  # [shape: nlam, nFPM_max + 1, nPup]
