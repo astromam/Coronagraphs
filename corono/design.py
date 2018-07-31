@@ -730,7 +730,7 @@ class APLC1d(Coronagraph):
             *corono_field_tmp*self.R/self.nPup
             
 
-class APLC1dAnalytical(APLC1d):
+class APLC1dAnalyticalHankel(APLC1d):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
