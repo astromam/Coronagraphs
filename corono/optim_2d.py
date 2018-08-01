@@ -861,18 +861,6 @@ class MaxContrast(ProblemMatrix):
         b4  = np.zeros(self.ndz)
         b5  = [-self.tau]
 
-
-#        if (stdgrb and self.solver == 'stdgrb') or (gb and self.solver == 'gurobipy'):        
-#            A2  = np.concatenate((-np.identity(self.npp), N0), axis=0)
-#            A3  = np.concatenate(( np.identity(self.npp), N0), axis=0)
-#            b2  = np.zeros(self.npp)
-#            b3  = np.ones(self.npp)
-#            self.A = np.concatenate((A0,A1,A2,A3,A4,A5[:,None]), axis=1)
-#            self.b = np.concatenate((b0,b1,b2,b3,b4,b5))
-#        else:
-#            self.A = np.concatenate((A0,A1,A4,A5[:,None]), axis=1)
-#            self.b = np.concatenate((b0,b1,b4,b5))
-
         self.A = np.concatenate((A0,A1,A4,A5[:,None]), axis=1)
         self.b = np.concatenate((b0,b1,b4,b5))
 
