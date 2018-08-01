@@ -23,8 +23,7 @@ except ModuleNotFoundError:
     gb = False
 
 import scipy.optimize        
-
-import corono as coro
+from . import design
 
 #%%
 """
@@ -123,7 +122,7 @@ class ProblemMatrix(object):
     """
     default_params = get_default_params_ProblemMatrix()
   
-    def __init__(self,corono=coro.design.APLC2d(), **kwargs):
+    def __init__(self,corono=design.APLC2d(), **kwargs):
         r"""
         __init__ : method
             Constructor for the ProblemMatrix class
