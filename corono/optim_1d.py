@@ -640,17 +640,6 @@ class MaxTau(ProblemMatrix):
         b0  = np.zeros((self.corono.nlam*self.ndz*2))
         b1  = np.zeros((self.corono.nlam*self.ndz*2))
                                     
-#        if (stdgrb and self.solver == 'stdgrb') or (gb and self.solver == 'gurobipy'):
-#            A2  = -np.identity(self.npp)
-#            A3  =  np.identity(self.npp)
-#            b2  = np.zeros(self.npp)
-#            b3  = np.ones(self.npp)
-#            self.A = np.concatenate((A0,A1,A2,A3), axis=1)
-#            self.b = np.concatenate((b0,b1,b2,b3))
-#        else:
-#            self.A = np.concatenate((A0,A1), axis=1)
-#            self.b = np.concatenate((b0,b1))
-
         self.A = np.concatenate((A0,A1), axis=1)
         self.b = np.concatenate((b0,b1))
 
@@ -886,16 +875,16 @@ class MaxContrast(ProblemMatrix):
         b6  = np.zeros(self.ndz)
         b7  = [-self.tau]
                         
+        self.A = np.concatenate((A0,A1,A6,A7[:,None]), axis=1)
+        self.b = np.concatenate((b0,b1,b6,b7))
+
         if (stdgrb and self.solver == 'stdgrb') or (gb and self.solver == 'gurobipy'):
             A2  = np.concatenate((-np.identity(self.npp), N0), axis=0)
             A3  = np.concatenate(( np.identity(self.npp), N0), axis=0)
             b2  = np.zeros(self.npp)
             b3  = np.ones(self.npp)
-            self.A = np.concatenate((A0,A1,A2,A3,A6,A7[:,None]), axis=1)
-            self.b = np.concatenate((b0,b1,b2,b3,b6,b7))
-        else:
-            self.A = np.concatenate((A0,A1,A6,A7[:,None]), axis=1)
-            self.b = np.concatenate((b0,b1,b6,b7))
+            self.A = np.concatenate((self.A,A2,A3), axis=1)
+            self.b = np.concatenate((self.b,b2,b3))
             
         if self.FirstDer is True:
             A4  = np.diff(np.identity(self.npp), axis=1)
