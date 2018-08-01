@@ -611,17 +611,6 @@ class MaxTau(ProblemMatrix):
         b0  = np.zeros((len(self.corono_field_t.T)))
         b1  = np.zeros((len(self.corono_field_t.T)))
 
-#        if (stdgrb and self.solver == 'stdgrb') or (gb and self.solver == 'gurobipy'):
-#            A2  = -np.identity(self.npp)
-#            A3  =  np.identity(self.npp)
-#            b2  = np.zeros(self.npp)
-#            b3  = np.ones(self.npp)
-#            self.A = np.concatenate((A0,A1,A2,A3), axis=1)
-#            self.b = np.concatenate((b0,b1,b2,b3))
-#        else:
-#            self.A = np.concatenate((A0,A1), axis=1)
-#            self.b = np.concatenate((b0,b1))            
-
         self.A = np.concatenate((A0,A1), axis=1)
         self.b = np.concatenate((b0,b1))
 
@@ -639,22 +628,17 @@ class MaxTau(ProblemMatrix):
 
 #%%            
     def update_cDarkHole(self):
-        ED0 = np.zeros_like(self.corono_field_t)
-        ED0tmp = self.Pupil_vec[self.idx_pup]*self.LyotStop_vec[self.idx_pup]
-        for j in range(len(self.corono_field_t.T)):
-            ED0[:,j] = ED0tmp
-        cst = 10.**(-self.cDarkHole/2.)/np.sqrt(2.)      
-        ED0 *= cst*self.corono.Fmax2d/(self.corono.nImg2d*self.corono.nPup)
+        cst = (10.**(-self.cDarkHole/2.)/np.sqrt(2.))*self.corono.Fmax2d/(self.corono.nImg2d*self.corono.nPup)
 
-        A0  =  self.corono_field_t - ED0                
-        A1  = -self.corono_field_t - ED0       
+        A0  =  self.corono_field_t - cst*self.Pupil_vec[self.idx_pup, None]*self.LyotStop_vec[self.idx_pup, None]            
+        A1  = -self.corono_field_t - cst*self.Pupil_vec[self.idx_pup, None]*self.LyotStop_vec[self.idx_pup, None]    
 
+        self.A = np.concatenate((A0,A1), axis=1)
         if (stdgrb and self.solver == 'stdgrb') or (gb and self.solver == 'gurobipy'):
             A2  = -np.identity(self.npp)
             A3  =  np.identity(self.npp)
-            self.A = np.concatenate((A0,A1,A2,A3), axis=1)
-        else:
-            self.A = np.concatenate((A0,A1), axis=1)            
+            self.A = np.concatenate((self.A,A2,A3), axis=1)
+            
 
 #%%
     def compute_gurobi_model(self):
@@ -883,12 +867,12 @@ class MaxContrast(ProblemMatrix):
         b4  = np.zeros(self.ndz)
         b5  = [-self.tau]
 
+        self.b = np.concatenate((b0,b1,b4,b5))
+
         if (stdgrb and self.solver == 'stdgrb') or (gb and self.solver == 'gurobipy'):        
             b2  = np.zeros(self.npp)
             b3  = np.ones(self.npp)
-            self.b = np.concatenate((b0,b1,b2,b3,b4,b5))
-        else:
-            self.b = np.concatenate((b0,b1,b4,b5))
+            self.b = np.concatenate((self.b,b2,b3))
             
 #%%
     def compute_gurobi_model(self):
