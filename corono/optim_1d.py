@@ -56,7 +56,8 @@ def get_default_params_ProblemMatrix():
            'slvCrossover':0, 'slvLogToConsole':1, 'slvMethod':2,
            'allLogToConsole':0, 
            'FirstDer':False, 'SecondDer': False,
-           'FirstDerLim':0.01, 'SecondDerLim':0.0001}
+           'FirstDerLim':0.01, 'SecondDerLim':0.0001,
+           'FirstDerGlobalLim':0.01}
     return tmp
 
 #%%
@@ -662,6 +663,12 @@ class MaxTau(ProblemMatrix):
             b5  = self.SecondDerLim*np.ones(self.npp)
             self.A = np.concatenate((self.A, A5, -A5), axis=1)
             self.b = np.concatenate((self.b, b5, b5))        
+
+        if self.FirstDerGlobal is True:
+            A6  = np.diff(np.identity(self.npp), axis=1)
+            b6  = self.FirstDerGlobalLim
+            self.A = np.concatenate((self.A, A6, -A6), axis=1)
+            self.b = np.concatenate((self.b, b6, b6))
                
         self.c = - 2.*np.pi*(np.asarray(self.idx_pup)+0.5)\
                 /(2.*self.corono.nPup)**2/self.TR                 
