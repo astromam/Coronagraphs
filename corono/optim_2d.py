@@ -23,7 +23,7 @@ except ModuleNotFoundError:
     gb = False
 
 import scipy.optimize        
-from . import design
+from . import design, update_params
 
 #%%
 """
@@ -416,7 +416,7 @@ class ProblemMatrix(object):
         
         """
         params = self.corono.params.copy()
-        params = coro.update_params(params, **kwargs)
+        params = update_params(params, **kwargs)
                 
         if self.problem_name == 'MaxTau':
             str_opt = '_C={cDarkHole:.1f}'
