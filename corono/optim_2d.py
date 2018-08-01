@@ -22,8 +22,9 @@ try:
 except ModuleNotFoundError:
     gb = False
 
-import scipy.optimize        
-from . import design, update_params
+import scipy.optimize
+from .utils import update_params        
+from . import design
 
 #%%
 """
