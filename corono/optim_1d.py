@@ -865,8 +865,7 @@ class MaxContrast(ProblemMatrix):
         A0  = np.concatenate(( self.corono_field_t, -I1), axis=0)
         A1  = np.concatenate((-self.corono_field_t, -I1), axis=0)
         A6  = np.concatenate((np.zeros((self.npp, self.ndz)), -I0), axis=0)
-        A7  = np.concatenate((- 2.*np.pi*(
-                np.arange(self.corono.nPup)[self.idx_pup]+0.5)\
+        A7  = np.concatenate((- 2.*np.pi*(np.asarray(self.idx_pup)+0.5)\
             *self.corono.Pupil1d[self.idx_pup]/(2.*self.corono.nPup)**2/self.TR, 
                                   Z0))
         
