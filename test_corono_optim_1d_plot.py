@@ -18,14 +18,14 @@ Parameters
 """
 corono_name  = 'APLC' # 'APLC' or 'SP'
 problem_name = 'MaxTauGlobalDer' # 'MaxContrastL1' #,'MaxContrastLinf' # 'MaxTau' # , 'MaxTauGlobalDer' # 
-solver       = 'xxx' # 'stdgrb', 'gurobipy', 'scipy.linprog'
+solver       = 'stdgrb' # 'stdgrb', 'gurobipy', 'scipy.linprog'
 
 FirstDer    = False
 SecondDer   = False
 FirstDerGlobal = True
 FirstDerLim = 0.01
 SecondDerLim= 0.001 
-FirstDerGlobalLim = 7.
+FirstDerGlobalLim = 3.
 
 nPup = 500
 nFPM = 50

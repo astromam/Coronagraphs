@@ -1007,7 +1007,7 @@ class Coronagraph(object):
         if poly:
             return np.sum(np.abs(corono_field)**2,0)
         else:
-            print('Warning: No normalization for multiple lambda!')
+            print('Warning: multi-wavelength normalization assuming flat spectrum!')
             return np.abs(corono_field)**2       
 
 #%% direct signal in intensity
@@ -1063,7 +1063,7 @@ class Coronagraph(object):
         if poly:
             return np.sum(np.abs(corono_field_2d)**2,0)
         else:
-            print('Warning: No normalization for multiple lambda!')
+            print('Warning: multi-wavelength normalization assuming flat spectrum!')
             return np.abs(corono_field_2d)**2
 
 #%%

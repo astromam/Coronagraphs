@@ -1065,7 +1065,7 @@ class MaxTauGlobalDer(ProblemMatrix):
             self.b = np.concatenate((self.b,b2,b3))
 
         if self.FirstDerGlobal is True:
-            A00    = np.zeros((2*(self.npp-1), np.shape(self.A)[1]))            
+            A00    = np.zeros((self.nvv, np.shape(self.A)[1]))            
             self.A = np.concatenate((self.A, A00))
 
             AD  = np.diff(np.identity(self.npp), axis=1)
