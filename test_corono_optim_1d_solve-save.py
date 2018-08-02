@@ -26,7 +26,7 @@ allLogToConsole = 0
 
 FirstDer    = False
 SecondDer   = False
-MinIsland   = False
+MinIsland   = True
 FirstDerLim = 0.01
 SecondDerLim= 0.001 
 FirstDerGlobalLim = 1.

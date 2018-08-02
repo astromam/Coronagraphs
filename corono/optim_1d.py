@@ -307,7 +307,7 @@ class ProblemMatrix(object):
 #%%
     def compute_response_matrices(self):
 
-        if self.problem_name == 'MaxTau' or self.problem_name == 'MaxTauMinIsland':
+        if self.problem_name == 'MaxTau':
             direct_field_t_tmp = np.zeros((self.npp, self.corono.nlam, 
                                        self.corono.nImg+1), dtype='complex128')
             self.print_log('generating direct response matrices for 1D problem')
@@ -428,7 +428,7 @@ class ProblemMatrix(object):
         params = self.params.copy()
         params = update_params(params, **kwargs)
 
-        if self.problem_name == 'MaxTau' or self.problem_name == 'MaxTauMinIsland' :
+        if self.problem_name == 'MaxTau':
             str_opt = '_C={cDarkHole:.1f}'
         elif self.problem_name == 'MaxContrastL1' or self.problem_name == 'MaxContrastLinf' or\
         self.problem_name == 'MaxContrastL1MinIsland' or self.problem_name == 'MaxContrastLinfMinIsland':
@@ -444,22 +444,19 @@ class ProblemMatrix(object):
             str_cor = '_rMask1={rMask1:.3f}_rMask2={rMask2:.3f}_rMask3={rMask3:.3f}'
         else:
             raise NameError('{0}: Not an existing coronagraph!'.format(self.corono.corono_name))
-        
+
+        str_FirstDer = ''        
         if self.FirstDer is True:
             str_FirstDer = '_1stder={FirstDerLim}'
-        else:
-            str_FirstDer = ''
 
+        str_SecondDer = ''
         if self.SecondDer is True:
             str_SecondDer = '_2ndder={SecondDerLim}'
-        else:
-            str_SecondDer = ''
 
-        if (self.problem_name == 'MaxTauMinIsland' or self.problem_name == 'MaxContrastL1MinIsland' \
+        str_FirstDerGlobal = ''
+        if (self.problem_name == 'MaxTau' or self.problem_name == 'MaxContrastL1MinIsland' \
             or  self.problem_name == 'MaxContrastLinfMinIsland') and self.MinIsland is True:
             str_FirstDerGlobal = '_1stderglo={FirstDerGlobalLim}'
-        else:
-            str_FirstDerGlobal = ''
                     
         fname_gen   = '{corono_name}_obs={PupilObs:.2f}' + \
         '_lsid={LyotStopObs:.2f}_lsod={LyotStopIns:.2f}' + \
@@ -564,6 +561,8 @@ class MaxTau(ProblemMatrix):
         super(MaxTau, self).__init__(**kwargs)
         self.neps = 0
         self.nvv  = 0
+        if self.MinIsland is True:
+            self.nvv  = 2*(self.npp-1)
 
 #%%        
     def compute_problem_matrices(self):
@@ -661,9 +660,13 @@ class MaxTau(ProblemMatrix):
             
         if self.SecondDer is True:
             self.compute_problem_matrices_2ndDer()
+            
+        if self.MinIsland is True:
+            self.compute_problem_matrices_MinIsland()
                
-        self.c = - 2.*np.pi*(np.asarray(self.idx_pup)+0.5)\
-                /(2.*self.corono.nPup)**2/self.TR                 
+        ctmp = np.zeros((self.npp + self.nvv))
+        ctmp[:self.npp] = np.asarray(self.idx_pup)+0.5
+        self.c = - 2.*np.pi*ctmp/(2.*self.corono.nPup)**2/self.TR
         
         return self.A, self.b, self.c
 
@@ -691,6 +694,33 @@ class MaxTau(ProblemMatrix):
         self.b = np.concatenate((self.b, b5, b5))        
 
 #%%
+    def compute_problem_matrices_MinIsland(self):
+        A00    = np.zeros((self.nvv, np.shape(self.A)[1]))            
+        self.A = np.concatenate((self.A, A00))
+
+        AD  = np.diff(np.identity(self.npp), axis=1)
+        AI  = np.identity((self.npp-1))
+        
+        A6   = np.concatenate(( AD, -AI,  AI))
+        A7   = np.concatenate((-AD,  AI, -AI))
+        
+        AZ1 = np.zeros((self.npp, self.npp-1))                       
+        AZ2 = np.zeros((self.npp-1, self.npp-1))
+
+        A8  = np.concatenate((AZ1, -AI, AZ2))
+        A9  = np.concatenate((AZ1, AZ2, -AI))
+
+        bZ  = np.zeros((self.npp-1))
+
+        A10Z = np.zeros((self.npp))
+        A101 = np.ones(self.npp-1)
+        A10  = np.concatenate((A10Z, A101, A101))
+        b10  = [self.FirstDerGlobalLim]
+        
+        self.A = np.concatenate((self.A, A6, A7, A8, A9, A10[:, None]), axis=1)
+        self.b = np.concatenate((self.b, bZ, bZ, bZ, bZ, b10))       
+
+#%%
     def compute_gurobi_model(self):
         """
         Generates the gurobi solver model for the MaxTau problem.
@@ -713,13 +743,13 @@ class MaxTau(ProblemMatrix):
         # Create a new model               
         self.m = gb.Model("LP max tau new")
         # Create variables
-        ApodTmp = self.m.addVars(self.npp, lb=0.0, ub=1.0, name="ApodTmp")
+        ApodTmp = self.m.addVars(self.npp+self.nvv, lb=0.0, ub=1.0, name="ApodTmp")
         # Set objective
         self.m.setObjective(gb.quicksum((self.c[i]*ApodTmp[i] 
                 for i in range(self.npp))), gb.GRB.MINIMIZE)
         # Add constraint:                
         self.m.addConstrs((gb.quicksum((ApodTmp[i]*self.A[i,j] 
-                for i in range(self.npp) if self.A[i,j])) <=  self.b[j] 
+                for i in range(self.npp+self.nvv) if self.A[i,j])) <=  self.b[j] 
                 for j in range(nA)), "cpos")
         self.m.update()          
 
@@ -974,187 +1004,6 @@ class MaxContrast(ProblemMatrix):
         self.m.update()
             
         return self.m
-
-#%%
-"""
-MaxTau ProblemMatrix subclass
-"""
-class MaxTauMinIsland(ProblemMatrix):
-    r"""
-    Defines the ProblemMatrix subclass for the optimization problem that 
-    maximizes the integrated apodizer transmission for a given contrast 
-    :math:`C` in the search area inside the coronagraphic image.
-    """
-    def __init__(self, **kwargs):
-        """
-        Constructor for the Matrix problem with the coronagraph object
-        
-        """
-        super(MaxTauMinIsland, self).__init__(**kwargs)
-        self.neps = 0
-        self.nvv  = 2*(self.npp-1)
-
-#%%        
-    def compute_problem_matrices(self):
-        r"""
-        Computes the matrices for the optimization problem that consists in 
-        maximizing the amplitude transmission of the apodizer :math:`\Phi` 
-        for a set contrast :math:`C` in a given search area in the coronagraphic 
-        image. In terms of matrices, the optimization problem writes as
-            
-        .. math:: \max_{C} c^{T}.x,
-            
-        under the constraint :math:`A.x \leq b`.
-                
-        The variable :math:`x` represents the apodizer transmission 
-        function :math:`\Phi`. The variables follow the notations of [1]_ and [2]_.       
-        
-        Parameters
-        -----------        
-        A0, b0 : array_like, array_like
-            Contrast constraint on the coronagraphic electric field :math:`\Psi_D`
-            that is represented the following equation:
-                
-            :math:`\Psi_D(\xi,\lambda)-10^{-C/2}\Psi_0(\xi,\lambda) \leq 0`. 
-            
-            :math:`\xi` and :math:`\lambda` denote the image plane coordinate 
-            and wavelength. The term :math:`\Psi_0` represents the coronagraphic 
-            electric field in the absence of focal plane mask (FPM).
-            
-        A1, b1 : array_like, array_like
-            Contrast constraints on the coronagraphic electric field Psi_D
-            that is represented the following equations:
-                
-            :math:`-\Psi_D(\xi,\lambda)-10^{-C/2}\Psi_0(\xi,\lambda) \leq 0`.
-
-        A2, b2 : array_like, array_like
-            Constraint on the transmission of the amplitude apodization 
-            :math:`\Phi`
-            
-            :math:`- \Phi(r) \leq 0`,
-            in which :math:`r` represents the radial coordinate of the pupil.
-            
-        A3, b3 : array_like, array_like
-            Constraint on the transmission of the amplitude apodization 
-            :math:`\Phi`
-            
-            :math:`\Phi(r) \leq 1`.
-        
-        Returns 
-        ----------
-        A, b, c: array_like, array_like, array_like
-            The matrices for the optimization problem.
-            A and b are concatenations of the matrices for the constraints that 
-            are described above.
-            
-            The cost function c to maximize is the transmission of the apodizer 
-            inside the pupil :math:`P_0`.
-            
-            .. math:: \max_{C}[\int_{P_0} \Phi(r)dr].
-            
-        References
-        ----------
-        .. [1] M. N'Diaye, L. Pueyo, and R. Soummer, Apodized Pupil Lyot Coronagraphs for 
-            Arbitrary Apertures. IV. Reduced Inner Working Angle and Increased 
-            Robustness to Low-order Aberrations, ApJ 799, 2, 225 (2015).
-            
-            http://iopscience.iop.org/article/10.1088/0004-637X/799/2/225/meta.
-            
-        .. [2] M. N'Diaye, R. Soummer, L. Pueyo, A. Carlotti, C. Stark, M. Perrin,
-            Apodized Pupil Lyot Coronagraphs for Arbitrary Apertures. V. Hybrid
-            Shaped Pupil Designs for Imaging Earth-like planets with Future 
-            Space Observatories, ApJ 818, 2, 163 (2016). 
-            
-            http://iopscience.iop.org/article/10.3847/0004-637X/818/2/163/meta
-                      
-            
-        """
-        cst = 10.**(-self.cDarkHole/2.)/np.sqrt(2.)
-
-        A0  =  self.corono_field_t \
-        - cst*self.direct_field_re_t_tmp[:,(self.corono.nlam-1)//2,0, None]
-        A1  = -self.corono_field_t \
-        - cst*self.direct_field_re_t_tmp[:,(self.corono.nlam-1)//2,0, None]
-    
-        b0  = np.zeros((self.corono.nlam*self.ndz*2))
-        b1  = np.zeros((self.corono.nlam*self.ndz*2))
-                                    
-        self.A = np.concatenate((A0,A1), axis=1)
-        self.b = np.concatenate((b0,b1))
-
-        if (stdgrb and self.solver == 'stdgrb') or (gb and self.solver == 'gurobipy'):
-            A2  = -np.identity(self.npp)
-            A3  =  np.identity(self.npp)
-            b2  = np.zeros(self.npp)
-            b3  = np.ones(self.npp)
-            self.A = np.concatenate((self.A,A2,A3), axis=1)
-            self.b = np.concatenate((self.b,b2,b3))
-
-        if self.MinIsland is True:
-            A00    = np.zeros((self.nvv, np.shape(self.A)[1]))            
-            self.A = np.concatenate((self.A, A00))
-
-            AD  = np.diff(np.identity(self.npp), axis=1)
-            AI  = np.identity((self.npp-1))
-            
-            A4   = np.concatenate(( AD, -AI,  AI))
-            A5   = np.concatenate((-AD,  AI, -AI))
-            
-            AZ1 = np.zeros((self.npp, self.npp-1))                       
-            AZ2 = np.zeros((self.npp-1, self.npp-1))
-
-            A6  = np.concatenate((AZ1, -AI, AZ2))
-            A7  = np.concatenate((AZ1, AZ2, -AI))
-
-            bZ  = np.zeros((self.npp-1))
-
-            A8Z = np.zeros((self.npp))
-            A81 = np.ones(self.npp-1)
-            A8  = np.concatenate((A8Z, A81, A81))
-            b8  = [self.FirstDerGlobalLim]
-            
-            self.A = np.concatenate((self.A, A4, A5, A6, A7, A8[:, None]), axis=1)
-            self.b = np.concatenate((self.b, bZ, bZ, bZ, bZ, b8))
-
-        ctmp = np.zeros((self.npp + self.nvv))
-        ctmp[:self.npp] = np.asarray(self.idx_pup)+0.5
-        self.c = - 2.*np.pi*ctmp/(2.*self.corono.nPup)**2/self.TR
-                                 
-        return self.A, self.b, self.c
-
-#%%
-    def compute_gurobi_model(self):
-        """
-        Generates the gurobi solver model for the MaxTau problem.
-        
-        Parameters 
-        -----------
-        Apodtmp : array_like
-            Vector of the apodizer :math:`\Phi` in the non zero points of 
-            the pupil :math:`P_0`
-        
-        Returns
-        -----------
-        m : gurobi model
-            Gurobi model of the MaxTau problem to solve
-            
-        """
-         
-        nA = np.shape(self.A)[1]
-    
-        # Create a new model               
-        self.m = gb.Model("LP max tau new")
-        # Create variables
-        ApodTmp = self.m.addVars(self.npp+self.nvv, lb=0.0, ub=1.0, name="ApodTmp")
-        # Set objective
-        self.m.setObjective(gb.quicksum((self.c[i]*ApodTmp[i] 
-                for i in range(self.npp))), gb.GRB.MINIMIZE)
-        # Add constraint:                
-        self.m.addConstrs((gb.quicksum((ApodTmp[i]*self.A[i,j] 
-                for i in range(self.npp+self.nvv) if self.A[i,j])) <=  self.b[j] 
-                for j in range(nA)), "cpos")
-        self.m.update()          
-
 
 #%%
 """
