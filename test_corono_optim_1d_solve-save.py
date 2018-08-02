@@ -29,7 +29,7 @@ SecondDer   = False
 FirstDerGlobal = True
 FirstDerLim = 0.01
 SecondDerLim= 0.001 
-FirstDerGlobalLim = 7.
+FirstDerGlobalLim = 6.
 
 nPup = 500
 nFPM = 50
