@@ -19,6 +19,13 @@ Parameters
 corono_name = 'APLC' # 'APLC' or 'SP'
 solver      = 'stdgrb' # 'stdgrb', 'gurobipy', 'scipy.linprog'
 
+FirstDer    = False
+SecondDer   = False
+MinIsland   = False
+FirstDerLim = 0.01
+SecondDerLim= 0.001 
+FirstDerGlobalLim = 1.
+
 nPup = 500
 nFPM = 50
 nImg = 440
@@ -68,7 +75,10 @@ params = coro.to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
                  LyotStopIns = LyotStopIns,
                  r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d,
                  solver = solver, 
-                 corono_name = corono_name)
+                 corono_name = corono_name,
+                 FirstDer = FirstDer, SecondDer = SecondDer,
+                 FirstDerLim = FirstDerLim, SecondDerLim = SecondDerLim,
+                 MinIsland = MinIsland, FirstDerGlobalLim = FirstDerGlobalLim)
 
 #%%
 """

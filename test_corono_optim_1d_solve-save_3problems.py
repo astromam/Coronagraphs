@@ -22,6 +22,13 @@ slvCrossover    = 0
 slvMethod       = 2
 allLogToConsole = 0
 
+FirstDer    = False
+SecondDer   = False
+MinIsland   = False
+FirstDerLim = 0.01
+SecondDerLim= 0.001 
+FirstDerGlobalLim = 1.
+
 nPup = 500
 nFPM = 50
 nImg = 44
@@ -72,7 +79,10 @@ params = coro.to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
                  solver = solver, 
                  corono_name = corono_name, slvLogToConsole = slvLogToConsole,
                  slvCrossover = slvCrossover, slvMethod = slvMethod,
-                 allLogToConsole = allLogToConsole)
+                 allLogToConsole = allLogToConsole,
+                 FirstDer = FirstDer, SecondDer = SecondDer,
+                 FirstDerLim = FirstDerLim, SecondDerLim = SecondDerLim,
+                 MinIsland = MinIsland, FirstDerGlobalLim = FirstDerGlobalLim)
 
 #%%
 """

@@ -17,7 +17,7 @@ import corono as coro
 Parameters
 """
 corono_name  = 'APLC' # 'APLC' or 'SP'
-problem_name = 'MaxContrastLinf' # 'MaxContrastL1' #,'MaxContrastLinf' # 'MaxTau' # , 'MaxTauMinIsland' # 
+problem_name = 'MaxContrastLinf' # 'MaxContrastL1' #,'MaxContrastLinf' # 'MaxTau' #
 solver       = 'gurobipy' # 'stdgrb', 'gurobipy', 'scipy.linprog'
 
 FirstDer    = False
@@ -121,14 +121,6 @@ elif problem_name == 'MaxContrastL1':
 elif problem_name == 'MaxContrastLinf':
     # Maximization of the contrast under L-infinite norm
     problem1 = coro.optim_1d.MaxContrast(corono=corono0, Lnorm='Linf',**params)
-elif problem_name == 'MaxTauMinIsland':
-    problem1 = coro.optim_1d.MaxTauMinIsland(corono=corono0, **params)
-elif problem_name == 'MaxContrastL1MinIsland':
-    # Maximization of the contrast under L1-norm
-    problem1 = coro.optim_1d.MaxContrastMinIsland(corono=corono0, Lnorm='L1',**params)
-elif problem_name == 'MaxContrastLinfMinIsland':
-    # Maximization of the contrast under L-infinite norm
-    problem1 = coro.optim_1d.MaxContrastMinIsland(corono=corono0, Lnorm='Linf',**params)
 else:
      raise NameError('{0}: Not an existing optimization problem!'.format(problem_name))
 

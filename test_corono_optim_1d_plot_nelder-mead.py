@@ -20,6 +20,13 @@ corono_name  = 'APLC' # 'APLC' or 'SP' or 'HDZPM' or 'HTZPM'
 problem_name = 'MaxTau'#'MaxContrastLinf' # ,'MaxContrastL1' # #  'MaxContrastL1', 
 solver       = 'stdgrb' # 'stdgrb', 'gurobipy', 'scipy.linprog'
 
+FirstDer    = False
+SecondDer   = False
+MinIsland   = False
+FirstDerLim = 0.01
+SecondDerLim= 0.001 
+FirstDerGlobalLim = 1.
+
 nPup = 500
 nFPM = 50
 nImg = 220
@@ -70,7 +77,10 @@ params = coro.to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
                  LyotStopIns = LyotStopIns,
                  r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d,
                  solver = solver, problem_name = problem_name,
-                 corono_name = corono_name)
+                 corono_name = corono_name,
+                 FirstDer = FirstDer, SecondDer = SecondDer,
+                 FirstDerLim = FirstDerLim, SecondDerLim = SecondDerLim,
+                 MinIsland = MinIsland, FirstDerGlobalLim = FirstDerGlobalLim)
 
 #%%
 """
