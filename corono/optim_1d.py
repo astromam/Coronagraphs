@@ -655,12 +655,6 @@ class MaxTau(ProblemMatrix):
 
         if (stdgrb and self.solver == 'stdgrb') or (gb and self.solver == 'gurobipy'):
             self.compute_problem_matrices_gurobi()
-#            A2  = -np.identity(self.npp)
-#            A3  =  np.identity(self.npp)
-#            b2  = np.zeros(self.npp)
-#            b3  = np.ones(self.npp)
-#            self.A = np.concatenate((self.A,A2,A3), axis=1)
-#            self.b = np.concatenate((self.b,b2,b3))
 
         if self.FirstDer is True:
             self.compute_problem_matrices_1stDer()
