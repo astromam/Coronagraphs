@@ -57,7 +57,7 @@ def get_default_params_ProblemMatrix():
            'allLogToConsole':0, 
            'FirstDer':False, 'SecondDer': False,
            'FirstDerLim':0.01, 'SecondDerLim':0.0001,
-           'FirstDerGlobal':False,
+           'MinIsland':False,
            'FirstDerGlobalLim':0.01}
     return tmp
 
@@ -307,7 +307,7 @@ class ProblemMatrix(object):
 #%%
     def compute_response_matrices(self):
 
-        if self.problem_name == 'MaxTau' or self.problem_name == 'MaxTauGlobalDer':
+        if self.problem_name == 'MaxTau' or self.problem_name == 'MaxTauMinIsland':
             direct_field_t_tmp = np.zeros((self.npp, self.corono.nlam, 
                                        self.corono.nImg+1), dtype='complex128')
             self.print_log('generating direct response matrices for 1D problem')
@@ -428,9 +428,10 @@ class ProblemMatrix(object):
         params = self.params.copy()
         params = update_params(params, **kwargs)
 
-        if self.problem_name == 'MaxTau' or self.problem_name == 'MaxTauGlobalDer' :
+        if self.problem_name == 'MaxTau' or self.problem_name == 'MaxTauMinIsland' :
             str_opt = '_C={cDarkHole:.1f}'
-        elif self.problem_name == 'MaxContrastL1' or self.problem_name == 'MaxContrastLinf':
+        elif self.problem_name == 'MaxContrastL1' or self.problem_name == 'MaxContrastLinf' or\
+        self.problem_name == 'MaxContrastL1MinIsland' or self.problem_name == 'MaxContrastLinfMinIsland':
             str_opt = '_tau={tau:.3f}'
         else:
             raise NameError('{0}: Not an existing optimization problem!'.format(self.problem_name))
@@ -445,17 +446,18 @@ class ProblemMatrix(object):
             raise NameError('{0}: Not an existing coronagraph!'.format(self.corono.corono_name))
         
         if self.FirstDer is True:
-            str_FirstDer = '_der1st={FirstDerLim}'
+            str_FirstDer = '_1stder={FirstDerLim}'
         else:
             str_FirstDer = ''
 
         if self.SecondDer is True:
-            str_SecondDer = '_der2nd={SecondDerLim}'
+            str_SecondDer = '_2ndder={SecondDerLim}'
         else:
             str_SecondDer = ''
 
-        if self.problem_name == 'MaxTauGlobalDer' and self.FirstDerGlobal is True:
-            str_FirstDerGlobal = '_der1st={FirstDerGlobalLim}'
+        if (self.problem_name == 'MaxTauMinIsland' or self.problem_name == 'MaxContrastL1MinIsland' \
+            or  self.problem_name == 'MaxContrastLinfMinIsland') and self.MinIsland is True:
+            str_FirstDerGlobal = '_1stderglo={FirstDerGlobalLim}'
         else:
             str_FirstDerGlobal = ''
                     
@@ -953,7 +955,7 @@ class MaxContrast(ProblemMatrix):
 """
 MaxTau ProblemMatrix subclass
 """
-class MaxTauGlobalDer(ProblemMatrix):
+class MaxTauMinIsland(ProblemMatrix):
     r"""
     Defines the ProblemMatrix subclass for the optimization problem that 
     maximizes the integrated apodizer transmission for a given contrast 
@@ -964,7 +966,7 @@ class MaxTauGlobalDer(ProblemMatrix):
         Constructor for the Matrix problem with the coronagraph object
         
         """
-        super(MaxTauGlobalDer, self).__init__(**kwargs)
+        super(MaxTauMinIsland, self).__init__(**kwargs)
         self.neps = 0
         self.nvv  = 2*(self.npp-1)
 
@@ -1064,7 +1066,7 @@ class MaxTauGlobalDer(ProblemMatrix):
             self.A = np.concatenate((self.A,A2,A3), axis=1)
             self.b = np.concatenate((self.b,b2,b3))
 
-        if self.FirstDerGlobal is True:
+        if self.MinIsland is True:
             A00    = np.zeros((self.nvv, np.shape(self.A)[1]))            
             self.A = np.concatenate((self.A, A00))
 
@@ -1128,4 +1130,274 @@ class MaxTauGlobalDer(ProblemMatrix):
                 for i in range(self.npp+self.nvv) if self.A[i,j])) <=  self.b[j] 
                 for j in range(nA)), "cpos")
         self.m.update()          
+
+
+#%%
+"""
+MaxContrast ProblemMatrix subclass
+"""
+class MaxContrastMinIsland(ProblemMatrix):
+    r"""
+    Defines the ProblemMatrix subclass for the optimization problem that 
+    maximizes the contrast in a given search area for a given integrated 
+    apodizer transmission :math:`\tau`.
+    """
+    default_params = get_default_params_MaxContrastProblemMatrix()
+    
+    def __init__(self, **kwargs):
+        """
+        Constructor for the Matrix problem with 
+        the coronagraph object.
+        """
+        super(MaxContrastMinIsland,self).__init__(**kwargs)
+
+        if self.Lnorm == 'Linf':
+            self.neps = 1
+        else:
+            self.neps = self.ndz
+            
+        self.nvv   = 2*(self.npp-1)
+
+#%%    
+    def compute_problem_matrices(self):
+        r"""
+        Computes the matrices for the optimization problem that consists in 
+        maximizing the contrast in a given search area in the coronagraphic 
+        image for a set integrated apodizer transmission :math:`\tau`. In terms
+        of matrices, the optimization problem writes as
+            
+        .. math:: \max_{\tau} c^{T}.x,
+            
+        under the constraint :math:`A.x \leq b`.
+                
+        The variable :math:`x` is a concatenation of the apodizer transmission 
+        function :math:`\Phi` and an auxiliary variable :math:`\epsilon`.
+        The variable :math:`\epsilon` represents the contrast to maximize in 
+        the search area ranging between :math:`\rho_0` and :math:`\rho_1` in 
+        the coronagraphic image. It can either depend on the position 
+        :math:`\xi` in the coronagraphic image or not (:math:`L_1`-norm or 
+        :math:`L_\infty`-norm problem). 
+        The variables follow the notations of [1]_ and [2]_.
+
+        Parameters
+        -----------
+        Lnorm : string
+            Type of L-norm for the optimization problem
+            
+        I0, I1, N0, Z0, c1 : array_like
+            Intermediate matrices for the generation of the matrices A0 to A5.
+            They depend on the type of the norm (:math:`L_1` or :math:`L_\infty`) 
+            for the problem.
+
+        A0, b0 : array_like, array_like
+            Contrast constraint on the coronagraphic electric field :math:`\Psi_D`
+            that is represented the following equation:
+                
+            :math:`\Psi_D(\xi,\lambda)-\epsilon(\xi) \leq 0` 
+            if :math:`L_1`-norm constraint,
+            
+            :math:`\Psi_D(\xi,\lambda)-\epsilon    \leq 0`  
+            if :math:`L_\infty`-norm constraint,
+            
+            :math:`\xi` and :math:`\lambda` denote the image plane coordinate 
+            and wavelength.
+
+        A1, b1 : array_like, array_like
+            Contrast constraint on the coronagraphic electric field :math:`\Psi_D`
+            that is represented the following equation:
+                
+            :math:`-\Psi_D(\xi, \lambda) - \epsilon(\xi) \leq 0`
+            if :math:`L_1`-norm constraint,
+            
+            :math:`-\Psi_D(\xi,\lambda) - \epsilon    \leq 0`
+            if :math:`L_\infty`-norm constraint.
+            
+
+        A2, b2 : array_like, array_like
+            Constraint on the transmission of the amplitude apodization 
+            :math:`\Phi`
+            
+            :math:`- \Phi(r) \leq 0`,
+            in which :math:`r` represents the radial coordinate of the pupil.
+            
+        A3, b3 : array_like, array_like
+            Constraint on the transmission of the amplitude apodization 
+            :math:`\Phi`
+            
+            :math:`\Phi(r) \leq 1`.
+            
+        A4, b4 : array_like, array_like
+            Constraint on the variable epsilon that is related to contrast
+            and represented by the following equation:
+                
+            :math:`-\epsilon(\xi) \leq 0` if :math:`L_1`-norm constraint,
+            
+            :math:`-\epsilon     \leq 0` if :math:`L_\infty`-norm constraint.            
+                  
+        A5, b5 : array_like
+            Constraint on the integral of the apodization amplitude transmission, 
+            used as a proxy of the apodizer throughput. It is normalized to the
+            integral of the transmission of the pupil :math:`P_0` and is larger 
+            than a parameter :math:`\tau` set by the user.
+            
+            .. math:: - \frac{\int_{P} \Phi(r)dr}{\int_{P_0} P(r)dr} \leq \tau.
+                  
+        
+        Returns
+        -----------
+        A, b, c: array_like, array_like, array_like
+            The matrices for the optimization problem.
+            A and b are concatenations of the matrices for the constraints that 
+            are described above.
+            
+            The cost function c to maximize represents the contrast 
+            in the search area ranging between :math:`\rho_0` and :math:`\rho_1` 
+            inside the coronagraphic image.
+            
+            .. math:: \max_{\tau}[ - \int_{\rho_0}^{\rho_1} W(\xi)\epsilon(\xi)d\xi],
+            
+            with
+            
+            :math:`W(\xi)= \xi` if :math:`L_1`-norm constraint
+            
+            :math:`W(\xi) = 1` if :math:`L_\infty`-norm constraint
+
+        References
+        ----------
+        .. [1] M. N'Diaye, L. Pueyo, and R. Soummer, Apodized Pupil Lyot Coronagraphs for 
+            Arbitrary Apertures. IV. Reduced Inner Working Angle and Increased 
+            Robustness to Low-order Aberrations, ApJ 799, 2, 225 (2015).
+            
+            http://iopscience.iop.org/article/10.1088/0004-637X/799/2/225/meta.
+            
+        .. [2] M. N'Diaye, R. Soummer, L. Pueyo, A. Carlotti, C. Stark, M. Perrin,
+            Apodized Pupil Lyot Coronagraphs for Arbitrary Apertures. V. Hybrid
+            Shaped Pupil Designs for Imaging Earth-like planets with Future 
+            Space Observatories, ApJ 818, 2, 163 (2016). 
+            
+            http://iopscience.iop.org/article/10.3847/0004-637X/818/2/163/meta
+
+                                
+        """
+        if self.Lnorm == 'Linf':
+            I1 = np.ones(self.ndz*self.corono.nlam*2)
+            I1 = I1[None,:]
+            I0 = np.ones(self.ndz)
+            I0 = I0[None,:]
+            N0 = np.zeros((1, self.npp))
+            Z0 = np.zeros(1)
+            c1 = [1]
+        else:
+            I0 = np.identity(self.ndz)
+            I1 = np.hstack([I0 for k in range(self.corono.nlam*2)])            
+            N0 = np.zeros((self.ndz, self.npp))
+            Z0 = np.zeros(self.ndz)
+            c1 = 2.*np.pi*np.asarray(self.idx_dz)*(self.corono.Fmax\
+                                  /self.corono.nImg)**2
+        
+        A0  = np.concatenate(( self.corono_field_t, -I1), axis=0)
+        A1  = np.concatenate((-self.corono_field_t, -I1), axis=0)
+        A6  = np.concatenate((np.zeros((self.npp, self.ndz)), -I0), axis=0)
+        A7  = np.concatenate((- 2.*np.pi*(np.asarray(self.idx_pup)+0.5)\
+            *self.corono.Pupil1d[self.idx_pup]/(2.*self.corono.nPup)**2/self.TR, 
+                                  Z0))
+        
+        b0  = np.zeros((self.corono.nlam*self.ndz*2))
+        b1  = np.zeros((self.corono.nlam*self.ndz*2))
+        b6  = np.zeros(self.ndz)
+        b7  = [-self.tau]
+                        
+        self.A = np.concatenate((A0,A1,A6,A7[:,None]), axis=1)
+        self.b = np.concatenate((b0,b1,b6,b7))
+
+        if (stdgrb and self.solver == 'stdgrb') or (gb and self.solver == 'gurobipy'):
+            A2  = np.concatenate((-np.identity(self.npp), N0), axis=0)
+            A3  = np.concatenate(( np.identity(self.npp), N0), axis=0)
+            b2  = np.zeros(self.npp)
+            b3  = np.ones(self.npp)
+            self.A = np.concatenate((self.A,A2,A3), axis=1)
+            self.b = np.concatenate((self.b,b2,b3))
+            
+#        if self.FirstDer is True:
+#            A4  = np.diff(np.identity(self.npp), axis=1)
+#            A4  = np.concatenate((A4, N0[:, :self.npp-1]), axis=0)
+#            b4  = self.FirstDerLim*np.ones(self.npp)
+#            self.A = np.concatenate((self.A, A4, -A4), axis=1)
+#            self.b = np.concatenate((self.b, b4, b4))
+#
+#        if self.SecondDer is True:
+#            A5  = np.diff(np.diff(np.identity(self.npp), axis=1), axis=1)
+#            A5  = np.concatenate((A5, N0[:, :self.npp-2]), axis=0)
+#            b5  = self.SecondDerLim*np.ones(self.npp)
+#            self.A = np.concatenate((self.A, A5, -A5), axis=1)
+#            self.b = np.concatenate((self.b, b5, b5))     
+
+        if self.MinIsland is True:
+            A00    = np.zeros((self.nvv, np.shape(self.A)[1]))            
+            self.A = np.concatenate((self.A, A00))
+
+            AD  = np.diff(np.identity(self.npp), axis=1)
+            AI  = np.identity((self.npp-1))
+            
+            AZ0 = np.zeros((self.neps, self.npp-1))
+            
+            A8   = np.concatenate(( AD, AZ0, -AI,  AI))
+            A9   = np.concatenate((-AD, AZ0,  AI, -AI))
+            
+            AZ1 = np.zeros((self.npp, self.npp-1))                       
+            AZ2 = np.zeros((self.npp-1, self.npp-1))
+
+            A10  = np.concatenate((AZ1, AZ0, -AI, AZ2))
+            A11  = np.concatenate((AZ1, AZ0, AZ2, -AI))
+
+            bZ  = np.zeros((self.npp-1))
+
+            A12Z = np.zeros((self.npp))
+            A121 = np.ones(self.npp-1)
+            A12  = np.concatenate((A12Z, np.zeros((self.neps)), A121, A121))
+            b12  = [self.FirstDerGlobalLim]
+                        
+            self.A = np.concatenate((self.A, A8, A9, A10, A11, A12[:, None]), axis=1)
+            self.b = np.concatenate((self.b, bZ, bZ, bZ, bZ, b12))
+                   
+        self.c = np.concatenate((np.zeros(self.npp), c1, np.zeros(self.nvv)), axis=0)
+        
+        return self.A, self.b, self.c
+
+#%%
+    def compute_gurobi_model(self):
+        r"""
+        Generates the gurobi solver model for the MaxContrast problem.
+        
+        Parameters 
+        -----------
+        ApodEpstmp : array_like
+            Vector of the apodizer in the non zero points of the pupil 
+            :math:`P_0` and neps points for the coronagraphic image
+        
+        Returns
+        -----------
+        m : gurobi model
+            Gurobi model of the MaxContrast problem to solve
+            
+        """        
+                          
+        nn = np.shape(self.A)[1]
+        # Create a new model  
+        self.m = gb.Model("LP max C new")
+        
+        # Create variables
+        ApodEpsTmp = self.m.addVars(self.npp + self.nvv +self.neps, lb=0.0, 
+                                    name="ApodEpsTmp")        
+        # Set objective
+        self.m.setObjective(gb.quicksum((self.c[i+self.npp]*ApodEpsTmp[i+self.npp] 
+                for i in range(self.neps))), gb.GRB.MINIMIZE)
+        # Add constraint:
+        self.m.addConstrs((gb.quicksum((ApodEpsTmp[i]*self.A[i,j] 
+                for i in range(self.npp + self.nvv + self.neps) if self.A[i,j])) <=  self.b[j] 
+                for j in np.arange(nn)), "cpos")
+        
+        self.m.update()
+            
+        return self.m
 

@@ -17,15 +17,15 @@ import corono as coro
 Parameters
 """
 corono_name  = 'APLC' # 'APLC' or 'SP'
-problem_name = 'MaxTauGlobalDer' # 'MaxContrastL1' #,'MaxContrastLinf' # 'MaxTau' # , 'MaxTauGlobalDer' # 
-solver       = 'stdgrb' # 'stdgrb', 'gurobipy', 'scipy.linprog'
+problem_name = 'MaxContrastL1MinIsland' # 'MaxContrastL1' #,'MaxContrastLinf' # 'MaxTau' # , 'MaxTauMinIsland' # 
+solver       = 'xxx' # 'stdgrb', 'gurobipy', 'scipy.linprog'
 
 FirstDer    = False
 SecondDer   = False
-FirstDerGlobal = True
+MinIsland   = True
 FirstDerLim = 0.01
 SecondDerLim= 0.001 
-FirstDerGlobalLim = 3.
+FirstDerGlobalLim = 1.
 
 nPup = 500
 nFPM = 50
@@ -57,7 +57,7 @@ rho1 = 10.0
 cDarkHole = 8.0
 
 # tau (integrated Pupil transmission)
-tau   = 0.5
+tau   = 0.3
 
 r   = np.arange(nPup)*R/nPup + R/(2*nPup)
 Pupil1d      = (r>PupilObs)*1.0
@@ -79,7 +79,7 @@ params = coro.to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
                  corono_name = corono_name,
                  FirstDer = FirstDer, SecondDer = SecondDer,
                  FirstDerLim = FirstDerLim, SecondDerLim = SecondDerLim,
-                 FirstDerGlobal = FirstDerGlobal, FirstDerGlobalLim = FirstDerGlobalLim)
+                 MinIsland = MinIsland, FirstDerGlobalLim = FirstDerGlobalLim)
 
 #%%
 fdir = Path('.').resolve()
@@ -121,10 +121,16 @@ elif problem_name == 'MaxContrastL1':
 elif problem_name == 'MaxContrastLinf':
     # Maximization of the contrast under L-infinite norm
     problem1 = coro.optim_1d.MaxContrast(corono=corono0, Lnorm='Linf',**params)
-elif problem_name == 'MaxTauGlobalDer':
-    problem1 = coro.optim_1d.MaxTauGlobalDer(corono=corono0, **params) 
+elif problem_name == 'MaxTauMinIsland':
+    problem1 = coro.optim_1d.MaxTauMinIsland(corono=corono0, **params)
+elif problem_name == 'MaxContrastL1MinIsland':
+    # Maximization of the contrast under L1-norm
+    problem1 = coro.optim_1d.MaxContrastMinIsland(corono=corono0, Lnorm='L1',**params)
+elif problem_name == 'MaxContrastLinfMinIsland':
+    # Maximization of the contrast under L-infinite norm
+    problem1 = coro.optim_1d.MaxContrastMinIsland(corono=corono0, Lnorm='Linf',**params)
 else:
-    raise NameError('{0}: Not an existing optimization problem!'.format(problem_name))
+     raise NameError('{0}: Not an existing optimization problem!'.format(problem_name))
 
 #%% Apodizer solution for the problems
 """
@@ -190,7 +196,7 @@ pl.clf()
 #pl.semilogy(corono0.xi,poly_direct_image1/poly_direct_image1.max(),label='Direct')
 #pl.semilogy(corono0.xi,poly_direct_image2/poly_direct_image2.max(),label='Direct')
 #pl.semilogy(corono0.xi,poly_direct_image3/poly_direct_image3.max(),label='Direct')
-pl.semilogy(corono0.xi,poly_corono_image1/poly_direct_image1.max(),label='gurobipy')
+pl.semilogy(corono0.xi,poly_corono_image1/poly_direct_image1.max(),label=solver)
 pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
 pl.axvline(x=corono0.rho0, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
 pl.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
