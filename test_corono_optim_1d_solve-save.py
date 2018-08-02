@@ -17,19 +17,19 @@ import corono as coro
 Parameters
 """
 corono_name  = 'APLC' # 'APLC' or 'SP'
-problem_name = 'MaxContrastLinf' # ,'MaxTau' # 'MaxContrastLinf' #'MaxContrastL1' # #  
+problem_name = 'MaxTauGlobalDer' # ,'MaxTau' # 'MaxContrastLinf' #'MaxContrastL1' # 'MaxTauGlobalDer' 
 solver       = 'stdgrb' # 'stdgrb', 'gurobipy', 'scipy.linprog'
-slvLogToConsole = 0
+slvLogToConsole = 1
 slvCrossover    = 0
 slvMethod       = 2
 allLogToConsole = 0
 
 FirstDer    = False
 SecondDer   = False
-FirstDerGlobal = False
+FirstDerGlobal = True
 FirstDerLim = 0.01
 SecondDerLim= 0.001 
-FirstDerGlobalLim = 0.01
+FirstDerGlobalLim = 10.
 
 nPup = 500
 nFPM = 50
@@ -122,8 +122,10 @@ elif problem_name == 'MaxContrastL1':
 elif problem_name == 'MaxContrastLinf':
     # Maximization of the contrast under L-infinite norm
     problem1 = coro.optim_1d.MaxContrast(corono=corono0, Lnorm='Linf',**params)
+elif problem_name == 'MaxTauGlobalDer':
+    problem1 = coro.optim_1d.MaxTauGlobalDer(corono=corono0, **params) 
 else:
-    raise NameError('{0}: Not an existing optimization problem!'.format(problem_name))
+     raise NameError('{0}: Not an existing optimization problem!'.format(problem_name))
     
 #%%
 """
