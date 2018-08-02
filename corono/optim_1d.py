@@ -662,21 +662,29 @@ class MaxTau(ProblemMatrix):
             self.b = np.concatenate((self.b,b2,b3))
 
         if self.FirstDer is True:
-            A4  = np.diff(np.identity(self.npp), axis=1)
-            b4  = self.FirstDerLim*np.ones(self.npp)
-            self.A = np.concatenate((self.A, A4, -A4), axis=1)
-            self.b = np.concatenate((self.b, b4, b4))
-
+            self.compute_problem_matrices_1stDer()
+            
         if self.SecondDer is True:
-            A5  = np.diff(np.diff(np.identity(self.npp), axis=1), axis=1)
-            b5  = self.SecondDerLim*np.ones(self.npp)
-            self.A = np.concatenate((self.A, A5, -A5), axis=1)
-            self.b = np.concatenate((self.b, b5, b5))        
+            self.compute_problem_matrices_2ndDer()
                
         self.c = - 2.*np.pi*(np.asarray(self.idx_pup)+0.5)\
                 /(2.*self.corono.nPup)**2/self.TR                 
         
         return self.A, self.b, self.c
+
+#%%        
+    def compute_problem_matrices_1stDer(self):
+        A4  = np.diff(np.identity(self.npp), axis=1)
+        b4  = self.FirstDerLim*np.ones(self.npp)
+        self.A = np.concatenate((self.A, A4, -A4), axis=1)
+        self.b = np.concatenate((self.b, b4, b4))
+
+#%%        
+    def compute_problem_matrices_2ndDer(self):
+        A5  = np.diff(np.diff(np.identity(self.npp), axis=1), axis=1)
+        b5  = self.SecondDerLim*np.ones(self.npp)
+        self.A = np.concatenate((self.A, A5, -A5), axis=1)
+        self.b = np.concatenate((self.b, b5, b5))        
 
 #%%
     def compute_gurobi_model(self):
@@ -1318,20 +1326,6 @@ class MaxContrastMinIsland(ProblemMatrix):
             self.A = np.concatenate((self.A,A2,A3), axis=1)
             self.b = np.concatenate((self.b,b2,b3))
             
-#        if self.FirstDer is True:
-#            A4  = np.diff(np.identity(self.npp), axis=1)
-#            A4  = np.concatenate((A4, N0[:, :self.npp-1]), axis=0)
-#            b4  = self.FirstDerLim*np.ones(self.npp)
-#            self.A = np.concatenate((self.A, A4, -A4), axis=1)
-#            self.b = np.concatenate((self.b, b4, b4))
-#
-#        if self.SecondDer is True:
-#            A5  = np.diff(np.diff(np.identity(self.npp), axis=1), axis=1)
-#            A5  = np.concatenate((A5, N0[:, :self.npp-2]), axis=0)
-#            b5  = self.SecondDerLim*np.ones(self.npp)
-#            self.A = np.concatenate((self.A, A5, -A5), axis=1)
-#            self.b = np.concatenate((self.b, b5, b5))     
-
         if self.MinIsland is True:
             A00    = np.zeros((self.nvv, np.shape(self.A)[1]))            
             self.A = np.concatenate((self.A, A00))

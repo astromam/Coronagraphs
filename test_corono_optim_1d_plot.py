@@ -17,12 +17,12 @@ import corono as coro
 Parameters
 """
 corono_name  = 'APLC' # 'APLC' or 'SP'
-problem_name = 'MaxContrastL1MinIsland' # 'MaxContrastL1' #,'MaxContrastLinf' # 'MaxTau' # , 'MaxTauMinIsland' # 
-solver       = 'xxx' # 'stdgrb', 'gurobipy', 'scipy.linprog'
+problem_name = 'MaxTau' # 'MaxContrastL1' #,'MaxContrastLinf' # 'MaxTau' # , 'MaxTauMinIsland' # 
+solver       = 'stdgrb' # 'stdgrb', 'gurobipy', 'scipy.linprog'
 
-FirstDer    = False
-SecondDer   = False
-MinIsland   = True
+FirstDer    = True
+SecondDer   = True
+MinIsland   = False
 FirstDerLim = 0.01
 SecondDerLim= 0.001 
 FirstDerGlobalLim = 1.
@@ -151,7 +151,7 @@ fpath      = fdir_plot / fname_pl
 
 pl.figure(1)
 pl.clf()
-pl.plot(corono0.r, Apod_pyth/Apod_pyth.max(), label='gurobipy')
+pl.plot(corono0.r, Apod_pyth/Apod_pyth.max(), label=solver)
 pl.xlabel(r'Pupil radius r')
 pl.ylabel('Apodizer amplitude transmission')
 pl.legend()
