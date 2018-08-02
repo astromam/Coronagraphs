@@ -395,7 +395,7 @@ class ProblemMatrix(object):
                         
         else:
             self.print_log('solving problem with scipy.optimize')
-            bds = np.zeros((self.npp+self.neps, 2))
+            bds = np.zeros((self.npp+self.neps+self.nv, 2))
             bds[:,1] = 1.
             sol=scipy.optimize.linprog(self.c,self.A.T,self.b,
                                        method='interior-point',
@@ -561,6 +561,7 @@ class MaxTau(ProblemMatrix):
         """
         super(MaxTau, self).__init__(**kwargs)
         self.neps = 0
+        self.nv   = 0
 
 #%%        
     def compute_problem_matrices(self):
@@ -731,6 +732,8 @@ class MaxContrast(ProblemMatrix):
             self.neps = 1
         else:
             self.neps = self.ndz
+            
+        self.nv   = 0
 
 #%%    
     def compute_problem_matrices(self):
@@ -1061,9 +1064,6 @@ class MaxTauGlobalDer(ProblemMatrix):
             self.A = np.concatenate((self.A,A2,A3), axis=1)
             self.b = np.concatenate((self.b,b2,b3))
 
-        self.c = - 2.*np.pi*(np.asarray(self.idx_pup)+0.5)\
-                /(2.*self.corono.nPup)**2/self.TR
-
         if self.FirstDerGlobal is True:
             A00    = np.zeros((2*(self.npp-1), np.shape(self.A)[1]))            
             self.A = np.concatenate((self.A, A00))
@@ -1090,11 +1090,9 @@ class MaxTauGlobalDer(ProblemMatrix):
             self.A = np.concatenate((self.A, A4, A5, A6, A7, A8[:, None]), axis=1)
             self.b = np.concatenate((self.b, bZ, bZ, bZ, bZ, b8))
 
-            ctmp = np.zeros((self.npp + 2*(self.npp-1)))
-            ctmp[:self.npp] = np.asarray(self.idx_pup)+0.5
-            
-            self.c = - 2.*np.pi*(ctmp)\
-                /(2.*self.corono.nPup)**2/self.TR
+        ctmp = np.zeros((self.npp + 2*(self.npp-1)))
+        ctmp[:self.npp] = np.asarray(self.idx_pup)+0.5
+        self.c = - 2.*np.pi*ctmp/(2.*self.corono.nPup)**2/self.TR
                                  
         return self.A, self.b, self.c
 
@@ -1121,13 +1119,13 @@ class MaxTauGlobalDer(ProblemMatrix):
         # Create a new model               
         self.m = gb.Model("LP max tau new")
         # Create variables
-        ApodTmp = self.m.addVars(self.npp, lb=0.0, ub=1.0, name="ApodTmp")
+        ApodTmp = self.m.addVars(self.npp+2*(self.npp-1), lb=0.0, ub=1.0, name="ApodTmp")
         # Set objective
         self.m.setObjective(gb.quicksum((self.c[i]*ApodTmp[i] 
                 for i in range(self.npp))), gb.GRB.MINIMIZE)
         # Add constraint:                
         self.m.addConstrs((gb.quicksum((ApodTmp[i]*self.A[i,j] 
-                for i in range(self.npp) if self.A[i,j])) <=  self.b[j] 
+                for i in range(self.npp+2*(self.npp-1)) if self.A[i,j])) <=  self.b[j] 
                 for j in range(nA)), "cpos")
         self.m.update()          
 
