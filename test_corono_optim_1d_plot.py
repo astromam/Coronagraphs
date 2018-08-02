@@ -17,11 +17,11 @@ import corono as coro
 Parameters
 """
 corono_name  = 'APLC' # 'APLC' or 'SP'
-problem_name = 'MaxContrastLinf' # 'MaxContrastL1' #,'MaxContrastLinf' # 'MaxTau' # , 'MaxTauMinIsland' # 
+problem_name = 'MaxTau' # 'MaxContrastL1' #,'MaxContrastLinf' # 'MaxTau' # , 'MaxTauMinIsland' # 
 solver       = 'stdgrb' # 'stdgrb', 'gurobipy', 'scipy.linprog'
 
-FirstDer    = True
-SecondDer   = True
+FirstDer    = False
+SecondDer   = False
 MinIsland   = False
 FirstDerLim = 0.01
 SecondDerLim= 0.001 

@@ -654,12 +654,13 @@ class MaxTau(ProblemMatrix):
         self.b = np.concatenate((b0,b1))
 
         if (stdgrb and self.solver == 'stdgrb') or (gb and self.solver == 'gurobipy'):
-            A2  = -np.identity(self.npp)
-            A3  =  np.identity(self.npp)
-            b2  = np.zeros(self.npp)
-            b3  = np.ones(self.npp)
-            self.A = np.concatenate((self.A,A2,A3), axis=1)
-            self.b = np.concatenate((self.b,b2,b3))
+            self.compute_problem_matrices_gurobi()
+#            A2  = -np.identity(self.npp)
+#            A3  =  np.identity(self.npp)
+#            b2  = np.zeros(self.npp)
+#            b3  = np.ones(self.npp)
+#            self.A = np.concatenate((self.A,A2,A3), axis=1)
+#            self.b = np.concatenate((self.b,b2,b3))
 
         if self.FirstDer is True:
             self.compute_problem_matrices_1stDer()
@@ -672,6 +673,15 @@ class MaxTau(ProblemMatrix):
         
         return self.A, self.b, self.c
 
+#%%
+    def compute_problem_matrices_gurobi(self):
+        A2  = -np.identity(self.npp)
+        A3  =  np.identity(self.npp)
+        b2  = np.zeros(self.npp)
+        b3  = np.ones(self.npp)
+        self.A = np.concatenate((self.A,A2,A3), axis=1)
+        self.b = np.concatenate((self.b,b2,b3))
+        
 #%%        
     def compute_problem_matrices_1stDer(self):
         A4  = np.diff(np.identity(self.npp), axis=1)
@@ -898,39 +908,29 @@ class MaxContrast(ProblemMatrix):
         self.b = np.concatenate((b0,b1,b6,b7))
 
         if (stdgrb and self.solver == 'stdgrb') or (gb and self.solver == 'gurobipy'):
-            A2  = np.concatenate((-np.identity(self.npp), self.N0), axis=0)
-            A3  = np.concatenate(( np.identity(self.npp), self.N0), axis=0)
-            b2  = np.zeros(self.npp)
-            b3  = np.ones(self.npp)
-            self.A = np.concatenate((self.A,A2,A3), axis=1)
-            self.b = np.concatenate((self.b,b2,b3))
+            self.compute_problem_matrices_gurobi()
             
         if self.FirstDer is True:
             self.compute_problem_matrices_1stDer()
-#            A4  = np.diff(np.identity(self.npp), axis=1)
-#            A4  = np.concatenate((A4, N0[:, :self.npp-1]), axis=0)
-#            b4  = self.FirstDerLim*np.ones(self.npp)
-#            self.A = np.concatenate((self.A, A4, -A4), axis=1)
-#            self.b = np.concatenate((self.b, b4, b4))
 
         if self.SecondDer is True:
-            self.compute_problem_matrices_2ndDer()
-#            A5  = np.diff(np.diff(np.identity(self.npp), axis=1), axis=1)
-#            A5  = np.concatenate((A5, N0[:, :self.npp-2]), axis=0)
-#            b5  = self.SecondDerLim*np.ones(self.npp)
-#            self.A = np.concatenate((self.A, A5, -A5), axis=1)
-#            self.b = np.concatenate((self.b, b5, b5))     
+            self.compute_problem_matrices_2ndDer()     
             
         self.c = np.concatenate((np.zeros(self.npp), c1), axis=0)        
         
         return self.A, self.b, self.c
 
+#%%
+    def compute_problem_matrices_gurobi(self):
+        A2  = np.concatenate((-np.identity(self.npp), self.N0), axis=0)
+        A3  = np.concatenate(( np.identity(self.npp), self.N0), axis=0)
+        b2  = np.zeros(self.npp)
+        b3  = np.ones(self.npp)
+        self.A = np.concatenate((self.A,A2,A3), axis=1)
+        self.b = np.concatenate((self.b,b2,b3))        
+
 #%%        
     def compute_problem_matrices_1stDer(self):
-#        A4  = np.diff(np.identity(self.npp), axis=1)
-#        b4  = self.FirstDerLim*np.ones(self.npp)
-#        self.A = np.concatenate((self.A, A4, -A4), axis=1)
-#        self.b = np.concatenate((self.b, b4, b4))
         A4  = np.diff(np.identity(self.npp), axis=1)
         A4  = np.concatenate((A4, self.N0[:, :self.npp-1]), axis=0)
         b4  = self.FirstDerLim*np.ones(self.npp)
@@ -939,10 +939,6 @@ class MaxContrast(ProblemMatrix):
 
 #%%        
     def compute_problem_matrices_2ndDer(self):
-#        A5  = np.diff(np.diff(np.identity(self.npp), axis=1), axis=1)
-#        b5  = self.SecondDerLim*np.ones(self.npp)
-#        self.A = np.concatenate((self.A, A5, -A5), axis=1)
-#        self.b = np.concatenate((self.b, b5, b5))
         A5  = np.diff(np.diff(np.identity(self.npp), axis=1), axis=1)
         A5  = np.concatenate((A5, self.N0[:, :self.npp-2]), axis=0)
         b5  = self.SecondDerLim*np.ones(self.npp)
