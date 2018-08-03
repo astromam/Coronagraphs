@@ -345,7 +345,8 @@ class ProblemMatrix(object):
             self.print_log('solving problem with stdgrb package')
             Apodtmp, val = stdgrb.lp_solve(self.c, A=(self.A).T, b=self.b, 
                                            crossover=self.slvCrossover, 
-                                           logtoconsole=self.slvLogToConsole, method=self.slvMethod)
+                                           logtoconsole=self.slvLogToConsole, 
+                                           method=self.slvMethod)
             self.Apod[self.idx_pup] = Apodtmp[:self.npp]
 
         elif gb and self.solver == 'gurobipy':
@@ -673,7 +674,7 @@ class MaxTau(ProblemMatrix):
         self.A = np.concatenate((self.A, A00))
 
         AD  = np.diff(np.identity(self.npp), axis=1)
-        AI  = np.identity((self.npp-1))
+        AI  = np.identity(self.npp-1)
         
         A6   = np.concatenate(( AD, -AI,  AI))
         A7   = np.concatenate((-AD,  AI, -AI))
@@ -958,24 +959,24 @@ class MaxContrast(ProblemMatrix):
         
         AZ0 = np.zeros((self.neps, self.npp-1))
         
-        A8   = np.concatenate(( AD, AZ0, -AI,  AI))
-        A9   = np.concatenate((-AD, AZ0,  AI, -AI))
+        A6   = np.concatenate(( AD, AZ0, -AI,  AI))
+        A7   = np.concatenate((-AD, AZ0,  AI, -AI))
         
         AZ1 = np.zeros((self.npp, self.npp-1))                       
         AZ2 = np.zeros((self.npp-1, self.npp-1))
 
-        A10  = np.concatenate((AZ1, AZ0, -AI, AZ2))
-        A11  = np.concatenate((AZ1, AZ0, AZ2, -AI))
+        A8  = np.concatenate((AZ1, AZ0, -AI, AZ2))
+        A9  = np.concatenate((AZ1, AZ0, AZ2, -AI))
 
         bZ  = np.zeros((self.npp-1))
 
-        A12Z = np.zeros((self.npp))
-        A121 = np.ones(self.npp-1)
-        A12  = np.concatenate((A12Z, np.zeros((self.neps)), A121, A121))
-        b12  = [self.FirstDerGlobalLim]
+        A10Z = np.zeros((self.npp))
+        A101 = np.ones(self.npp-1)
+        A10  = np.concatenate((A10Z, np.zeros((self.neps)), A101, A101))
+        b10  = [self.FirstDerGlobalLim]
 
-        self.A = np.concatenate((self.A, A8, A9, A10, A11, A12[:, None]), axis=1)
-        self.b = np.concatenate((self.b, bZ, bZ, bZ, bZ, b12))
+        self.A = np.concatenate((self.A, A6, A7, A8, A9, A10[:, None]), axis=1)
+        self.b = np.concatenate((self.b, bZ, bZ, bZ, bZ, b10))
       
 #%%
     def compute_gurobi_model(self):
@@ -1000,14 +1001,14 @@ class MaxContrast(ProblemMatrix):
         self.m = gb.Model("LP max C new")
         
         # Create variables
-        ApodEpsTmp = self.m.addVars(self.npp + self.nvv +self.neps, lb=0.0, 
+        ApodEpsTmp = self.m.addVars(self.npp +self.neps + self.nvv, lb=0.0, 
                                     name="ApodEpsTmp")        
         # Set objective
         self.m.setObjective(gb.quicksum((self.c[i+self.npp]*ApodEpsTmp[i+self.npp] 
                 for i in range(self.neps))), gb.GRB.MINIMIZE)
         # Add constraint:
         self.m.addConstrs((gb.quicksum((ApodEpsTmp[i]*self.A[i,j] 
-                for i in range(self.npp + self.nvv + self.neps) if self.A[i,j])) <=  self.b[j] 
+                for i in range(self.npp + self.neps + self.nvv) if self.A[i,j])) <=  self.b[j] 
                 for j in np.arange(nn)), "cpos")
         
         self.m.update()

@@ -18,18 +18,18 @@ Parameters
 """
 corono_name  = 'APLC' # 'APLC' or 'SP'
 problem_name = 'MaxContrastLinf' # ,'MaxTau' # 'MaxContrastLinf' #'MaxContrastL1'
-solver       = 'gurobipy' # 'stdgrb', 'gurobipy', 'scipy.linprog'
-slvLogToConsole = 0
+solver       = 'stdgrb' # 'stdgrb', 'gurobipy', 'scipy.linprog'
+slvLogToConsole = 1
 slvCrossover    = 0
-slvMethod       = 2
+slvMethod       = 1
 allLogToConsole = 0
 
 FirstDer    = False
 SecondDer   = False
-MinIsland   = False
+MinIsland   = True
 FirstDerLim = 0.01
 SecondDerLim= 0.001 
-FirstDerGlobalLim = 1.
+FirstDerGlobalLim = 10.
 
 nPup = 500
 nFPM = 50

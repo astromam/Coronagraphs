@@ -16,70 +16,73 @@ import corono as coro
 """
 Parameters
 """
-corono_name  = 'APLC' # 'APLC' or 'SP'
-problem_name = 'MaxContrastLinf' # 'MaxContrastL1' #,'MaxContrastLinf' # 'MaxTau' #
-solver       = 'gurobipy' # 'stdgrb', 'gurobipy', 'scipy.linprog'
-
-FirstDer    = False
-SecondDer   = False
-MinIsland   = False
-FirstDerLim = 0.01
-SecondDerLim= 0.001 
-FirstDerGlobalLim = 1.
-
-nPup = 500
-nFPM = 50
-nImg = 110
-Fmax = 11
-R    = 1
-
-bw   = 0.1
-nlam = 5
-nlambis = 9
-
-PupilObs    = 0.20
-rMask       = 4.4
-
-rMask1      = 2.0
-rMask2      = 3.0
-rMask3      = 3.5
-OPDx2       = 0.5
-OPDx3       = 0.75
-
-LyotStopObs = 0.40
-LyotStopIns = 1.0
-
-# dark zone bounds (inner and outer edges) in lam0/D unit
-rho0 = 3.5
-rho1 = 10.0
-
-# contrast in the dark region
-cDarkHole = 8.0
-
-# tau (integrated Pupil transmission)
-tau   = 0.3
-
-r   = np.arange(nPup)*R/nPup + R/(2*nPup)
-Pupil1d      = (r>PupilObs)*1.0
-LyotStop1d   = (r>LyotStopObs)*(r<LyotStopIns)*1.0
-
-if solver != 'gurobipy' and solver != 'stdgrb':
-    solver = 'scipy'
-
-params = coro.to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
-                 nPup = nPup, nFPM=nFPM, nImg=nImg, Fmax = Fmax,
-                 bw = bw, nlam = nlam,
-                 PupilObs = PupilObs, rMask = rMask, 
-                 rMask1 = rMask1, rMask2 = rMask2, rMask3 = rMask3,
-                 OPDx2 = OPDx2, OPDx3 = OPDx3, 
-                 LyotStopObs = LyotStopObs,
-                 LyotStopIns = LyotStopIns,
-                 r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d,
-                 solver = solver, problem_name = problem_name,
-                 corono_name = corono_name,
-                 FirstDer = FirstDer, SecondDer = SecondDer,
-                 FirstDerLim = FirstDerLim, SecondDerLim = SecondDerLim,
-                 MinIsland = MinIsland, FirstDerGlobalLim = FirstDerGlobalLim)
+pl.close('all')
+if False:
+    corono_name  = 'APLC' # 'APLC' or 'SP'
+    problem_name = 'MaxTau' # 'MaxContrastL1' #,'MaxContrastLinf' # 'MaxTau' #
+    solver       = 'stdgrb' # 'stdgrb', 'gurobipy', 'scipy.linprog'
+    
+    FirstDer    = False
+    SecondDer   = False
+    MinIsland   = True
+    FirstDerLim = 0.01
+    SecondDerLim= 0.001 
+    FirstDerGlobalLim = 1.
+    
+    nPup = 500
+    nFPM = 50
+    nImg = 110
+    Fmax = 11
+    R    = 1
+    
+    bw   = 0.1
+    nlam = 5
+    nlambis = 9
+    
+    PupilObs    = 0.20
+    rMask       = 4.4
+    
+    rMask1      = 2.0
+    rMask2      = 3.0
+    rMask3      = 3.5
+    OPDx2       = 0.5
+    OPDx3       = 0.75
+    
+    LyotStopObs = 0.40
+    LyotStopIns = 1.0
+    
+    # dark zone bounds (inner and outer edges) in lam0/D unit
+    rho0 = 3.5
+    rho1 = 10.0
+    
+    # contrast in the dark region
+    cDarkHole = 8.0
+    
+    # tau (integrated Pupil transmission)
+    tau   = 0.3
+    
+    r   = np.arange(nPup)*R/nPup + R/(2*nPup)
+    Pupil1d      = (r>PupilObs)*1.0
+    LyotStop1d   = (r>LyotStopObs)*(r<LyotStopIns)*1.0
+    
+    if solver != 'gurobipy' and solver != 'stdgrb':
+        solver = 'scipy'
+    
+    params = coro.to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
+                     nPup = nPup, nFPM=nFPM, nImg=nImg, Fmax = Fmax,
+                     bw = bw, nlam = nlam,
+                     PupilObs = PupilObs, rMask = rMask, 
+                     rMask1 = rMask1, rMask2 = rMask2, rMask3 = rMask3,
+                     OPDx2 = OPDx2, OPDx3 = OPDx3, 
+                     LyotStopObs = LyotStopObs,
+                     LyotStopIns = LyotStopIns,
+                     r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d,
+                     solver = solver, problem_name = problem_name,
+                     corono_name = corono_name,
+                     FirstDer = FirstDer, SecondDer = SecondDer,
+                     FirstDerLim = FirstDerLim, SecondDerLim = SecondDerLim,
+                     MinIsland = MinIsland, FirstDerGlobalLim = FirstDerGlobalLim)
+    
 
 #%%
 fdir = Path('.').resolve()
