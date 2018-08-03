@@ -20,8 +20,11 @@ Parameters
 """
 # Telescope name
 pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
-problem_name = 'MaxContrastLinf' # 'MaxContrastL1' #'MaxTau' # , 'MaxContrastLinf' # #  
-solver       = 'stdgrb' # 'stdgrb' #  'gurobipy', 'scipy.linprog'
+problem_name = 'MaxTau' # 'MaxContrastL1' #'MaxTau' # , 'MaxContrastLinf' # #  
+solver       = 'xxx' # 'stdgrb' #  'gurobipy', 'scipy.linprog'
+
+MinIsland   = False
+FirstDerGlobalLim = 1.
 
 #nPup = corono0.params['nPup']
 nPup = 50
@@ -83,7 +86,8 @@ params = coro.to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
                  Pupil2dSym = Pupil2dSym, rMask=rMask,
                  problem_name = problem_name, 
                  solver = solver, 
-                 corono_name = corono_name, pupil_name = pupil_name)
+                 corono_name = corono_name, pupil_name = pupil_name,
+                 MinIsland = MinIsland, FirstDerGlobalLim = FirstDerGlobalLim)
 
 #%%
 """
@@ -147,7 +151,7 @@ fpath = fdir_pdf / fname
 pl.figure(5)
 pl.clf()
 pl.imshow(Apod_pyth*corono0.Pupil2d, cmap = cm.Greys_r)
-pl.title('Apod 1 transmission - MaxTau problem - pyth')
+pl.title('Apod 1 transmission - MaxTau problem - '+ solver)
 pl.savefig(str(fpath))
 
 #%% Signal in intensity
@@ -226,10 +230,10 @@ pl.title('Radial intensity profiles of the images')
 #pl.semilogy(corono0.xi,poly_direct_image3/poly_direct_image3.max(),label='Direct')
 if corono_name == 'SP':
 #    pl.semilogy(xi2d,poly_corono_image1[nImg2d//2,nImg2d//2:]/poly_corono_image1.max(),label='Apod - pyth')
-    pl.semilogy(xi2d,poly_corono_image1[nImg2d//2,nImg2d//2:]/poly_corono_image1.max(),label='Apod - cyth')
+    pl.semilogy(xi2d,poly_corono_image1[nImg2d//2,nImg2d//2:]/poly_corono_image1.max(),label=solver)
 else:
 #    pl.semilogy(xi2d,poly_corono_image1[nImg2d//2,nImg2d//2:]/poly_direct_image1.max(),label='Apod - pyth')
-    pl.semilogy(xi2d,poly_corono_image1[nImg2d//2,nImg2d//2:]/poly_direct_image1.max(),label='Apod - cyth')    
+    pl.semilogy(xi2d,poly_corono_image1[nImg2d//2,nImg2d//2:]/poly_direct_image1.max(),label=solver)    
 #pl.semilogy(corono0.xi2d,poly_corono_image2[nImg2d//2,nImg2d//2:]/poly_direct_image2.max(),label=r'MaxContrast, L$_1$-norm')
 #pl.semilogy(corono0.xi2d,poly_corono_image3[nImg2d//2,nImg2d//2:]/poly_direct_image3.max(),label=r'MaxContrast, L$_{\infty}$-norm')
 #pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
@@ -263,12 +267,12 @@ pl.title('Radial intensity profiles of the images')
 for i in range(corono0.nlam):
     if corono_name == 'SP':
         pl.semilogy(xi2d,mono_corono_image1[i, nImg2d//2,nImg2d//2:]/mono_corono_image1.max(), '-',
-                    label='Apod - cyth',
+                    label=r'{0:.2f}$\lambda_0$'.format(corono0.lam_t[i]),
                     color = colors[i])
     else:
         pl.semilogy(xi2d,mono_corono_image1[i, nImg2d//2,nImg2d//2:]/mono_direct_image1[(corono0.nlam+1)//2].max(), 
                     '-',
-                    label='APLC - cyth',  color = colors[i])
+                    label=r'{0:.2f}$\lambda_0$'.format(corono0.lam_t[i]),  color = colors[i])
 #pl.semilogy(corono0.xi2d,poly_corono_image2[nImg2d//2,nImg2d//2:]/poly_direct_image2.max(),label=r'MaxContrast, L$_1$-norm')
 #pl.semilogy(corono0.xi2d,poly_corono_image3[nImg2d//2,nImg2d//2:]/poly_direct_image3.max(),label=r'MaxContrast, L$_{\infty}$-norm')
 #pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')

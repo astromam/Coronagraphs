@@ -877,10 +877,10 @@ class MaxContrast(ProblemMatrix):
                                 
         """
         if self.Lnorm == 'Linf':
-            I1 = np.ones(self.ndz*self.corono.nlam*2)
-            I1 = I1[None,:]
             I0 = np.ones(self.ndz)
             I0 = I0[None,:]
+            I1 = np.ones(self.ndz*self.corono.nlam*2)
+            I1 = I1[None,:]
             self.N0 = np.zeros((1, self.npp))
             Z0 = np.zeros(1)
             c1 = [1]
