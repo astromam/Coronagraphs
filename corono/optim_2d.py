@@ -54,7 +54,10 @@ def get_default_params_ProblemMatrix():
     """
     tmp = {'cDarkHole':8, 'tau':0.2, 'solver':'stdgrb', 
            'pupil_name':'sbr', 
-           'slvCrossover':0, 'slvLogToConsole':1, 'slvMethod':2}
+           'slvCrossover':0, 'slvLogToConsole':1, 'slvMethod':2,
+           'allLogToConsole':0,
+           'MinIsland':False,
+           'FirstDerGlobalLim':0.01}
     return tmp
 
 #%%
@@ -425,11 +428,25 @@ class ProblemMatrix(object):
             str_opt = '_tau={tau:.3f}'
         else:
             raise NameError('{0}: Not an existing optimization problem!'.format(self.problem_name))
+
+        if self.corono.corono_name == 'APLC' or self.corono.corono_name == 'SP': 
+            str_cor = '_rMask={rMask:.3f}'
+        elif self.corono.corono_name == 'HDZPM':
+            str_cor = '_rMask1={rMask1:.3f}_rMask2={rMask2:.3f}'
+        elif self.corono.corono_name == 'HTZPM':
+            str_cor = '_rMask1={rMask1:.3f}_rMask2={rMask2:.3f}_rMask3={rMask3:.3f}'
+        else:
+            raise NameError('{0}: Not an existing coronagraph!'.format(self.corono.corono_name))
+
+        str_FirstDerGlobal = ''
+        if self.MinIsland is True:
+            str_FirstDerGlobal = '_1stderglo={FirstDerGlobalLim}'
             
         fname_gen  = '{pupil_name}_{corono_name}_IWA={rho0}_OWA={rho1}_BW={bw:.2f}_nlam={nlam:02d}' + \
-        '_2D_nPup={nPup:04d}_{problem_name}' + str_opt + '_{solver}'        
+        '_2D_nPup={nPup:04d}' + str_cor + '_{problem_name}' + str_opt + \
+        str_FirstDerGlobal + '_{solver}'        
         
-        return fname_gen.format(**{key: params[key] for key in params})
+        return fname_gen.format(**params)
 
 #%%    
     def compute_matrices(self):
@@ -615,16 +632,20 @@ class MaxTau(ProblemMatrix):
         self.b = np.concatenate((b0,b1))
 
         if (stdgrb and self.solver == 'stdgrb') or (gb and self.solver == 'gurobipy'):
-            A2  = -np.identity(self.npp)
-            A3  =  np.identity(self.npp)
-            b2  = np.zeros(self.npp)
-            b3  = np.ones(self.npp)
-            self.A = np.concatenate((self.A,A2,A3), axis=1)
-            self.b = np.concatenate((self.b,b2,b3))
+            self.compute_problem_matrices_gurobi()
             
         self.c = -self.Pupil_vec[self.idx_pup]/self.TR
         
         return self.A, self.b, self.c
+
+#%%
+    def compute_problem_matrices_gurobi(self):
+        A2  = -np.identity(self.npp)
+        A3  =  np.identity(self.npp)
+        b2  = np.zeros(self.npp)
+        b3  = np.ones(self.npp)
+        self.A = np.concatenate((self.A,A2,A3), axis=1)
+        self.b = np.concatenate((self.b,b2,b3))        
 
 #%%            
     def update_cDarkHole(self):
@@ -822,13 +843,13 @@ class MaxContrast(ProblemMatrix):
             I1 = I1[None,:]
             I0 = np.ones(self.ndz)
             I0 = I0[None,:]
-            N0 = np.zeros((1, self.npp))
+            self.N0 = np.zeros((1, self.npp))
             Z0 = np.zeros(1)
             c1 = [1]
         else:
             I0 = np.identity(self.ndz)
             I1 = np.hstack([I0 for k in range(self.corono.nlam*2)])            
-            N0 = np.zeros((self.ndz, self.npp))
+            self.N0 = np.zeros((self.ndz, self.npp))
             Z0 = np.zeros(self.ndz)
             c1 = np.array(self.rad2d)
         
@@ -836,8 +857,7 @@ class MaxContrast(ProblemMatrix):
         A1  = np.concatenate((-self.corono_field_t, -I1), axis=0)
 
         A4  = np.concatenate((np.zeros((self.npp, self.ndz)), -I0), axis=0)
-        A5  = np.concatenate((- self.Pupil_vec[self.idx_pup]/self.TR, 
-                                  Z0))
+        A5  = np.concatenate((- self.Pupil_vec[self.idx_pup]/self.TR, Z0))
         
         b0  = np.zeros((self.corono.nlam*self.ndz*2))
         b1  = np.zeros((self.corono.nlam*self.ndz*2))
@@ -849,16 +869,20 @@ class MaxContrast(ProblemMatrix):
         self.b = np.concatenate((b0,b1,b4,b5))
 
         if (stdgrb and self.solver == 'stdgrb') or (gb and self.solver == 'gurobipy'):        
-            A2  = np.concatenate((-np.identity(self.npp), N0), axis=0)
-            A3  = np.concatenate(( np.identity(self.npp), N0), axis=0)
-            b2  = np.zeros(self.npp)
-            b3  = np.ones(self.npp)
-            self.A = np.concatenate((self.A,A2,A3), axis=1)
-            self.b = np.concatenate((self.b,b2,b3))
+            self.compute_problem_matrices_gurobi()
             
         self.c = np.concatenate((np.zeros(self.npp), c1), axis=0)
         
         return self.A, self.b, self.c
+
+#%%
+    def compute_problem_matrices_gurobi(self):
+        A2  = np.concatenate((-np.identity(self.npp), self.N0), axis=0)
+        A3  = np.concatenate(( np.identity(self.npp), self.N0), axis=0)
+        b2  = np.zeros(self.npp)
+        b3  = np.ones(self.npp)
+        self.A = np.concatenate((self.A,A2,A3), axis=1)
+        self.b = np.concatenate((self.b,b2,b3))        
 
 #%%            
     def update_tau(self):
