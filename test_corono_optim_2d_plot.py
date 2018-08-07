@@ -18,45 +18,50 @@ import corono as coro
 """
 Parameters
 """
-# Telescope name
-pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
-problem_name = 'MaxTau' # 'MaxContrastL1' #'MaxTau' # , 'MaxContrastLinf' # #  
-solver       = 'xxx' # 'stdgrb' #  'gurobipy', 'scipy.linprog'
+pl.close('all')
+if False:
+    # Telescope name
+    pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
+    problem_name = 'MaxTau' # 'MaxContrastL1' #'MaxTau' # , 'MaxContrastLinf' # #  
+    solver       = 'stdgrb' # 'stdgrb' #  'gurobipy', 'scipy.linprog'
+    
+    MinIsland   = False
+    FirstDerGlobalLim = 1.
+    
+    #nPup = corono0.params['nPup']
+    nPup = 50
+    nFPM = 50
+    Fmax2d = 50
+    nImg2d = 500
+    
+    # mask radius in lam0/D unit
+    rMask = 4.0
+    
+    # dark zone bounds (inner and outer edges) in lam0/D unit
+    rho0 =  5.0
+    rho1 = 10.0
+    
+    # contrast in the dark region
+    cDarkHole = 7.0
+    
+    # tau (integrated Pupil transmission)
+    tau   = 0.4
+    
+    # CtrBtwnPix2
+    corono_name   = 'SP' # 'SP' or 'APLC'
+    CtrBtwnPix  = True
+    CtrBtwnPix2 = True
+    Pupil2dSym  = False # set it True only for optimization
+    
+    #nlam
+    bw   = 0.1
+    nlam = 5
 
-MinIsland   = False
-FirstDerGlobalLim = 1.
+    
+    do_fits = True
 
-#nPup = corono0.params['nPup']
-nPup = 50
-nFPM = 50
-Fmax2d = 50
-nImg2d = 500
-
-# mask radius in lam0/D unit
-rMask = 4.0
-
-# dark zone bounds (inner and outer edges) in lam0/D unit
-rho0 =  5.0
-rho1 = 10.0
-
-# contrast in the dark region
-cDarkHole = 7.0
-
-# tau (integrated Pupil transmission)
-tau   = 0.4
-
-# CtrBtwnPix2
-corono_name   = 'SP' # 'SP' or 'APLC'
-CtrBtwnPix  = True
-CtrBtwnPix2 = True
-Pupil2dSym  = False # set it True only for optimization
-
-#nlam
-bw   = 0.1
-nlam = 5
-nlambis = 11
-
-do_fits = True
+nlambis = 11    
+    
 
 #%%
 """

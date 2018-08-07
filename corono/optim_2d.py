@@ -390,7 +390,7 @@ class ProblemMatrix(object):
                 
         else:
             self.print_log('solving problem with scipy.optimize')
-            bds = np.zeros((self.npp+self.neps, 2))
+            bds = np.zeros((self.npp+self.neps+self.nvv, 2))
             bds[:,1] = 1.
             sol=scipy.optimize.linprog(self.c,self.A.T,self.b,
                                        method='interior-point',
@@ -419,7 +419,7 @@ class ProblemMatrix(object):
             
         
         """
-        params = self.corono.params.copy()
+        params = self.params.copy()
         params = update_params(params, **kwargs)
                 
         if self.problem_name == 'MaxTau':
@@ -442,7 +442,8 @@ class ProblemMatrix(object):
         if self.MinIsland is True:
             str_FirstDerGlobal = '_1stderglo={FirstDerGlobalLim}'
             
-        fname_gen  = '{pupil_name}_{corono_name}_IWA={rho0}_OWA={rho1}_BW={bw:.2f}_nlam={nlam:02d}' + \
+        fname_gen  = '{pupil_name}_{corono_name}_IWA={rho0}' + \
+        '_OWA={rho1}_BW={bw:.2f}_nlam={nlam:02d}' + \
         '_2D_nPup={nPup:04d}' + str_cor + '_{problem_name}' + str_opt + \
         str_FirstDerGlobal + '_{solver}'        
         
@@ -545,6 +546,9 @@ class MaxTau(ProblemMatrix):
         """
         super(MaxTau, self).__init__(**kwargs)
         self.neps = 0
+        self.nvv  = 0
+        if self.MinIsland is True:
+            self.nvv  = 2*(self.npp)**2
         
 #%%        
     def compute_problem_matrices(self):
@@ -633,6 +637,9 @@ class MaxTau(ProblemMatrix):
 
         if (stdgrb and self.solver == 'stdgrb') or (gb and self.solver == 'gurobipy'):
             self.compute_problem_matrices_gurobi()
+
+        if self.MinIsland is True:
+            self.compute_problem_matrices_MinIsland()
             
         self.c = -self.Pupil_vec[self.idx_pup]/self.TR
         
@@ -646,6 +653,66 @@ class MaxTau(ProblemMatrix):
         b3  = np.ones(self.npp)
         self.A = np.concatenate((self.A,A2,A3), axis=1)
         self.b = np.concatenate((self.b,b2,b3))        
+
+#%%
+    def compute_problem_matrices_MinIsland(self):
+
+        A00    = np.zeros((self.nvv, np.shape(self.A)[1]))            
+        self.A = np.concatenate((self.A, A00))
+        
+        dx_op = np.zeros((self.nPup**2, self.nPup**2))
+        dy_op = np.zeros((self.nPup**2, self.nPup**2))
+        
+        idx_pup_a = np.asarray(self.idx_pup)
+        
+        idx_pup2d_i = idx_pup_a // self.nPup
+        idx_pup2d_j = idx_pup_a % self.nPup
+        
+        for i in range(self.nPup):
+            idx = idx_pup2d_i == i
+            nel = len(idx_pup_a[idx])
+            for k, val in enumerate(idx_pup_a[idx][:nel-1]):
+                if val+1 in idx_pup_a[idx]:
+                    dx_op[val, val]   = -1
+                    dx_op[val, val+1] = 1
+                    
+        for j in range(self.nPup):
+            idy = idx_pup2d_j == j
+            nel = len(idx_pup_a[idy])
+            for k, val in enumerate(idx_pup_a[idy][:nel-1]):
+                if val+self.nPup in idx_pup_a[idy]:
+                    dy_op[val, val]   = -1
+                    dy_op[val, val+self.nPup] = 1
+                    
+        ADx  = dx_op[self.idx_pup]
+        ADx  = ADx[:, self.idx_pup]
+        
+        ADy  = dy_op[self.idx_pup]
+        ADy  = ADy[:, self.idx_pup]
+        
+        AD   = ADx + ADy
+        
+        AI   = np.identity(self.npp)
+        AZ   = np.zeros((self.npp, self.npp))
+    
+        A6  = np.concatenate(( AD.T, -AI,  AI))
+        A7  = np.concatenate((-AD.T,  AI, -AI))
+        
+                
+        A8  = np.concatenate((AZ, -AI,  AZ))
+        A9  = np.concatenate((AZ,  AZ, -AI))
+
+        bZ   = np.zeros((self.npp))
+
+        A10Z = np.zeros((self.npp))
+        A101 = np.ones(self.npp)
+        A10  = np.concatenate((A10Z, A101, A101, A101, A101))
+        b10  = [self.FirstDerGlobalLim]
+                
+        self.A = np.concatenate((self.A, A6, A7, A8, A9, A10[:, None]), axis=1)
+        self.b = np.concatenate((self.b, bZ, bZ, bZ, bZ, b10))       
+
+        print('Warning: compute_problem_matrices_MinIsland() is not yet written!')
 
 #%%            
     def update_cDarkHole(self):
@@ -683,13 +750,13 @@ class MaxTau(ProblemMatrix):
         # Create a new model               
         self.m = gb.Model("LP max tau new")
         # Create variables
-        ApodTmp = self.m.addVars(self.npp, lb=0.0, ub=1.0, name="ApodTmp")
+        ApodTmp = self.m.addVars(self.npp+self.nvv, lb=0.0, ub=1.0, name="ApodTmp")
         # Set objective
         self.m.setObjective(gb.quicksum((self.c[i]*ApodTmp[i] 
                 for i in range(self.npp))), gb.GRB.MINIMIZE)
         # Add constraint:                
         self.m.addConstrs((gb.quicksum((ApodTmp[i]*self.A[i,j] 
-                for i in range(self.npp) if self.A[i,j])) <=  self.b[j] 
+                for i in range(self.npp+self.nvv) if self.A[i,j])) <=  self.b[j] 
                 for j in range(nA)), "cpos")
         self.m.update()            
 
@@ -716,6 +783,12 @@ class MaxContrast(ProblemMatrix):
             self.neps = 1
         else:
             self.neps = self.ndz
+
+        self.nvv   = 0
+        if self.MinIsland is True:
+            self.idx_pup_bis = list(set().union(list(np.asarray(self.idx_pup)-1),list(np.asarray(self.idx_pup)-self.nPup), self.idx_pup))
+            self.npp_bis     = len(self.idx_pup_bis)
+            self.nvv         = 2*self.npp_bis
 
 #%%    
     def compute_problem_matrices(self):
@@ -870,8 +943,11 @@ class MaxContrast(ProblemMatrix):
 
         if (stdgrb and self.solver == 'stdgrb') or (gb and self.solver == 'gurobipy'):        
             self.compute_problem_matrices_gurobi()
+
+        if self.MinIsland is True:
+            self.compute_problem_matrices_MinIsland()
             
-        self.c = np.concatenate((np.zeros(self.npp), c1), axis=0)
+        self.c = np.concatenate((np.zeros(self.npp), c1, np.zeros(self.nvv)), axis=0)
         
         return self.A, self.b, self.c
 
@@ -883,6 +959,53 @@ class MaxContrast(ProblemMatrix):
         b3  = np.ones(self.npp)
         self.A = np.concatenate((self.A,A2,A3), axis=1)
         self.b = np.concatenate((self.b,b2,b3))        
+
+#%%
+    def compute_problem_matrices_MinIsland(self):
+       
+        A00    = np.zeros((self.nvv, np.shape(self.A)[1]))
+        self.A = np.concatenate((self.A, A00))
+
+        dx0_op = np.zeros((self.nPup**2, self.npp_bis))
+#        dx1_op = np.zeros((self.nPup**2, self.npp_bis))
+
+        for k, val in enumerate(self.idx_pup_bis):
+            if val//self.nPup != self.nPup-1:
+                dx0_op[val, k]      = -1
+                dx0_op[val+self.nPup, k] = 1
+                
+#        for k, val in enumerate(self.idx_pup_bis):
+#            if val % self.nPup != self.nPup-1:
+#                dx1_op[val, k]   = -1
+#                dx1_op[val+1, k] = 1
+
+        ADx  = dx0_op[self.idx_pup]
+#        ADy  = dx1_op[self.idx_pup]
+               
+        AD   = ADx
+        AI   = np.identity(self.npp_bis)
+        
+        AZ0 = np.zeros((self.neps, self.npp_bis))
+
+        A6  = np.concatenate(( AD, AZ0, -AI,  AI))        
+        A7  = np.concatenate((-AD, AZ0,  AI, -AI))
+
+        AZ1 = np.zeros((self.npp, self.npp_bis))        
+        AZ2 = np.zeros((self.npp_bis, self.npp_bis))
+ 
+        A8  = np.concatenate((AZ1, AZ0, -AI, AZ2))
+        A9  = np.concatenate((AZ1, AZ0, AZ2, -AI))
+       
+        bZ   = np.zeros((self.npp_bis))
+
+        A10Z = np.zeros((self.npp))
+        A101 = np.ones(self.npp_bis)
+        A10  = np.concatenate((A10Z, np.zeros((self.neps)), A101, A101))
+        b10  = [self.FirstDerGlobalLim]
+                
+        self.A = np.concatenate((self.A, A6, A7, A8, A9, A10[:, None]), axis=1)
+        self.b = np.concatenate((self.b, bZ, bZ, bZ, bZ, b10))       
+        print('Warning: compute_problem_matrices_MinIsland() is not yet written!')
 
 #%%            
     def update_tau(self):
@@ -919,18 +1042,15 @@ class MaxContrast(ProblemMatrix):
         # Create a new model  
         self.m = gb.Model("LP max C new")
         
-        if self.Lnorm == 'Linf':
-            self.neps = 1
-        else:
-            self.neps = self.ndz
         # Create variables
-        ApodEpsTmp = self.m.addVars(self.npp + self.neps, lb=0.0, name="ApodEpsTmp")        
+        ApodEpsTmp = self.m.addVars(self.npp + self.neps + self.nvv, lb=0.0, 
+                                    name="ApodEpsTmp")        
         # Set objective
         self.m.setObjective(gb.quicksum((self.c[i+self.npp]*ApodEpsTmp[i+self.npp] 
                 for i in range(self.neps))), gb.GRB.MINIMIZE)
         # Add constraint:
         self.m.addConstrs((gb.quicksum((ApodEpsTmp[i]*self.A[i,j] 
-                for i in range(self.npp + self.neps) if self.A[i,j])) <=  self.b[j] 
+                for i in range(self.npp + self.neps + self.nvv) if self.A[i,j])) <=  self.b[j] 
                 for j in np.arange(nn)), "cpos")
         
         self.m.update()

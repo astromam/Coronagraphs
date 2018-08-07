@@ -21,15 +21,15 @@ Parameters
 """
 # Telescope name
 pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
-problem_name = 'MaxTau' # 'MaxContrastL1' # 'MaxTau' # ,'MaxContrastLinf' # #  
-solver       = 'xxx' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
-slvLogToConsole = 0
+problem_name = 'MaxContrastL1' # 'MaxContrastL1' # 'MaxTau' # ,'MaxContrastLinf' # #  
+solver       = 'stdgrb' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
+slvLogToConsole = 1
 slvCrossover    = 0
 slvMethod       = 2
 allLogToConsole = 0
 
-MinIsland   = False
-FirstDerGlobalLim = 1.
+MinIsland   = True
+FirstDerGlobalLim = 30.
 
 #nPup = corono0.params['nPup']
 nPup = 50
@@ -37,7 +37,7 @@ nFPM = 50
 Fmax2d = 22.5
 nImg2d = 45
 
-# mask radius in lam0/D unit
+# mask radius in lam0/D units
 rMask = 4.0
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
