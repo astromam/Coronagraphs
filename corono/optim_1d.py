@@ -58,7 +58,8 @@ def get_default_params_ProblemMatrix():
            'FirstDer':False, 'SecondDer': False,
            'FirstDerLim':0.01, 'SecondDerLim':0.0001,
            'MinIsland':False,
-           'FirstDerGlobalLim':0.01}
+           'FirstDerGlobalLim':0.01,
+           'Binarity':False}
     return tmp
 
 #%%
@@ -635,6 +636,9 @@ class MaxTau(ProblemMatrix):
             
         if self.SecondDer is True:
             self.compute_problem_matrices_2ndDer()
+
+        if self.Binarity is True:
+            self.compute_problem_matrices_Binarity()
             
         if self.MinIsland is True:
             self.compute_problem_matrices_MinIsland()
@@ -694,6 +698,11 @@ class MaxTau(ProblemMatrix):
         
         self.A = np.concatenate((self.A, A6, A7, A8, A9, A10[:, None]), axis=1)
         self.b = np.concatenate((self.b, bZ, bZ, bZ, bZ, b10))       
+
+#%%
+    def compute_problem_matrices_Binarity(self):
+        
+        print('Matrix for constraints on apodizer binarity is not yet written!!!')
 
 #%%
     def compute_gurobi_model(self):
@@ -917,6 +926,9 @@ class MaxContrast(ProblemMatrix):
         if self.SecondDer is True:
             self.compute_problem_matrices_2ndDer()     
 
+        if self.Binarity is True:
+            self.compute_problem_matrices_Binarity()
+
         if self.MinIsland is True:
             self.compute_problem_matrices_MinIsland()
             
@@ -977,6 +989,11 @@ class MaxContrast(ProblemMatrix):
 
         self.A = np.concatenate((self.A, A6, A7, A8, A9, A10[:, None]), axis=1)
         self.b = np.concatenate((self.b, bZ, bZ, bZ, bZ, b10))
+
+#%%
+    def compute_problem_matrices_Binarity(self):
+        
+        print('Matrix for constraints on apodizer binarity is not yet written!!!')
       
 #%%
     def compute_gurobi_model(self):

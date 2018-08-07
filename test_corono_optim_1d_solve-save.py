@@ -27,6 +27,7 @@ allLogToConsole = 0
 FirstDer    = False
 SecondDer   = False
 MinIsland   = True
+Binarity    = True
 FirstDerLim = 0.01
 SecondDerLim= 0.001 
 FirstDerGlobalLim = 10.
@@ -84,7 +85,8 @@ params = coro.to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
                  allLogToConsole = allLogToConsole,
                  FirstDer = FirstDer, SecondDer = SecondDer,
                  FirstDerLim = FirstDerLim, SecondDerLim = SecondDerLim,
-                 MinIsland = MinIsland, FirstDerGlobalLim = FirstDerGlobalLim)
+                 MinIsland = MinIsland, FirstDerGlobalLim = FirstDerGlobalLim,
+                 Binarity = Binarity)
 
 #%%
 """

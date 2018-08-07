@@ -25,6 +25,7 @@ if False:
     FirstDer    = False
     SecondDer   = False
     MinIsland   = True
+    Binarity    = True
     FirstDerLim = 0.01
     SecondDerLim= 0.001 
     FirstDerGlobalLim = 1.
@@ -81,7 +82,8 @@ if False:
                      corono_name = corono_name,
                      FirstDer = FirstDer, SecondDer = SecondDer,
                      FirstDerLim = FirstDerLim, SecondDerLim = SecondDerLim,
-                     MinIsland = MinIsland, FirstDerGlobalLim = FirstDerGlobalLim)
+                     MinIsland = MinIsland, FirstDerGlobalLim = FirstDerGlobalLim,
+                     Binarity = Binarity)
     
 
 #%%
