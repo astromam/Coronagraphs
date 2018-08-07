@@ -21,15 +21,15 @@ Parameters
 """
 # Telescope name
 pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
-problem_name = 'MaxContrastLinf' # 'MaxContrastL1' # 'MaxTau' # ,'MaxContrastLinf' # #  
-solver       = 'xxx' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
+problem_name = 'MaxTau' # 'MaxContrastL1' # 'MaxTau' # ,'MaxContrastLinf' # #  
+solver       = 'stdgrb' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
 slvLogToConsole = 1
 slvCrossover    = 0
 slvMethod       = 2
 allLogToConsole = 0
 
 MinIsland   = True
-FirstDerGlobalLim = 75.
+FirstDerGlobalLim = 200.
 
 #nPup = corono0.params['nPup']
 nPup = 50

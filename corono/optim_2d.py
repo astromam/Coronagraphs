@@ -548,7 +548,9 @@ class MaxTau(ProblemMatrix):
         self.neps = 0
         self.nvv  = 0
         if self.MinIsland is True:
-            self.nvv  = 2*(self.npp)**2
+            self.idx_pup_bis = list(set().union(list(np.asarray(self.idx_pup)-1),list(np.asarray(self.idx_pup)-self.nPup), self.idx_pup))
+            self.npp_bis     = len(self.idx_pup_bis)
+            self.nvv         = 4*self.npp_bis
         
 #%%        
     def compute_problem_matrices(self):
@@ -641,7 +643,9 @@ class MaxTau(ProblemMatrix):
         if self.MinIsland is True:
             self.compute_problem_matrices_MinIsland()
             
-        self.c = -self.Pupil_vec[self.idx_pup]/self.TR
+#        self.c = -self.Pupil_vec[self.idx_pup]/self.TR
+        
+        self.c = np.concatenate((-self.Pupil_vec[self.idx_pup]/self.TR, np.zeros(self.nvv)), axis=0)
         
         return self.A, self.b, self.c
 
@@ -660,59 +664,49 @@ class MaxTau(ProblemMatrix):
         A00    = np.zeros((self.nvv, np.shape(self.A)[1]))            
         self.A = np.concatenate((self.A, A00))
         
-        dx_op = np.zeros((self.nPup**2, self.nPup**2))
-        dy_op = np.zeros((self.nPup**2, self.nPup**2))
-        
-        idx_pup_a = np.asarray(self.idx_pup)
-        
-        idx_pup2d_i = idx_pup_a // self.nPup
-        idx_pup2d_j = idx_pup_a % self.nPup
-        
-        for i in range(self.nPup):
-            idx = idx_pup2d_i == i
-            nel = len(idx_pup_a[idx])
-            for k, val in enumerate(idx_pup_a[idx][:nel-1]):
-                if val+1 in idx_pup_a[idx]:
-                    dx_op[val, val]   = -1
-                    dx_op[val, val+1] = 1
-                    
-        for j in range(self.nPup):
-            idy = idx_pup2d_j == j
-            nel = len(idx_pup_a[idy])
-            for k, val in enumerate(idx_pup_a[idy][:nel-1]):
-                if val+self.nPup in idx_pup_a[idy]:
-                    dy_op[val, val]   = -1
-                    dy_op[val, val+self.nPup] = 1
-                    
-        ADx  = dx_op[self.idx_pup]
-        ADx  = ADx[:, self.idx_pup]
-        
-        ADy  = dy_op[self.idx_pup]
-        ADy  = ADy[:, self.idx_pup]
-        
-        AD   = ADx + ADy
-        
-        AI   = np.identity(self.npp)
-        AZ   = np.zeros((self.npp, self.npp))
-    
-        A6  = np.concatenate(( AD.T, -AI,  AI))
-        A7  = np.concatenate((-AD.T,  AI, -AI))
-        
-                
-        A8  = np.concatenate((AZ, -AI,  AZ))
-        A9  = np.concatenate((AZ,  AZ, -AI))
+        dx0_op = np.zeros((self.nPup**2, self.npp_bis))
+        dx1_op = np.zeros((self.nPup**2, self.npp_bis))
 
-        bZ   = np.zeros((self.npp))
+        for k, val in enumerate(self.idx_pup_bis):
+            if val//self.nPup != self.nPup-1:
+                dx0_op[val, k]      = -1
+                dx0_op[val+self.nPup, k] = 1
+                
+        for k, val in enumerate(self.idx_pup_bis):
+            if val % self.nPup != self.nPup-1:
+                dx1_op[val, k]   = -1
+                dx1_op[val+1, k] = 1
+
+        ADx  = dx0_op[self.idx_pup]
+        ADy  = dx1_op[self.idx_pup]
+                
+        AI   = np.identity(self.npp_bis)
+        
+        AZ2  = np.zeros((self.npp_bis, self.npp_bis))
+    
+        A6x  = np.concatenate(( ADx, -AI,  AI, AZ2, AZ2))        
+        A7x  = np.concatenate((-ADx,  AI, -AI, AZ2, AZ2))
+        
+        A6y  = np.concatenate(( ADy, AZ2, AZ2, -AI,  AI))        
+        A7y  = np.concatenate((-ADy, AZ2, AZ2,  AI, -AI))
+        
+        AZ1 = np.zeros((self.npp, self.npp_bis))
+                
+        A8x  = np.concatenate((AZ1, -AI, AZ2, AZ2, AZ2))
+        A9x  = np.concatenate((AZ1, AZ2, -AI, AZ2, AZ2))
+        
+        A8y  = np.concatenate((AZ1, AZ2, AZ2, -AI, AZ2))
+        A9y  = np.concatenate((AZ1, AZ2, AZ2, AZ2, -AI))
+
+        bZ   = np.zeros((self.npp_bis))
 
         A10Z = np.zeros((self.npp))
-        A101 = np.ones(self.npp)
+        A101 = np.ones(self.npp_bis)
         A10  = np.concatenate((A10Z, A101, A101, A101, A101))
         b10  = [self.FirstDerGlobalLim]
                 
-        self.A = np.concatenate((self.A, A6, A7, A8, A9, A10[:, None]), axis=1)
-        self.b = np.concatenate((self.b, bZ, bZ, bZ, bZ, b10))       
-
-        print('Warning: compute_problem_matrices_MinIsland() is not yet written!')
+        self.A = np.concatenate((self.A, A6x, A7x, A6y, A7y, A8x, A9x, A8y, A9y, A10[:, None]), axis=1)
+        self.b = np.concatenate((self.b,  bZ,  bZ,  bZ,  bZ,  bZ,  bZ,  bZ,  bZ, b10))       
 
 #%%            
     def update_cDarkHole(self):
@@ -1010,7 +1004,6 @@ class MaxContrast(ProblemMatrix):
                 
         self.A = np.concatenate((self.A, A6x, A7x, A6y, A7y, A8x, A9x, A8y, A9y, A10[:, None]), axis=1)
         self.b = np.concatenate((self.b,  bZ,  bZ,  bZ,  bZ,  bZ,  bZ,  bZ,  bZ, b10))       
-        print('Warning: compute_problem_matrices_MinIsland() is not yet written!')
 
 #%%            
     def update_tau(self):
