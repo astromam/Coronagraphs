@@ -17,20 +17,21 @@ import corono as coro
 Parameters
 """
 corono_name  = 'APLC' # 'APLC' or 'SP'
-problem_name = 'MaxContrastLinf' # ,'MaxTau' # 'MaxContrastLinf' #'MaxContrastL1'
+problem_name = 'MaxTau' # ,'MaxTau' # 'MaxContrastLinf' #'MaxContrastL1'
 solver       = 'stdgrb' # 'stdgrb', 'gurobipy', 'scipy.linprog'
 slvLogToConsole = 1
-slvCrossover    = 0
-slvMethod       = 1
+slvCrossover    = 1
+slvMethod       = 2
 allLogToConsole = 0
 
 FirstDer    = False
 SecondDer   = False
 MinIsland   = True
-Binarity    = True
+Binarity    = False
 FirstDerLim = 0.01
 SecondDerLim= 0.001 
 FirstDerGlobalLim = 10.
+BinarityReg       = 0.1
 
 nPup = 500
 nFPM = 50
@@ -86,7 +87,7 @@ params = coro.to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
                  FirstDer = FirstDer, SecondDer = SecondDer,
                  FirstDerLim = FirstDerLim, SecondDerLim = SecondDerLim,
                  MinIsland = MinIsland, FirstDerGlobalLim = FirstDerGlobalLim,
-                 Binarity = Binarity)
+                 Binarity = Binarity, BinarityReg = BinarityReg)
 
 #%%
 """

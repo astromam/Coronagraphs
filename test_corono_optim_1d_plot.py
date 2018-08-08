@@ -29,6 +29,7 @@ if False:
     FirstDerLim = 0.01
     SecondDerLim= 0.001 
     FirstDerGlobalLim = 1.
+    BinarityReg       = 10.
     
     nPup = 500
     nFPM = 50
@@ -38,7 +39,6 @@ if False:
     
     bw   = 0.1
     nlam = 5
-    nlambis = 9
     
     PupilObs    = 0.20
     rMask       = 4.4
@@ -83,8 +83,9 @@ if False:
                      FirstDer = FirstDer, SecondDer = SecondDer,
                      FirstDerLim = FirstDerLim, SecondDerLim = SecondDerLim,
                      MinIsland = MinIsland, FirstDerGlobalLim = FirstDerGlobalLim,
-                     Binarity = Binarity)
-    
+                     Binarity = Binarity, BinarityReg = BinarityReg)
+
+nlambis = 11    
 
 #%%
 fdir = Path('.').resolve()
