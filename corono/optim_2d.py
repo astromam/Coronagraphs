@@ -57,7 +57,8 @@ def get_default_params_ProblemMatrix():
            'slvCrossover':0, 'slvLogToConsole':1, 'slvMethod':2,
            'allLogToConsole':0,
            'MinIsland':False,
-           'FirstDerGlobalLim':0.01}
+           'FirstDerGlobalLim':0.01,
+           'Binarity':False, 'BinarityReg':0.1}
     return tmp
 
 #%%
@@ -362,6 +363,7 @@ class ProblemMatrix(object):
         if stdgrb and self.solver == 'stdgrb':
             self.print_log('solving problem with stdgrb package')
             Apodtmp, val = stdgrb.lp_solve(self.c, A=(self.A).T, b=self.b, 
+                                           ub = np.ones(self.npp+self.neps+self.nbb+self.nvv),                                           
                                            crossover=self.slvCrossover, 
                                            logtoconsole=self.slvLogToConsole, 
                                            method=self.slvMethod)
@@ -390,7 +392,7 @@ class ProblemMatrix(object):
                 
         else:
             self.print_log('solving problem with scipy.optimize')
-            bds = np.zeros((self.npp+self.neps+self.nvv, 2))
+            bds = np.zeros((self.npp+self.neps+self.nbb+self.nvv, 2))
             bds[:,1] = 1.
             sol=scipy.optimize.linprog(self.c,self.A.T,self.b,
                                        method='interior-point',
@@ -441,11 +443,15 @@ class ProblemMatrix(object):
         str_FirstDerGlobal = ''
         if self.MinIsland is True:
             str_FirstDerGlobal = '_1stderglo={FirstDerGlobalLim}'
+
+        str_Binarity = ''
+        if self.Binarity is True:
+            str_Binarity = '_binreg={BinarityReg}'
             
         fname_gen  = '{pupil_name}_{corono_name}_IWA={rho0}' + \
         '_OWA={rho1}_BW={bw:.2f}_nlam={nlam:02d}' + \
         '_2D_nPup={nPup:04d}' + str_cor + '_{problem_name}' + str_opt + \
-        str_FirstDerGlobal + '_{solver}'        
+        str_FirstDerGlobal + str_Binarity + '_{solver}'        
         
         return fname_gen.format(**params)
 
@@ -551,6 +557,10 @@ class MaxTau(ProblemMatrix):
             self.idx_pup_bis = list(set().union(list(np.asarray(self.idx_pup)-1),list(np.asarray(self.idx_pup)-self.nPup), self.idx_pup))
             self.npp_bis     = len(self.idx_pup_bis)
             self.nvv         = 4*self.npp_bis
+
+        self.nbb  = 0
+        if self.Binarity is True:
+            self.nbb  = 2*self.npp
         
 #%%        
     def compute_problem_matrices(self):
@@ -640,12 +650,17 @@ class MaxTau(ProblemMatrix):
         if (stdgrb and self.solver == 'stdgrb') or (gb and self.solver == 'gurobipy'):
             self.compute_problem_matrices_gurobi()
 
+        if self.Binarity is True:
+            self.compute_problem_matrices_Binarity()
+
         if self.MinIsland is True:
             self.compute_problem_matrices_MinIsland()
             
 #        self.c = -self.Pupil_vec[self.idx_pup]/self.TR
         
-        self.c = np.concatenate((-self.Pupil_vec[self.idx_pup]/self.TR, np.zeros(self.nvv)), axis=0)
+        self.c = np.concatenate((-self.Pupil_vec[self.idx_pup]/self.TR, 
+                                 self.BinarityReg*np.ones(self.nbb),
+                                 np.zeros(self.nvv)), axis=0)
         
         return self.A, self.b, self.c
 
@@ -658,6 +673,31 @@ class MaxTau(ProblemMatrix):
         self.A = np.concatenate((self.A,A2,A3), axis=1)
         self.b = np.concatenate((self.b,b2,b3))        
 
+#%%
+    def compute_problem_matrices_Binarity(self):
+
+        A00    = np.zeros((self.nbb, np.shape(self.A)[1]))            
+        self.A = np.concatenate((self.A, A00))
+
+        AI     = np.identity(self.npp)
+        
+        A11    = np.concatenate(( AI, -AI,  AI))
+        A12    = np.concatenate((-AI,  AI, -AI))
+        
+        AZ     = np.zeros((self.npp, self.npp))                       
+
+        A13    = np.concatenate((AZ, -AI,  AZ))
+        A14    = np.concatenate((AZ,  AZ, -AI))
+        
+        b11    = 0.5*np.ones(self.npp)
+        b12    = -b11
+        bZ     = np.zeros((self.npp))
+       
+        self.A = np.concatenate((self.A, A11, A12, A13, A14), axis=1)
+        self.b = np.concatenate((self.b, b11, b12,  bZ,  bZ))        
+        
+        print('Constraint matrix for apodizer binarity is not yet validated!!!')
+        
 #%%
     def compute_problem_matrices_MinIsland(self):
 
@@ -683,26 +723,27 @@ class MaxTau(ProblemMatrix):
         AI   = np.identity(self.npp_bis)
         
         AZ2  = np.zeros((self.npp_bis, self.npp_bis))
+        AZ0 = np.zeros((self.nbb, self.npp_bis))
     
-        A6x  = np.concatenate(( ADx, -AI,  AI, AZ2, AZ2))        
-        A7x  = np.concatenate((-ADx,  AI, -AI, AZ2, AZ2))
+        A6x  = np.concatenate(( ADx, AZ0, -AI,  AI, AZ2, AZ2))        
+        A7x  = np.concatenate((-ADx, AZ0,  AI, -AI, AZ2, AZ2))
         
-        A6y  = np.concatenate(( ADy, AZ2, AZ2, -AI,  AI))        
-        A7y  = np.concatenate((-ADy, AZ2, AZ2,  AI, -AI))
+        A6y  = np.concatenate(( ADy, AZ0, AZ2, AZ2, -AI,  AI))        
+        A7y  = np.concatenate((-ADy, AZ0, AZ2, AZ2,  AI, -AI))
         
         AZ1 = np.zeros((self.npp, self.npp_bis))
                 
-        A8x  = np.concatenate((AZ1, -AI, AZ2, AZ2, AZ2))
-        A9x  = np.concatenate((AZ1, AZ2, -AI, AZ2, AZ2))
+        A8x  = np.concatenate((AZ1, AZ0, -AI, AZ2, AZ2, AZ2))
+        A9x  = np.concatenate((AZ1, AZ0, AZ2, -AI, AZ2, AZ2))
         
-        A8y  = np.concatenate((AZ1, AZ2, AZ2, -AI, AZ2))
-        A9y  = np.concatenate((AZ1, AZ2, AZ2, AZ2, -AI))
+        A8y  = np.concatenate((AZ1, AZ0, AZ2, AZ2, -AI, AZ2))
+        A9y  = np.concatenate((AZ1, AZ0, AZ2, AZ2, AZ2, -AI))
 
         bZ   = np.zeros((self.npp_bis))
 
         A10Z = np.zeros((self.npp))
         A101 = np.ones(self.npp_bis)
-        A10  = np.concatenate((A10Z, A101, A101, A101, A101))
+        A10  = np.concatenate((A10Z, np.zeros((self.nbb)), A101, A101, A101, A101))
         b10  = [self.FirstDerGlobalLim]
                 
         self.A = np.concatenate((self.A, A6x, A7x, A6y, A7y, A8x, A9x, A8y, A9y, A10[:, None]), axis=1)
@@ -744,13 +785,13 @@ class MaxTau(ProblemMatrix):
         # Create a new model               
         self.m = gb.Model("LP max tau new")
         # Create variables
-        ApodTmp = self.m.addVars(self.npp+self.nvv, lb=0.0, ub=1.0, name="ApodTmp")
+        ApodTmp = self.m.addVars(self.npp + self.nbb + self.nvv, lb=0.0, ub=1.0, name="ApodTmp")
         # Set objective
         self.m.setObjective(gb.quicksum((self.c[i]*ApodTmp[i] 
-                for i in range(self.npp))), gb.GRB.MINIMIZE)
+                for i in range(self.npp + self.nbb))), gb.GRB.MINIMIZE)
         # Add constraint:                
         self.m.addConstrs((gb.quicksum((ApodTmp[i]*self.A[i,j] 
-                for i in range(self.npp+self.nvv) if self.A[i,j])) <=  self.b[j] 
+                for i in range(self.npp + self.nbb + self.nvv) if self.A[i,j])) <=  self.b[j] 
                 for j in range(nA)), "cpos")
         self.m.update()            
 
@@ -783,6 +824,10 @@ class MaxContrast(ProblemMatrix):
             self.idx_pup_bis = list(set().union(list(np.asarray(self.idx_pup)-1),list(np.asarray(self.idx_pup)-self.nPup), self.idx_pup))
             self.npp_bis     = len(self.idx_pup_bis)
             self.nvv         = 4*self.npp_bis
+
+        self.nbb  = 0
+        if self.Binarity is True:
+            self.nbb  = 2*self.npp
 
 #%%    
     def compute_problem_matrices(self):
@@ -938,10 +983,15 @@ class MaxContrast(ProblemMatrix):
         if (stdgrb and self.solver == 'stdgrb') or (gb and self.solver == 'gurobipy'):        
             self.compute_problem_matrices_gurobi()
 
+        if self.Binarity is True:
+            self.compute_problem_matrices_Binarity()
+
         if self.MinIsland is True:
             self.compute_problem_matrices_MinIsland()
             
-        self.c = np.concatenate((np.zeros(self.npp), c1, np.zeros(self.nvv)), axis=0)
+        self.c = np.concatenate((np.zeros(self.npp), c1, 
+                                 -self.BinarityReg*np.ones(self.nbb), 
+                                 np.zeros(self.nvv)), axis=0)
         
         return self.A, self.b, self.c
 
@@ -953,6 +1003,33 @@ class MaxContrast(ProblemMatrix):
         b3  = np.ones(self.npp)
         self.A = np.concatenate((self.A,A2,A3), axis=1)
         self.b = np.concatenate((self.b,b2,b3))        
+
+#%%
+    def compute_problem_matrices_Binarity(self):
+
+        A00    = np.zeros((self.nbb, np.shape(self.A)[1]))            
+        self.A = np.concatenate((self.A, A00))
+
+        AI     = np.identity(self.npp)
+
+        AZ0    = np.zeros((self.neps, self.npp))
+        
+        A11    = np.concatenate(( AI, AZ0, -AI,  AI))
+        A12    = np.concatenate((-AI, AZ0,  AI, -AI))
+        
+        AZ     = np.zeros((self.npp, self.npp))                       
+
+        A13    = np.concatenate((AZ, AZ0, -AI,  AZ))
+        A14    = np.concatenate((AZ, AZ0,  AZ, -AI))
+        
+        b11    = 0.5*np.ones(self.npp)
+        bZ     = np.zeros((self.npp))
+                      
+        self.A = np.concatenate((self.A, A11, A12, A13, A14), axis=1)
+        self.b = np.concatenate((self.b, b11,-b11,  bZ,  bZ))
+        
+        print('Constraint matrix for apodizer binarity is not yet validated!!!')
+
 
 #%%
     def compute_problem_matrices_MinIsland(self):
@@ -979,7 +1056,7 @@ class MaxContrast(ProblemMatrix):
         AI   = np.identity(self.npp_bis)
         
         AZ2 = np.zeros((self.npp_bis, self.npp_bis))        
-        AZ0 = np.zeros((self.neps, self.npp_bis))
+        AZ0 = np.zeros((self.neps+self.nbb, self.npp_bis))
 
         A6x  = np.concatenate(( ADx, AZ0, -AI,  AI, AZ2, AZ2))        
         A7x  = np.concatenate((-ADx, AZ0,  AI, -AI, AZ2, AZ2))
@@ -999,7 +1076,7 @@ class MaxContrast(ProblemMatrix):
 
         A10Z = np.zeros((self.npp))
         A101 = np.ones(self.npp_bis)
-        A10  = np.concatenate((A10Z, np.zeros((self.neps)), A101, A101, A101, A101))
+        A10  = np.concatenate((A10Z, np.zeros((self.neps+self.nbb)), A101, A101, A101, A101))
         b10  = [self.FirstDerGlobalLim]
                 
         self.A = np.concatenate((self.A, A6x, A7x, A6y, A7y, A8x, A9x, A8y, A9y, A10[:, None]), axis=1)
@@ -1041,14 +1118,14 @@ class MaxContrast(ProblemMatrix):
         self.m = gb.Model("LP max C new")
         
         # Create variables
-        ApodEpsTmp = self.m.addVars(self.npp + self.neps + self.nvv, lb=0.0, 
+        ApodEpsTmp = self.m.addVars(self.npp + self.neps + self.nbb + self.nvv, lb=0.0, 
                                     name="ApodEpsTmp")        
         # Set objective
         self.m.setObjective(gb.quicksum((self.c[i+self.npp]*ApodEpsTmp[i+self.npp] 
-                for i in range(self.neps))), gb.GRB.MINIMIZE)
+                for i in range(self.neps + self.nbb))), gb.GRB.MINIMIZE)
         # Add constraint:
         self.m.addConstrs((gb.quicksum((ApodEpsTmp[i]*self.A[i,j] 
-                for i in range(self.npp + self.neps + self.nvv) if self.A[i,j])) <=  self.b[j] 
+                for i in range(self.npp + self.neps + self.nbb + self.nvv) if self.A[i,j])) <=  self.b[j] 
                 for j in np.arange(nn)), "cpos")
         
         self.m.update()

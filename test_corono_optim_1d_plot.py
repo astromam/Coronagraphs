@@ -25,7 +25,7 @@ if False:
     FirstDer    = False
     SecondDer   = False
     MinIsland   = True
-    Binarity    = True
+    Binarity    = False
     FirstDerLim = 0.01
     SecondDerLim= 0.001 
     FirstDerGlobalLim = 1.
@@ -85,7 +85,9 @@ if False:
                      MinIsland = MinIsland, FirstDerGlobalLim = FirstDerGlobalLim,
                      Binarity = Binarity, BinarityReg = BinarityReg)
 
-nlambis = 11    
+nlambis = 11
+nImgbis = 110
+Fmaxbis = 11    
 
 #%%
 fdir = Path('.').resolve()
@@ -162,7 +164,7 @@ pl.savefig(str(fpath))
 Computation of the direct and coronagraphic images
 """
 fname_gen  = problem1.get_filename(nlam=nlambis)
-params2    = coro.update_params(params, nlam=nlambis) 
+params2    = coro.update_params(params, nlam=nlambis, nImg=nImgbis, Fmax=Fmaxbis) 
 
 if corono_name == 'APLC':
     corono0 = coro.design.APLC1d(**params2)

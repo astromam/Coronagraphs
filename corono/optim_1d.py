@@ -345,6 +345,7 @@ class ProblemMatrix(object):
         if stdgrb and self.solver == 'stdgrb':
             self.print_log('solving problem with stdgrb package')
             Apodtmp, val = stdgrb.lp_solve(self.c, A=(self.A).T, b=self.b, 
+                                           ub = np.ones(self.npp+self.neps+self.nbb+self.nvv),
                                            crossover=self.slvCrossover, 
                                            logtoconsole=self.slvLogToConsole, 
                                            method=self.slvMethod)
@@ -760,7 +761,8 @@ class MaxTau(ProblemMatrix):
         # Create a new model               
         self.m = gb.Model("LP max tau new")
         # Create variables
-        ApodTmp = self.m.addVars(self.npp + self.nbb + self.nvv, lb=0.0, ub=1.0, name="ApodTmp")
+        ApodTmp = self.m.addVars(self.npp + self.nbb + self.nvv, lb=0.0, ub=1.0,
+                                 name="ApodTmp")
         # Set objective
         self.m.setObjective(gb.quicksum((self.c[i]*ApodTmp[i] 
                 for i in range(self.npp + self.nbb))), gb.GRB.MINIMIZE)

@@ -61,7 +61,8 @@ if False:
     do_fits = True
 
 nlambis = 11    
-    
+Fmax2dbis = 50
+nImg2dbis = 500    
 
 #%%
 """
@@ -164,7 +165,7 @@ pl.savefig(str(fpath))
 Computation of the direct and coronagraphic images
 """
 fname_gen  = problem1.get_filename(nlam=nlambis)
-params2    = coro.update_params(params, nlam=nlambis) 
+params2    = coro.update_params(params, nlam=nlambis, Fmax2d = Fmax2dbis, nImg2d = nImg2dbis) 
 
 if corono_name == 'SP':
     corono0 = coro.design.SP2d(**params2)
@@ -219,7 +220,7 @@ Display of the intensity profiles of the coronagraphic images
 #xi2d = mydist[nImg2d//2,nImg2d//2:]
 
 xi2d = corono0.xi2d
-if nImg2d%2 == 0:
+if nImg2dbis%2 == 0:
     xi2d = corono0.xi2d_ctr
 
 nImg2d = corono0.params['nImg2d']
@@ -235,10 +236,10 @@ pl.title('Radial intensity profiles of the images')
 #pl.semilogy(corono0.xi,poly_direct_image3/poly_direct_image3.max(),label='Direct')
 if corono_name == 'SP':
 #    pl.semilogy(xi2d,poly_corono_image1[nImg2d//2,nImg2d//2:]/poly_corono_image1.max(),label='Apod - pyth')
-    pl.semilogy(xi2d,poly_corono_image1[nImg2d//2,nImg2d//2:]/poly_corono_image1.max(),label=solver)
+    pl.semilogy(xi2d,poly_corono_image1[nImg2dbis//2,nImg2dbis//2:]/poly_corono_image1.max(),label=solver)
 else:
 #    pl.semilogy(xi2d,poly_corono_image1[nImg2d//2,nImg2d//2:]/poly_direct_image1.max(),label='Apod - pyth')
-    pl.semilogy(xi2d,poly_corono_image1[nImg2d//2,nImg2d//2:]/poly_direct_image1.max(),label=solver)    
+    pl.semilogy(xi2d,poly_corono_image1[nImg2dbis//2,nImg2dbis//2:]/poly_direct_image1.max(),label=solver)    
 #pl.semilogy(corono0.xi2d,poly_corono_image2[nImg2d//2,nImg2d//2:]/poly_direct_image2.max(),label=r'MaxContrast, L$_1$-norm')
 #pl.semilogy(corono0.xi2d,poly_corono_image3[nImg2d//2,nImg2d//2:]/poly_direct_image3.max(),label=r'MaxContrast, L$_{\infty}$-norm')
 #pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
@@ -271,11 +272,11 @@ pl.title('Radial intensity profiles of the images')
 #pl.semilogy(corono0.xi,poly_direct_image3/poly_direct_image3.max(),label='Direct')
 for i in range(corono0.nlam):
     if corono_name == 'SP':
-        pl.semilogy(xi2d,mono_corono_image1[i, nImg2d//2,nImg2d//2:]/mono_corono_image1.max(), '-',
+        pl.semilogy(xi2d,mono_corono_image1[i, nImg2dbis//2,nImg2dbis//2:]/mono_corono_image1.max(), '-',
                     label=r'{0:.2f}$\lambda_0$'.format(corono0.lam_t[i]),
                     color = colors[i])
     else:
-        pl.semilogy(xi2d,mono_corono_image1[i, nImg2d//2,nImg2d//2:]/mono_direct_image1[(corono0.nlam+1)//2].max(), 
+        pl.semilogy(xi2d,mono_corono_image1[i, nImg2dbis//2,nImg2dbis//2:]/mono_direct_image1[(corono0.nlam+1)//2].max(), 
                     '-',
                     label=r'{0:.2f}$\lambda_0$'.format(corono0.lam_t[i]),  color = colors[i])
 #pl.semilogy(corono0.xi2d,poly_corono_image2[nImg2d//2,nImg2d//2:]/poly_direct_image2.max(),label=r'MaxContrast, L$_1$-norm')
