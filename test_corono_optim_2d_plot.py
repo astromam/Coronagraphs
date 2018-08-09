@@ -68,21 +68,22 @@ nImg2dbis = 500
 """
 File reading for Pupil and Lyot stop
 """
-fdir = Path('./pupils/2D/').resolve()
-if pupil_name == 'lvr':
-    fname_pup = 'ATLAST_Aperture_nPup={0}.fits'.format(nPup,)
-    fname_lys = 'ATLAST_LyotStop_nPup={0}.fits'.format(nPup,)
-else:
-    fname_pup = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
-    fname_lys = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
-
-fpath_pup = fdir / fname_pup
-fpath_lys = fdir / fname_lys
-Pupil2d    = fits.getdata(fpath_pup)
-LyotStop2d = fits.getdata(fpath_lys)
-
-if solver != 'gurobipy' and solver != 'stdgrb':
-    solver = 'scipy'
+if False:
+    fdir = Path('./pupils/2D/').resolve()
+    if pupil_name == 'lvr':
+        fname_pup = 'ATLAST_Aperture_nPup={0}.fits'.format(nPup,)
+        fname_lys = 'ATLAST_LyotStop_nPup={0}.fits'.format(nPup,)
+    else:
+        fname_pup = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
+        fname_lys = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
+    
+    fpath_pup = fdir / fname_pup
+    fpath_lys = fdir / fname_lys
+    Pupil2d    = fits.getdata(fpath_pup)
+    LyotStop2d = fits.getdata(fpath_lys)
+    
+    if solver != 'gurobipy' and solver != 'stdgrb':
+        solver = 'scipy'
 
 params = coro.to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
                  rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau, 

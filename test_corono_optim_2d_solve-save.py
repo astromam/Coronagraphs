@@ -28,9 +28,9 @@ slvCrossover    = 0
 slvMethod       = 2
 allLogToConsole = 0
 
-MinIsland   = True
-Binarity    = True
-FirstDerGlobalLim = 200.
+MinIsland   = False
+Binarity    = False
+FirstDerGlobalLim = 100.
 BinarityReg       = 0.1
 
 #nPup = corono0.params['nPup']
@@ -53,7 +53,7 @@ cDarkHole = 7.0
 tau   = 0.4
 
 # CtrBtwnPix2
-corono_name = 'SP' # 'SP' or 'APLC'
+corono_name = 'APLC' # 'SP' or 'APLC'
 CtrBtwnPix  = True
 CtrBtwnPix2 = True
 Pupil2dSym  = True
@@ -80,6 +80,7 @@ fpath_pup = fdir / fname_pup
 fpath_lys = fdir / fname_lys
 Pupil2d    = fits.getdata(fpath_pup)
 LyotStop2d = fits.getdata(fpath_lys)
+
 
 if solver != 'gurobipy' and solver != 'stdgrb':
     solver = 'scipy'
