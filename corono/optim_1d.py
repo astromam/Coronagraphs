@@ -49,14 +49,27 @@ def get_default_params_ProblemMatrix():
         solver for the programming problem (linear for the moment). 
         The user can choose between:
             
-        - 'gurobipy'     : python implementation of the gurobi solver.
-        Code from gurobi: http://www.gurobi.com/documentation/
+            - 'gurobipy'     : python implementation of the gurobi solver.
+            Code from gurobi: http://www.gurobi.com/documentation/
         
-        - 'stdgrb'       : cython wrapper that calls gurobi through its C interface.        
-        Code by R. Flamary: https://github.com/rflamary/stdgrb
+            - 'stdgrb'       : cython wrapper that calls gurobi through its C interface.        
+            Code by R. Flamary: https://github.com/rflamary/stdgrb
         
-        - 'scipy.optimize.linprog': linear programming solver from scipy package.
-        Documentation: https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.linprog.html
+            - 'scipy.optimize.linprog': linear programming solver from scipy package.
+            Documentation: https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.linprog.html
+    
+    problem_name : string (default='MaxTau')
+        name of the optimization problem.
+        The user can choose between:
+            
+            - 'MaxTau': maximization of the apodizer transmission for a given 
+            contrast
+            
+            - 'MaxContrastL1': maximization of the contrast for a given apodizer 
+            transmission under L1-norm constraints
+            
+            - 'MaxContrastLinf': maximization of the contrast for a given apodizer 
+            transmission under Linf-norm constraints
     
     slvCrossover : integer (default=0)
         gurobi solver parameter for barrier crossover strategy. 
@@ -126,6 +139,7 @@ def get_default_params_ProblemMatrix():
         
     """
     tmp = {'cDarkHole':8, 'tau':0.2, 'solver':'stdgrb', 
+           'problem_name':'MaxTau',
            'slvCrossover':0, 'slvLogToConsole':0, 'slvMethod':2,
            'allLogToConsole':0, 
            'FirstDer':False, 'FirstDerLim':0.01, 
@@ -190,7 +204,7 @@ class ProblemMatrix(object):
         aaa : array_like
             Vector indexing the points in the coronagraphic image
             
-        idz_dz : array_like
+        idx_dz : array_like
             Vector indexing the points of the dark zone in the coronagraphic 
             image
             
@@ -252,12 +266,6 @@ class ProblemMatrix(object):
         self.aaa     = np.arange(self.corono.nImg+1) 
         self.idx_dz  = list(self.aaa[self.dz])
         self.ndz     = len(self.idx_dz)
-
-        self.dzdirect      = (self.corono.xi >= self.corono.rho0direct) \
-                & (self.corono.xi <= self.corono.rho1direct) 
-        self.idx_dzdirect  = list(self.aaa[self.dzdirect])
-        self.ndzdirect     = len(self.idx_dzdirect)
-
     
         self.pup     = (self.corono.Pupil1d > 0.)
         self.bbb     = np.arange(self.corono.nPup)
@@ -284,7 +292,7 @@ class ProblemMatrix(object):
                
 #%%
     def __contains__(self, item):
-        """
+        r"""
         Checks params for a given item.
         
         Parameters
@@ -302,7 +310,7 @@ class ProblemMatrix(object):
     
 #%%     
     def __getattr__(self, name):
-        """
+        r"""
         Checks the attribute for the params.
         
         Parameters
@@ -320,8 +328,8 @@ class ProblemMatrix(object):
 
 #%%        
     def check_params(self):
-        """
-        Check the params.
+        r"""
+        Checks the params.
         
         Returns
         ----------
@@ -335,7 +343,7 @@ class ProblemMatrix(object):
   
 #%%    
     def load_params(self, fname):
-        """
+        r"""
         Loads the params from a given filename 
         using JavaScript Object Notation (JSON).
         
@@ -354,23 +362,16 @@ class ProblemMatrix(object):
 #%%
     def compute_response_matrices(self):
         r"""
+        Computes the response matrix for the coronagraph with or without 
+        the focal plane mask for each point at the entrance pupil.
+        
+        """
 
-        Parameters
-        ----------
-
+        r"""
         direct_field_re_t_tmp, direct_field_im_t_tmp : array_like, array_like
             Real and imaginary part of the non coronagraphic response matrix 
-            for all the points in the pupil :math:`P_0` and at all the wavelengths
-            
-        corono_field_re_t_tmp, corono_field_im_t_tmp : array_like, array_like
-            Real and imaginary part of the coronagraphic response matrix 
-            for all the points in the pupil :math:`P_0` and at all the wavelengths
-         
-        corono_field_t_re2 : array_like
-            Real part of the coronagraphic response matrix 
-            for all the non zero points in the pupil and at all the wavelengths
-
-        
+            for all the points in the pupil :math:`P_0` and at all the wavelengths.
+            These terms are only computed for 'MaxTau' optimization problem
         """
         if self.problem_name == 'MaxTau':
             direct_field_t_tmp = np.zeros((self.npp, self.corono.nlam, 
@@ -387,7 +388,16 @@ class ProblemMatrix(object):
             t1 = time.time()
             self.print_log('direct matrix computation time: {0:.2f}s'.format(t1-t0))
 
-
+        r"""
+        corono_field_t_tmp : array_like
+            Complex amplitude of the coronagraphic 
+            response matrix for all the points in the pupil :math:`P_0` and 
+            at all the wavelengths
+            
+        corono_field_re_t_tmp, corono_field_im_t_tmp : array_like, array_like
+            Real and imaginary parts of the coronagraphic response matrix
+            for all the points in the pupil :math:`P_0` and at all the wavelengths        
+        """
         corono_field_t_tmp = np.zeros((self.npp, self.corono.nlam, 
                                    self.corono.nImg+1), dtype='complex128')
 
@@ -402,6 +412,13 @@ class ProblemMatrix(object):
         t1 = time.time()
         self.print_log('corono matrix computation time: {0:.2f}s'.format(t1-t0))
         
+        r"""
+        corono_field_re_t, corono_field_im_t : array_like, array_like
+            Real and imaginary parts of the coronagraphic response matrix
+            for all the points in the pupil :math:`P_0` and at all the wavelengths.
+            These arrays are sliced from corono_field_re_t_tmp, corono_field_im_t_tmp 
+            for the points inside the region of interest in the final image plane.
+        """
         corono_field_re_t = np.reshape(
                 corono_field_re_t_tmp[:,:,self.idx_dz], 
                 (self.npp, self.corono.nlam*self.ndz))
@@ -410,6 +427,12 @@ class ProblemMatrix(object):
                 corono_field_im_t_tmp[:,:,self.idx_dz], 
                 (self.npp, self.corono.nlam*self.ndz))
 
+        r"""
+        corono_field_t : array_like
+            Concatenation of the real and imaginary parts of the coronagraphic 
+            response matrix for all the points in the pupil :math:`P_0` and 
+            at all the wavelengths
+        """
         self.corono_field_t    = np.concatenate((corono_field_re_t,
                                                   corono_field_im_t), 
                                                   axis=1)
@@ -418,7 +441,7 @@ class ProblemMatrix(object):
 #%%        
     def solve_model(self):
         """
-        Solves the optimization problem for the model using the gurobi solver.
+        Solves the optimization problem for the model with the selected solver.
         
         Returns
         -------
@@ -594,7 +617,7 @@ class ProblemMatrix(object):
 #%%
     def print_log(self, string):
         r"""
-        Print a given log on the console depending on the value of 
+        Prints a given log on the console depending on the value of 
         allLogtoConsole parameter
         
         Parameters:
@@ -628,6 +651,7 @@ class MaxTau(ProblemMatrix):
         
         """
         super(MaxTau, self).__init__(**kwargs)
+
         self.neps = 0
 
         self.nvv  = 0
@@ -881,9 +905,11 @@ class MaxContrast(ProblemMatrix):
 
         if self.Lnorm == 'Linf':
             self.neps = 1
-        else:
+        elif self.Lnorm == 'L1':
             self.neps = self.ndz
-            
+        else:
+            raise NameError('{0}: Not an existing L-type norm!'.format(self.problem_name))
+        
         self.nvv   = 0
         if self.MinIsland is True:
             self.nvv   = 2*(self.npp-1)            
