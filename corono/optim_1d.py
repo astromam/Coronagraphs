@@ -41,25 +41,98 @@ def get_default_params_ProblemMatrix():
         coronagraphic image.
     
     tau : float (default=0.2)
-        Integrated amplitude transmission :math:`\tau` of the apodizer :math:`\Phi` in 
-        fraction of the integrated amplitude transmissio of the pupil 
-        :math:`P_0`.
+        Integrated amplitude transmission :math:`\tau` of the apodizer 
+        :math:`\Phi` in fraction of the integrated amplitude transmission of 
+        the pupil :math:`P_0`.
+    
+    solver : string (default='stdgrb')
+        solver for the programming problem (linear for the moment). 
+        The user can choose between:
+            
+        - 'gurobipy'     : python implementation of the gurobi solver.
+        Code from gurobi: http://www.gurobi.com/documentation/
+        
+        - 'stdgrb'       : cython wrapper that calls gurobi through its C interface.        
+        Code by R. Flamary: https://github.com/rflamary/stdgrb
+        
+        - 'scipy.optimize.linprog': linear programming solver from scipy package.
+        Documentation: https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.linprog.html
+    
+    slvCrossover : integer (default=0)
+        gurobi solver parameter for barrier crossover strategy. 
+        See details: http://www.gurobi.com/documentation/8.0/refman/crossover.html
+        
+    slvLogToConsole : integer (default=0)
+        gurobi solver parameter for control console logging.
+        See details: http://www.gurobi.com/documentation/8.0/refman/logtoconsole.html 
+    
+    slvMethod : integer (default=2)
+        gurobi solver parameter to select the used algorithm to solve problem.
+        See details: http://www.gurobi.com/documentation/8.0/refman/method.html
+        
+        The user can choose between:
+    
+        - -1 : Automatic
+        
+        -  1 : Dual simplex method
+        
+        -  2 : Barrier
+        
+    allLogToConsole : integer (default=0)
+        control console logging for output from this class
+        
+    FirstDer : bool (default=False)
+        introduce constraints on the first derivative of the apodizer 
+        transmission in the optimization problem.
+    
+    FirstDerLim : float (default=0.01)
+        Upper limit on the absolute first derivative of the apodizer 
+        transmission.   
+    
+    SecondDer : bool (default=False)
+        introduce constraints on the second derivative of the apodizer 
+        transmission in the optimization problem.
+        
+    SecondDerLim : float (default=0.0001)
+        Upper limit on the absolute second derivative of the apodizer 
+        transmission.
+        
+    MinIsland : bool (default=False)
+        introduce constraints on the first derivative of the apodizer 
+        transmission in the optimization problem to minimize the number of 
+        islands in the apodization.
+        
+    FirstDerGlobalLim : float (default=0.01)
+        Upper limit on the integral of the absolute first derivative of the 
+        apodizer transmission.
+        
+    Binarity : bool (default=False)
+        introduce constraints of the apodizer transmission in the optimization 
+        problem to maximize the number of binary points in the apodization.
+    
+    BinarityReg : float (default=0.01)
+        Regularization term on the binarity of the apodizer transmission.
     
     Returns    
     ----------
     tmp : dict
-        Dictionnary of parameters with their default values.
+        Dictionary of parameters with their default values.
+        
+    References
+    ----------        
+    .. [1] Gurobi Optimization, LLC, Gurobi Optimizer Reference Manual (2018).
+    
+           http://www.gurobi.com
         
     """
-    tmp = {'cDarkHole':8,'tau':0.2,
-           'cDarkHoledirect':2, 'solver':'stdgrb', 
-           'slvCrossover':0, 'slvLogToConsole':1, 'slvMethod':2,
+    tmp = {'cDarkHole':8, 'tau':0.2, 'solver':'stdgrb', 
+           'slvCrossover':0, 'slvLogToConsole':0, 'slvMethod':2,
            'allLogToConsole':0, 
-           'FirstDer':False, 'SecondDer': False,
-           'FirstDerLim':0.01, 'SecondDerLim':0.0001,
-           'MinIsland':False,
-           'FirstDerGlobalLim':0.01,
+           'FirstDer':False, 'FirstDerLim':0.01, 
+           'SecondDer': False, 'SecondDerLim':0.0001,
+           'MinIsland':False, 'FirstDerGlobalLim':0.01,
            'Binarity':False, 'BinarityReg':0.1}
+    
     return tmp
 
 #%%
@@ -143,31 +216,28 @@ class ProblemMatrix(object):
             Vector indexing the non zero points of the pupil in the Lyot stop
             :math:`L`
             
-        direct_field_re_t_tmp, direct_field_im_t_tmp : array_like, array_like
-            Real and imaginary part of the non coronagraphic response matrix 
-            for all the points in the pupil :math:`P_0` and at all the wavelengths
+        direct_field_re_t_tmp : array_like, array_like
+            Real part of the non coronagraphic response matrix for all the 
+            points in the pupil :math:`P_0` and at all the wavelengths
             
-        corono_field_re_t_tmp, corono_field_im_t_tmp : array_like, array_like
-            Real and imaginary part of the coronagraphic response matrix 
-            for all the points in the pupil :math:`P_0` and at all the wavelengths
-         
-        corono_field_t_re2 : array_like
-            Real part of the coronagraphic response matrix 
-            for all the non zero points in the pupil and at all the wavelengths
-                                
+        corono_field_t : array_like
+            Coronagraphic response matrix for all the points in the pupil 
+            :math:`P_0` and at all the wavelengths
+                                         
         A, b, c : array_like, array_like, array_like
             Matrices for the optimization problem that writes as
             
             .. math:: \max_{\tau} c^{T}.x,    
             under the constraint :math:`A.x \leq b`.
+
+        m : gurobi model
+            Gurobi model of the problem to solve when the used solver is 
+            gurobipy
         
         TR : float
             Integrated amplitude transmission of the pupil :math:`P_0` 
             with respect to that of the clear pupil
-            
-        m : gurobi model
-            Gurobi model of the problem to solve
-            
+                       
         Apod : array_like
             Apodizer :math:`\Phi` to be generated
         
@@ -196,21 +266,21 @@ class ProblemMatrix(object):
     
         self.lys     = (self.corono.LyotStop1d > 0.)
         self.idx_lys = list(self.bbb[self.lys]) 
-        
+
+        self.direct_field_re_t_tmp = None        
         self.corono_field_t = None
-        self.direct_field_re_t_tmp = None
-        
+      
         self.A       = None
         self.b       = None
         self.c       = None
         
         self.m       = None
-        
-        self.Apod    = np.zeros((self.corono.nPup))
-
+    
         self.TR      = np.sum(2.*np.pi*self.corono.Pupil1d *np.linspace(
                 0.5,self.corono.nPup+0.5,num=self.corono.nPup)\
                 /(2.*self.corono.nPup)**2)
+    
+        self.Apod    = np.zeros((self.corono.nPup))   
                
 #%%
     def __contains__(self, item):
@@ -283,7 +353,25 @@ class ProblemMatrix(object):
 
 #%%
     def compute_response_matrices(self):
+        r"""
 
+        Parameters
+        ----------
+
+        direct_field_re_t_tmp, direct_field_im_t_tmp : array_like, array_like
+            Real and imaginary part of the non coronagraphic response matrix 
+            for all the points in the pupil :math:`P_0` and at all the wavelengths
+            
+        corono_field_re_t_tmp, corono_field_im_t_tmp : array_like, array_like
+            Real and imaginary part of the coronagraphic response matrix 
+            for all the points in the pupil :math:`P_0` and at all the wavelengths
+         
+        corono_field_t_re2 : array_like
+            Real part of the coronagraphic response matrix 
+            for all the non zero points in the pupil and at all the wavelengths
+
+        
+        """
         if self.problem_name == 'MaxTau':
             direct_field_t_tmp = np.zeros((self.npp, self.corono.nlam, 
                                        self.corono.nImg+1), dtype='complex128')
