@@ -52,10 +52,12 @@ def get_default_params_ProblemMatrix():
             - 'gurobipy'     : python implementation of the gurobi solver.
             Code from gurobi: http://www.gurobi.com/documentation/
         
-            - 'stdgrb'       : cython wrapper that calls gurobi through its C interface.        
+            - 'stdgrb'       : cython wrapper that calls gurobi through its C 
+            interface.        
             Code by R. Flamary: https://github.com/rflamary/stdgrb
         
-            - 'scipy.optimize.linprog': linear programming solver from scipy package.
+            - 'scipy.optimize.linprog': linear programming solver from scipy 
+            package.
             Documentation: https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.linprog.html
     
     problem_name : string (default='MaxTau')
@@ -65,11 +67,11 @@ def get_default_params_ProblemMatrix():
             - 'MaxTau': maximization of the apodizer transmission for a given 
             contrast
             
-            - 'MaxContrastL1': maximization of the contrast for a given apodizer 
-            transmission under L1-norm constraints
+            - 'MaxContrastL1': maximization of the contrast for a given 
+            apodizer transmission under L1-norm constraints
             
-            - 'MaxContrastLinf': maximization of the contrast for a given apodizer 
-            transmission under Linf-norm constraints
+            - 'MaxContrastLinf': maximization of the contrast for a given 
+            apodizer transmission under Linf-norm constraints
     
     slvCrossover : integer (default=0)
         gurobi solver parameter for barrier crossover strategy. 
@@ -362,17 +364,38 @@ class ProblemMatrix(object):
 #%%
     def compute_response_matrices(self):
         r"""
-        Computes the response matrix for the coronagraph with or without 
-        the focal plane mask for each point at the entrance pupil.
+        Computes the response matrix for the coronagraph with and without 
+        the focal plane mask.
         
-        """
-
-        r"""
+        Notes
+        -----
         direct_field_re_t_tmp, direct_field_im_t_tmp : array_like, array_like
             Real and imaginary part of the non coronagraphic response matrix 
             for all the points in the pupil :math:`P_0` and at all the wavelengths.
             These terms are only computed for 'MaxTau' optimization problem
+        
+        corono_field_t_tmp : array_like
+            Complex amplitude of the coronagraphic 
+            response matrix for all the points in the pupil :math:`P_0` and 
+            at all the wavelengths
+            
+        corono_field_re_t_tmp, corono_field_im_t_tmp : array_like, array_like
+            Real and imaginary parts of the coronagraphic response matrix
+            for all the points in the pupil :math:`P_0` and at all the wavelengths
+
+        corono_field_re_t, corono_field_im_t : array_like, array_like
+            Real and imaginary parts of the coronagraphic response matrix
+            for all the points in the pupil :math:`P_0` and at all the wavelengths.
+            These arrays are sliced from corono_field_re_t_tmp, corono_field_im_t_tmp 
+            for the points inside the region of interest in the final image plane.
+
+        corono_field_t : array_like
+            Concatenation of the real and imaginary parts of the coronagraphic 
+            response matrix for all the points in the pupil :math:`P_0` and 
+            at all the wavelengths
+        
         """
+
         if self.problem_name == 'MaxTau':
             direct_field_t_tmp = np.zeros((self.npp, self.corono.nlam, 
                                        self.corono.nImg+1), dtype='complex128')
@@ -384,20 +407,11 @@ class ProblemMatrix(object):
                 direct_field_t_tmp[i] = self.corono.compute_direct_field_1d(Apod1d)
                 Apod1d[val] = 0            
             self.direct_field_re_t_tmp = direct_field_t_tmp.real
-    #        self.direct_field_im_t_tmp = direct_field_t_tmp.imag    
+            #        self.direct_field_im_t_tmp = direct_field_t_tmp.imag    
             t1 = time.time()
             self.print_log('direct matrix computation time: {0:.2f}s'.format(t1-t0))
 
-        r"""
-        corono_field_t_tmp : array_like
-            Complex amplitude of the coronagraphic 
-            response matrix for all the points in the pupil :math:`P_0` and 
-            at all the wavelengths
             
-        corono_field_re_t_tmp, corono_field_im_t_tmp : array_like, array_like
-            Real and imaginary parts of the coronagraphic response matrix
-            for all the points in the pupil :math:`P_0` and at all the wavelengths        
-        """
         corono_field_t_tmp = np.zeros((self.npp, self.corono.nlam, 
                                    self.corono.nImg+1), dtype='complex128')
 
@@ -412,13 +426,7 @@ class ProblemMatrix(object):
         t1 = time.time()
         self.print_log('corono matrix computation time: {0:.2f}s'.format(t1-t0))
         
-        r"""
-        corono_field_re_t, corono_field_im_t : array_like, array_like
-            Real and imaginary parts of the coronagraphic response matrix
-            for all the points in the pupil :math:`P_0` and at all the wavelengths.
-            These arrays are sliced from corono_field_re_t_tmp, corono_field_im_t_tmp 
-            for the points inside the region of interest in the final image plane.
-        """
+
         corono_field_re_t = np.reshape(
                 corono_field_re_t_tmp[:,:,self.idx_dz], 
                 (self.npp, self.corono.nlam*self.ndz))
@@ -427,12 +435,6 @@ class ProblemMatrix(object):
                 corono_field_im_t_tmp[:,:,self.idx_dz], 
                 (self.npp, self.corono.nlam*self.ndz))
 
-        r"""
-        corono_field_t : array_like
-            Concatenation of the real and imaginary parts of the coronagraphic 
-            response matrix for all the points in the pupil :math:`P_0` and 
-            at all the wavelengths
-        """
         self.corono_field_t    = np.concatenate((corono_field_re_t,
                                                   corono_field_im_t), 
                                                   axis=1)
@@ -441,18 +443,18 @@ class ProblemMatrix(object):
 #%%        
     def solve_model(self):
         """
-        Solves the optimization problem for the model with the selected solver.
-        
+        Solves the optimization problem model for the model with the selected solver.
+               
         Returns
         -------
         Apod
-            Solution for the optimization problem
+            Apodizer solution :math:`\Phi` for the optimization problem.
         
         """
         self.compute_matrices()
 
         t0 = time.time()
-        
+
         if stdgrb and self.solver == 'stdgrb':
             self.print_log('solving problem with stdgrb package')
             Apodtmp, val = stdgrb.lp_solve(self.c, A=(self.A).T, b=self.b, 
@@ -561,35 +563,7 @@ class ProblemMatrix(object):
 #%%    
     def compute_matrices(self):
         r"""
-        Computes the matrices for the optimization problem that consists in 
-        maximizing the contrast in a given search area in the coronagraphic 
-        image for a set integrated apodizer transmission :math:`\tau`. In terms
-        of matrices, the optimization problem writes as
-            
-        .. math:: \max_{\tau} c^{T}.x,
-            
-        under the constraint :math:`A.x \leq b`.
-                
-        The variable :math:`x` is a concatenation of the apodizer transmission 
-        function :math:`\Phi` and an auxiliary variable :math:`\epsilon`.
-        The variable :math:`\epsilon` represents the contrast to maximize in 
-        the search area ranging between :math:`\rho_0` and :math:`\rho_1` in 
-        the coronagraphic image. It can either depend on the position 
-        :math:`\xi` in the coronagraphic image or not (:math:`L_1`-norm or 
-        :math:`L_\infty`-norm problem). 
-        The variables follow the notations of [1]_ and [2]_.
-
-        Parameters
-        -----------
-
-                         
-        Returns
-        -----------
-
-
-        References
-        ----------
-
+        Computes the matrices for the optimization problem.
                                 
         """
         
@@ -644,10 +618,24 @@ class MaxTau(ProblemMatrix):
     Defines the ProblemMatrix subclass for the optimization problem that 
     maximizes the integrated apodizer transmission for a given contrast 
     :math:`C` in the search area inside the coronagraphic image.
+    
     """
     def __init__(self, **kwargs):
-        """
-        Constructor for the Matrix problem with the coronagraph object
+        r"""
+        Constructor for the MaxTau problem with the coronagraph object
+        
+        Attributes
+        ----------
+        
+        eps : int (default=0)
+            size of the variable :math:`\epsilon` for contrast.
+            eps is null for MaxTau optimization problem
+        
+        nvv : int (default=0)
+            size of the auxiliary variables for the apodizer derivative 
+        
+        nbb : int (default=0)
+            size of the auxiliary variables for the apodizer binarity
         
         """
         super(MaxTau, self).__init__(**kwargs)
@@ -656,7 +644,8 @@ class MaxTau(ProblemMatrix):
 
         self.nvv  = 0
         if self.MinIsland is True:
-            self.nvv  = 2*(self.npp-1)
+            self.npp_bis = self.npp-1
+            self.nvv     = 2*(self.npp_bis)
         
         self.nbb  = 0
         if self.Binarity is True:
@@ -667,46 +656,36 @@ class MaxTau(ProblemMatrix):
         r"""
         Computes the matrices for the optimization problem that consists in 
         maximizing the amplitude transmission of the apodizer :math:`\Phi` 
-        for a set contrast :math:`C` in a given search area in the coronagraphic 
-        image. In terms of matrices, the optimization problem writes as
+        for a set contrast :math:`C` in a given search area in the 
+        coronagraphic image. In terms of matrices, the optimization problem 
+        writes as
             
         .. math:: \max_{C} c^{T}.x,
             
         under the constraint :math:`A.x \leq b`.
                 
         The variable :math:`x` represents the apodizer transmission 
-        function :math:`\Phi`. The variables follow the notations of [1]_ and [2]_.       
+        function :math:`\Phi`. The variables follow the notations of [1]_ and 
+        [2]_.       
         
-        Parameters
+        Notes
         -----------        
-        A0, b0 : array_like, array_like
-            Contrast constraint on the coronagraphic electric field :math:`\Psi_D`
-            that is represented the following equation:
+        A0 : array_like
+            Contrast constraint on the coronagraphic electric field 
+            :math:`\Psi_D` that is represented the following equation:
                 
             :math:`\Psi_D(\xi,\lambda)-10^{-C/2}\Psi_0(\xi,\lambda) \leq 0`. 
             
             :math:`\xi` and :math:`\lambda` denote the image plane coordinate 
-            and wavelength. The term :math:`\Psi_0` represents the coronagraphic 
-            electric field in the absence of focal plane mask (FPM).
+            and wavelength. The term :math:`\Psi_0` represents the 
+            coronagraphic electric field in the absence of focal plane mask 
+            (FPM).
             
-        A1, b1 : array_like, array_like
+        A1 : array_like
             Contrast constraints on the coronagraphic electric field Psi_D
             that is represented the following equations:
                 
             :math:`-\Psi_D(\xi,\lambda)-10^{-C/2}\Psi_0(\xi,\lambda) \leq 0`.
-
-        A2, b2 : array_like, array_like
-            Constraint on the transmission of the amplitude apodization 
-            :math:`\Phi`
-            
-            :math:`- \Phi(r) \leq 0`,
-            in which :math:`r` represents the radial coordinate of the pupil.
-            
-        A3, b3 : array_like, array_like
-            Constraint on the transmission of the amplitude apodization 
-            :math:`\Phi`
-            
-            :math:`\Phi(r) \leq 1`.
         
         Returns 
         ----------
@@ -722,133 +701,297 @@ class MaxTau(ProblemMatrix):
             
         References
         ----------
-        .. [1] M. N'Diaye, L. Pueyo, and R. Soummer, Apodized Pupil Lyot Coronagraphs for 
-            Arbitrary Apertures. IV. Reduced Inner Working Angle and Increased 
-            Robustness to Low-order Aberrations, ApJ 799, 2, 225 (2015).
+        .. [1] M. N'Diaye, L. Pueyo, and R. Soummer, "Apodized Pupil Lyot 
+            Coronagraphs for Arbitrary Apertures. IV. Reduced Inner Working 
+            Angle and Increased Robustness to Low-order Aberrations", ApJ 799, 
+            2, 225 (2015).
             
             http://iopscience.iop.org/article/10.1088/0004-637X/799/2/225/meta.
             
-        .. [2] M. N'Diaye, R. Soummer, L. Pueyo, A. Carlotti, C. Stark, M. Perrin,
-            Apodized Pupil Lyot Coronagraphs for Arbitrary Apertures. V. Hybrid
-            Shaped Pupil Designs for Imaging Earth-like planets with Future 
-            Space Observatories, ApJ 818, 2, 163 (2016). 
+        .. [2] M. N'Diaye, R. Soummer, L. Pueyo, A. Carlotti, C. Stark, 
+            M. Perrin, "Apodized Pupil Lyot Coronagraphs for Arbitrary 
+            Apertures. V. Hybrid Shaped Pupil Designs for Imaging Earth-like 
+            planets with Future Space Observatories", ApJ 818, 2, 163 (2016). 
             
             http://iopscience.iop.org/article/10.3847/0004-637X/818/2/163/meta
                       
             
         """
+        # Compute constant term that includes contrast
         cst = 10.**(-self.cDarkHole/2.)/np.sqrt(2.)
 
+        # Compute contrast constraints on the coronagraphic electric field
         A0  =  self.corono_field_t \
         - cst*self.direct_field_re_t_tmp[:,(self.corono.nlam-1)//2,0, None]
         A1  = -self.corono_field_t \
         - cst*self.direct_field_re_t_tmp[:,(self.corono.nlam-1)//2,0, None]
-    
-        b0  = np.zeros((self.corono.nlam*self.ndz*2))
-        b1  = np.zeros((self.corono.nlam*self.ndz*2))
-                                    
+         
+        # Yield the A and b matrices for the optimization problem                               
         self.A = np.concatenate((A0,A1), axis=1)
-        self.b = np.concatenate((b0,b1))
-
-        if (stdgrb and self.solver == 'stdgrb') or (gb and self.solver == 'gurobipy'):
+        self.b = np.zeros((2*self.corono.nlam*self.ndz*2))
+        
+        # Add apodizer normalization contraints for gurobi solvers
+        if (stdgrb and self.solver == 'stdgrb') \
+        or (gb and self.solver == 'gurobipy'):
             self.compute_problem_matrices_gurobi()
-
+        
+        # Add apodizer first derivative constraints
         if self.FirstDer is True:
             self.compute_problem_matrices_1stDer()
             
+        # Add apodizer second derivative constraints            
         if self.SecondDer is True:
             self.compute_problem_matrices_2ndDer()
-
+            
+        # Add apodizer binarity constraints
         if self.Binarity is True:
             self.compute_problem_matrices_Binarity()
             
+        # Add apodizer minimal islands constraints    
         if self.MinIsland is True:
             self.compute_problem_matrices_MinIsland()
-               
+        
+        # Compute the cost function
         ctmp = np.zeros((self.npp + self.nbb + self.nvv))
         ctmp[:self.npp] = np.asarray(self.idx_pup)+0.5
         ctmp[self.npp:self.npp+self.nbb] = self.BinarityReg*np.ones(self.nbb)
         self.c = - 2.*np.pi*ctmp/(2.*self.corono.nPup)**2/self.TR
         
+        # Return the A, b, and c matrices
         return self.A, self.b, self.c
 
 #%%
     def compute_problem_matrices_gurobi(self):
+        r"""
+        Computes constraints to range the amplitude transmission of the 
+        apodizer :math:`\Phi` between 0 and 1. It writes as
+        
+        :math:`0 \leq \Phi(r) \leq 1`,
+        
+        in which :math:`r` represents the radial coordinate of the pupil.
+        This computation is used to solve the optimization problem with gurobi
+        
+        Notes
+        -----
+        A2, b2 : array_like, array_like
+            Constraint on the amplitude transmission of the apodization 
+            :math:`\Phi`
+            
+            :math:`- \Phi(r) \leq 0`,
+            
+            in which :math:`r` represents the radial coordinate of the pupil.
+            
+        A3, b3 : array_like, array_like
+            Constraint on the amplitude transmission of the apodization 
+            :math:`\Phi`
+            
+            :math:`\Phi(r) \leq 1`.        
+        
+        """
+        # Compute constraints on the apodizer transmission
         A2  = -np.identity(self.npp)
         A3  =  np.identity(self.npp)
         b2  = np.zeros(self.npp)
         b3  = np.ones(self.npp)
+        
+        # Update the A, b, and c matrices
         self.A = np.concatenate((self.A,A2,A3), axis=1)
         self.b = np.concatenate((self.b,b2,b3))
         
 #%%        
-    def compute_problem_matrices_1stDer(self):
+    def compute_problem_matrices_1stder(self):
+        r"""
+        Computes matrices to add constraints on the apodizer first derivative.
+
+        Notes
+        -----
+        A4, b4 : array_like, array_like
+            Constraint on the amplitude transmission of the apodization 
+            :math:`\Phi`
+            
+            :math:`|\frac{d\Phi(r)}{dr}| \leq lim_1`,
+            
+            in which :math:`r` represents the radial coordinate of the pupil.
+                            
+        """
+        # Compute the apodizer first derivative constraints
         A4  = np.diff(np.identity(self.npp), axis=1)
         b4  = self.FirstDerLim*np.ones(self.npp)
+        
+        # Update the A, b, and c matrices
         self.A = np.concatenate((self.A, A4, -A4), axis=1)
         self.b = np.concatenate((self.b, b4, b4))
 
 #%%        
     def compute_problem_matrices_2ndDer(self):
+        r"""
+        Computes matrices to add constraints on the apodizer second derivative.
+
+        Notes
+        -----
+        A5, b5 : array_like, array_like
+            Constraint on the amplitude transmission of the apodization 
+            :math:`\Phi`
+            
+            :math:`|\frac{d^2\Phi(r)}{dr^2}| \leq lim_2`,
+            
+            in which :math:`r` represents the radial coordinate of the pupil.
+                            
+        """
+        # Compute the apodizer second derivative constraints        
         A5  = np.diff(np.diff(np.identity(self.npp), axis=1), axis=1)
         b5  = self.SecondDerLim*np.ones(self.npp)
+        
+        # Update the A, b, and c matrices
         self.A = np.concatenate((self.A, A5, -A5), axis=1)
         self.b = np.concatenate((self.b, b5, b5))        
 
 #%%
     def compute_problem_matrices_Binarity(self):
+        r"""
+        Computes matrices to add constraints on the apodizer binarity.
         
+        Notes
+        -----
+        A11, b11 : array_like, array_like
+            Constraint on the apodization transmission such that
+            
+            :math:`\Phi(r) - w^{+}(r) + w^{-}(r) \leq 0.5`,
+            
+            where :math:`w^{+}` and :math:`w^{-}` are two auxiliary variables
+            to constrain the absolute value of the derivative to remain 
+            positive. 
+            
+        A12, b12 : array_like, array_like
+            Constraint on the apodization transmission such that
+            
+            :math:`-\Phi(r) + w^{+}(r) - w^{-}(r) \leq -0.5`.
+            
+        A13 : array_like
+            Constraint on the auxiliary variable :math:`w^{+}` to force it 
+            to be positive with
+            
+            :math:`- w^{+}(r) \leq 0`.
+        
+        A14 : array_like
+            Constraint on the auxiliary variable :math:`w^{-}` to force it 
+            to be positive with
+            
+            :math:`- w^{-}(r) \leq 0`.        
+        
+        """
+        # Reshape the matrice A to account for the auxialiary variables
         A00    = np.zeros((self.nbb, np.shape(self.A)[1]))            
         self.A = np.concatenate((self.A, A00))
 
+        # Compute an intermediate matrix for further computation of A matrices
         AI     = np.identity(self.npp)
         
+        # Add constraints on the apodizer transmission with auxiliary variables
         A11    = np.concatenate(( AI, -AI,  AI))
         A12    = np.concatenate((-AI,  AI, -AI))
-        
+
+        # Compute an intermediate matrix for further computation of A matrices        
         AZ     = np.zeros((self.npp, self.npp))                       
 
+        # Add positivity constraints on the auxiliary variables
         A13    = np.concatenate((AZ, -AI,  AZ))
         A14    = np.concatenate((AZ,  AZ, -AI))
-        
+
+        # Compute the b terms corresponding to A11 and A12 matrices        
         b11    = 0.5*np.ones(self.npp)
-        b12    = -b11
+        
+        # Compute an intermediate matrix for b terms for A13 and A14 
         bZ     = np.zeros((self.npp))
        
-        self.A = np.concatenate((self.A, A11, A12, A13, A14), axis=1)
-        self.b = np.concatenate((self.b, b11, b12,  bZ,  bZ))
+        # Update the A, b, and c matrices
+        self.A = np.concatenate((self.A, A11,  A12, A13, A14), axis=1)
+        self.b = np.concatenate((self.b, b11, -b11,  bZ,  bZ))
         
+        # Warning on the code
         print('Constraint matrix for apodizer binarity is not yet validated!!!')
 
 #%%
     def compute_problem_matrices_MinIsland(self):
+        r"""
+        Computes matrices to add constraints that minimizes the islands in the
+        apodizer transmission.
+        
+        Notes
+        -----
+        A6, b6 : array_like, array_like
+            Constraint of the first derivative of the apodization such that
+            
+            :math:`\frac{d\Phi(r)}{dr} - v^{+}(r) + v^{-}(r) \leq 0`,
+            
+            where :math:`v^{+}` and :math:`v^{-}` are two auxiliary variables
+            to constrain the absolute value of the derivative to remain 
+            positive. 
+            
+        A7, b7 : array_like, array_like
+            Constraint of the first derivative of the apodization such that
+            
+            :math:`-\frac{d\Phi(r)}{dr} + v^{+}(r) - v^{-}(r) \leq 0`.
+            
+        A8 : array_like
+            Constraint on the auxiliary variable :math:`v^{+}` to force it 
+            to be positive with
+            
+            :math:`- v^{+}(r) \leq 0`.
+        
+        A9 : array_like
+            Constraint on the auxiliary variable :math:`v^{-}` to force it 
+            to be positive with
+            
+            :math:`- v^{-}(r) \leq 0`. 
+            
+        A10, b10: array_like, array_like
+            Constraint on the apodizer first derivative through the auxiliary 
+            variables with
+            
+            :math:`\int_{P_0} (v^{+}(r) + v^{-}(r))dr \leq \delta`.
+        
+        """
+        # Reshape the matrice A to account for the auxialiary variables
         A00    = np.zeros((self.nvv, np.shape(self.A)[1]))            
         self.A = np.concatenate((self.A, A00))
 
+        # Compute the derivative operator of the pupil
         AD  = np.diff(np.identity(self.npp), axis=1)
-        AI  = np.identity(self.npp-1)
         
-        AZ0 = np.zeros((self.nbb, self.npp-1))
-        
+        # Compute an intermediate matrix for further computation of A matrices
+        AI  = np.identity(self.npp_bis)
+
+        # Add terms corresponding to the binarity auxiliary variables        
+        AZ0 = np.zeros((self.nbb, self.npp_bis))
+
+        # Add constraints on the apodizer first derivative with 
+        # auxiliary variables        
         A6   = np.concatenate(( AD, AZ0, -AI,  AI))
         A7   = np.concatenate((-AD, AZ0,  AI, -AI))
-        
-        AZ1 = np.zeros((self.npp, self.npp-1))                       
-        AZ2 = np.zeros((self.npp-1, self.npp-1))
 
+        # Compute intermediate matrices for further computation of A matrices                                
+        AZ1 = np.zeros((self.npp, self.npp_bis))                       
+        AZ2 = np.zeros((self.npp_bis, self.npp_bis))
+
+        # Add positivity constraints on the auxiliary variables
         A8  = np.concatenate((AZ1, AZ0, -AI, AZ2))
         A9  = np.concatenate((AZ1, AZ0, AZ2, -AI))
 
-        bZ  = np.zeros((self.npp-1))
+        # Compute an intermediate matrix for b terms for A13 and A14 
+        bZ  = np.zeros((self.npp_bis))
 
+        # Add boundary constraints on the apodizer first derivative
         A10Z = np.zeros((self.npp))
-        A101 = np.ones(self.npp-1)
+        A101 = np.ones(self.npp_bis)
         A10  = np.concatenate((A10Z, np.zeros((self.nbb)), A101, A101))
+        
+        # Compute b term to bound the integral of the apodizer derivative
         b10  = [self.FirstDerGlobalLim]
         
+        # Update the A, b, and c matrices
         self.A = np.concatenate((self.A, A6, A7, A8, A9, A10[:, None]), axis=1)
         self.b = np.concatenate((self.b, bZ, bZ, bZ, bZ, b10))  
-
 
 #%%
     def compute_gurobi_model(self):
@@ -861,27 +1004,32 @@ class MaxTau(ProblemMatrix):
             Vector of the apodizer :math:`\Phi` in the non zero points of 
             the pupil :math:`P_0`
         
-        Returns
+        Notes
         -----------
         m : gurobi model
             Gurobi model of the MaxTau problem to solve
             
         """
-         
+        # Compute the length of the A matrix along axis=1  
         nA = np.shape(self.A)[1]
     
         # Create a new model               
         self.m = gb.Model("LP max tau new")
+        
         # Create variables
         ApodTmp = self.m.addVars(self.npp + self.nbb + self.nvv, lb=0.0, ub=1.0,
                                  name="ApodTmp")
+        
         # Set objective
         self.m.setObjective(gb.quicksum((self.c[i]*ApodTmp[i] 
                 for i in range(self.npp + self.nbb))), gb.GRB.MINIMIZE)
+        
         # Add constraint:                
         self.m.addConstrs((gb.quicksum((ApodTmp[i]*self.A[i,j] 
                 for i in range(self.npp + self.nbb + self.nvv) if self.A[i,j])) <=  self.b[j] 
                 for j in range(nA)), "cpos")
+        
+        # Update model
         self.m.update()          
 
 #%%
@@ -897,9 +1045,21 @@ class MaxContrast(ProblemMatrix):
     default_params = get_default_params_MaxContrastProblemMatrix()
     
     def __init__(self, **kwargs):
-        """
-        Constructor for the Matrix problem with 
-        the coronagraph object.
+        r"""
+        Constructor for the MaxContrast problem with the coronagraph object
+        
+        Attributes
+        ----------
+        
+        eps : int (default=0)
+            size of the variable :math:`\epsilon` for contrast.
+        
+        nvv : int (default=0)
+            size of the auxiliary variables for the apodizer derivative. 
+        
+        nbb : int (default=0)
+            size of the auxiliary variables for the apodizer binarity.
+        
         """
         super(MaxContrast,self).__init__(**kwargs)
 
@@ -912,7 +1072,8 @@ class MaxContrast(ProblemMatrix):
         
         self.nvv   = 0
         if self.MinIsland is True:
-            self.nvv   = 2*(self.npp-1)            
+            self.npp_bis = self.npp-1
+            self.nvv     = 2*(self.npp-1)            
 
         self.nbb  = 0
         if self.Binarity is True:
@@ -939,7 +1100,7 @@ class MaxContrast(ProblemMatrix):
         :math:`L_\infty`-norm problem). 
         The variables follow the notations of [1]_ and [2]_.
 
-        Parameters
+        Notes
         -----------
         Lnorm : string
             Type of L-norm for the optimization problem
@@ -949,7 +1110,7 @@ class MaxContrast(ProblemMatrix):
             They depend on the type of the norm (:math:`L_1` or :math:`L_\infty`) 
             for the problem.
 
-        A0, b0 : array_like, array_like
+        A0, b01 : array_like, array_like
             Contrast constraint on the coronagraphic electric field :math:`\Psi_D`
             that is represented the following equation:
                 
@@ -962,7 +1123,7 @@ class MaxContrast(ProblemMatrix):
             :math:`\xi` and :math:`\lambda` denote the image plane coordinate 
             and wavelength.
 
-        A1, b1 : array_like, array_like
+        A1, b01 : array_like, array_like
             Contrast constraint on the coronagraphic electric field :math:`\Psi_D`
             that is represented the following equation:
                 
@@ -971,22 +1132,8 @@ class MaxContrast(ProblemMatrix):
             
             :math:`-\Psi_D(\xi,\lambda) - \epsilon    \leq 0`
             if :math:`L_\infty`-norm constraint.
-            
-
-        A2, b2 : array_like, array_like
-            Constraint on the transmission of the amplitude apodization 
-            :math:`\Phi`
-            
-            :math:`- \Phi(r) \leq 0`,
-            in which :math:`r` represents the radial coordinate of the pupil.
-            
-        A3, b3 : array_like, array_like
-            Constraint on the transmission of the amplitude apodization 
-            :math:`\Phi`
-            
-            :math:`\Phi(r) \leq 1`.
-            
-        A4, b4 : array_like, array_like
+                        
+        A6, b6 : array_like, array_like
             Constraint on the variable epsilon that is related to contrast
             and represented by the following equation:
                 
@@ -994,7 +1141,7 @@ class MaxContrast(ProblemMatrix):
             
             :math:`-\epsilon     \leq 0` if :math:`L_\infty`-norm constraint.            
                   
-        A5, b5 : array_like
+        A7, b7 : array_like
             Constraint on the integral of the apodization amplitude transmission, 
             used as a proxy of the apodizer throughput. It is normalized to the
             integral of the transmission of the pupil :math:`P_0` and is larger 
@@ -1024,21 +1171,22 @@ class MaxContrast(ProblemMatrix):
 
         References
         ----------
-        .. [1] M. N'Diaye, L. Pueyo, and R. Soummer, Apodized Pupil Lyot Coronagraphs for 
-            Arbitrary Apertures. IV. Reduced Inner Working Angle and Increased 
-            Robustness to Low-order Aberrations, ApJ 799, 2, 225 (2015).
+        .. [1] M. N'Diaye, L. Pueyo, and R. Soummer, "Apodized Pupil Lyot 
+            Coronagraphs for Arbitrary Apertures. IV. Reduced Inner Working 
+            Angle and Increased Robustness to Low-order Aberrations", ApJ 799, 
+            2, 225 (2015).
             
             http://iopscience.iop.org/article/10.1088/0004-637X/799/2/225/meta.
             
-        .. [2] M. N'Diaye, R. Soummer, L. Pueyo, A. Carlotti, C. Stark, M. Perrin,
-            Apodized Pupil Lyot Coronagraphs for Arbitrary Apertures. V. Hybrid
-            Shaped Pupil Designs for Imaging Earth-like planets with Future 
-            Space Observatories, ApJ 818, 2, 163 (2016). 
+        .. [2] M. N'Diaye, R. Soummer, L. Pueyo, A. Carlotti, C. Stark, 
+            M. Perrin, "Apodized Pupil Lyot Coronagraphs for Arbitrary 
+            Apertures. V. Hybrid Shaped Pupil Designs for Imaging Earth-like 
+            planets with Future Space Observatories", ApJ 818, 2, 163 (2016). 
             
             http://iopscience.iop.org/article/10.3847/0004-637X/818/2/163/meta
-
-                                
+                                                      
         """
+        # Compute intermediate variables for electric field constraints 
         if self.Lnorm == 'Linf':
             I0 = np.ones(self.ndz)
             I0 = I0[None,:]
@@ -1055,124 +1203,295 @@ class MaxContrast(ProblemMatrix):
             c1 = 2.*np.pi*np.asarray(self.idx_dz)*(self.corono.Fmax\
                                   /self.corono.nImg)**2
         
+        # Compute constraints on the coronagraphic electric field
         A0  = np.concatenate(( self.corono_field_t, -I1), axis=0)
         A1  = np.concatenate((-self.corono_field_t, -I1), axis=0)
+        
+        # Compute constraint on the auxiliary variable epsilon
         A6  = np.concatenate((np.zeros((self.npp, self.ndz)), -I0), axis=0)
+        
+        # Compute constraint on the integral of the apodizer transmission
         A7  = np.concatenate((- 2.*np.pi*(np.asarray(self.idx_pup)+0.5)\
             *self.corono.Pupil1d[self.idx_pup]/(2.*self.corono.nPup)**2/self.TR, 
                                   Z0))
+        # Compute b term corresponding to A0 and A1
+        b01  = np.zeros((2*self.corono.nlam*self.ndz*2))
         
-        b0  = np.zeros((self.corono.nlam*self.ndz*2))
-        b1  = np.zeros((self.corono.nlam*self.ndz*2))
+        # Compute b terms corresponding to A6 and A7
         b6  = np.zeros(self.ndz)
         b7  = [-self.tau]
-                        
+        
+        #  Yield the A and b matrices for the optimization problem       
         self.A = np.concatenate((A0,A1,A6,A7[:,None]), axis=1)
-        self.b = np.concatenate((b0,b1,b6,b7))
+        self.b = np.concatenate((b01  ,b6,b7))
 
-        if (stdgrb and self.solver == 'stdgrb') or (gb and self.solver == 'gurobipy'):
+        # Add apodizer normalization contraints for gurobi solvers
+        if (stdgrb and self.solver == 'stdgrb') \
+        or (gb and self.solver == 'gurobipy'):
             self.compute_problem_matrices_gurobi()
-            
+
+        # Add apodizer first derivative constraints            
         if self.FirstDer is True:
             self.compute_problem_matrices_1stDer()
 
+        # Add apodizer second derivative constraints
         if self.SecondDer is True:
             self.compute_problem_matrices_2ndDer()     
 
+        # Add apodizer binarity constraints
         if self.Binarity is True:
             self.compute_problem_matrices_Binarity()
 
+        # Add apodizer minimal islands constraints
         if self.MinIsland is True:
             self.compute_problem_matrices_MinIsland()
-            
+
+        # Compute the cost function            
         self.c = np.concatenate((np.zeros(self.npp), c1, 
                                  -self.BinarityReg*np.ones(self.nbb), 
                                  np.zeros(self.nvv)), axis=0)
         
+        # Returns the A, b, and c matrices        
         return self.A, self.b, self.c
 
 #%%
     def compute_problem_matrices_gurobi(self):
+        r"""
+        Computes constraints to range the amplitude transmission of the 
+        apodizer :math:`\Phi` between 0 and 1. It writes as
+        
+        :math:`0 \leq \Phi(r) \leq 1`,
+        
+        in which :math:`r` represents the radial coordinate of the pupil.
+        This computation is used to solve the optimization problem with gurobi
+        
+        Notes
+        -----
+        A2, b2 : array_like, array_like
+            Constraint on the amplitude transmission of the apodization 
+            :math:`\Phi`
+            
+            :math:`- \Phi(r) \leq 0`,
+            
+            in which :math:`r` represents the radial coordinate of the pupil.
+            
+        A3, b3 : array_like, array_like
+            Constraint on the amplitude transmission of the apodization 
+            :math:`\Phi`
+            
+            :math:`\Phi(r) \leq 1`.        
+        
+        """
+        # Compute constraints on the apodizer transmission
         A2  = np.concatenate((-np.identity(self.npp), self.N0), axis=0)
         A3  = np.concatenate(( np.identity(self.npp), self.N0), axis=0)
         b2  = np.zeros(self.npp)
         b3  = np.ones(self.npp)
+        
+        # Update the A, b, and c matrices
         self.A = np.concatenate((self.A,A2,A3), axis=1)
         self.b = np.concatenate((self.b,b2,b3))        
 
 #%%        
     def compute_problem_matrices_1stDer(self):
+        r"""
+        Computes matrices to add constraints on the apodizer first derivative.
+
+        Notes
+        -----
+        A4, b4 : array_like, array_like
+            Constraint on the amplitude transmission of the apodization 
+            :math:`\Phi`
+            
+            :math:`|\frac{d\Phi(r)}{dr}| \leq lim_1`,
+            
+            in which :math:`r` represents the radial coordinate of the pupil.
+                            
+        """
+        # Compute the apodizer first derivative constraints
         A4  = np.diff(np.identity(self.npp), axis=1)
         A4  = np.concatenate((A4, self.N0[:, :self.npp-1]), axis=0)
         b4  = self.FirstDerLim*np.ones(self.npp)
+        
+        # Update the A, b, and c matrices
         self.A = np.concatenate((self.A, A4, -A4), axis=1)
         self.b = np.concatenate((self.b, b4, b4))        
 
 #%%        
     def compute_problem_matrices_2ndDer(self):
+        r"""
+        Computes matrices to add constraints on the apodizer second derivative.
+
+        Notes
+        -----
+        A5, b5 : array_like, array_like
+            Constraint on the amplitude transmission of the apodization 
+            :math:`\Phi`
+            
+            :math:`|\frac{d^2\Phi(r)}{dr^2}| \leq lim_2`,
+            
+            in which :math:`r` represents the radial coordinate of the pupil.
+                            
+        """
+        # Compute the apodizer second derivative constraints
         A5  = np.diff(np.diff(np.identity(self.npp), axis=1), axis=1)
         A5  = np.concatenate((A5, self.N0[:, :self.npp-2]), axis=0)
         b5  = self.SecondDerLim*np.ones(self.npp)
+        
+        # Update the A, b, and c matrices
         self.A = np.concatenate((self.A, A5, -A5), axis=1)
         self.b = np.concatenate((self.b, b5, b5))
 
 #%%
     def compute_problem_matrices_Binarity(self):
-
+        r"""
+        Computes matrices to add constraints on the apodizer binarity.
+        
+        Notes
+        -----
+        A11, b11 : array_like, array_like
+            Constraint on the apodization transmission such that
+            
+            :math:`\Phi(r) - w^{+}(r) + w^{-}(r) \leq 0.5`,
+            
+            where :math:`w^{+}` and :math:`w^{-}` are two auxiliary variables
+            to constrain the absolute value of the derivative to remain 
+            positive. 
+            
+        A12, b12 : array_like, array_like
+            Constraint on the apodization transmission such that
+            
+            :math:`-\Phi(r) + w^{+}(r) - w^{-}(r) \leq -0.5`.
+            
+        A13 : array_like
+            Constraint on the auxiliary variable :math:`w^{+}` to force it 
+            to be positive with
+            
+            :math:`- w^{+}(r) \leq 0`.
+        
+        A14 : array_like
+            Constraint on the auxiliary variable :math:`w^{-}` to force it 
+            to be positive with
+            
+            :math:`- w^{-}(r) \leq 0`.        
+        
+        """
+        # Reshape the matrice A to account for the auxialiary variables
         A00    = np.zeros((self.nbb, np.shape(self.A)[1]))            
         self.A = np.concatenate((self.A, A00))
 
+        # Compute an intermediate matrix for further computation of A matrices
         AI     = np.identity(self.npp)
 
+        # Add terms corresponding to the epsilon variable
         AZ0    = np.zeros((self.neps, self.npp))
-        
+
+        # Add constraints on the apodizer transmission with auxiliary variables
         A11    = np.concatenate(( AI, AZ0, -AI,  AI))
         A12    = np.concatenate((-AI, AZ0,  AI, -AI))
-        
+
+        # Compute an intermediate matrix for further computation of A matrices                        
         AZ     = np.zeros((self.npp, self.npp))                       
 
+        # Add positivity constraints on the auxiliary variables
         A13    = np.concatenate((AZ, AZ0, -AI,  AZ))
         A14    = np.concatenate((AZ, AZ0,  AZ, -AI))
-        
+
+        # Compute the b terms corresponding to A11 and A12 matrices                
         b11    = 0.5*np.ones(self.npp)
+
+        # Compute an intermediate matrix for b terms for A13 and A14 
         bZ     = np.zeros((self.npp))
-                      
-        self.A = np.concatenate((self.A, A11, A12, A13, A14), axis=1)
-        self.b = np.concatenate((self.b, b11,-b11,  bZ,  bZ))
         
+        # Update the A, b, and c matrices              
+        self.A = np.concatenate((self.A, A11,  A12, A13, A14), axis=1)
+        self.b = np.concatenate((self.b, b11, -b11,  bZ,  bZ))
+
+        # Warning on the code        
         print('Constraint matrix for apodizer binarity is not yet validated!!!')
 
 
 #%%
     def compute_problem_matrices_MinIsland(self):
+        r"""
+        Computes matrices to add constraints that minimizes the islands in the
+        apodizer transmission.
+        
+        Notes
+        -----
+        A6, b6 : array_like, array_like
+            Constraint of the first derivative of the apodization such that
+            
+            :math:`\frac{d\Phi(r)}{dr} - v^{+}(r) + v^{-}(r) \leq 0`,
+            
+            where :math:`v^{+}` and :math:`v^{-}` are two auxiliary variables
+            to constrain the absolute value of the derivative to remain 
+            positive. 
+            
+        A7, b7 : array_like, array_like
+            Constraint of the first derivative of the apodization such that
+            
+            :math:`-\frac{d\Phi(r)}{dr} + v^{+}(r) - v^{-}(r) \leq 0`.
+            
+        A8 : array_like
+            Constraint on the auxiliary variable :math:`v^{+}` to force it 
+            to be positive with
+            
+            :math:`- v^{+}(r) \leq 0`.
+        
+        A9 : array_like
+            Constraint on the auxiliary variable :math:`v^{-}` to force it 
+            to be positive with
+            
+            :math:`- v^{-}(r) \leq 0`. 
+            
+        A10, b10: array_like, array_like
+            Constraint on the apodizer first derivative through the auxiliary 
+            variables with
+            
+            :math:`\int_{P_0} (v^{+}(r) + v^{-}(r))dr \leq \delta`.
+        
+        """
+        # Reshape the matrice A to account for the auxialiary variables
         A00    = np.zeros((self.nvv, np.shape(self.A)[1]))            
         self.A = np.concatenate((self.A, A00))
 
+        # Compute the derivative operator of the pupil
         AD  = np.diff(np.identity(self.npp), axis=1)
-        AI  = np.identity((self.npp-1))
+
+        # Compute an intermediate matrix for further computation of A matrices
+        AI  = np.identity((self.npp_bis))
         
-        AZ0 = np.zeros((self.neps+self.nbb, self.npp-1))
+        # Add terms corresponding to eps and the binarity auxiliary variables     
+        AZ0 = np.zeros((self.neps+self.nbb, self.npp_bis))
         
+        # Add constraints on the apodizer first derivative with 
+        # auxiliary variables        
         A6   = np.concatenate(( AD, AZ0, -AI,  AI))
         A7   = np.concatenate((-AD, AZ0,  AI, -AI))
         
-        AZ1 = np.zeros((self.npp, self.npp-1))                       
-        AZ2 = np.zeros((self.npp-1, self.npp-1))
+        # Compute intermediate matrices for further computation of A matrices                                
+        AZ1 = np.zeros((self.npp, self.npp_bis))                       
+        AZ2 = np.zeros((self.npp_bis, self.npp_bis))
 
+        # Add positivity constraints on the auxiliary variables
         A8  = np.concatenate((AZ1, AZ0, -AI, AZ2))
         A9  = np.concatenate((AZ1, AZ0, AZ2, -AI))
 
-        bZ  = np.zeros((self.npp-1))
+        # Compute an intermediate matrix for b terms for A13 and A14 
+        bZ  = np.zeros((self.npp_bis))
 
+        # Add boundary constraints on the apodizer first derivative
         A10Z = np.zeros((self.npp))
-        A101 = np.ones(self.npp-1)
+        A101 = np.ones(self.npp_bis)
         A10  = np.concatenate((A10Z, np.zeros((self.neps+self.nbb)), A101, A101))
+
+        # Compute b term to bound the integral of the apodizer derivative
         b10  = [self.FirstDerGlobalLim]
 
+        # Update the A, b, and c matrices
         self.A = np.concatenate((self.A, A6, A7, A8, A9, A10[:, None]), axis=1)
         self.b = np.concatenate((self.b, bZ, bZ, bZ, bZ, b10))
-
-
       
 #%%
     def compute_gurobi_model(self):
@@ -1185,14 +1504,15 @@ class MaxContrast(ProblemMatrix):
             Vector of the apodizer in the non zero points of the pupil 
             :math:`P_0` and neps points for the coronagraphic image
         
-        Returns
+        Notes
         -----------
         m : gurobi model
             Gurobi model of the MaxContrast problem to solve
             
         """        
-                          
-        nn = np.shape(self.A)[1]
+        # Compute the length of the A matrix along axis=1                          
+        nA = np.shape(self.A)[1]
+        
         # Create a new model  
         self.m = gb.Model("LP max C new")
         
@@ -1202,11 +1522,11 @@ class MaxContrast(ProblemMatrix):
         # Set objective
         self.m.setObjective(gb.quicksum((self.c[i+self.npp]*ApodEpsTmp[i+self.npp] 
                 for i in range(self.neps + self.nbb))), gb.GRB.MINIMIZE)
+        
         # Add constraint:
         self.m.addConstrs((gb.quicksum((ApodEpsTmp[i]*self.A[i,j] 
                 for i in range(self.npp + self.neps + self.nbb + self.nvv) if self.A[i,j])) <=  self.b[j] 
-                for j in np.arange(nn)), "cpos")
+                for j in np.arange(nA)), "cpos")
         
+        # Update model
         self.m.update()
-            
-        return self.m
