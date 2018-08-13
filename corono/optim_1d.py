@@ -60,19 +60,6 @@ def get_default_params_ProblemMatrix():
             package.
             Documentation: https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.linprog.html
     
-    problem_name : string (default='MaxTau')
-        name of the optimization problem.
-        The user can choose between:
-            
-            - 'MaxTau': maximization of the apodizer transmission for a given 
-            contrast
-            
-            - 'MaxContrastL1': maximization of the contrast for a given 
-            apodizer transmission under L1-norm constraints
-            
-            - 'MaxContrastLinf': maximization of the contrast for a given 
-            apodizer transmission under Linf-norm constraints
-    
     slvCrossover : integer (default=0)
         gurobi solver parameter for barrier crossover strategy. 
         See details: http://www.gurobi.com/documentation/8.0/refman/crossover.html
@@ -141,13 +128,50 @@ def get_default_params_ProblemMatrix():
         
     """
     tmp = {'cDarkHole':8, 'tau':0.2, 'solver':'stdgrb', 
-           'problem_name':'MaxTau',
            'slvCrossover':0, 'slvLogToConsole':0, 'slvMethod':2,
            'allLogToConsole':0, 
            'FirstDer':False, 'FirstDerLim':0.01, 
            'SecondDer': False, 'SecondDerLim':0.0001,
            'MinIsland':False, 'FirstDerGlobalLim':0.01,
            'Binarity':False, 'BinarityReg':0.1}
+    
+    return tmp
+
+#%%
+def get_default_params_MaxTauProblemMatrix():
+    r"""
+    Gets the default parameters for the Max contrast optimization problem.
+    
+    Parameters
+    ---------- 
+    tmp : dict
+        Dictionary from the get_default_matrix_pb
+        
+    Lnorm : string (default= 'L1')
+        L-norm type for the optimization problem 
+        ('Linf' : :math:`L_{\infty}` norm, 'L1' : :math:`L_1`-norm)
+    
+    problem_name : string (default='MaxTau')
+        name of the optimization problem.
+        The user can choose between:
+            
+            - 'MaxTau': maximization of the apodizer transmission for a given 
+            contrast
+            
+            - 'MaxContrastL1': maximization of the contrast for a given 
+            apodizer transmission under L1-norm constraints
+            
+            - 'MaxContrastLinf': maximization of the contrast for a given 
+            apodizer transmission under Linf-norm constraints
+            
+    Returns    
+    ----------
+    tmp : dict
+        Updated dictionary
+        
+    """    
+    tmp = get_default_params_ProblemMatrix()
+    tmp.update({'problem_name':'MaxTau'})
     
     return tmp
 
@@ -164,16 +188,29 @@ def get_default_params_MaxContrastProblemMatrix():
     Lnorm : string (default= 'L1')
         L-norm type for the optimization problem 
         ('Linf' : :math:`L_{\infty}` norm, 'L1' : :math:`L_1`-norm)
+
+    problem_name : string (default='MaxTau')
+        name of the optimization problem.
+        The user can choose between:
             
+            - 'MaxTau': maximization of the apodizer transmission for a given 
+            contrast
+            
+            - 'MaxContrastL1': maximization of the contrast for a given 
+            apodizer transmission under L1-norm constraints
+            
+            - 'MaxContrastLinf': maximization of the contrast for a given 
+            apodizer transmission under Linf-norm constraints
+                
     Returns    
     ----------
     tmp : dict
         Updated dictionary
         
-    """
-    
+    """    
     tmp = get_default_params_ProblemMatrix()
-    tmp.update({'Lnorm':'L1'})
+    tmp.update({'Lnorm':'L1', 'problem_name':'MaxContrastL1'})
+    
     return tmp
 
 
@@ -443,7 +480,8 @@ class ProblemMatrix(object):
 #%%        
     def solve_model(self):
         """
-        Solves the optimization problem model for the model with the selected solver.
+        Solves the optimization problem model for the model with the selected 
+        solver.
                
         Returns
         -------
@@ -552,11 +590,12 @@ class ProblemMatrix(object):
         if self.Binarity is True:
             str_Binarity = '_binreg={BinarityReg}'    
                     
-        fname_gen   = '{corono_name}_obs={PupilObs:.2f}' + \
-        '_lsid={LyotStopObs:.2f}_lsod={LyotStopIns:.2f}' + \
-        '_IWA={rho0}_OWA={rho1}_BW={bw:.2f}_nlam={nlam:02d}' + \
-        '_1D_N={nPup:04d}_nFPM={nFPM:03d}'+ str_cor + '_{problem_name}' + str_opt + \
-        str_FirstDer + str_SecondDer + str_FirstDerGlobal + str_Binarity + '_{solver}'
+        fname_gen   = '{corono_name}_obs={PupilObs:.2f}' \
+        + '_lsid={LyotStopObs:.2f}_lsod={LyotStopIns:.2f}' \
+        + '_IWA={rho0}_OWA={rho1}_BW={bw:.2f}_nlam={nlam:02d}' \
+        + '_1D_N={nPup:04d}_nFPM={nFPM:03d}'+ str_cor + '_{problem_name}' \
+        + str_opt + str_FirstDer + str_SecondDer + str_FirstDerGlobal \
+        + str_Binarity + '_{solver}'
         
         return fname_gen.format(**params)
     
@@ -566,7 +605,6 @@ class ProblemMatrix(object):
         Computes the matrices for the optimization problem.
                                 
         """
-        
         if self.corono_field_t is None:
             t00 = time.time()            
             self.print_log('computing response matrices for 1D problem')   
@@ -620,13 +658,14 @@ class MaxTau(ProblemMatrix):
     :math:`C` in the search area inside the coronagraphic image.
     
     """
+    default_params = get_default_params_MaxTauProblemMatrix()
+
     def __init__(self, **kwargs):
         r"""
         Constructor for the MaxTau problem with the coronagraph object
         
         Attributes
-        ----------
-        
+        ----------        
         eps : int (default=0)
             size of the variable :math:`\epsilon` for contrast.
             eps is null for MaxTau optimization problem
@@ -717,7 +756,7 @@ class MaxTau(ProblemMatrix):
                       
             
         """
-        # Compute constant term that includes contrast
+        # Compute constant term that includes contrast and normalization
         cst = 10.**(-self.cDarkHole/2.)/np.sqrt(2.)
 
         # Compute contrast constraints on the coronagraphic electric field
@@ -978,7 +1017,7 @@ class MaxTau(ProblemMatrix):
         A8  = np.concatenate((AZ1, AZ0, -AI, AZ2))
         A9  = np.concatenate((AZ1, AZ0, AZ2, -AI))
 
-        # Compute an intermediate matrix for b terms for A13 and A14 
+        # Compute an intermediate matrix for b terms for A6, A7, A8, and A9 
         bZ  = np.zeros((self.npp_bis))
 
         # Add boundary constraints on the apodizer first derivative
@@ -989,7 +1028,7 @@ class MaxTau(ProblemMatrix):
         # Compute b term to bound the integral of the apodizer derivative
         b10  = [self.FirstDerGlobalLim]
         
-        # Update the A, b, and c matrices
+        # Update the A and b matrices
         self.A = np.concatenate((self.A, A6, A7, A8, A9, A10[:, None]), axis=1)
         self.b = np.concatenate((self.b, bZ, bZ, bZ, bZ, b10))  
 
@@ -1211,9 +1250,10 @@ class MaxContrast(ProblemMatrix):
         A6  = np.concatenate((np.zeros((self.npp, self.ndz)), -I0), axis=0)
         
         # Compute constraint on the integral of the apodizer transmission
-        A7  = np.concatenate((- 2.*np.pi*(np.asarray(self.idx_pup)+0.5)\
+        A7  = np.concatenate((-2.*np.pi*(np.asarray(self.idx_pup)+0.5)\
             *self.corono.Pupil1d[self.idx_pup]/(2.*self.corono.nPup)**2/self.TR, 
                                   Z0))
+
         # Compute b term corresponding to A0 and A1
         b01  = np.zeros((2*self.corono.nlam*self.ndz*2))
         
@@ -1530,3 +1570,5 @@ class MaxContrast(ProblemMatrix):
         
         # Update model
         self.m.update()
+
+#%%
