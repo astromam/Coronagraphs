@@ -793,18 +793,6 @@ class MaxTau(ProblemMatrix):
         # Compute constant term that includes contrast and normalization
         cst = (10.**(-self.cDarkHole/2.)/np.sqrt(2.))*self.corono.Fmax2d/(self.corono.nImg2d*self.corono.nPup)
 
-#        # Compute contrast constraints on the coronagraphic electric field
-#        nel  = 2*self.corono.nlam*self.ndz
-#        for k in range(self.ncorono):
-#            A0  =  self.corono_field_t[:, k*nel:(k+1)*nel] \
-#            - cst*self.Pupil_vec[self.idx_pup, None]*self.LyotStop_vec_t[k][self.idx_pup, None]           
-#            A1  = -self.corono_field_t[:, k*nel:(k+1)*nel] \
-#            - cst*self.Pupil_vec[self.idx_pup, None]*self.LyotStop_vec_t[k][self.idx_pup, None]
-#            if k == 0:
-#                self.A = np.concatenate((A0,A1), axis=1)
-#            else:
-#                self.A = np.concatenate((self.A, A0, A1), axis=1)
-
         # Compute contrast constraints on the coronagraphic electric field
         for k in range(self.ncorono):
             corono_field_t = self.compute_response_matrices(self.corono_t[k])
@@ -1252,26 +1240,45 @@ class MaxContrast(ProblemMatrix):
         """           
         # Compute intermediate variables for electric field constraints 
         if self.Lnorm == 'Linf':
-            I1 = np.ones(len(self.corono_field_t.T))
-            I1 = I1[None,:]
             I0 = np.ones(self.ndz)
             I0 = I0[None,:]
             self.N0 = np.zeros((1, self.npp))
             Z0 = np.zeros(1)
             c1 = [1]
         else:
-            I0 = np.identity(self.ndz)
-            I1 = np.hstack([I0 for k in range(len(self.corono_field_t.T)//self.ndz)])            
+            I0 = np.identity(self.ndz)            
             self.N0 = np.zeros((self.ndz, self.npp))
             Z0 = np.zeros(self.ndz)
             c1 = np.array(self.rad2d)
-        
-        # Compute constraints on the coronagraphic electric field
-        A0  = np.concatenate(( self.corono_field_t, -I1), axis=0)
-        A1  = np.concatenate((-self.corono_field_t, -I1), axis=0)
 
-        # Compute b term corresponding to A0 and A1
-        b01 = np.zeros((2*len(self.corono_field_t.T)))
+        for k in range(self.ncorono):
+            corono_field_t = self.compute_response_matrices(self.corono_t[k])
+
+            # Compute intermediate variables for electric field constraints 
+            if self.Lnorm == 'Linf':
+#                I1 = np.ones(len(corono_field_t.T))
+                I1 = np.ones(2*self.nlam*self.ndz)
+                I1 = I1[None,:]
+            else:
+#                I1 = np.hstack([I0 for k in range(len(corono_field_t.T)//self.ndz)])
+                I1 = np.hstack([I0 for k in range(2*self.nlam)])
+        
+            # Compute constraints on the coronagraphic electric field
+            A0  = np.concatenate(( corono_field_t, -I1), axis=0)
+            A1  = np.concatenate((-corono_field_t, -I1), axis=0)
+
+            # Compute b term corresponding to A0 and A1
+            b01 = np.zeros((2*len(corono_field_t.T)))
+
+            #  Yield the A and b matrices for the optimization problem
+            if k == 0:
+                self.A = np.concatenate((A0,A1), axis=1)
+                self.b = b01*1
+            else:
+                self.A = np.concatenate((self.A, A0,A1), axis=1)
+                self.b = np.concatenate((self.b, b01,))
+
+
 
         # Compute constraint on the auxiliary variable epsilon
         A20  = np.concatenate((np.zeros((self.npp, self.ndz)), -I0), axis=0)
@@ -1284,8 +1291,8 @@ class MaxContrast(ProblemMatrix):
         b21  = [-self.tau]
         
         #  Yield the A and b matrices for the optimization problem       
-        self.A = np.concatenate((A0,A1,A20,A21[:,None]), axis=1)
-        self.b = np.concatenate((b01,  b20,b21))
+        self.A = np.concatenate((self.A, A20,A21[:,None]), axis=1)
+        self.b = np.concatenate((self.b, b20,b21))
 
         # Add apodizer normalization contraints for gurobi solvers
         if (stdgrb and self.solver == 'stdgrb')\
