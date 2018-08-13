@@ -100,6 +100,9 @@ ENV/
 # vscode project settings
 .vscode
 
+# Atom symbol tags
+.tags*
+
 # mypy
 .mypy_cache/
 test_corono_optim_1d_compare_ampl_python.py
