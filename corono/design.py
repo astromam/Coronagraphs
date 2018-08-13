@@ -646,6 +646,7 @@ class APLC1d(Coronagraph):
         super(APLC1d,self).__init__(**kwargs)
 
         # mask size at Apod given wavelength [shape: (nlam,)]
+        # _t -> table (i.e. table of wavelength)
         self.rMask_t    = (self.lam0/self.lam_t)*self.rMask
 
         # mask sampling at Apod given wavelength and max nFPM_max [shape: (nlam,)]
@@ -653,6 +654,9 @@ class APLC1d(Coronagraph):
         self.nFPM_max   = int(np.max(self.nFPM_t))
         self.mask_lam   = (np.arange(self.nFPM_max+1)[None,:]\
                            <self.rMask_t[:,None]*self.nFPM)  # [shape: (nlam, nFPM_max + 1)]
+
+        # Truncated coordinate vector (ends up being equivalent to ordinary DFT and then
+        # multiplying by a mask elementwise)
         self.xi_FPM_lam = np.arange(self.nFPM_max+1)[None,:]\
                 *self.mask_lam/self.nFPM  # [shape: (nlam, nFPM_max + 1)]
 
