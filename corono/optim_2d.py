@@ -734,8 +734,7 @@ class MaxTau(ProblemMatrix):
             
             # Compute coronagraph response matrix
             t00 = time.time()
-            self.print_log('computing corono response matrix for 2D problem') 
-            print('compute response matrix')            
+            self.print_log('computing corono response matrix for 2D problem')             
             corono_field_t = self.compute_response_matrices(self.corono_t[k])
             t11 = time.time()
             self.print_log('computing time (response matrices): {0:.2f}s\n'.format(t11-t00))
@@ -1203,8 +1202,7 @@ class MaxContrast(ProblemMatrix):
         for k in range(self.ncorono):
             # Compute coronagraph response matrix
             t00 = time.time()
-            self.print_log('computing corono response matrix for 2D problem') 
-            print('compute response matrix')            
+            self.print_log('computing corono response matrix for 2D problem')             
             corono_field_t = self.compute_response_matrices(self.corono_t[k])
             t11 = time.time()
             self.print_log('computing time (response matrices): {0:.2f}s\n'.format(t11-t00))
