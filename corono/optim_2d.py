@@ -819,7 +819,7 @@ class MaxTau(ProblemMatrix):
             
             in which :math:`r` represents the radial coordinate of the pupil.
             
-        A3, b3 : array_like, array_like
+        b3 : array_like
             Constraint on the amplitude transmission of the apodization 
             :math:`\Phi`
             
@@ -828,13 +828,12 @@ class MaxTau(ProblemMatrix):
         """
         # Compute constraints on the apodizer transmission
         A2  = -np.identity(self.npp)
-        A3  =  np.identity(self.npp)
         b2  = np.zeros(self.npp)
         b3  = np.ones(self.npp)
 
         # Update the A, b, and c matrices
-        self.A = np.concatenate((self.A,A2,A3), axis=1)
-        self.b = np.concatenate((self.b,b2,b3))        
+        self.A = np.concatenate((self.A, A2, -A2), axis=1)
+        self.b = np.concatenate((self.b, b2,  b3))        
 
 #%%
     def compute_problem_matrices_Binarity(self):
@@ -843,27 +842,24 @@ class MaxTau(ProblemMatrix):
         
         Notes
         -----
-        A11, b11 : array_like, array_like
+        A6, b6 : array_like, array_like
             Constraint on the apodization transmission such that
             
             :math:`\Phi(r) - w^{+}(r) + w^{-}(r) \leq 0.5`,
             
+            :math:`-\Phi(r) + w^{+}(r) - w^{-}(r) \leq -0.5`.
+            
             where :math:`w^{+}` and :math:`w^{-}` are two auxiliary variables
             to constrain the absolute value of the derivative to remain 
             positive. 
-            
-        A12, b12 : array_like, array_like
-            Constraint on the apodization transmission such that
-            
-            :math:`-\Phi(r) + w^{+}(r) - w^{-}(r) \leq -0.5`.
-            
-        A13 : array_like
+                        
+        A8 : array_like
             Constraint on the auxiliary variable :math:`w^{+}` to force it 
             to be positive with
             
             :math:`- w^{+}(r) \leq 0`.
         
-        A14 : array_like
+        A9 : array_like
             Constraint on the auxiliary variable :math:`w^{-}` to force it 
             to be positive with
             
@@ -878,25 +874,24 @@ class MaxTau(ProblemMatrix):
         AI     = np.identity(self.npp)
         
         # Add constraints on the apodizer transmission with auxiliary variables
-        A11    = np.concatenate(( AI, -AI,  AI))
-        A12    = np.concatenate((-AI,  AI, -AI))
+        A6     = np.concatenate(( AI, -AI,  AI))
         
         # Compute an intermediate matrix for further computation of A matrices        
         AZ     = np.zeros((self.npp, self.npp))                       
 
         # Add positivity constraints on the auxiliary variables
-        A13    = np.concatenate((AZ, -AI,  AZ))
-        A14    = np.concatenate((AZ,  AZ, -AI))
+        A8     = np.concatenate((AZ, -AI,  AZ))
+        A9     = np.concatenate((AZ,  AZ, -AI))
         
         # Compute the b terms corresponding to A11 and A12 matrices        
-        b11    = 0.5*np.ones(self.npp)
+        b6     = 0.5*np.ones(self.npp)
 
         # Compute an intermediate matrix for b terms for A13 and A14 
         bZ     = np.zeros((self.npp))
        
         # Update the A, b, and c matrices
-        self.A = np.concatenate((self.A, A11,  A12, A13, A14), axis=1)
-        self.b = np.concatenate((self.b, b11, -b11,  bZ,  bZ))        
+        self.A = np.concatenate((self.A, A6, -A6, A8, A9), axis=1)
+        self.b = np.concatenate((self.b, b6, -b6, bZ, bZ))        
         
         # Warning on the code
         print('Constraint matrix for apodizer binarity is not yet validated!!!')
@@ -909,7 +904,7 @@ class MaxTau(ProblemMatrix):
         
         Notes
         -----
-        A6, b6 : array_like, array_like
+        A10, b10 : array_like, array_like
             Constraint of the first derivative of the apodization such that
             
             :math:`\frac{d\Phi(r)}{dr} - v^{+}(r) + v^{-}(r) \leq 0`,
@@ -918,24 +913,24 @@ class MaxTau(ProblemMatrix):
             to constrain the absolute value of the derivative to remain 
             positive. 
             
-        A7, b7 : array_like, array_like
+        A11, b11 : array_like, array_like
             Constraint of the first derivative of the apodization such that
             
             :math:`-\frac{d\Phi(r)}{dr} + v^{+}(r) - v^{-}(r) \leq 0`.
             
-        A8 : array_like
+        A12 : array_like
             Constraint on the auxiliary variable :math:`v^{+}` to force it 
             to be positive with
             
             :math:`- v^{+}(r) \leq 0`.
         
-        A9 : array_like
+        A13 : array_like
             Constraint on the auxiliary variable :math:`v^{-}` to force it 
             to be positive with
             
             :math:`- v^{-}(r) \leq 0`. 
             
-        A10, b10: array_like, array_like
+        A14, b14: array_like, array_like
             Constraint on the apodizer first derivative through the auxiliary 
             variables with
             
@@ -974,36 +969,34 @@ class MaxTau(ProblemMatrix):
     
         # Add constraints on the apodizer first derivative with 
         # auxiliary variables        
-        A6x  = np.concatenate(( ADx, AZ0, -AI,  AI, AZ2, AZ2))        
-        A7x  = np.concatenate((-ADx, AZ0,  AI, -AI, AZ2, AZ2))
+        A10x  = np.concatenate(( ADx, AZ0, -AI,  AI, AZ2, AZ2))        
         
-        A6y  = np.concatenate(( ADy, AZ0, AZ2, AZ2, -AI,  AI))        
-        A7y  = np.concatenate((-ADy, AZ0, AZ2, AZ2,  AI, -AI))
+        A10y  = np.concatenate(( ADy, AZ0, AZ2, AZ2, -AI,  AI))        
         
         # Compute intermediate matrices for further computation of A matrices                                
         AZ1 = np.zeros((self.npp, self.npp_bis))
                 
         # Add positivity constraints on the auxiliary variables
-        A8x  = np.concatenate((AZ1, AZ0, -AI, AZ2, AZ2, AZ2))
-        A9x  = np.concatenate((AZ1, AZ0, AZ2, -AI, AZ2, AZ2))
+        A12x  = np.concatenate((AZ1, AZ0, -AI, AZ2, AZ2, AZ2))
+        A13x  = np.concatenate((AZ1, AZ0, AZ2, -AI, AZ2, AZ2))
         
-        A8y  = np.concatenate((AZ1, AZ0, AZ2, AZ2, -AI, AZ2))
-        A9y  = np.concatenate((AZ1, AZ0, AZ2, AZ2, AZ2, -AI))
+        A12y  = np.concatenate((AZ1, AZ0, AZ2, AZ2, -AI, AZ2))
+        A13y  = np.concatenate((AZ1, AZ0, AZ2, AZ2, AZ2, -AI))
 
         # Compute an intermediate matrix for b terms for A6, A7, A8, and A9 
-        bZ   = np.zeros((self.npp_bis))
+        bZ   = np.zeros((2*4*self.npp_bis))
 
         # Add boundary constraints on the apodizer first derivative
-        A10Z = np.zeros((self.npp))
-        A101 = np.ones(self.npp_bis)
-        A10  = np.concatenate((A10Z, np.zeros((self.nbb)), A101, A101, A101, A101))
+        A14Z = np.zeros((self.npp))
+        A141 = np.ones(2*2*self.npp_bis)
+        A14  = np.concatenate((A14Z, np.zeros((self.nbb)), A141))
 
         # Compute b term to bound the integral of the apodizer derivative
-        b10  = [self.FirstDerGlobalLim]
+        b14  = [self.FirstDerGlobalLim]
                 
         # Update the A and b matrices
-        self.A = np.concatenate((self.A, A6x, A7x, A6y, A7y, A8x, A9x, A8y, A9y, A10[:, None]), axis=1)
-        self.b = np.concatenate((self.b,  bZ,  bZ,  bZ,  bZ,  bZ,  bZ,  bZ,  bZ, b10))       
+        self.A = np.concatenate((self.A, A10x, -A10x, A10y, -A10y, A12x, A13x, A12y, A13y, A14[:, None]), axis=1)
+        self.b = np.concatenate((self.b,   bZ,  b14))       
 
 #%%            
     def update_cDarkHole(self):
@@ -1231,21 +1224,21 @@ class MaxContrast(ProblemMatrix):
         A1  = np.concatenate((-self.corono_field_t, -I1), axis=0)
 
         # Compute constraint on the auxiliary variable epsilon
-        A6  = np.concatenate((np.zeros((self.npp, self.ndz)), -I0), axis=0)
+        A20  = np.concatenate((np.zeros((self.npp, self.ndz)), -I0), axis=0)
 
         # Compute constraint on the integral of the apodizer transmission
-        A7  = np.concatenate((-self.Pupil_vec[self.idx_pup]/self.TR, Z0))
+        A21  = np.concatenate((-self.Pupil_vec[self.idx_pup]/self.TR, Z0))
         
         # Compute b term corresponding to A0 and A1
         b01 = np.zeros((2*len(self.corono_field_t.T)))
 
         # Compute b terms corresponding to A4 and A5
-        b6  = np.zeros(self.ndz)
-        b7  = [-self.tau]
+        b20  = np.zeros(self.ndz)
+        b21  = [-self.tau]
         
         #  Yield the A and b matrices for the optimization problem       
-        self.A = np.concatenate((A0,A1,A6,A7[:,None]), axis=1)
-        self.b = np.concatenate((b01,  b6,b7))
+        self.A = np.concatenate((A0,A1,A20,A21[:,None]), axis=1)
+        self.b = np.concatenate((b01,  b20,b21))
 
         # Add apodizer normalization contraints for gurobi solvers
         if (stdgrb and self.solver == 'stdgrb') or (gb and self.solver == 'gurobipy'):        
@@ -1280,30 +1273,26 @@ class MaxContrast(ProblemMatrix):
         
         Notes
         -----
-        A2, b2 : array_like, array_like
+        A2, b2, b3 : array_like, array_like, array_like
             Constraint on the amplitude transmission of the apodization 
             :math:`\Phi`
             
             :math:`- \Phi(r) \leq 0`,
             
+            :math:`\Phi(r) \leq 1`,
+            
             in which :math:`r` represents the radial coordinate of the pupil.
-            
-        A3, b3 : array_like, array_like
-            Constraint on the amplitude transmission of the apodization 
-            :math:`\Phi`
-            
-            :math:`\Phi(r) \leq 1`.        
         
         """
         # Compute constraints on the apodizer transmission
         A2  = np.concatenate((-np.identity(self.npp), self.N0), axis=0)
-        A3  = np.concatenate(( np.identity(self.npp), self.N0), axis=0)
+
         b2  = np.zeros(self.npp)
         b3  = np.ones(self.npp)
         
         # Update the A, b, and c matrices
-        self.A = np.concatenate((self.A,A2,A3), axis=1)
-        self.b = np.concatenate((self.b,b2,b3))        
+        self.A = np.concatenate((self.A, A2, -A2), axis=1)
+        self.b = np.concatenate((self.b, b2,  b3))        
 
 #%%
     def compute_problem_matrices_Binarity(self):
@@ -1312,7 +1301,7 @@ class MaxContrast(ProblemMatrix):
         
         Notes
         -----
-        A11, b11 : array_like, array_like
+        A6, b6 : array_like, array_like
             Constraint on the apodization transmission such that
             
             :math:`\Phi(r) - w^{+}(r) + w^{-}(r) \leq 0.5`,
@@ -1321,18 +1310,18 @@ class MaxContrast(ProblemMatrix):
             to constrain the absolute value of the derivative to remain 
             positive. 
             
-        A12, b12 : array_like, array_like
+        A7, b7 : array_like, array_like
             Constraint on the apodization transmission such that
             
             :math:`-\Phi(r) + w^{+}(r) - w^{-}(r) \leq -0.5`.
             
-        A13 : array_like
+        A8 : array_like
             Constraint on the auxiliary variable :math:`w^{+}` to force it 
             to be positive with
             
             :math:`- w^{+}(r) \leq 0`.
         
-        A14 : array_like
+        A9 : array_like
             Constraint on the auxiliary variable :math:`w^{-}` to force it 
             to be positive with
             
@@ -1350,25 +1339,24 @@ class MaxContrast(ProblemMatrix):
         AZ0    = np.zeros((self.neps, self.npp))
         
         # Add constraints on the apodizer transmission with auxiliary variables
-        A11    = np.concatenate(( AI, AZ0, -AI,  AI))
-        A12    = np.concatenate((-AI, AZ0,  AI, -AI))
+        A6    = np.concatenate(( AI, AZ0, -AI,  AI))
         
         # Compute an intermediate matrix for further computation of A matrices                        
         AZ     = np.zeros((self.npp, self.npp))                       
 
         # Add positivity constraints on the auxiliary variables
-        A13    = np.concatenate((AZ, AZ0, -AI,  AZ))
-        A14    = np.concatenate((AZ, AZ0,  AZ, -AI))
+        A8    = np.concatenate((AZ, AZ0, -AI,  AZ))
+        A9    = np.concatenate((AZ, AZ0,  AZ, -AI))
         
         # Compute the b terms corresponding to A11 and A12 matrices                
-        b11    = 0.5*np.ones(self.npp)
+        b6    = 0.5*np.ones(self.npp)
 
         # Compute an intermediate matrix for b terms for A13 and A14 
         bZ     = np.zeros((self.npp))
                       
         # Update the A and b matrices              
-        self.A = np.concatenate((self.A, A11, A12, A13, A14), axis=1)
-        self.b = np.concatenate((self.b, b11,-b11,  bZ,  bZ))
+        self.A = np.concatenate((self.A, A6, -A6, A8, A9), axis=1)
+        self.b = np.concatenate((self.b, b6, -b6, bZ, bZ))
         
         # Warning on the code        
         print('Constraint matrix for apodizer binarity is not yet validated!!!')
@@ -1382,7 +1370,7 @@ class MaxContrast(ProblemMatrix):
         
         Notes
         -----
-        A6, b6 : array_like, array_like
+        A10x, A10y, bZ : array_like, array_like, array_like
             Constraint of the first derivative of the apodization such that
             
             :math:`\frac{d\Phi(r)}{dr} - v^{+}(r) + v^{-}(r) \leq 0`,
@@ -1391,24 +1379,24 @@ class MaxContrast(ProblemMatrix):
             to constrain the absolute value of the derivative to remain 
             positive. 
             
-        A7, b7 : array_like, array_like
+        A11x, A11y, bZ : array_like, array_like, array_like
             Constraint of the first derivative of the apodization such that
             
             :math:`-\frac{d\Phi(r)}{dr} + v^{+}(r) - v^{-}(r) \leq 0`.
             
-        A8 : array_like
+        A12x, A12y : array_like, array_like
             Constraint on the auxiliary variable :math:`v^{+}` to force it 
             to be positive with
             
             :math:`- v^{+}(r) \leq 0`.
         
-        A9 : array_like
+        A13x, A13y : array_like, array_like
             Constraint on the auxiliary variable :math:`v^{-}` to force it 
             to be positive with
             
             :math:`- v^{-}(r) \leq 0`. 
             
-        A10, b10: array_like, array_like
+        A14, b14: array_like, array_like
             Constraint on the apodizer first derivative through the auxiliary 
             variables with
             
@@ -1447,45 +1435,42 @@ class MaxContrast(ProblemMatrix):
 
         # Add constraints on the apodizer first derivative with 
         # auxiliary variables        
-        A6x  = np.concatenate(( ADx, AZ0, -AI,  AI, AZ2, AZ2))        
-        A7x  = np.concatenate((-ADx, AZ0,  AI, -AI, AZ2, AZ2))
+        A10x  = np.concatenate(( ADx, AZ0, -AI,  AI, AZ2, AZ2))        
         
-        A6y  = np.concatenate(( ADy, AZ0, AZ2, AZ2, -AI,  AI))        
-        A7y  = np.concatenate((-ADy, AZ0, AZ2, AZ2,  AI, -AI))
+        A10y  = np.concatenate(( ADy, AZ0, AZ2, AZ2, -AI,  AI))        
         
         # Compute intermediate matrices for further computation of A matrices                                
         AZ1 = np.zeros((self.npp, self.npp_bis))
  
         # Add positivity constraints on the auxiliary variables
-        A8x  = np.concatenate((AZ1, AZ0, -AI, AZ2, AZ2, AZ2))
-        A9x  = np.concatenate((AZ1, AZ0, AZ2, -AI, AZ2, AZ2))
+        A12x  = np.concatenate((AZ1, AZ0, -AI, AZ2, AZ2, AZ2))
+        A13x  = np.concatenate((AZ1, AZ0, AZ2, -AI, AZ2, AZ2))
         
-        A8y  = np.concatenate((AZ1, AZ0, AZ2, AZ2, -AI, AZ2))
-        A9y  = np.concatenate((AZ1, AZ0, AZ2, AZ2, AZ2, -AI))
+        A12y  = np.concatenate((AZ1, AZ0, AZ2, AZ2, -AI, AZ2))
+        A13y  = np.concatenate((AZ1, AZ0, AZ2, AZ2, AZ2, -AI))
        
-        # Compute an intermediate matrix for b terms for A13 and A14 
-        bZ   = np.zeros((self.npp_bis))
+        # Compute an intermediate matrix for b terms from A10 to A14 
+        bZ   = np.zeros((2*4*self.npp_bis))
 
         # Add boundary constraints on the apodizer first derivative
-        A10Z = np.zeros((self.npp))
-        A101 = np.ones(self.npp_bis)
-        A10  = np.concatenate((A10Z, np.zeros((self.neps+self.nbb)), A101, A101, A101, A101))
+        A14Z = np.zeros((self.npp))
+        A141 = np.ones(2*2*self.npp_bis)
+        A14  = np.concatenate((A14Z, np.zeros((self.neps+self.nbb)), A141))
 
         # Compute b term to bound the integral of the apodizer derivative
-        b10  = [self.FirstDerGlobalLim]
+        b14  = [self.FirstDerGlobalLim]
                 
         # Update the A, b, and c matrices
-        self.A = np.concatenate((self.A, A6x, A7x, A6y, A7y, A8x, A9x, A8y, A9y, A10[:, None]), axis=1)
-        self.b = np.concatenate((self.b,  bZ,  bZ,  bZ,  bZ,  bZ,  bZ,  bZ,  bZ, b10))       
+        self.A = np.concatenate((self.A, A10x, -A10x, A10y, -A10y, A12x, A13x, A12y, A13y, A14[:, None]), axis=1)
+        self.b = np.concatenate((self.b,   bZ, b14))       
 
 #%%            
     def update_tau(self):
-        b0  = np.zeros((self.corono.nlam*self.ndz*2))
-        b1  = np.zeros((self.corono.nlam*self.ndz*2))        
+        b0  = np.zeros((self.corono.nlam*self.ndz*2))       
         b4  = np.zeros(self.ndz)
         b5  = [-self.tau]
 
-        self.b = np.concatenate((b0,b1,b4,b5))
+        self.b = np.concatenate((b0,b0,b4,b5))
 
         if (stdgrb and self.solver == 'stdgrb') or (gb and self.solver == 'gurobipy'):        
             b2  = np.zeros(self.npp)
