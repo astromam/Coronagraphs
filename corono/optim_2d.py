@@ -333,7 +333,7 @@ class ProblemMatrix(object):
 #        self.lys     = (self.LyotStop_vec > 0.)
 #        self.idx_lys = list(self.bbb[self.lys]) 
        
-        self.corono_field_t    = None
+#        self.corono_field_t    = None
 
         self.A       = None
         self.b       = None
@@ -413,62 +413,6 @@ class ProblemMatrix(object):
         params=json.loads(f.read())
         self.__init__(**params)
         f.close()              
-
-##%%        
-#    def compute_response_matrices(self):
-#        r"""
-#        Computes the response matrix for the coronagraph with and without 
-#        the focal plane mask.
-#        
-#        Notes
-#        -----        
-#        corono_field_re_t_tmp, corono_field_im_t_tmp : array_like, array_like
-#            Real and imaginary parts of the coronagraphic response matrix
-#            for all the points in the pupil :math:`P_0` and at all the wavelengths
-#
-#        corono_field_re_t, corono_field_im_t : array_like, array_like
-#            Real and imaginary parts of the coronagraphic response matrix
-#            for all the points in the pupil :math:`P_0` and at all the wavelengths.
-#            These arrays are sliced from corono_field_re_t_tmp, corono_field_im_t_tmp 
-#            for the points inside the region of interest in the final image plane.
-#
-#        corono_field_t : array_like
-#            Concatenation of the real and imaginary parts of the coronagraphic 
-#            response matrix for all the points in the pupil :math:`P_0` and 
-#            at all the wavelengths
-#                
-#        """        
-#        corono_field_re_t_tmp = np.empty((self.npp, self.corono.nlam, 
-#                                           self.corono.nImg2d**2))
-#        corono_field_im_t_tmp = np.empty((self.npp, self.corono.nlam, 
-#                                           self.corono.nImg2d**2))
-#
-#        Apod2d = np.zeros((self.corono.nPup, self.corono.nPup))
-#
-#        for k, corono in enumerate(self.corono_t):
-#            for i, val in enumerate(self.idx_pup):
-#                (i0,j0) = np.unravel_index(val, (self.corono.nPup, self.corono.nPup))
-#                Apod2d[i0,j0] = 1            
-#                corono_field_re_t_tmp[i], corono_field_im_t_tmp[i] = \
-#                corono.compute_corono_field_2d_vec(Apod2d)
-#                Apod2d[i0,j0] = 0 
-#                
-#            corono_field_re_t = np.reshape(
-#                    corono_field_re_t_tmp[:,:, self.idx_dz], 
-#                    (self.npp, self.corono.nlam*self.ndz))
-#    
-#            corono_field_im_t = np.reshape(
-#                    corono_field_im_t_tmp[:,:, self.idx_dz], 
-#                    (self.npp, self.corono.nlam*self.ndz))
-#                
-#            if k == 0:
-#                self.corono_field_t = np.concatenate((corono_field_re_t,
-#                                                     corono_field_im_t), 
-#                                                     axis=1)
-#            else:
-#                self.corono_field_t = np.concatenate((self.corono_field_t,
-#                                                      corono_field_re_t,
-#                                                      corono_field_im_t), axis=1)
             
 #%%        
     def compute_response_matrices(self, corono):
@@ -636,14 +580,6 @@ class ProblemMatrix(object):
         Computes the matrices for the optimization problem.
                                 
         """ 
-#        if self.corono_field_t is None:
-#            t00 = time.time()
-#            self.print_log('computing corono response matrix for 2D problem') 
-#            print('compute response matrix')
-#            self.compute_response_matrices(self.corono)
-#            t11 = time.time()
-#            self.print_log('computing time (response matrices): {0:.2f}s\n'.format(t11-t00))
-
         if self.A is None or self.b is None or self.c is None:
             t00 = time.time()
             self.print_log('computing A, b, and c matrices')
@@ -795,8 +731,17 @@ class MaxTau(ProblemMatrix):
 
         # Compute contrast constraints on the coronagraphic electric field
         for k in range(self.ncorono):
+            
+            # Compute coronagraph response matrix
+            t00 = time.time()
+            self.print_log('computing corono response matrix for 2D problem') 
+            print('compute response matrix')            
             corono_field_t = self.compute_response_matrices(self.corono_t[k])
+            t11 = time.time()
+            self.print_log('computing time (response matrices): {0:.2f}s\n'.format(t11-t00))
+            
             LyotStop_vec   = self.LyotStop_vec_t[k]
+            
             A0  =  corono_field_t \
             - cst*self.Pupil_vec[self.idx_pup, None]*LyotStop_vec[self.idx_pup, None]           
             A1  = -corono_field_t \
@@ -1043,7 +988,8 @@ class MaxTau(ProblemMatrix):
             A2  = -np.identity(self.npp)
             A3  =  np.identity(self.npp)
             self.A = np.concatenate((self.A,A2,A3), axis=1)
-            
+
+        print('Warning: update_cDarkHole() method is outdated!!!')            
 
 #%%
     def compute_gurobi_model(self):
@@ -1242,26 +1188,26 @@ class MaxContrast(ProblemMatrix):
         if self.Lnorm == 'Linf':
             I0 = np.ones(self.ndz)
             I0 = I0[None,:]
+            I1 = np.ones(2*self.nlam*self.ndz)
+            I1 = I1[None,:]
             self.N0 = np.zeros((1, self.npp))
             Z0 = np.zeros(1)
             c1 = [1]
         else:
-            I0 = np.identity(self.ndz)            
+            I0 = np.identity(self.ndz)
+            I1 = np.hstack([I0 for k in range(2*self.nlam)])            
             self.N0 = np.zeros((self.ndz, self.npp))
             Z0 = np.zeros(self.ndz)
             c1 = np.array(self.rad2d)
 
         for k in range(self.ncorono):
+            # Compute coronagraph response matrix
+            t00 = time.time()
+            self.print_log('computing corono response matrix for 2D problem') 
+            print('compute response matrix')            
             corono_field_t = self.compute_response_matrices(self.corono_t[k])
-
-            # Compute intermediate variables for electric field constraints 
-            if self.Lnorm == 'Linf':
-#                I1 = np.ones(len(corono_field_t.T))
-                I1 = np.ones(2*self.nlam*self.ndz)
-                I1 = I1[None,:]
-            else:
-#                I1 = np.hstack([I0 for k in range(len(corono_field_t.T)//self.ndz)])
-                I1 = np.hstack([I0 for k in range(2*self.nlam)])
+            t11 = time.time()
+            self.print_log('computing time (response matrices): {0:.2f}s\n'.format(t11-t00))
         
             # Compute constraints on the coronagraphic electric field
             A0  = np.concatenate(( corono_field_t, -I1), axis=0)
@@ -1277,8 +1223,6 @@ class MaxContrast(ProblemMatrix):
             else:
                 self.A = np.concatenate((self.A, A0,A1), axis=1)
                 self.b = np.concatenate((self.b, b01,))
-
-
 
         # Compute constraint on the auxiliary variable epsilon
         A20  = np.concatenate((np.zeros((self.npp, self.ndz)), -I0), axis=0)
@@ -1531,6 +1475,8 @@ class MaxContrast(ProblemMatrix):
             b2  = np.zeros(self.npp)
             b3  = np.ones(self.npp)
             self.b = np.concatenate((self.b,b2,b3))
+            
+        print('Warning: update_tau() method is outdated!!!') 
             
 #%%
     def compute_gurobi_model(self):
