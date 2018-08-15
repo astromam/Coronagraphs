@@ -746,46 +746,53 @@ class APLC1dAnalyticalHankel(APLC1d):
         rMask : float
             Occulter radius in lam0/D units
         nFPM : int
-            Number of samples across occulter at center wavelength lam0
+            Number of samples per lambda/D in occulter plane
         lam_t : array_like (nlam,)
             Vector of wavelengths in physical units (i.e. meters)
 
         """
+        # Occulter-plane sample spacing [lambda/D, same for every wavelength]
+        self.drho = 1 / self.nFPM
 
-        # Field stop radius in absolute angular units [scalar]
+        # Pupil-plane sample spacing
+        # Note: interpretation of nPup as the total number of samples across pupil radius is
+        # consistent with definition of Coronagraph().r variable
+        self.dr = self.R / self.nPup
+
+        # Field stop radius at center wavelength [lambda0/D, scalar]
         self.rFS = kwargs.get('field_stop_radius')
 
-        # Field stop radius in lambda/D units, at each wavelength [shape: (nlam,)]
-        self.rFS_t  = (self.lam0 / self.lam_t) * self.rFS_t
+        # Field stop radius scaled by wavelength [lambda/D, shape: (nlam,)]
+        self.rFS_t = (self.lam0 / self.lam_t) * self.rFS
 
-        # Find number of samples across field stop, assuming equal sample spacing across both the
-        self.nFS = int(np.ceil(self.rFS / self.rMask))
-        self.nFS_t = self.rFS_t * self.nFS  # TODO: What is this supposed to be doing?
-        self.nFS_max = int(np.max(self.nFS_t))
+        # Number of samples across field stop at lam0, and as function of wavelength
+        self.nFS = self.rFS / self.drho
+        self.nFS_t = self.rFS_t / self.drho
+        self.nFS_max = int(np.max(self.nFS_t))  # Largest possible pixel size of field stop
 
         # Number of samples across the occulter at each wavelength [shape: (nlam,)]
-        self.nFPM_t     = self.rMask_t * self.nFPM
-        # self.nFPM_max   = int(np.max(self.nFPM_t))
-        self.nFPM_max = int(np.max)
+        self.nFPM_t = self.rMask_t / self.drho
+
+        # Occulter plane coordinates in units of pixels and in lam0/D units [(nlam, nFS_max + 1)]
+        self.rho_px = np.arange(self.nFS_max + 1)
+        self.rho = self.rho_px * self.drho
 
         # Generate a set of focal-plane masks (WITH FIELD STOPS) resized for every wavelength
-        self.mask_lam   = (self.rMask_t[:, None] * self.nFPM
-                           < np.arange(self.nFS_max + 1)[None, :]
-                           < self.rFS_t[:, None] * self.nFS)# [shape: (nlam, nFS_max + 1)]
+        self.fpm = self.nFPM_t[:, None] < self.rho_px[None, :] < self.nFS_t[:, None]
+        self.envelope = None
 
-        # Coordinates in lambda/D for occulter plane, scaled by wavelength
-        # [shape: (nlam, nFS_max + 1)]
-        # TODO: Appears to also include the mask itself.  Are these coordinates or a masks?
-        # TODO: Add in analytical envelope when coordinate situation is figured out
-        self.xi_FPM_lam = (np.arange(self.nFS_max + 1)[None, :] * self.mask_lam / self.nFS)
-
+        # Envelope goes here
+        # Will have the following properties:
+        #   - Scales with wavelength -> first dimension has length nlam
+        #   - Function of radius -> second dimension has length nFS_max + 1
+        #   - Rows are Bessel functions whose width is 1/dr, where dr is pupil plane sample spacing
 
         # Hankel kernel for the focal plane mask (FPM)
-        # TODO: Constructed with xi_FPM_lam, which appears to be both a mask and coordinate axis
-        self.hankel_kernel_FPM_all  = besselJ0(  # [shape: nlam, nFS_max + 1, nPup]
-                np.pi / self.R * self.xi_FPM_lam[:, :, None] * self.r[None, None, :])
-        self.hankel_kernel_iFPM_all = besselJ0(  # [shape: nlam, nPup, nFS_max + 1]
-                np.pi / self.R * self.xi_FPM_lam[:, None, :] * self.r[None, :, None])
+        # Mask is applied explicitly during propagation, so kernel is only 2D
+        self.hankel_kernel_FPM  = besselJ0(  # [shape: nFS_max + 1, nPup]
+                np.pi / self.R * self.rho[:, None] * self.r[None, :])
+        self.hankel_kernel_iFPM = besselJ0(  # [shape: nPup, nFS_max + 1]
+                np.pi / self.R * self.rho[None, :] * self.r[:, None])
 
 
     def compute_direct_field_1d(self, Apod):
@@ -808,28 +815,39 @@ class APLC1dAnalyticalHankel(APLC1d):
 
         """
         # Propagate from apodizer to occulter
-        # TODO: why don't we need to propagate every wavelength separately like in the next step?
-        FPM_field  = np.pi * self.hankel_kernel_FPM_all.dot(
-            Apod * self.Pupil1d * self.r / self.R) * (self.R / self.nPup) * self.xi_FPM_lam
+        # QUESTION: why is rho in this expression?
+        #   Theory: it belongs in the expression for iFPM_field, since it is inside the integral
+        #   when doing the inverse Hankel transform
+        # QUESTION: why is the prefactor pi instead of 2pi?
+        # QUESTION: why divide by R?
+        # Seems like the definition below is more correct:
+        # FPM_field = (self.envelope * self.fpm * 2 * np.pi * (self.dr ** 2) *
+        #              np.dot(self.hankel_kernel_FPM, Apod * self.Pupil1d * self.r))
+        FPM_field = (self.envelope * self.fpm * np.pi * self.dr *
+                     np.dot(self.hankel_kernel_FPM, Apod * self.Pupil1d * self.r / self.R))
 
         # Propagate each wavelength separately from occulter to Lyot stop plane
+        # QUESTION: why is the prefactor pi instead of 2pi?
+        # TODO: how to broadcast rho to the correct size?
         iFPM_field = np.zeros((self.nlam, self.nPup))
         for i in range(self.nlam):
-            iFPM_field[i, :] = np.pi * self.hankel_kernel_iFPM_all[i, :, :].dot(
-                FPM_field[i, :]) * (1 / self.nFPM)
+            iFPM_field[i, :] = np.dot(self.hankel_kernel_iFPM, FPM_field[i, :] * self.rho)
+
+        # QUESTION: what is r/R doing in this expression?  Does it belong inside the next transform?
+        iFPM_field *= np.pi * self.dhro * self.r / self.R
 
         # Using direct propagation, so we don't need to account for the wave that doesn't encounter
         # the occulter
-        lyot_field   = iFPM_field * self.LyotStop1d[None, :]
+        # QUESTION: what is the Lyot stop broadcasting for?
+        lyot_field = iFPM_field * self.LyotStop1d[None, :]
 
         # Propagate from Lyot stop to detector
         corono_field_tmp = np.zeros((self.nlam, self.nImg + 1))
         for i in range(self.nlam):
-            corono_field_tmp[i, :] = self.hankel_kernel_all[i, :, :].dot(
-                lyot_field[i,:])
+            corono_field_tmp[i, :] = np.dot(self.hankel_kernel_all[i, :, :], lyot_field[i, :])
 
         # Scale field and return
-        return self.lam0 / self.lam_t[:,None] * np.pi * corono_field_tmp * self.R / self.nPup
+        return (self.lam0 / self.lam_t[:, None]) * np.pi * corono_field_tmp * self.dr
 
 
 #%%
