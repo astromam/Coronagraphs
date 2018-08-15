@@ -645,24 +645,38 @@ class APLC1d(Coronagraph):
         """
         super(APLC1d,self).__init__(**kwargs)
 
-        # mask size at Apod given wavelength [shape: (nlam,)]
-        # _t -> table (i.e. table of wavelength)
-        self.rMask_t    = (self.lam0/self.lam_t)*self.rMask
+        # Vector of wavelength ratios:  wr[n] = lam0 / lam[n] [shape: (nlam,)]
+        self.wr = self.lam0 / self.lam_t
 
-        # mask sampling at Apod given wavelength and max nFPM_max [shape: (nlam,)]
-        self.nFPM_t     = self.rMask_t*self.nFPM
+        # Focal plane mask size in lambda/D units as a function of wavelength [shape: (nlam,)]
+        # If
+        #               rMask [lam0/D] = rMask [rad] / (lam0/D)
+        # then
+        #             rMask [lam[n]/D] = (lam0/lam[n]) * rMask [lam0/D]
+        self.rMask_t    = self.wr * self.rMask
+
+        #   nFPM -> number of samples PER lambda/D, same for every wavelength, i.e.
+        #               nFPM = 5 <=> step size = 0.2 lambda/D
+        #   nFPM_t -> TOTAL NUMBER of samples across the occulter radius at each wavelength
+        self.nFPM_t     = self.rMask_t * self.nFPM
         self.nFPM_max   = int(np.max(self.nFPM_t))
-        self.mask_lam   = (np.arange(self.nFPM_max+1)[None,:]\
-                           <self.rMask_t[:,None]*self.nFPM)  # [shape: (nlam, nFPM_max + 1)]
 
-        # Truncated coordinate vector (ends up being equivalent to ordinary DFT and then
-        # multiplying by a mask elementwise)
-        self.xi_FPM_lam = np.arange(self.nFPM_max+1)[None,:]\
-                *self.mask_lam/self.nFPM  # [shape: (nlam, nFPM_max + 1)]
+        # Rows: transmissive occulter (for semi-analytical prop.), scaled by wavelength
+        # NOTE: rMask_t * nFPM is NOT integer valued at every wavelength.  Does this mean that the
+        # occulter behaves differently at some wavelengths vs. others?  Do we always need to choose
+        # wavelengths so that the occulter has an integer number of samples?
+        self.mask_lam   = (np.arange(self.nFPM_max+1)[None, :]\
+                           < self.rMask_t[:, None] * self.nFPM)  # [shape: (nlam, nFPM_max + 1)]
+
+        # Truncated coordinate vector (equivalent to performing ordinary DFT and then
+        # multiplying elementwise by a binary aperture)
+        # NOTE: dividing by nFPM is equivalent to multiplying by step size -> xi_FPM_lam has units # of lambda/D
+        self.xi_FPM_lam = np.arange(self.nFPM_max + 1)[None, :]\
+                * self.mask_lam / self.nFPM  # [shape: (nlam, nFPM_max + 1)]
 
         # Hankel kernel for the focal plane mask (FPM)
         self.hankel_kernel_FPM_all  = besselJ0(  # [shape: nlam, nFPM_max + 1, nPup]
-                np.pi/self.R*self.xi_FPM_lam[:,:,None]*self.r[None,None,:])
+                np.pi / self.R * self.xi_FPM_lam[:, :, None] * self.r[None, None, :])
         self.hankel_kernel_iFPM_all = besselJ0(  # [shape: nlam, nPup, nFPM_max + 1]
                 np.pi/self.R*self.xi_FPM_lam[:,None,:]*self.r[None,:,None])
                 
@@ -714,10 +728,13 @@ class APLC1d(Coronagraph):
             Coronagraphic electric field :math:`\Psi_D` at all the wavelengths
 
         """
+        # QUESTION: what's the point of xi_FPM_lam here? Isn't the FPM already implicitly applied
+        # since it was used to construct the Hankel kernel?
         FPM_field  = np.pi*self.hankel_kernel_FPM_all.dot(
                 Apod*self.Pupil1d*self.r/self.R)\
                 *(self.R/self.nPup)*self.xi_FPM_lam
 
+        # QUESTION: where's the occulter plane coordinate axis inside the integral?
         iFPM_field = np.zeros((self.nlam,self.nPup))
         for i in range(self.nlam):
             iFPM_field[i,:] = np.pi*self.hankel_kernel_iFPM_all[i,:,:].dot(
