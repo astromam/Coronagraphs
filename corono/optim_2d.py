@@ -134,7 +134,8 @@ def get_default_params_ProblemMatrix():
            'slvCrossover':0, 'slvLogToConsole':1, 'slvMethod':2,
            'allLogToConsole':0,
            'MinIsland':False, 'FirstDerGlobalLim':0.01,
-           'Binarity':False, 'BinarityReg':0.1}
+           'Binarity':False, 'BinarityReg':0.1,
+           'ImPart':True}
     return tmp
 
 #%%
@@ -289,20 +290,15 @@ class ProblemMatrix(object):
         self.check_params()
         
         if isinstance(corono, list) == True:
-            self.corono   = corono[0]
             self.corono_t = corono
-            self.ncorono  = len(self.corono_t)
-            print('number of corono: {0}'.format(self.ncorono))
-            self.LyotStop_vec_t = np.zeros((self.ncorono, (self.corono.nPup**2)))
-            for i in range(self.ncorono):
-                self.LyotStop_vec_t[i] = np.reshape(self.corono_t[i].LyotStop2d, (self.corono.nPup**2))                
         else:
-            self.corono  = corono
             self.corono_t = [corono]
-            self.ncorono = 1
-            self.LyotStop_vec = np.reshape(self.corono.LyotStop2d, (self.corono.nPup**2))
-            self.LyotStop_vec_t = [self.LyotStop_vec]
 
+        self.corono   = self.corono_t[0]
+        self.ncorono  = len(self.corono_t)
+        self.LyotStop_vec_t = np.zeros((self.ncorono, (self.corono.nPup**2)))
+        for i in range(self.ncorono):
+            self.LyotStop_vec_t[i] = np.reshape(self.corono_t[i].LyotStop2d, (self.corono.nPup**2))                
         
         if self.corono.Pupil2dSym == False:
             self.Pupil_vec = np.reshape(self.corono.Pupil2d, (self.corono.nPup**2))
@@ -455,13 +451,15 @@ class ProblemMatrix(object):
         corono_field_re_t = np.reshape(
                 corono_field_re_t_tmp[:,:, self.idx_dz], 
                 (self.npp, self.corono.nlam*self.ndz))
-
-        corono_field_im_t = np.reshape(
+                
+        if self.ImPart is True:
+            corono_field_im_t = np.reshape(
                 corono_field_im_t_tmp[:,:, self.idx_dz], 
                 (self.npp, self.corono.nlam*self.ndz))
-                
-        return np.concatenate((corono_field_re_t, corono_field_im_t), 
+            return np.concatenate((corono_field_re_t, corono_field_im_t), 
                                                      axis=1)
+        else:
+            return corono_field_re_t
 
 #%%        
     def solve_model(self):
@@ -1184,17 +1182,22 @@ class MaxContrast(ProblemMatrix):
                                 
         """           
         # Compute intermediate variables for electric field constraints 
+        nI1 = 2 
+        if self.ImPart is False:
+            nI1 = 1
+
         if self.Lnorm == 'Linf':
             I0 = np.ones(self.ndz)
             I0 = I0[None,:]
-            I1 = np.ones(2*self.nlam*self.ndz)
+
+            I1 = np.ones(nI1*self.nlam*self.ndz)
             I1 = I1[None,:]
             self.N0 = np.zeros((1, self.npp))
             Z0 = np.zeros(1)
             c1 = [1]
         else:
             I0 = np.identity(self.ndz)
-            I1 = np.hstack([I0 for k in range(2*self.nlam)])            
+            I1 = np.hstack([I0 for k in range(nI1*self.nlam)])
             self.N0 = np.zeros((self.ndz, self.npp))
             Z0 = np.zeros(self.ndz)
             c1 = np.array(self.rad2d)
