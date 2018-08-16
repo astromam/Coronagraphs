@@ -515,7 +515,7 @@ class ProblemMatrix(object):
             bds[:,1] = 1.
             sol=scipy.optimize.linprog(self.c,self.A.T,self.b,
                                        method='interior-point',
-                                       bounds=bds)
+                                       bounds=bds, options={'lstsq':True,'presolve':True} )
             self.Apod[self.idx_pup]=sol.x
 
         t1 = time.time()
