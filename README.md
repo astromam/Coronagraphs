@@ -29,9 +29,8 @@ details.
 
 * [Rémy Flamary](https://github.com/rflamary) for providing countless guidance in Python 
 coding and optimization.
-* [Frantz Martinache](https://github.com/fmartinache) for introducing me to Python.
-* Collaborators at the [Space Telescope Science Institute](http://www.stsci.edu/), 
-in particular, those from the Segmented Design and Analysis (SCDA) team.
+* [Space Telescope Science Institute](http://www.stsci.edu/) collaborators, 
+in particular, the Segmented Design and Analysis (SCDA) team.
 * the [Lorentz Center](http://www.lorentzcenter.nl/) for hosting and to a large extent 
 funding the Optimal Optical Coronagraph workshop held September 25-29, 2017 at the Lorentz
  Center in Leiden, the Netherlands. Also, all the participants of the workshop for very
