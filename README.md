@@ -4,7 +4,7 @@ This package allows you to design and simulate the propagation in Lyot-style cor
 For design optimization, the code defines a linear program model and uses a solver to find
 the best solution of the problem. Two different solvers can be used to solve the problem:
 - [scipy.linprog](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.linprog.html)
-- [gurobi solver](www.gurobi.com)
+- [gurobi](http://www.gurobi.com)
 
 
 ### Prerequisites
