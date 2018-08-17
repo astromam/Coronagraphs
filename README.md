@@ -1,7 +1,7 @@
 # Coronagraphs
 
-This package allows the user to design and simulate the propagation in Lyot-style 
-coronagraphs. For design optimization, the code defines a linear program model and uses a 
+This package allows the user to design and simulate Lyot-style coronagraphs. 
+For design optimization, the code defines a linear program model and uses a 
 solver to find the best solution of the problem. Two different solvers can be used to 
 solve the problem:
 - [scipy.linprog](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.linprog.html)
@@ -25,3 +25,14 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 details.
 
 
+## Acknowledgments
+
+* [Rémy Flamary](https://github.com/rflamary) for providing countless guidance in Python 
+coding and optimization.
+* [Frantz Martinache](https://github.com/fmartinache) for introducing me to Python.
+* Collaborators at the [Space Telescope Science Institute](http://www.stsci.edu/), 
+in particular, those from the Segmented Design and Analysis (SCDA) team.
+* the [Lorentz Center](http://www.lorentzcenter.nl/) for hosting and to a large extent 
+funding the Optimal Optical Coronagraph workshop held September 25-29, 2017 at the Lorentz
+ Center in Leiden, the Netherlands. Also, all the participants of the workshop for very
+ engaging discussions.
