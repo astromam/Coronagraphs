@@ -135,7 +135,7 @@ def get_default_params_ProblemMatrix():
            'allLogToConsole':0,
            'MinIsland':False, 'FirstDerGlobalLim':0.01,
            'Binarity':False, 'BinarityReg':0.1,
-           'ImPart':True}
+           'ImPart':True, 'LSRobustness':False}
     return tmp
 
 #%%
@@ -293,7 +293,10 @@ class ProblemMatrix(object):
             self.corono_t = corono
         else:
             self.corono_t = [corono]
-
+        
+        if self.LSRobustness == False:
+            self.corono_t = [self.corono_t[0]]
+        
         self.corono   = self.corono_t[0]
         self.ncorono  = len(self.corono_t)
         self.LyotStop_vec_t = np.zeros((self.ncorono, (self.corono.nPup**2)))
@@ -565,10 +568,16 @@ class ProblemMatrix(object):
         if self.Binarity is True:
             str_Binarity = '_binreg={BinarityReg}'
             
+        str_LSRobustness = ''
+        if self.LSRobustness is True:
+            str_LSRobustness = '_LSRobustness=1'
+            
+            
         fname_gen  = '{pupil_name}_{corono_name}_IWA={rho0}' \
         + '_OWA={rho1}_BW={bw:.2f}_nlam={nlam:02d}' \
         + '_2D_nPup={nPup:04d}' + str_cor + '_{problem_name}' \
-        + str_opt + str_FirstDerGlobal + str_Binarity + '_{solver}'        
+        + str_opt + str_FirstDerGlobal + str_Binarity + str_LSRobustness \
+        + '_{solver}'        
         
         return fname_gen.format(**params)
 
