@@ -2,15 +2,30 @@
 
 This package allows the user to design and simulate Lyot-style coronagraphs. 
 For design optimization, the code defines a linear program model and uses a 
-solver to find the best solution of the problem. Two different solvers can be used to 
-solve the problem:
+solver to find the best solution of the problem. Two different solvers are available to 
+solve the optimization problem:
 - [scipy.linprog](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.linprog.html)
 - [gurobi](http://www.gurobi.com)
 
-
 ### Prerequisites
 - Gurobi solver for python: see instructions for installation and license at 
-[gurobipy](http://www.gurobi.com/documentation/7.5/quickstart_mac/the_gurobi_python_interfac.html)
+[gurobipy](http://www.gurobi.com/documentation/7.5/quickstart_mac/the_gurobi_python_interfac.html).
+- [stdgrb](https://github.com/rflamary/stdgrb) gurobi cython wrapper for dense optimization
+problem.
+
+### Installing
+
+
+## Deployment
+
+## Built With
+- [spyder](https://pythonhosted.org/spyder/installation.html) the used python editor
+
+## Contributing
+
+
+## Versioning
+
 
 ## Authors
 
