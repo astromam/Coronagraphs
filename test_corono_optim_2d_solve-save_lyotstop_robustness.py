@@ -32,6 +32,7 @@ MinIsland   = False
 Binarity    = False
 FirstDerGlobalLim = 100.
 BinarityReg       = 0.1
+LSRobustness = True
 
 # sampling
 nPup = 50
@@ -68,6 +69,9 @@ nlam = 5
 # maximum pixel shift along a given axis for Lyot stop 
 pix_max   = 1
 
+# Lyot stop outer diameter
+LSOD = 0.95
+
 # save in fits file
 do_fits = True
 
@@ -91,7 +95,7 @@ Pupil2d    = fits.getdata(fpath_pup)
 LyotStop2d = fits.getdata(fpath_lys)
 
 # reduction of the outer diameter of the Lyot stop
-circ = coro.utils.uniform_disk(nPup, 0.95*nPup/2, CtrBtwnPix=True)
+circ = coro.utils.uniform_disk(nPup, LSOD*nPup/2, CtrBtwnPix=True)
 LyotStop2d *= circ
 
 # List of Lyot stops for the design optimization
@@ -99,7 +103,7 @@ LyotStop2d_t = [LyotStop2d]
 
 # List construction for Lyot stop position shifts
 pix_t = []
-if pix_max >= 1:
+if pix_max >= 1 and LSRobustness == True:
     pix_pos_t = 1+np.arange(pix_max)
     pix_neg_t = - pix_pos_t
     pix_t = list(-pix_pos_t) + list(pix_pos_t)
@@ -133,7 +137,7 @@ params = coro.to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
                  allLogToConsole = allLogToConsole,
                  MinIsland = MinIsland, FirstDerGlobalLim = FirstDerGlobalLim,
                  Binarity = Binarity, BinarityReg = BinarityReg,
-                 ImPart = ImPart)
+                 ImPart = ImPart, LSRobustness = LSRobustness)
 
 # list of parameters for each coronagraph configuration
 params_t = []
