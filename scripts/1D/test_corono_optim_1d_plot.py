@@ -40,7 +40,7 @@ if False:
     bw   = 0.1
     nlam = 5
     
-    PupilObs    = 0.20
+    PupilID    = 0.20
     rMask       = 4.4
     
     rMask1      = 2.0
@@ -49,8 +49,8 @@ if False:
     OPDx2       = 0.5
     OPDx3       = 0.75
     
-    LyotStopObs = 0.40
-    LyotStopIns = 1.0
+    LyotStopID = 0.40
+    LyotStopOD = 1.0
     
     # dark zone bounds (inner and outer edges) in lam0/D unit
     rho0 = 3.5
@@ -63,8 +63,8 @@ if False:
     tau   = 0.3
     
     r   = np.arange(nPup)*R/nPup + R/(2*nPup)
-    Pupil1d      = (r>PupilObs)*1.0
-    LyotStop1d   = (r>LyotStopObs)*(r<LyotStopIns)*1.0
+    Pupil1d      = (r>PupilID)*1.0
+    LyotStop1d   = (r>LyotStopID)*(r<LyotStopOD)*1.0
     
     if solver != 'gurobipy' and solver != 'stdgrb':
         solver = 'scipy'
@@ -72,11 +72,11 @@ if False:
     params = coro.to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
                      nPup = nPup, nFPM=nFPM, nImg=nImg, Fmax = Fmax,
                      bw = bw, nlam = nlam,
-                     PupilObs = PupilObs, rMask = rMask, 
+                     PupilID = PupilID, rMask = rMask, 
                      rMask1 = rMask1, rMask2 = rMask2, rMask3 = rMask3,
                      OPDx2 = OPDx2, OPDx3 = OPDx3, 
-                     LyotStopObs = LyotStopObs,
-                     LyotStopIns = LyotStopIns,
+                     LyotStopID = LyotStopID,
+                     LyotStopOD = LyotStopOD,
                      r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d,
                      solver = solver, problem_name = problem_name,
                      corono_name = corono_name,
@@ -90,10 +90,10 @@ nImgbis = 110
 Fmaxbis = 11    
 
 #%%
-fdir = Path('.').resolve()
+fdir = Path('../../results/1D/').resolve()
 
-fdir_pyth = fdir / 'results' / '1D' / 'dat_pyth'
-fdir_plot = fdir / 'results' / '1D' / 'plots'
+fdir_pyth = fdir / 'dat_pyth'
+fdir_plot = fdir / 'plots'
 
 if not os.path.exists(fdir_plot):
     os.makedirs(fdir_plot)

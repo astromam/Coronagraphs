@@ -37,7 +37,7 @@ bw   = 0.2
 nlam = 5
 nlambis = 11
 
-PupilObs    = 0.14
+PupilID    = 0.14
 
 rMask       = 4.0  #2.3 or 4.0
 
@@ -47,8 +47,8 @@ rMask3      = 0.25
 OPDx2       = 0.25
 OPDx3       = 0.75
 
-LyotStopObs = 0.28
-LyotStopIns = 0.9
+LyotStopID = 0.28
+LyotStopOD = 0.9
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
 rho0 = 2.5
@@ -61,8 +61,8 @@ cDarkHole = 10.0
 tau   = 0.01
 
 r            = np.arange(nPup)*R/nPup + R/(2*nPup)
-Pupil1d      = (r>PupilObs)*1.0
-LyotStop1d   = (r>LyotStopObs)*(r<LyotStopIns)*1.0
+Pupil1d      = (r>PupilID)*1.0
+LyotStop1d   = (r>LyotStopID)*(r<LyotStopOD)*1.0
 
 if solver != 'gurobipy' and solver != 'stdgrb':
     solver = 'scipy'
@@ -70,11 +70,11 @@ if solver != 'gurobipy' and solver != 'stdgrb':
 params = coro.to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
                  nPup = nPup, nFPM=nFPM, nImg=nImg, Fmax = Fmax,
                  bw = bw, nlam = nlam,
-                 PupilObs = PupilObs, rMask = rMask, 
+                 PupilID = PupilID, rMask = rMask, 
                  rMask1 = rMask1, rMask2 = rMask2, rMask3 = rMask3,
                  OPDx2 = OPDx2, OPDx3 = OPDx3, 
-                 LyotStopObs = LyotStopObs,
-                 LyotStopIns = LyotStopIns,
+                 LyotStopID = LyotStopID,
+                 LyotStopOD = LyotStopOD,
                  r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d,
                  solver = solver, problem_name = problem_name,
                  corono_name = corono_name,
@@ -86,9 +86,10 @@ params = coro.to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
 """
 Working directory
 """
-fdir = Path('.').resolve()
-fdir_pyth = fdir / 'results' / '1D' / 'dat_pyth'
-fdir_plot = fdir / 'results' / '1D' / 'plots'
+fdir = Path('../../results/1D/').resolve()
+
+fdir_pyth = fdir / 'dat_pyth'
+fdir_plot = fdir / 'plots'
 
 if not os.path.exists(fdir_plot):
     os.makedirs(fdir_plot)
@@ -135,20 +136,20 @@ fpath_pyth_nm0 = fdir_pyth / fname_pyth_nm0
 x_end = np.loadtxt(fpath_pyth_nm0)
 
 if corono_name == 'APLC':
-    rMask, LyotStopObs, LyotStopIns = [x_end[i] for i in range(3)]
+    rMask, LyotStopID, LyotStopOD = [x_end[i] for i in range(3)]
     print('mask radius          : {0:.3f} lambda/D'.format(rMask))
-    print('Lyot Stop obstruction: {0:.3f}'.format(LyotStopObs))
-    print('Lyot Stop ins. size  : {0:.3f}'.format(LyotStopIns))
+    print('Lyot Stop obstruction: {0:.3f}'.format(LyotStopID))
+    print('Lyot Stop ins. size  : {0:.3f}'.format(LyotStopOD))
 elif corono_name == 'HDZPM':
-    rMask1, OPDx2, LyotStopObs, LyotStopIns = [x_end[i] for i in {0,2,3,4}]
+    rMask1, OPDx2, LyotStopID, LyotStopOD = [x_end[i] for i in {0,2,3,4}]
     rMask2      = rMask1 + x_end[1]
     print('mask radius 1         : {0:.3f} lambda_0/D'.format(rMask1))
     print('mask radius 2         : {0:.3f} lambda_0/D'.format(rMask2))
     print('OPD 2                 : {0:.3f} lambda_0'.format(OPDx2))
-    print('Lyot Stop obstruction: {0:.3f}'.format(LyotStopObs))
-    print('Lyot Stop ins. size  : {0:.3f}'.format(LyotStopIns))    
+    print('Lyot Stop obstruction: {0:.3f}'.format(LyotStopID))
+    print('Lyot Stop ins. size  : {0:.3f}'.format(LyotStopOD))    
 elif corono_name == 'HTZPM': 
-    rMask1, OPDx2, OPDx3, LyotStopObs, LyotStopIns = [x_end[i] for i in {0,3,4,5,6}]
+    rMask1, OPDx2, OPDx3, LyotStopID, LyotStopOD = [x_end[i] for i in {0,3,4,5,6}]
     rMask2      = rMask1 + x_end[1]
     rMask3      = rMask2 + x_end[2]
     print('mask radius 1         : {0:.3f} lambda_0/D'.format(rMask1))
@@ -156,20 +157,20 @@ elif corono_name == 'HTZPM':
     print('mask radius 3         : {0:.3f} lambda_0/D'.format(rMask3))
     print('OPD 2                 : {0:.3f} lambda_0'.format(OPDx2))
     print('OPD 3                 : {0:.3f} lambda_0'.format(OPDx3))
-    print('Lyot Stop obstruction: {0:.3f}'.format(LyotStopObs))
-    print('Lyot Stop ins. size  : {0:.3f}'.format(LyotStopIns)) 
+    print('Lyot Stop obstruction: {0:.3f}'.format(LyotStopID))
+    print('Lyot Stop ins. size  : {0:.3f}'.format(LyotStopOD)) 
 else:
     raise NameError('{0}: Not a correct coronagraph for NM-optimization!'.format(corono_name))    
 
     
 r   = np.arange(nPup)*R/nPup + R/(2*nPup)
-Pupil1d      = (r>PupilObs)*1.0
-LyotStop1d   = (r>LyotStopObs)*(r<LyotStopIns)*1.0
+Pupil1d      = (r>PupilID)*1.0
+LyotStop1d   = (r>LyotStopID)*(r<LyotStopOD)*1.0
 
 params = coro.update_params(params, rMask = rMask, 
                        rMask1 = rMask1, rMask2 = rMask2, rMask3 = rMask3,
                         OPDx2 = OPDx2, OPDx3 = OPDx3,
-                        LyotStopObs = LyotStopObs, LyotStopIns = LyotStopIns,
+                        LyotStopID = LyotStopID, LyotStopOD = LyotStopOD,
                         r = r, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d,)
 
     
@@ -202,10 +203,10 @@ pl.clf()
 pl.plot(corono0.r, Apod_pyth/Apod_pyth.max())
 pl.xlabel(r'Pupil radius r')
 pl.ylabel('Apodizer amplitude transmission')
-pl.axvline(x=corono0.PupilObs, ymin=-0.5, ymax =2, linewidth=1, color='g', linestyle='--')
+pl.axvline(x=corono0.PupilID, ymin=-0.5, ymax =2, linewidth=1, color='g', linestyle='--')
 pl.axvline(x=1.0, ymin=-0.5, ymax =2, linewidth=1, color='g', linestyle='--')
-pl.axvline(x=corono0.LyotStopObs, ymin=-0.5, ymax =2, linewidth=1, color='r', linestyle='--')
-pl.axvline(x=corono0.LyotStopIns, ymin=-0.5, ymax =2, linewidth=1, color='r', linestyle='--')
+pl.axvline(x=corono0.LyotStopID, ymin=-0.5, ymax =2, linewidth=1, color='r', linestyle='--')
+pl.axvline(x=corono0.LyotStopOD, ymin=-0.5, ymax =2, linewidth=1, color='r', linestyle='--')
 #pl.legend()
 pl.tight_layout()
 pl.show()

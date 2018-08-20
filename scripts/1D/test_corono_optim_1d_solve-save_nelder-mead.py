@@ -43,7 +43,7 @@ R    = 1
 bw   = 0.2
 nlam = 5
 
-PupilObs    = 0.14
+PupilID    = 0.14
 rMask       = 4.0
 
 rMask1      = 3.0
@@ -52,8 +52,8 @@ rMask3      = 0.25
 OPDx2       = 0.25
 OPDx3       = 0.75
 
-LyotStopObs = 0.28
-LyotStopIns = 0.9
+LyotStopID = 0.28
+LyotStopOD = 0.9
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
 rho0 = 2.5
@@ -66,8 +66,8 @@ cDarkHole = 10.0
 tau   = 0.01
 
 r   = np.arange(nPup)*R/nPup + R/(2*nPup)
-Pupil1d      = (r>PupilObs)*1.0
-LyotStop1d   = (r>LyotStopObs)*(r<LyotStopIns)*1.0
+Pupil1d      = (r>PupilID)*1.0
+LyotStop1d   = (r>LyotStopID)*(r<LyotStopOD)*1.0
 
 if solver != 'gurobipy' and solver != 'stdgrb':
     solver = 'scipy'
@@ -75,11 +75,11 @@ if solver != 'gurobipy' and solver != 'stdgrb':
 params = coro.to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
                  nPup = nPup, nFPM=nFPM, nImg=nImg, Fmax = Fmax,
                  bw = bw, nlam = nlam,
-                 PupilObs = PupilObs, rMask = rMask, 
+                 PupilID = PupilID, rMask = rMask, 
                  rMask1 = rMask1, rMask2 = rMask2, rMask3 = rMask3,
                  OPDx2 = OPDx2, OPDx3 = OPDx3, 
-                 LyotStopObs = LyotStopObs,
-                 LyotStopIns = LyotStopIns,
+                 LyotStopID = LyotStopID,
+                 LyotStopOD = LyotStopOD,
                  r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d,
                  solver = solver, problem_name = problem_name,
                  corono_name = corono_name, slvLogToConsole = slvLogToConsole,
@@ -93,8 +93,7 @@ params = coro.to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
 """
 Working directory
 """
-fdir = Path('.').resolve()
-fdir_pyth = fdir / 'results' / '1D' / 'dat_pyth' 
+fdir = Path('../../results/1D/dat_pyth').resolve()
 if not os.path.exists(fdir):
     os.makedirs(fdir)      
 
@@ -130,7 +129,7 @@ else:
     raise NameError('{0}: Not an existing optimization problem!'.format(problem_name))
 
 fname_pyth = problem0.get_filename() + '_tmp.dat'
-fpath_pyth = fdir_pyth / fname_pyth
+fpath_pyth = fdir / fname_pyth
 
 #%%
 """
@@ -142,15 +141,15 @@ t0 = time.time()
 Parameter boundaries
 """
 if corono_name   == 'APLC':
-    x_init = [rMask, LyotStopObs, LyotStopIns] 
+    x_init = [rMask, LyotStopID, LyotStopOD] 
     x_lb   = [2.0, 0.14, 0.8]
     x_ub   = [4.5, 0.50, 1.0]
 elif corono_name == 'HDZPM':
-    x_init = [rMask1, rMask2, OPDx2, LyotStopObs, LyotStopIns] 
+    x_init = [rMask1, rMask2, OPDx2, LyotStopID, LyotStopOD] 
     x_lb   = [1.0, 0.1, 0.0, 0.14, 0.8]
     x_ub   = [3.0, 0.5, 1.0, 0.45, 1.0]    
 elif corono_name == 'HTZPM': 
-    x_init = [rMask1, rMask2, rMask3, OPDx2, OPDx3, LyotStopObs, LyotStopIns] 
+    x_init = [rMask1, rMask2, rMask3, OPDx2, OPDx3, LyotStopID, LyotStopOD] 
     x_lb   = [2.0, 0.001, 0.001, 0.0, 0.0, 0.14, 0.8]
     x_ub   = [4.5, 0.5, 0.5, 1.0, 1.0, 0.45, 1.0] 
 else:    
@@ -161,22 +160,22 @@ def res_energy_with_lp(x_t):
     x_t = np.maximum(x_lb,np.minimum(x_ub,x_t))
 
     if   corono_name == 'APLC':
-        rMask, LyotStopObs, LyotStopIns = [x_t[i] for i in range(3)]
-        LyotStop1d  = (r>LyotStopObs)*(r<LyotStopIns)*1.0
+        rMask, LyotStopID, LyotStopOD = [x_t[i] for i in range(3)]
+        LyotStop1d  = (r>LyotStopID)*(r<LyotStopOD)*1.0
         params2 = coro.update_params(params, rMask = rMask)
         
     elif corono_name == 'HDZPM':
-        rMask1, OPDx2, LyotStopObs, LyotStopIns = [x_t[i] for i in {0,2,3,4}]
+        rMask1, OPDx2, LyotStopID, LyotStopOD = [x_t[i] for i in {0,2,3,4}]
         rMask2      = rMask1 + x_t[1]
-        LyotStop1d  = (r>LyotStopObs)*(r<LyotStopIns)*1.0
+        LyotStop1d  = (r>LyotStopID)*(r<LyotStopOD)*1.0
         params2 = coro.update_params(params, OPDx2 = OPDx2, 
                                 rMask1 = rMask1, rMask2 = rMask2,)
         
     elif corono_name == 'HTZPM':
-        rMask1, OPDx2, OPDx3, LyotStopObs, LyotStopIns = [x_t[i] for i in {0,3,4,5,6}]
+        rMask1, OPDx2, OPDx3, LyotStopID, LyotStopOD = [x_t[i] for i in {0,3,4,5,6}]
         rMask2      = rMask1 + x_t[1]
         rMask3      = rMask2 + x_t[2]
-        LyotStop1d  = (r>LyotStopObs)*(r<LyotStopIns)*1.0
+        LyotStop1d  = (r>LyotStopID)*(r<LyotStopOD)*1.0
         params2 = coro.update_params(params, OPDx2 = OPDx2, OPDx3 = OPDx3,
                         rMask1 = rMask1, rMask2 = rMask2, rMask3 = rMask3)
         
@@ -184,7 +183,7 @@ def res_energy_with_lp(x_t):
         raise NameError('{0}: Not a correct coronagraph for NM-optimization!'.format(corono_name))    
 
     params2 = coro.update_params(params2, LyotStop1d = LyotStop1d,
-                        LyotStopObs = LyotStopObs, LyotStopIns = LyotStopIns)
+                        LyotStopID = LyotStopID, LyotStopOD = LyotStopOD)
     
     if   corono_name == 'APLC':
         corono0 = coro.design.APLC1d(**params2)
@@ -255,12 +254,12 @@ x_end = np.maximum(x_lb,np.minimum(x_ub,res.x))
 
 #%% save solution
 fname_pyth = problem0.get_filename() + '_tmp.dat'
-fpath_pyth = fdir_pyth / fname_pyth
+fpath_pyth = fdir / fname_pyth
 
-fpath_pyth = fdir_pyth / fname_pyth
+fpath_pyth = fdir / fname_pyth
 test0      = np.loadtxt(fpath_pyth)
 Apod_nm0   = test0[:, 1]
 
 fname_pyth_nm0 = problem0.get_filename() + '_nm0.dat'
-fpath_pyth_nm0 = fdir_pyth / fname_pyth_nm0
+fpath_pyth_nm0 = fdir / fname_pyth_nm0
 np.savetxt(fpath_pyth_nm0, x_end)
