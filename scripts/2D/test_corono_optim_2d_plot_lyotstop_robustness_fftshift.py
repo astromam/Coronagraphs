@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Thu Aug 16 17:09:41 2018
+Created on Fri Aug 17 15:13:19 2018
 
 @author: mndiaye
 """
@@ -13,14 +13,19 @@ from pathlib import Path
 import os
 from astropy.io import fits
 import corono as coro
-from scipy.ndimage.interpolation import shift
+
+ishift = np.fft.ifftshift
+shift = np.fft.fftshift
+fft   = np.fft.fft2
+ifft  = np.fft.ifft2
+
 
 #%% parameters
 """
 Parameters
 """
 # scaling factor for the pupil
-zm = 8 
+zm = 2 
 
 pl.close('all')
 if False:
@@ -86,7 +91,7 @@ else:
 File reading for Pupil and Lyot stop
 """
 if False:
-    fdir = Path('./pupils/2D/').resolve()
+    fdir = Path('../../pupils/2D/').resolve()
     if pupil_name == 'lvr':
         fname_pup = 'ATLAST_Aperture_nPup={0}.fits'.format(nPup,)
         fname_lys = 'ATLAST_LyotStop_nPup={0}.fits'.format(nPup,)
@@ -153,9 +158,9 @@ if False:
 """
 Working directories
 """
-fdir = Path('./results/2D/dat_pyth').resolve() / pupil_name
+fdir = Path('../../results/2D/dat_pyth').resolve() / pupil_name
 
-fdir_pdf = Path('./results/2D/plots/').resolve()
+fdir_pdf = Path('../../results/2D/plots/').resolve()
 if not os.path.exists(fdir_pdf):
     os.makedirs(fdir_pdf)
 
@@ -249,18 +254,24 @@ zLyotStop2d_t = []
 zpix_t = np.arange(-pix_max, pix_max+pix_step, pix_step)
 nzcorono = len(list(zpix_t))
 
+val = 0
+if CtrBtwnPix is True:
+    val = 1/2
+xx,yy  = np.meshgrid(np.arange(nPup)-nPup/2+val, np.arange(nPup)-nPup/2+val)
+
 for j in range(2):
     for i in range(len(zpix_t)):
         if j == 0:
-            shift_val = (zpix_t[i], 0)
+            x0 = zpix_t[i]
+            y0 = 0
         else:
-            shift_val = (0, zpix_t[i])
-        zLyotStop2d_t.append(shift(zLyotStop2d, shift_val, order=1))
-
-#pl.close('all')
-#for k in range(len(zLyotStop2d_t)//2):
-#    pl.figure(k)
-#    pl.imshow(zLyotStop2d_t[k], cmap = 'Greys_r')
+            x0 = 0
+            y0 = zpix_t[i]
+        
+        fftzLyotStop2d     = shift(fft(shift(zLyotStop2d)))
+        fftzLyotStop2d_exp = fftzLyotStop2d*np.exp(-2.*1j*np.pi*(xx*x0+yy*y0)/nPup)
+        zLyotStop2d_end    = np.real(shift(ifft(shift(fftzLyotStop2d_exp))))
+        zLyotStop2d_t.append(zLyotStop2d_end)
 
 params2_t  = []
 for k in range(2*nzcorono):

@@ -76,7 +76,7 @@ nImg2dbis = 500
 File reading for Pupil and Lyot stop
 """
 if False:
-    fdir = Path('./pupils/2D/').resolve()
+    fdir = Path('../../pupils/2D/').resolve()
     if pupil_name == 'lvr':
         fname_pup = 'ATLAST_Aperture_nPup={0}.fits'.format(nPup,)
         fname_lys = 'ATLAST_LyotStop_nPup={0}.fits'.format(nPup,)
@@ -138,9 +138,9 @@ if False:
 """
 Working directories
 """
-fdir = Path('./results/2D/dat_pyth').resolve() / pupil_name
+fdir = Path('../../results/2D/dat_pyth').resolve() / pupil_name
 
-fdir_pdf = Path('./results/2D/plots/').resolve()
+fdir_pdf = Path('../../results/2D/plots/').resolve()
 if not os.path.exists(fdir_pdf):
     os.makedirs(fdir_pdf)
 

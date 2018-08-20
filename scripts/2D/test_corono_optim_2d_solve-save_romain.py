@@ -61,7 +61,7 @@ do_fits = True
 """
 File reading for Pupil and Lyot stop
 """
-fdir = Path('./pupils/2D/').resolve()
+fdir = Path('../../pupils/2D/').resolve()
 if pupil_name == 'lvr':
     fname_pup = 'ATLAST_Aperture_nPup={0}.fits'.format(nPup,)
     fname_lys = 'ATLAST_LyotStop_nPup={0}.fits'.format(nPup,)
@@ -141,7 +141,7 @@ if Pupil2dSym == True:
 """
 Save apodizer
 """
-fdir = Path('./results/2D/dat_pyth').resolve() / pupil_name
+fdir = Path('../../results/2D/dat_pyth').resolve() / pupil_name
 if not os.path.exists(fdir):
     os.makedirs(fdir)
 
