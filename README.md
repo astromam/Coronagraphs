@@ -1,8 +1,8 @@
 # Coronagraphs
 In the context of exoplanet imaging, this object-oriented toolkit in Python 
-enables the model and optimization of Lyot-style coronagraphs and Shaped pupil 
-devices. The code is developed with two object classes:
-- design for coronagraph model
+enables the modelling and optimization of Lyot-style coronagraphs and Shaped 
+pupil devices. The code is developed with two object classes:
+- design for coronagraph modelling
 - optim_1d and optim_2d for coronagraph design optimization.
 
 In terms of design optimization, the package defines an optimization problem 
