@@ -17,7 +17,7 @@ import numpy
 
 here = path.abspath(path.dirname(__file__))
 # dirty but working
-__version__ = '0.0'
+__version__ = '0.1.0-beta'
 # The beautiful part is, I don't even need to check exceptions here.
 
 # Get the long description from the README file
@@ -60,7 +60,7 @@ setup(
     # This is a one-line description or tagline of what your project does. This
     # corresponds to the "Summary" metadata field:
     # https://packaging.python.org/specifications/core-metadata/#summary
-    description='Package for Lyot-style coronagraph design and optimization',  # Required
+    description='Toolkit for Lyot-style coronagraph model and optimization',  # Required
 
     # This is an optional longer description of your project that represents
     # the body of text which users will see when they visit PyPI.

@@ -20,7 +20,9 @@ solution. The tool currently works with the following solvers:
 ### Installing
 The only strong dependencies are
 - numpy
+- scipy
 - astropy
+- pylab
 
 You can install the module with
 ```
@@ -30,7 +32,8 @@ python setup.py install # --user if local install
 ## Deployment
 
 ## Built With
-- [spyder](https://pythonhosted.org/spyder/installation.html) the used python editor
+- [spyder](https://pythonhosted.org/spyder/installation.html) the used python 
+editor.
 
 ## Versioning
 We use [SemVer](http://semver.org/) for versioning. For the versions available,
@@ -44,16 +47,16 @@ See also the list of [contributors](https://github.com/astromam/Coronagraphs/gra
 who participated in this project.
 
 ## License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for 
-details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) 
+file for details.
 
 ## Acknowledgments
 
-* [Rémy Flamary](https://github.com/rflamary) for providing countless guidance in Python 
-coding and optimization.
+* [Rémy Flamary](https://github.com/rflamary) for providing countless guidance 
+in Python coding and optimization.
 * [Space Telescope Science Institute](http://www.stsci.edu/) collaborators, 
 in particular, the Segmented Design and Analysis (SCDA) team.
-* the [Lorentz Center](http://www.lorentzcenter.nl/) for hosting and to a large extent 
-funding the [Optimal Optical Coronagraph workshop](https://www.lorentzcenter.nl/lc/web/2017/924/info.php3?wsid=924&venue=Snellius) 
-held September 25-29, 2017 at the Lorentz Center in Leiden, the Netherlands. Also, all the
- participants for the very engaging discussions during the workshop.
+* the [Lorentz Center](http://www.lorentzcenter.nl/) for hosting and to a large
+extent funding the [Optimal Optical Coronagraph workshop](https://www.lorentzcenter.nl/lc/web/2017/924/info.php3?wsid=924&venue=Snellius) 
+held September 25-29, 2017 at the Lorentz Center in Leiden, the Netherlands. 
+Also, all the participants for the very engaging discussions during the workshop.
