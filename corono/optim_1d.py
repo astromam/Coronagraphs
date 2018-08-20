@@ -590,8 +590,8 @@ class ProblemMatrix(object):
         if self.Binarity is True:
             str_Binarity = '_binreg={BinarityReg}'    
                     
-        fname_gen   = '{corono_name}_obs={PupilObs:.2f}' \
-        + '_lsid={LyotStopObs:.2f}_lsod={LyotStopIns:.2f}' \
+        fname_gen   = '{corono_name}_obs={PupilID:.2f}' \
+        + '_lsid={LyotStopID:.2f}_lsod={LyotStopOD:.2f}' \
         + '_IWA={rho0}_OWA={rho1}_BW={bw:.2f}_nlam={nlam:02d}' \
         + '_1D_N={nPup:04d}_nFPM={nFPM:03d}'+ str_cor + '_{problem_name}' \
         + str_opt + str_FirstDer + str_SecondDer + str_FirstDerGlobal \

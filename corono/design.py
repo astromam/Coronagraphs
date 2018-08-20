@@ -30,11 +30,11 @@ def get_default_params_Coronagraph():
         
     Parameters
     ---------- 
-    PupilObs : float (default=0.14)
+    PupilID : float (default=0.14)
         Pupil central obstruction size :math:`d` in fraction of the pupil 
         diameter :math:`D`
         
-    LyotStopObs : float (default=0.28)
+    LyotStopID : float (default=0.28)
         Lyot stop central obstruction size :math:`d_S` in fraction of the pupil
         diameter :math:`D`
         
@@ -107,7 +107,7 @@ def get_default_params_Coronagraph():
 
             
     """
-    tmp = {'PupilObs':0.14,'LyotStopObs':0.28,'LyotStopIns':1.0,    
+    tmp = {'PupilID':0.14,'LyotStopID':0.28,'LyotStopOD':1.0,    
            'rho0':5,'rho1':10,
            'rho0direct':0.7, 'rho1direct':6.0,
            'nPup':200,'nImg':200,'Fmax':25,
@@ -148,9 +148,9 @@ def get_default_params_APLC1d():
     r   = np.arange(tmp['nPup'])*tmp['R']/tmp['nPup']\
                 +tmp['R']/(2*tmp['nPup'])
     # Telescope aperture
-    Pupil1d      = (r>tmp['PupilObs'])*1.0
+    Pupil1d      = (r>tmp['PupilID'])*1.0
     # Lyot stop 
-    LyotStop1d   = (r>tmp['LyotStopObs'])*(r<tmp['LyotStopIns'])*1.0
+    LyotStop1d   = (r>tmp['LyotStopID'])*(r<tmp['LyotStopOD'])*1.0
     
     tmp.update({'r':r, 'Pupil1d':Pupil1d, 'LyotStop1d':LyotStop1d})
     return tmp
@@ -182,7 +182,7 @@ def get_default_params_SP1d():
     r   = np.arange(tmp['nPup'])*tmp['R']/tmp['nPup']\
                 +tmp['R']/(2*tmp['nPup'])
     # Telescope aperture
-    Pupil1d      = (r>tmp['PupilObs'])*1.0    
+    Pupil1d      = (r>tmp['PupilID'])*1.0    
     tmp.update({'r':r, 'Pupil1d':Pupil1d})
     
     return tmp
@@ -264,9 +264,9 @@ def get_default_params_DZPM1d():
     r   = np.arange(tmp['nPup'])*tmp['R']/tmp['nPup']\
                 +tmp['R']/(2*tmp['nPup'])
     # Telescope aperture
-    Pupil1d      = (r>tmp['PupilObs'])*1.0
+    Pupil1d      = (r>tmp['PupilID'])*1.0
     # Lyot stop 
-    LyotStop1d   = (r>tmp['LyotStopObs'])*(r<tmp['LyotStopIns'])*1.0
+    LyotStop1d   = (r>tmp['LyotStopID'])*(r<tmp['LyotStopOD'])*1.0
     
     tmp.update({'r':r, 'Pupil1d':Pupil1d, 'LyotStop1d':LyotStop1d})
     return tmp
@@ -343,9 +343,9 @@ def get_default_params_HDZPM1d():
     r   = np.arange(tmp['nPup'])*tmp['R']/tmp['nPup']\
                 +tmp['R']/(2*tmp['nPup'])
     # Telescope aperture
-    Pupil1d      = (r>tmp['PupilObs'])*1.0
+    Pupil1d      = (r>tmp['PupilID'])*1.0
     # Lyot stop 
-    LyotStop1d   = (r>tmp['LyotStopObs'])*(r<tmp['LyotStopIns'])*1.0
+    LyotStop1d   = (r>tmp['LyotStopID'])*(r<tmp['LyotStopOD'])*1.0
     
     tmp.update({'r':r, 'Pupil1d':Pupil1d, 'LyotStop1d':LyotStop1d})
     return tmp
@@ -430,9 +430,9 @@ def get_default_params_HTZPM1d():
     r   = np.arange(tmp['nPup'])*tmp['R']/tmp['nPup']\
                 +tmp['R']/(2*tmp['nPup'])
     # Telescope aperture
-    Pupil1d      = (r>tmp['PupilObs'])*1.0
+    Pupil1d      = (r>tmp['PupilID'])*1.0
     # Lyot stop 
-    LyotStop1d   = (r>tmp['LyotStopObs'])*(r<tmp['LyotStopIns'])*1.0
+    LyotStop1d   = (r>tmp['LyotStopID'])*(r<tmp['LyotStopOD'])*1.0
     
     tmp.update({'r':r, 'Pupil1d':Pupil1d, 'LyotStop1d':LyotStop1d})
     return tmp
@@ -477,10 +477,10 @@ def get_default_params_APLC2d():
                 
     # Telescope aperture
     Pupil2d      = uniform_disk(tmp['nPup'], tmp['nPup']/2., CtrBtwnPix=tmp['CtrBtwnPix'])\
-        - uniform_disk(tmp['nPup'], tmp['PupilObs']*tmp['nPup']/2., CtrBtwnPix=tmp['CtrBtwnPix'])
+        - uniform_disk(tmp['nPup'], tmp['PupilID']*tmp['nPup']/2., CtrBtwnPix=tmp['CtrBtwnPix'])
     # Lyot stop 
     LyotStop2d   = uniform_disk(tmp['nPup'], tmp['nPup']/2., CtrBtwnPix=tmp['CtrBtwnPix'])\
-        - uniform_disk(tmp['nPup'], tmp['LyotStopObs']*tmp['nPup']/2., CtrBtwnPix=tmp['CtrBtwnPix'])
+        - uniform_disk(tmp['nPup'], tmp['LyotStopID']*tmp['nPup']/2., CtrBtwnPix=tmp['CtrBtwnPix'])
     # OPD map
     OPDmap2d     = None
     Ampmap2d     = None        
@@ -522,7 +522,7 @@ def get_default_params_SP2d():
                 })
     # Telescope aperture
     Pupil2d      = uniform_disk(tmp['nPup'], tmp['nPup']/2., CtrBtwnPix=tmp['CtrBtwnPix'])\
-        - uniform_disk(tmp['nPup'], tmp['PupilObs']*tmp['nPup']/2., CtrBtwnPix=tmp['CtrBtwnPix'])
+        - uniform_disk(tmp['nPup'], tmp['PupilID']*tmp['nPup']/2., CtrBtwnPix=tmp['CtrBtwnPix'])
     tmp.update({'Pupil2d':Pupil2d})
     return tmp
 
@@ -606,10 +606,10 @@ def get_default_params_DZPM2d():
         
     # Telescope aperture
     Pupil2d      = uniform_disk(tmp['nPup'], tmp['nPup']/2., CtrBtwnPix=tmp['CtrBtwnPix'])\
-        - uniform_disk(tmp['nPup'], tmp['PupilObs']*tmp['nPup']/2., CtrBtwnPix=tmp['CtrBtwnPix'])
+        - uniform_disk(tmp['nPup'], tmp['PupilID']*tmp['nPup']/2., CtrBtwnPix=tmp['CtrBtwnPix'])
     # Lyot stop 
     LyotStop2d   = uniform_disk(tmp['nPup'], tmp['nPup']/2., CtrBtwnPix=tmp['CtrBtwnPix'])\
-        - uniform_disk(tmp['nPup'], tmp['LyotStopObs']*tmp['nPup']/2., CtrBtwnPix=tmp['CtrBtwnPix'])
+        - uniform_disk(tmp['nPup'], tmp['LyotStopID']*tmp['nPup']/2., CtrBtwnPix=tmp['CtrBtwnPix'])
     
     tmp.update({'Pupil2d':Pupil2d, 'LyotStop2d':LyotStop2d})
     return tmp
@@ -618,7 +618,7 @@ def get_default_params_DZPM2d():
 """
 Coronagraph filename
 """ 
-fname_coronagraph = 'obs={PupilObs}_ls={LyotStopObs}\
+fname_coronagraph = 'obs={PupilID}_ls={LyotStopID}\
 _IWA={rho0}_OWA={rho1}\
 _nPup={nPup:04d}_nImg={nImg}_Fmax={Fmax}\
 _bw={bw}_nlam={nlam:02d}'
@@ -662,11 +662,11 @@ class Coronagraph(object):
         R : float 
             Unitary radius of the pupil :math:`P_0`
 
-        PupilObs : float
+        PupilID : float
             Central obstruction size :math:`d` for the pupil :math:`P_0` 
             in pupil diameter :math:`D`
         
-        LyotStopObs : float
+        LyotStopID : float
             Central obstruction size :math:`d_S` for the Lyot stop :math:`L` 
             in pupil diameter :math:`D`
         
