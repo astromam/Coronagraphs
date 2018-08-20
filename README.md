@@ -4,6 +4,7 @@ enables the model and optimization of Lyot-style coronagraphs and Shaped pupil
 devices. The code is developed with two object classes:
 - design for coronagraph model
 - optim_1d and optim_2d for coronagraph design optimization.
+
 In terms of design optimization, the package defines an optimization problem 
 with a linear program (LP) model and calls for a solver to find the best 
 solution. The tool currently works with the following solvers:
@@ -23,9 +24,6 @@ optimization problem.
 
 ## Built With
 - [spyder](https://pythonhosted.org/spyder/installation.html) the used python editor
-
-%## Contributing
-
 
 ## Versioning
 We use [SemVer](http://semver.org/) for versioning. For the versions available,
