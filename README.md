@@ -29,8 +29,6 @@ You can install the module with
 python setup.py install # --user if local install
 ```
 
-## Deployment
-
 ## Built With
 - [spyder](https://pythonhosted.org/spyder/installation.html) the used python 
 editor.
