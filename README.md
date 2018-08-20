@@ -1,17 +1,20 @@
 # Coronagraphs
-
-This package allows the user to design and simulate Lyot-style coronagraphs. 
-For design optimization, the code defines a linear program model and uses a 
-solver to find the best solution of the problem. Two different solvers are available to 
-solve the optimization problem:
+In the context of exoplanet imaging, this object-oriented toolkit in Python 
+enables the model and optimization of Lyot-style coronagraphs and Shaped pupil 
+devices. The code is developed with two object classes:
+- design for coronagraph model
+- optim_1d and optim_2d for coronagraph design optimization.
+In terms of design optimization, the package defines an optimization problem 
+with a linear program (LP) model and calls for a solver to find the best 
+solution. The tool currently works with the following solvers:
 - [scipy.linprog](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.linprog.html)
 - [gurobi](http://www.gurobi.com)
 
 ### Prerequisites
-- Gurobi solver for python: see instructions for installation and license at 
+- Gurobi solver for Python. For installation and license, see instructions at 
 [gurobipy](http://www.gurobi.com/documentation/7.5/quickstart_mac/the_gurobi_python_interfac.html).
-- [stdgrb](https://github.com/rflamary/stdgrb) gurobi cython wrapper for dense optimization
-problem.
+- [stdgrb](https://github.com/rflamary/stdgrb) gurobi cython wrapper for dense 
+optimization problem.
 
 ### Installing
 
@@ -21,24 +24,23 @@ problem.
 ## Built With
 - [spyder](https://pythonhosted.org/spyder/installation.html) the used python editor
 
-## Contributing
+%## Contributing
 
 
 ## Versioning
-
+We use [SemVer](http://semver.org/) for versioning. For the versions available,
+see the [tags on this repository](https://github.com/astromam/Coronagraphs/tags).
 
 ## Authors
 
-* **Mamadou N'Diaye** - *Initial work* - [Astromam](https://github.com/astromam)
+* **Mamadou N'Diaye** - *Initial work* - [astromam](https://github.com/astromam)
 
 See also the list of [contributors](https://github.com/astromam/Coronagraphs/graphs/contributors) 
 who participated in this project.
 
-
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for 
 details.
-
 
 ## Acknowledgments
 
