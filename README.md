@@ -14,11 +14,18 @@ solution. The tool currently works with the following solvers:
 ### Prerequisites
 - Gurobi solver for Python. For installation and license, see instructions at 
 [gurobipy](http://www.gurobi.com/documentation/7.5/quickstart_mac/the_gurobi_python_interfac.html).
-- [stdgrb](https://github.com/rflamary/stdgrb) gurobi cython wrapper for dense 
-optimization problem.
+- stdgrb, a Python Gurobi solver for standard dense optimization problems using
+ cython wrapper. For installation, see instructions at [stdgrb](https://github.com/rflamary/stdgrb)
 
 ### Installing
+The only strong dependencies are
+- numpy
+- astropy
 
+You can install the module with
+```
+python setup.py install # --user if local install
+```
 
 ## Deployment
 
