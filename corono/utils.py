@@ -9,6 +9,7 @@ Created on Mon Mar  5 16:10:51 2018
 import numpy as np
 import scipy.special
 import copy
+import bessel
 
 #%% check python version
 """
@@ -194,8 +195,14 @@ def besselJ0(z):
         Bessel function of zero order for the z array
     
     """
-    temp=scipy.special.jv(0,z)
-    temp[np.isnan(temp)]=0
+#    temp=scipy.special.jv(0,z)
+    if len(np.shape(z)) == 2:
+        temp = bessel.BesselJ0_2(z)
+    elif len(np.shape(z)) == 3:
+        temp = bessel.BesselJ0_3(z)
+    else:
+        raise NameError('cyhton implemenation of Bessel function for 2 or 3 dimension array')
+#    temp[np.isnan(temp)]=0
     return temp
 
 #%%
