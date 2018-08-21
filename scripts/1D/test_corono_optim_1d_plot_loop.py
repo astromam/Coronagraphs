@@ -1,0 +1,307 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Aug 20 17:20:57 2018
+
+@author: mndiaye
+"""
+
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Thu May  3 10:26:11 2018
+
+@author: mndiaye
+"""
+import numpy as np
+import pylab as pl
+import os
+
+from pathlib import Path
+import corono as coro
+
+#%% parameters
+"""
+Parameters
+"""
+pl.close('all')
+
+corono_name  = 'APLC' # 'APLC' or 'SP'
+problem_name = 'MaxContrastL1' # 'MaxContrastL1' #,'MaxContrastLinf' # 'MaxTau' #
+solver       = 'stdgrb' # 'stdgrb', 'gurobipy', 'scipy.linprog'
+
+FirstDer    = False
+SecondDer   = False
+MinIsland   = True
+Binarity    = False
+FirstDerLim = 0.01
+SecondDerLim= 0.001 
+FirstDerGlobalLim = 1.
+BinarityReg       = 10.
+
+nPup = 500
+nFPM = 50
+nImg = 44
+Fmax = 11
+R    = 1
+
+bw   = 0.1
+nlam = 5
+
+PupilID    = 0.20
+rMask       = 4.0
+
+rMask1      = 2.0
+rMask2      = 3.0
+rMask3      = 3.5
+OPDx2       = 0.5
+OPDx3       = 0.75
+
+LyotStopID = 0.40
+LyotStopOD = 1.0
+
+# dark zone bounds (inner and outer edges) in lam0/D unit
+rho0 = 3.5
+rho1 = 10.0
+
+# contrast in the dark region
+cDarkHole = 10.0
+
+# tau (integrated Pupil transmission)
+tau   = 0.4
+
+r   = np.arange(nPup)*R/nPup + R/(2*nPup)
+Pupil1d      = (r>PupilID)*1.0
+LyotStop1d   = (r>LyotStopID)*(r<LyotStopOD)*1.0
+
+if solver != 'gurobipy' and solver != 'stdgrb':
+    solver = 'scipy'
+
+params = coro.to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
+                 nPup = nPup, nFPM=nFPM, nImg=nImg, Fmax = Fmax,
+                 bw = bw, nlam = nlam,
+                 PupilID = PupilID, rMask = rMask, 
+                 rMask1 = rMask1, rMask2 = rMask2, rMask3 = rMask3,
+                 OPDx2 = OPDx2, OPDx3 = OPDx3, 
+                 LyotStopID = LyotStopID,
+                 LyotStopOD = LyotStopOD,
+                 r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d,
+                 solver = solver, problem_name = problem_name,
+                 corono_name = corono_name,
+                 FirstDer = FirstDer, SecondDer = SecondDer,
+                 FirstDerLim = FirstDerLim, SecondDerLim = SecondDerLim,
+                 MinIsland = MinIsland, FirstDerGlobalLim = FirstDerGlobalLim,
+                 Binarity = Binarity, BinarityReg = BinarityReg)
+
+nlambis = 11
+nImgbis = 110
+Fmaxbis = 11    
+
+
+    
+#%%
+fdir = Path('../../results/1D/').resolve()
+
+fdir_pyth = fdir / 'dat_pyth'
+fdir_npy  = fdir / 'npy'
+fdir_plot = fdir / 'plots'
+
+if not os.path.exists(fdir_plot):
+    os.makedirs(fdir_plot)
+    
+if not os.path.exists(fdir_pyth):
+    os.makedirs(fdir_pyth)    
+    
+#%%  
+
+nFirstDerGlobalLim  = 201
+stepFirstDerGlobalLim = 0.1
+FirstDerGlobalLim_t = stepFirstDerGlobalLim*np.arange(nFirstDerGlobalLim)
+Apod_t = []
+poly_direct_image_t = []
+poly_corono_image_t = []
+
+for istep, val in enumerate(FirstDerGlobalLim_t):
+    print('{0}/{1}'.format(istep+1,nFirstDerGlobalLim))
+
+    params = coro.update_params(params, FirstDerGlobalLim = val)
+
+    """ 
+    Coronagraph defintion
+    """
+    if corono_name == 'APLC':
+        corono0 = coro.design.APLC1d(**params)
+    elif corono_name == 'SP':
+        corono0 = coro.design.SP1d(**params)
+    elif corono_name == 'HDZPM':
+        corono0 = coro.design.HDZPM1d(**params)
+    elif corono_name == 'HTZPM':
+        corono0 = coro.design.HTZPM1d(**params)
+    else:
+        raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
+    
+    #%%
+    """
+    Problem defintion
+    """
+    if problem_name == 'MaxTau':
+        # Maximization of the integrated amplitude transmission of the apodizer
+        problem1 = coro.optim_1d.MaxTau(corono=corono0, **params)
+    elif problem_name == 'MaxContrastL1':
+        # Maximization of the contrast under L1-norm
+        problem1 = coro.optim_1d.MaxContrast(corono=corono0, Lnorm='L1',**params)
+    elif problem_name == 'MaxContrastLinf':
+        # Maximization of the contrast under L-infinite norm
+        problem1 = coro.optim_1d.MaxContrast(corono=corono0, Lnorm='Linf',**params)
+    else:
+         raise NameError('{0}: Not an existing optimization problem!'.format(problem_name))
+    
+    #%% Apodizer solution for the problems
+    """
+    Apodizer solutions
+    """
+    fname_gen  = problem1.get_filename()
+    fname_pyth = fname_gen + '.dat'
+    fpath_pyth = fdir_pyth / fname_pyth
+    test0 = np.loadtxt(fpath_pyth)
+    Apod_pyth = test0[:, 1]
+    
+    Apod_t.append(Apod_pyth)
+    
+    #%% Display of the apodizer
+    """
+    Plot display of the apodizers
+    """
+##    fname_pl   = fname_gen + '_apodizers_tran.png'
+#    fname_pl = 'apodizer{0:03d}'.format(istep) 
+#    fpath      = fdir_plot / fname_pl
+#    
+#    pl.figure(1)
+#    pl.clf()
+#    pl.plot(corono0.r, Apod_pyth/Apod_pyth.max(), label=solver)
+#    pl.xlabel(r'Pupil radius r')
+#    pl.ylabel('Apodizer amplitude transmission')
+#    pl.legend()
+#    pl.tight_layout()
+#    pl.show()
+#    pl.savefig(str(fpath))
+
+    
+    #%% Signal in intensity
+    """
+    Computation of the direct and coronagraphic images
+    """
+    fname_gen  = problem1.get_filename(nlam=nlambis)
+    params2    = coro.update_params(params, nlam=nlambis, nImg=nImgbis, Fmax=Fmaxbis) 
+    
+    if corono_name == 'APLC':
+        corono0 = coro.design.APLC1d(**params2)
+    elif corono_name == 'SP':
+        corono0 = coro.design.SP1d(**params2)
+    elif corono_name == 'HDZPM':
+        corono0 = coro.design.HDZPM1d(**params2)
+    elif corono_name == 'HTZPM':
+        corono0 = coro.design.HTZPM1d(**params2)
+    else:
+        raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
+    
+    poly_direct_image1 = corono0.compute_direct_intensity_1d(Apod_pyth)
+    poly_corono_image1 = corono0.compute_corono_intensity_1d(Apod_pyth)
+    
+    peaknorm = 1./poly_direct_image1.max()
+    
+    poly_direct_image1 *= peaknorm
+    poly_corono_image1 *= peaknorm
+    
+    poly_direct_image_t.append(poly_direct_image1)
+    poly_corono_image_t.append(poly_corono_image1)
+    
+    mono_direct_image1 = corono0.compute_direct_intensity_1d(Apod_pyth, poly=False)
+    mono_corono_image1 = corono0.compute_corono_intensity_1d(Apod_pyth, poly=False)
+    
+    #%% Intensity profiles of the direct and coronagraphic images
+    """
+    Display of the intensity profiles of the coronagraphic images
+    """
+    
+    fname_pl = 'apodizer{0:03d}'.format(istep) 
+    fpath      = fdir_plot / fname_pl
+    
+    pl.figure(2, (8,3))
+    pl.clf()
+
+    pl.subplot(121)
+    pl.plot(corono0.r, Apod_pyth/Apod_pyth.max(), label=solver)
+    pl.xlabel(r'Pupil radius r')
+    pl.ylabel('Apodizer amplitude transmission')
+    pl.legend()
+    
+    pl.subplot(122)
+    pl.semilogy(corono0.xi,poly_corono_image1,label=solver)
+    pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
+    pl.axvline(x=corono0.rho0, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
+    pl.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
+    pl.axhline(10**(-cDarkHole), xmin=corono0.xi.min(), xmax=corono0.xi.max(), linewidth=1, color='k', linestyle='--')
+    pl.xlabel(r'Angular separation in $\lambda_0$/D')
+    pl.ylabel('Normalized intensity in log scale')
+    pl.ylim(1e-12, 1e-3)
+    pl.legend()
+    pl.tight_layout()
+    pl.savefig(str(fpath))
+    
+    #%% Intensity profiles of the direct and coronagraphic images
+#    """
+#    Display of the monochromatic intensity profiles of the coronagraphic images
+#    """
+#    
+#    values = range(nlambis)
+#    colors = pl.cm.rainbow(np.linspace(0,1,nlambis))
+#    
+#    fname_pl = fname_gen + '_intensity_mono.pdf'
+#    fpath    = fdir_plot / fname_pl
+#    pl.figure(3)
+#    pl.clf()
+#    #pl.title('Intensity profiles of the coronagraphic images')
+#    #pl.semilogy(corono0.xi,poly_direct_image1/poly_direct_image1.max(),label='Direct')
+#    #pl.semilogy(corono0.xi,poly_direct_image2/poly_direct_image2.max(),label='Direct')
+#    #pl.semilogy(corono0.xi,poly_direct_image3/poly_direct_image3.max(),label='Direct')
+#    for i in range(corono0.nlam):
+#        pl.semilogy(corono0.xi,mono_corono_image1[i]/mono_direct_image1[(corono0.nlam+1)//2].max(), 
+#                    label=r'{0:.2f}$\lambda_0$'.format(corono0.lam_t[i]), color = colors[i])
+#    pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
+#    pl.axvline(x=corono0.rho0, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
+#    pl.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
+#    pl.axhline(10**(-cDarkHole), xmin=corono0.xi.min(), xmax=corono0.xi.max(), linewidth=1, color='k', linestyle='--')
+#    pl.xlabel(r'Angular separation in $\lambda_0$/D')
+#    pl.ylabel('Normalized intensity in log scale')
+#    pl.ylim(1e-12, 1e-3)
+#    pl.legend()
+#    pl.tight_layout()
+#    pl.savefig(str(fpath))
+
+#%%
+Apod_dic = {}
+for i, val in enumerate(FirstDerGlobalLim_t):
+    Apod_dic['{0:.2f}'.format(val)] = Apod_t[i]
+
+fname = problem1.get_filename(nlam = nlambis) + '_apod_t.npy'
+fpath = fdir_npy / fname
+np.save(fpath, Apod_dic)
+
+
+poly_direct_image_dic = {}
+for i, val in enumerate(FirstDerGlobalLim_t):
+    poly_direct_image_dic['{0:.2f}'.format(val)] = poly_direct_image_t[i]
+
+fname = problem1.get_filename(nlam = nlambis) + '_poly_direct_image_t.npy'
+fpath = fdir_npy / fname
+np.save(fpath, poly_direct_image_dic)
+
+
+poly_corono_image_dic = {}
+for i, val in enumerate(FirstDerGlobalLim_t):
+    poly_corono_image_dic['{0:.2f}'.format(val)] = poly_corono_image_t[i]
+
+fname = problem1.get_filename(nlam = nlambis) + '_poly_corono_image_t.npy'
+fpath = fdir_npy / fname
+np.save(fpath, poly_corono_image_dic)

@@ -17,7 +17,7 @@ import corono as coro
 Parameters
 """
 corono_name  = 'APLC' # 'APLC' or 'SP'
-problem_name = 'MaxTau' # ,'MaxTau' # 'MaxContrastLinf' #'MaxContrastL1'
+problem_name = 'MaxContrastLinf' # ,'MaxTau' # 'MaxContrastLinf' #'MaxContrastL1'
 solver       = 'stdgrb' # 'stdgrb', 'gurobipy', 'scipy.linprog'
 slvLogToConsole = 0
 slvCrossover    = 0
@@ -26,11 +26,11 @@ allLogToConsole = 0
 
 FirstDer    = False
 SecondDer   = False
-MinIsland   = False
+MinIsland   = True
 Binarity    = False
 FirstDerLim = 0.01
 SecondDerLim= 0.001 
-FirstDerGlobalLim = 10.
+FirstDerGlobalLim = 10
 BinarityReg       = 0.000000001
 
 nPup = 500
@@ -43,7 +43,7 @@ bw   = 0.1
 nlam = 5
 
 PupilID    = 0.20
-rMask       = 4.4
+rMask       = 4.0
 
 rMask1      = 2.0
 rMask2      = 3.0
@@ -59,10 +59,10 @@ rho0 = 3.5
 rho1 = 10.0
 
 # contrast in the dark region
-cDarkHole = 8.0
+cDarkHole = 10.0
 
 # tau (integrated Pupil transmission)
-tau   = 0.3
+tau   = 0.4
 
 r   = np.arange(nPup)*R/nPup + R/(2*nPup)
 Pupil1d      = (r>PupilID)*1.0
