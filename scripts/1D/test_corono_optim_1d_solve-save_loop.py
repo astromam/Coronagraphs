@@ -33,6 +33,43 @@ FirstDerLim = 0.01
 SecondDerLim= 0.001
 BinarityReg = 0.000000001 
 
+nPup = 500
+nFPM = 50
+nImg = 44
+Fmax = 11
+R    = 1
+
+bw   = 0.1
+nlam = 5
+
+PupilID    = 0.20
+rMask       = 4.0
+
+rMask1      = 2.0
+rMask2      = 3.0
+rMask3      = 3.5
+OPDx2       = 0.5
+OPDx3       = 0.75
+
+LyotStopID = 0.40
+LyotStopOD = 1.0
+
+# dark zone bounds (inner and outer edges) in lam0/D unit
+rho0 = 3.5
+rho1 = 10.0
+
+# contrast in the dark region
+cDarkHole = 10.0
+
+# tau (integrated Pupil transmission)
+tau   = 0.4
+
+r   = np.arange(nPup)*R/nPup + R/(2*nPup)
+Pupil1d      = (r>PupilID)*1.0
+LyotStop1d   = (r>LyotStopID)*(r<LyotStopOD)*1.0
+
+if solver != 'gurobipy' and solver != 'stdgrb':
+    solver = 'scipy'
 
 nFirstDerGlobalLim    = 201
 stepFirstDerGlobalLim = 0.1
@@ -41,45 +78,7 @@ FirstDerGlobalLim_t = stepFirstDerGlobalLim*np.arange(nFirstDerGlobalLim)
 for istep, val in enumerate(FirstDerGlobalLim_t):
     print('{0}/{1}'.format(istep+1,nFirstDerGlobalLim))
     FirstDerGlobalLim = val
-    
-    nPup = 500
-    nFPM = 50
-    nImg = 44
-    Fmax = 11
-    R    = 1
-    
-    bw   = 0.1
-    nlam = 5
-    
-    PupilID    = 0.20
-    rMask       = 4.0
-    
-    rMask1      = 2.0
-    rMask2      = 3.0
-    rMask3      = 3.5
-    OPDx2       = 0.5
-    OPDx3       = 0.75
-    
-    LyotStopID = 0.40
-    LyotStopOD = 1.0
-    
-    # dark zone bounds (inner and outer edges) in lam0/D unit
-    rho0 = 3.5
-    rho1 = 10.0
-    
-    # contrast in the dark region
-    cDarkHole = 10.0
-    
-    # tau (integrated Pupil transmission)
-    tau   = 0.4
-    
-    r   = np.arange(nPup)*R/nPup + R/(2*nPup)
-    Pupil1d      = (r>PupilID)*1.0
-    LyotStop1d   = (r>LyotStopID)*(r<LyotStopOD)*1.0
-    
-    if solver != 'gurobipy' and solver != 'stdgrb':
-        solver = 'scipy'
-    
+        
     params = coro.to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
                      nPup = nPup, nFPM=nFPM, nImg=nImg, Fmax = Fmax,
                      bw = bw, nlam = nlam,
