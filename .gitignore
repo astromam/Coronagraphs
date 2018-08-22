@@ -103,6 +103,12 @@ ENV/
 # Atom symbol tags
 .tags*
 
+# sublime project settings
+*.sublime-project
+*.sublime-workspace
+
+# notes
+notes/
 # mypy
 .mypy_cache/
 test_corono_optim_1d_compare_ampl_python.py
