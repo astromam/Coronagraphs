@@ -27,7 +27,7 @@ Parameters
 pl.close('all')
 
 corono_name  = 'APLC' # 'APLC' or 'SP'
-problem_name = 'MaxContrastL1' # 'MaxContrastL1' #,'MaxContrastLinf' # 'MaxTau' #
+problem_name = 'MaxContrastLinf' # 'MaxContrastL1' #,'MaxContrastLinf' # 'MaxTau' #
 solver       = 'stdgrb' # 'stdgrb', 'gurobipy', 'scipy.linprog'
 
 FirstDer    = False
@@ -224,7 +224,7 @@ for istep, val in enumerate(FirstDerGlobalLim_t):
     Display of the intensity profiles of the coronagraphic images
     """
     
-    fname_pl = 'apodizer{0:03d}'.format(istep) 
+    fname_pl = problem_name + '_apodizer{0:03d}'.format(istep) 
     fpath      = fdir_plot / fname_pl
     
     pl.figure(2, (8,3))
@@ -234,7 +234,7 @@ for istep, val in enumerate(FirstDerGlobalLim_t):
     pl.plot(corono0.r, Apod_pyth/Apod_pyth.max(), label=solver)
     pl.xlabel(r'Pupil radius r')
     pl.ylabel('Apodizer amplitude transmission')
-    pl.legend()
+#    pl.legend()
     
     pl.subplot(122)
     pl.semilogy(corono0.xi,poly_corono_image1,label=solver)
@@ -245,7 +245,7 @@ for istep, val in enumerate(FirstDerGlobalLim_t):
     pl.xlabel(r'Angular separation in $\lambda_0$/D')
     pl.ylabel('Normalized intensity in log scale')
     pl.ylim(1e-12, 1e-3)
-    pl.legend()
+#    pl.legend()
     pl.tight_layout()
     pl.savefig(str(fpath))
     
@@ -305,3 +305,5 @@ for i, val in enumerate(FirstDerGlobalLim_t):
 fname = problem1.get_filename(nlam = nlambis) + '_poly_corono_image_t.npy'
 fpath = fdir_npy / fname
 np.save(fpath, poly_corono_image_dic)
+
+os.system('say "your program has finished"')

@@ -22,7 +22,7 @@ pl.close('all')
 
 # Telescope name
 pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
-problem_name = 'MaxTau' # 'MaxContrastL1' #'MaxTau' # , 'MaxContrastLinf' # #  
+problem_name = 'MaxContrastLinf' # 'MaxContrastL1' #'MaxTau' # , 'MaxContrastLinf' # #  
 solver       = 'stdgrb' # 'stdgrb' #  'gurobipy', 'scipy.linprog'
 
 MinIsland   = True
@@ -107,8 +107,8 @@ if not os.path.exists(fdir_plot):
     os.makedirs(fdir_plot)
 
 #%%  
-nFirstDerGlobalLim  = 11
-stepFirstDerGlobalLim = 50.
+nFirstDerGlobalLim  = 36
+stepFirstDerGlobalLim = 10.
 FirstDerGlobalLim_t = stepFirstDerGlobalLim*np.arange(nFirstDerGlobalLim)
 Apod_t = []
 poly_direct_image_t = []
@@ -155,25 +155,7 @@ for istep, val in enumerate(FirstDerGlobalLim_t):
     fpath     = fdir / fname
     
     Apod_pyth = fits.getdata(fpath,)
-    
-    #%% Display of the apodizer
-    """
-    Plot display of the apodizers
-    """
-#    pl.figure(4)
-#    pl.clf()
-#    pl.imshow(corono0.Pupil2d, cmap = cm.Greys_r)
-#    pl.title('Pupil transmission')
-#    
-#    fname = fname_gen + '_apodisation_ampl.pdf'
-#    fpath = fdir_pdf / fname
-#    
-#    pl.figure(5)
-#    pl.clf()
-#    pl.imshow(Apod_pyth*corono0.Pupil2d, cmap = cm.Greys_r)
-#    pl.title('Apod 1 transmission - MaxTau problem - '+ solver)
-#    pl.savefig(str(fpath))
-    
+        
     #%% Signal in intensity
     """
     Computation of the direct and coronagraphic images
@@ -212,7 +194,7 @@ for istep, val in enumerate(FirstDerGlobalLim_t):
         xi2d = corono0.xi2d_ctr
 
 
-    fname_pl = 'apodizer{0:03d}'.format(istep) 
+    fname_pl = problem_name + '_apodizer{0:03d}'.format(istep) 
     fpath    = fdir_plot / fname_pl
     
     pl.figure(2, (8,3))
@@ -222,10 +204,10 @@ for istep, val in enumerate(FirstDerGlobalLim_t):
     pl.imshow(Apod_pyth*corono0.Pupil2d/Apod_pyth.max(), cmap = cm.Greys_r)
     cbar = pl.colorbar()
     cbar.set_label('Apodizer amplitude')
-    pl.legend()
+#    pl.legend()
     
     pl.subplot(122)
-    pl.semilogy(xi2d,poly_corono_image1[nImg2dbis//2,nImg2dbis//2:]/poly_direct_image1.max(),label=solver)    
+    pl.semilogy(xi2d,poly_corono_image1[nImg2dbis//2,nImg2dbis//2:],label=solver)    
     pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
     pl.axvline(x=corono0.rho0, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
     pl.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
@@ -233,130 +215,42 @@ for istep, val in enumerate(FirstDerGlobalLim_t):
     pl.xlabel(r'Angular separation in $\lambda_0$/D')
     pl.ylabel('Normalized intensity in log scale')
     pl.ylim(1e-12, 1e-3)
-    pl.legend()
+#    pl.legend()
     pl.tight_layout()
     pl.savefig(str(fpath))
 
+    
+#%%
+pl.show()
+    
+#%%
+fname = problem1.get_filename(nlam = nlambis) + '_apod_vs_FirstDerGlobalLim.pdf'
+fpath = fdir_plot / fname
 
+yticks_ind = list(5*np.arange(1+nFirstDerGlobalLim//5))
 
+aa = np.arange(nFirstDerGlobalLim)
+
+# imshow for different apodizers
+pl.figure(3,(8,4.5))
+pl.clf()
+pl.imshow(np.log10(np.asarray(poly_corono_image_t)[:, nImg2dbis//2, nImg2dbis//2:]),
+          aspect='auto', vmin = -9., vmax = -3.,
+          extent=[np.min(corono0.xi),np.max(corono0.xi),-0.5,nFirstDerGlobalLim-.5],
+          origin='lower',cmap='inferno')
+pl.yticks(aa[yticks_ind],FirstDerGlobalLim_t[yticks_ind])
+pl.title('Broadband intensity profiles for different apodizers')
+pl.xlabel(r'Angular separation in $\lambda_0$/D')
+pl.ylabel(r'Global 1st derivative limit $\beta$')
+pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
+pl.axvline(x=corono0.rho0, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
+pl.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
+cbar = pl.colorbar()
+cbar.set_label('Normalized intensity in log scale')
+
+pl.tight_layout()
+pl.savefig(str(fpath))
     
-    #%% Intensity profiles of the direct and coronagraphic images
-    """
-    Display of the intensity profiles of the coronagraphic images
-    """
-    
-    #val = 0
-    #if CtrBtwnPix2 is True:
-    #    val = 1/2
-    
-    #val = 0
-    #if nImg2d%2 == 0:
-    #    val = 1/2
-    #
-    #xx,yy  = np.meshgrid(np.arange(nImg2d)-nImg2d//2+val, np.arange(nImg2d)-nImg2d//2+val)
-    #mydist = (Fmax2d/nImg2d)*np.hypot(yy,xx)
-    #xi2d = mydist[nImg2d//2,nImg2d//2:]
-    
-#    xi2d = corono0.xi2d
-#    if nImg2dbis%2 == 0:
-#        xi2d = corono0.xi2d_ctr
-#    
-#    nImg2d = corono0.params['nImg2d']
-#    fname = fname_gen + '_intensity_profiles.pdf'
-#    fpath = fdir_plot / fname
-#    
-#    pl.figure(8)
-#    pl.clf()
-#    pl.title('Radial intensity profiles of the images')
-#    if corono_name == 'SP':
-#        pl.semilogy(xi2d,poly_corono_image1[nImg2dbis//2,nImg2dbis//2:]/poly_corono_image1.max(),label=solver)
-#    else:
-#        pl.semilogy(xi2d,poly_corono_image1[nImg2dbis//2,nImg2dbis//2:]/poly_direct_image1.max(),label=solver)    
-#    pl.axvline(x=corono0.rho0, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
-#    pl.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
-#    pl.axhline(10**(-cDarkHole), xmin=corono0.xi.min(), xmax=corono0.xi.max(), linewidth=1, color='k', linestyle='--')
-#    pl.xlabel(r'Angular separation in $\lambda_0$/D')
-#    pl.ylabel('Normalized intensity in log scale')
-#    pl.ylim(1e-9, 2e0)
-#    pl.legend()
-#    pl.tight_layout()
-#    pl.savefig(str(fpath))
-    
-#    #%%
-#    pl.show()
-#    
-#    values = range(nlambis)
-#    colors = pl.cm.rainbow(np.linspace(0,1,nlambis))
-#    
-#    mono_direct_image1 = corono0.compute_direct_intensity_2d(Apod_pyth, poly=False)
-#    mono_corono_image1 = corono0.compute_corono_intensity_2d(Apod_pyth, poly=False)
-#    
-#    
-#    
-#    pl.figure(21)
-#    pl.clf()
-#    pl.title('Radial intensity profiles of the images')
-#    #pl.semilogy(corono0.xi2d,poly_direct_image1[nImg2d//2,nImg2d//2:]/poly_direct_image1.max(),label='Direct')
-#    #pl.semilogy(corono0.xi,poly_direct_image2/poly_direct_image2.max(),label='Direct')
-#    #pl.semilogy(corono0.xi,poly_direct_image3/poly_direct_image3.max(),label='Direct')
-#    for i in range(corono0.nlam):
-#        if corono_name == 'SP':
-#            pl.semilogy(xi2d,mono_corono_image1[i, nImg2dbis//2,nImg2dbis//2:]/mono_corono_image1.max(), '-',
-#                        label=r'{0:.2f}$\lambda_0$'.format(corono0.lam_t[i]),
-#                        color = colors[i])
-#        else:
-#            pl.semilogy(xi2d,mono_corono_image1[i, nImg2dbis//2,nImg2dbis//2:]/mono_direct_image1[(corono0.nlam+1)//2].max(), 
-#                        '-',
-#                        label=r'{0:.2f}$\lambda_0$'.format(corono0.lam_t[i]),  color = colors[i])
-#    #pl.semilogy(corono0.xi2d,poly_corono_image2[nImg2d//2,nImg2d//2:]/poly_direct_image2.max(),label=r'MaxContrast, L$_1$-norm')
-#    #pl.semilogy(corono0.xi2d,poly_corono_image3[nImg2d//2,nImg2d//2:]/poly_direct_image3.max(),label=r'MaxContrast, L$_{\infty}$-norm')
-#    #pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
-#    pl.axvline(x=corono0.rho0, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
-#    pl.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
-#    pl.axhline(10**(-cDarkHole), xmin=corono0.xi.min(), xmax=corono0.xi.max(), linewidth=1, color='k', linestyle='--')
-#    pl.xlabel(r'Angular separation in $\lambda_0$/D')
-#    pl.ylabel('Normalized intensity in log scale')
-#    pl.ylim(1e-9, 2e0)
-#    pl.legend()
-#    pl.tight_layout()
-    
-    
-    #%%
-    pl.show()
-    
-    
-    
-    
-    ##%% Intensity profiles of the direct and coronagraphic images
-    #"""
-    #Display of the intensity profiles of the coronagraphic images
-    #"""
-    #
-    #nImg2d = corono0.params['nImg2d']
-    #fname = fname_gen + '_intensity_profiles.pdf'
-    #fpath = fdir_pdf / fname
-    #
-    #pl.figure(8)
-    #pl.clf()
-    #pl.title('Radial intensity profiles of the images')
-    #pl.semilogy(corono0.xi2d,poly_direct_image1[nImg2d//2,nImg2d//2:]/poly_direct_image1.max(),label='Direct')
-    ##pl.semilogy(corono0.xi,poly_direct_image2/poly_direct_image2.max(),label='Direct')
-    ##pl.semilogy(corono0.xi,poly_direct_image3/poly_direct_image3.max(),label='Direct')
-    #if corono_name == 'SP':
-    #    pl.semilogy(corono0.xi2d,poly_corono_image1[nImg2d//2,nImg2d//2:]/poly_corono_image1.max(),label='Apod')
-    #else:
-    #    pl.semilogy(corono0.xi2d,poly_corono_image1[nImg2d//2,nImg2d//2:]/poly_direct_image1.max(),label='MaxTau')
-    #    
-    ##pl.semilogy(corono0.xi2d,poly_corono_image2[nImg2d//2,nImg2d//2:]/poly_direct_image2.max(),label=r'MaxContrast, L$_1$-norm')
-    ##pl.semilogy(corono0.xi2d,poly_corono_image3[nImg2d//2,nImg2d//2:]/poly_direct_image3.max(),label=r'MaxContrast, L$_{\infty}$-norm')
-    ##pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
-    #pl.axvline(x=corono0.rho0, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
-    #pl.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
-    #pl.axhline(10**(-cDarkHole), xmin=corono0.xi.min(), xmax=corono0.xi.max(), linewidth=1, color='k', linestyle='--')
-    #pl.xlabel(r'Angular separation in $\lambda_0$/D')
-    #pl.ylabel('Normalized intensity in log scale')
-    #pl.legend()
-    #pl.savefig(str(fpath))
-    
-    #%%
-    pl.show()
+
+#%%
+os.system('say "your program has finished"')

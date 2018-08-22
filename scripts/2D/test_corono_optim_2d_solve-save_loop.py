@@ -21,7 +21,7 @@ Parameters
 """
 # Telescope name
 pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
-problem_name = 'MaxTau' # 'MaxTau' # ,'MaxContrastLinf' # 'MaxContrastL1' #
+problem_name = 'MaxContrastLinf' # 'MaxTau' # ,'MaxContrastLinf' # 'MaxContrastL1' #
 solver       = 'stdgrb' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
 slvLogToConsole = 0
 slvCrossover    = 0
@@ -86,8 +86,8 @@ if solver != 'gurobipy' and solver != 'stdgrb':
     solver = 'scipy'
 
 #%%
-nFirstDerGlobalLim    = 11
-stepFirstDerGlobalLim = 50.
+nFirstDerGlobalLim    = 36
+stepFirstDerGlobalLim = 10.
 FirstDerGlobalLim_t = stepFirstDerGlobalLim*np.arange(nFirstDerGlobalLim)
 
 for istep, val in enumerate(FirstDerGlobalLim_t):
@@ -171,3 +171,5 @@ for istep, val in enumerate(FirstDerGlobalLim_t):
     
     if do_fits is True:
         fits.writeto(fpath, Apod1_2d, overwrite=True)
+        
+os.system('say "your program has finished"')
