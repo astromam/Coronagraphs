@@ -867,6 +867,141 @@ class APLC1dAnalyticalHankel(APLC1d):
         return (self.lam0 / self.lam_t[:, None]) * np.pi * corono_field_tmp * self.dr
 
 
+class APLC1dOversample(Coronagraph):
+    def __init__(self, upsample=8, **kwargs):
+        super().__init__(**kwargs)
+        # Create upsampled arrays
+        # TODO: depending on the interaction of these parameters with the external world, it may be
+        # possible to do away with separate upsampled arrays and just define everything in
+        # upsampled form
+        self.upsample = upsample
+        self.nPup_up = self.nPup * upsample
+        self.Pupil1d_up = self.upsample(self.Pupil1d, upsample)
+        self.LyotStop1d_up = self.upsample(self.LyotStop1d, upsample)
+        self.r_up = np.arange(self.nPup_up) * self.R / self.nPup_up + self.R / (2 * self.nPup_up)
+        self.ClearPupil1d_up = np.ones((self.nPup_up))
+        self.ClearPupil2d_up = uniform_disk(self.nPup_up, self.nPup_up/2.,
+                                            CtrBtwnPix=self.CtrBtwnPix)
+
+        # Vector of wavelength ratios:  wr[n] = lam0 / lam[n] [shape: (nlam,)]
+        self.wr = self.lam0 / self.lam_t
+
+        # Focal plane mask size in lambda/D units as a function of wavelength [shape: (nlam,)]
+        # If
+        #               rMask [lam0/D] = rMask [rad] / (lam0/D)
+        # then
+        #             rMask [lam[n]/D] = (lam0/lam[n]) * rMask [lam0/D]
+        self.rMask_t = self.wr * self.rMask
+
+        #   nFPM -> number of samples PER lambda/D, same for every wavelength, i.e.
+        #               nFPM = 5 <=> step size = 0.2 lambda/D
+        #   nFPM_t -> TOTAL NUMBER of samples across the occulter radius at each wavelength
+        self.nFPM_t = self.rMask_t * self.nFPM
+        self.nFPM_max = int(np.max(self.nFPM_t))
+
+        # Rows: transmissive occulter (for semi-analytical prop.), scaled by wavelength
+        # NOTE: rMask_t * nFPM is NOT integer valued at every wavelength.  Does this mean that the
+        # occulter behaves differently at some wavelengths vs. others?  Do we always need to choose
+        # wavelengths so that the occulter has an integer number of samples?
+        self.mask_lam = (np.arange(self.nFPM_max + 1)[None, :]
+                         < self.rMask_t[:, None] * self.nFPM)  # [shape: (nlam, nFPM_max + 1)]
+
+        # Truncated coordinate vector (equivalent to performing ordinary DFT and then
+        # multiplying elementwise by a binary aperture)
+        # NOTE: dividing by nFPM is equivalent to multiplying by step size -> xi_FPM_lam has units
+        # of lambda/D
+        self.xi_FPM_lam = (np.arange(self.nFPM_max + 1)[None, :]
+                           * self.mask_lam / self.nFPM)  # [shape: (nlam, nFPM_max + 1)]
+
+        # Hankel kernel for the focal plane mask (FPM)
+        self.hankel_kernel_FPM_all = besselJ0(  # [shape: nlam, nFPM_max + 1, nPup]
+                np.pi / self.R * self.xi_FPM_lam[:, :, None] * self.r_up[None, None, :])
+        self.hankel_kernel_iFPM_all = besselJ0(  # [shape: nlam, nPup, nFPM_max + 1]
+                np.pi / self.R * self.xi_FPM_lam[:, None, :] * self.r_up[None, :, None])
+
+    @staticmethod
+    def upsample(arr, K):
+        """
+        Upsample an array by integer factor K using tile (pixel-perfect) upsampling, which means
+        that each pixel in the original array is replaced by a K x K group of pixels (in 2D) or a
+        length-K group of pixels (in 1D) in the upsampled array, each with the same value as the
+        original.
+
+        Parameters
+        ----------
+        arr : np.ndarray
+            The original array
+        alpha : int
+            Upsampling factor
+
+        Returns
+        -------
+        np.ndarray
+            The original array, upsampled by a factor q in both directions
+        """
+
+        upsampled = arr.repeat(K, axis=0)  # Upsample along first dimension
+
+        if arr.ndim == 2:  # Check if array is 2D
+            if arr.shape[1] > 1:  # Make sure the second dimension is not singleton
+                # Note: the inner conditional cannot be in the same line as the outer conditional.
+                # If the array is 1D (i.e. ndim == 1) and we attempt to check the size of the
+                # second dimension, we will get an exception
+                upsampled = upsampled.repeat(K, axis=1)
+
+        return upsampled
+
+    def compute_direct_field_1d(self, Apod):
+        Apod_up = self.upsample(Apod, self.upsample)
+
+        return (self.lam0 / self.lam_t[:, None] * np.pi * self.hankel_kernel_all.dot(
+                self.Pupil1d_up * Apod_up * self.LyotStop1d_up * self.r_up / self.R) * self.R /
+                self.nPup_up)
+
+    def compute_corono_field_1d(self, Apod):
+        """
+        Computes the electric field of the coronagraphic image with APLC
+        for the 1D problem.
+
+        Parameters
+        ----------
+        Apod : array_like
+            Entrance pupil apodization :math:`\Phi`
+
+        Returns
+        ----------
+        res : array_like
+            Coronagraphic electric field :math:`\Psi_D` at all the wavelengths
+
+        """
+        Apod_up = self.upsample(Apod, self.upsample)  # 'os' stands for 'oversampled'
+
+        # Compute field inside the interior of the occulter
+        FPM_field = (np.pi *
+                     self.hankel_kernel_FPM_all.dot(Apod_up * self.Pupil1d_up * self.r_up / self.R)
+                     * (self.R / self.nPup_up) * self.xi_FPM_lam)
+
+        # Apply occulter and propagate to the Lyot stop
+        iFPM_field = np.zeros((self.nlam, self.nPup_up))
+        for i in range(self.nlam):
+            iFPM_field[i, :] = np.pi * self.hankel_kernel_iFPM_all[i, :, :].dot(
+                 FPM_field[i, :]) * (1 / self.nFPM)
+
+        # Compute component of field not diffracted from occulter using Babinet's principle
+        nolyot_field = ((Apod_up[None, :] * self.Pupil1d_up[None, :] - iFPM_field) *
+                        self.r_up[None, :] / self.R)
+
+        # Apply Lyot stop
+        lyot_field = nolyot_field * self.LyotStop1d_up[None, :]
+
+        # Compute field in detector plane (up to scaling factors)
+        corono_field_tmp = np.zeros((self.nlam, self.nImg + 1))
+        for i in range(self.nlam):
+            corono_field_tmp[i, :] = self.hankel_kernel_all[i, :, :].dot(lyot_field[i, :])
+
+        # Scale detector-plane field correctly and return
+        return self.lam0 / self.lam_t[:, None] * np.pi * corono_field_tmp * self.R / self.nPup_up
+
 #%%
 """
 SP 1d Coronagraph subclass
