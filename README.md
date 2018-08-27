@@ -40,6 +40,10 @@ python setup.py install # --user if local install
 - [spyder](https://pythonhosted.org/spyder/installation.html) the used python 
 editor.
 
+## Contributing
+- Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on the process for
+ submitting pull requests to us.
+
 ## Versioning
 We use [SemVer](http://semver.org/) for versioning. For the versions available,
 see the [tags on this repository](https://github.com/astromam/Coronagraphs/tags).
