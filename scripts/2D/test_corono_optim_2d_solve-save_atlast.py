@@ -3,7 +3,10 @@
 """
 Created on Wed May  9 14:34:08 2018
 
-@author: mndiaye
+Author: Mamadou N'Diaye <mamadou.ndiaye@oca.eu> (https://github.com/astromam)
+
+License: MIT license
+
 """
 
 import numpy as np

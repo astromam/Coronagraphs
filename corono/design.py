@@ -3,7 +3,10 @@
 """
 Created on Wed Mar  7 21:57:28 2018
 
-@author: mndiaye
+Author: Mamadou N'Diaye <mamadou.ndiaye@oca.eu> (https://github.com/astromam)
+
+License: MIT license
+
 
 Class for different types of coronagraphs
 """

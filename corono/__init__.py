@@ -3,7 +3,10 @@
 """
 Created on Mon Mar  5 15:59:00 2018
 
-@author: mndiaye
+Author: Mamadou N'Diaye <mamadou.ndiaye@oca.eu> (https://github.com/astromam)
+
+License: MIT license
+
 """
 
 from . import design, optim_1d, optim_2d

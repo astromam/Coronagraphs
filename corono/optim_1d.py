@@ -3,7 +3,10 @@
 #!/usr/bin/env python3
 Created on Fri Mar  9 11:36:39 2018
 
-@author: mndiaye
+Author: Mamadou N'Diaye <mamadou.ndiaye@oca.eu> (https://github.com/astromam)
+
+License: MIT license
+
 """
 
 #%% Initialization problem

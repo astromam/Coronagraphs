@@ -3,15 +3,10 @@
 """
 Created on Wed May  2 17:57:03 2018
 
-@author: mndiaye
-"""
+Author: Mamadou N'Diaye <mamadou.ndiaye@oca.eu> (https://github.com/astromam)
 
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Mar  8 23:07:48 2018
+License: MIT license
 
-@author: mndiaye
 """
 
 #%% Initialization

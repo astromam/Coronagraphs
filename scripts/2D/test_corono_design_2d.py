@@ -3,7 +3,10 @@
 """
 Created on Thu Mar  8 23:07:48 2018
 
-@author: mndiaye
+Author: Mamadou N'Diaye <mamadou.ndiaye@oca.eu> (https://github.com/astromam)
+
+License: MIT license
+
 """
 
 #%% Initialization
