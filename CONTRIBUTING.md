@@ -1,4 +1,4 @@
-Contributing to POT
+Contributing to Coronagraphs
 ===================
 
 
