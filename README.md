@@ -10,6 +10,7 @@ with a linear program (LP) model and calls for a solver to find the best
 solution. The tool currently works with the following solvers:
 - [scipy.linprog](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.linprog.html)
 - [gurobi](http://www.gurobi.com)
+- [stdgrb](https://github.com/rflamary/stdgrb) (recommended)
 
 ### Prerequisites
 - Gurobi solver for Python. For installation and license, see instructions at 
@@ -22,10 +23,16 @@ The only strong dependencies are
 - numpy
 - scipy
 - astropy
-- pylab
+- matplotlib
+
+```bash
+python setup.py install numpy scipy astropy matplotlib # --user if local install
+```
+
 
 You can install the module with
-```
+
+```bash
 python setup.py install # --user if local install
 ```
 
@@ -40,6 +47,8 @@ see the [tags on this repository](https://github.com/astromam/Coronagraphs/tags)
 ## Authors
 
 * **Mamadou N'Diaye** - *Initial work* - [astromam](https://github.com/astromam)
+* **[Rémi Flamary](https://remi.flamary.com/)** - *Initial work* - [rflamary](https://github.com/rflamary)
+
 
 See also the list of [contributors](https://github.com/astromam/Coronagraphs/graphs/contributors) 
 who participated in this project.
@@ -50,8 +59,6 @@ file for details.
 
 ## Acknowledgments
 
-* [Rémy Flamary](https://github.com/rflamary) for providing countless guidance 
-in Python coding and optimization.
 * [Space Telescope Science Institute](http://www.stsci.edu/) collaborators, 
 in particular, the Segmented Design and Analysis (SCDA) team.
 * the [Lorentz Center](http://www.lorentzcenter.nl/) for hosting and to a large
