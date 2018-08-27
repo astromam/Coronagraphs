@@ -75,7 +75,7 @@ nImg2dbis = 500
 File reading for Pupil and Lyot stop
 """
 if False:
-    fdir = Path('../../data/pupils/2D/').resolve()
+    fdir = Path('../../data/2D/pupils/').resolve()
     if pupil_name == 'lvr':
         fname_pup = 'ATLAST_Aperture_nPup={0}.fits'.format(nPup,)
         fname_lys = 'ATLAST_LyotStop_nPup={0}.fits'.format(nPup,)
