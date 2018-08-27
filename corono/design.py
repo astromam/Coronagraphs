@@ -82,7 +82,7 @@ def get_default_params_Coronagraph():
         Keyword to work with image arrays that are centered between four pixels
         from pupil to the final image plane to if True           
 
-    Pupil2dSym : boolean (default=False)
+    Pupil2dSym : string (default='Full')
         Keyword to use faster computation for symmetric pupils
             
     Returns    
@@ -116,7 +116,7 @@ def get_default_params_Coronagraph():
            'R':1.0,
            'fdir':'',
            'CtrBtwnPix':True, 'CtrBtwnPix2':False, 
-           'Pupil2dSym':False
+           'Pupil2dSym':'Full'
            }
             
     return tmp
@@ -1148,8 +1148,17 @@ class Coronagraph(object):
         xx,yy  = np.meshgrid(np.arange(self.nImg2d)-self.nImg2d//2+val, np.arange(self.nImg2d)-self.nImg2d//2+val)
         mydist = (self.Fmax2d/self.nImg2d)*np.hypot(yy,xx)        
         res = (mydist <= self.rho1)*(mydist >= self.rho0)
-        if self.Pupil2dSym == True:
+        if self.Pupil2dSym == 'Full':
+            pass
+        elif self.Pupil2dSym == 'Quarter':
             res *= (xx >= 0)*(yy >= 0)
+        elif self.Pupil2dSym == 'Half-ax0':
+            res *= (xx >= 0)
+        elif self.Pupil2dSym == 'Half-ax1':
+            res *= (yy >= 0)
+        else:
+            raise NameError('{0}: Not an existing pupil symmetry type!'.format(self.Pupil2dSym))
+        
         return res, mydist[res]
     
 #%% 
@@ -2194,12 +2203,14 @@ class APLC2d(Coronagraph):
         for i in range(self.nlam):
             if self.OPDmap2d is not None:
                 field_L   = field_A[i]*self.LyotStop2d                
-            if self.Pupil2dSym == False:
+            if self.Pupil2dSym == 'Full' or self.Pupil2dSym == 'Half-ax0' or self.Pupil2dSym == 'Half-ax1':
                 field_Dtmp[i] = sft(field_L, self.nImg2d, self.mD_t[i], 
                           CtrBtwnPix=self.CtrBtwnPix2)
-            else:
+            elif self.Pupil2dSym == 'Quarter':
                 field_Dtmp[i] = sft_even(field_L, self.nImg2d, self.mD_t[i], 
-                          CtrBtwnPix=self.CtrBtwnPix2) 
+                          CtrBtwnPix=self.CtrBtwnPix2)
+            else:
+                raise NameError('{0}: Not an existing pupil symmetry type!'.format(self.Pupil2dSym))
                                 
         return field_Dtmp
  
@@ -2243,7 +2254,7 @@ class APLC2d(Coronagraph):
                 field = field_A
             else:
                 field = field_A[i]
-            if self.Pupil2dSym == False:
+            if self.Pupil2dSym == 'Full' or self.Pupil2dSym == 'Half-ax0' or self.Pupil2dSym == 'Half-ax1':
                 field_B       = self.mask2d*sft(field, self.nFPM, self.mB_t[i], 
                                                 CtrBtwnPix=self.CtrBtwnPix)
                 field_C       = field - isft(field_B, self.nPup, self.mB_t[i], 
@@ -2251,7 +2262,7 @@ class APLC2d(Coronagraph):
                 field_L       = field_C*self.LyotStop2d
                 field_Dtmp[i] = sft(field_L, self.nImg2d, self.mD_t[i], 
                           CtrBtwnPix=self.CtrBtwnPix2)
-            else:
+            elif self.Pupil2dSym == 'Quarter':
                 field_B       = self.mask2d*sft_even(field, self.nFPM, self.mB_t[i], 
                                                 CtrBtwnPix=self.CtrBtwnPix)
                 field_C       = field - isft_even(field_B, self.nPup, self.mB_t[i], 
@@ -2259,6 +2270,8 @@ class APLC2d(Coronagraph):
                 field_L       = field_C*self.LyotStop2d
                 field_Dtmp[i] = sft_even(field_L, self.nImg2d, self.mD_t[i], 
                           CtrBtwnPix=self.CtrBtwnPix2)
+            else:
+                raise NameError('{0}: Not an existing pupil symmetry type!'.format(self.Pupil2dSym))                
                                    
         return field_Dtmp   
 
@@ -2335,17 +2348,19 @@ class APLC2d(Coronagraph):
                 field = field_A
             else:
                 field = field_A[i]                
-            if self.Pupil2dSym == False:
+            if self.Pupil2dSym == 'Full' or self.Pupil2dSym == 'Half-ax0' or self.Pupil2dSym == 'Half-ax1':
                 field_B       = self.mask2d*sft(field, self.nFPM, self.mB_t[i], 
                                                 CtrBtwnPix=self.CtrBtwnPix)
                 field_C[i]       = field - isft(field_B, self.nPup, self.mB_t[i], 
                                                CtrBtwnPix=self.CtrBtwnPix)
 
-            else:
+            elif self.Pupil2dSym == 'Quarter':
                 field_B       = self.mask2d*sft_even(field, self.nFPM, self.mB_t[i], 
                                                 CtrBtwnPix=self.CtrBtwnPix)
                 field_C[i]       = field - isft_even(field_B, self.nPup, self.mB_t[i], 
                                                CtrBtwnPix=self.CtrBtwnPix)
+            else:
+                raise NameError('{0}: Not an existing pupil symmetry type!'.format(self.Pupil2dSym))                
                                    
         return field_C   
 
@@ -2406,15 +2421,17 @@ class SP2d(Coronagraph):
         field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
                               dtype='complex128')
 
-        if self.Pupil2dSym == False:
+        if self.Pupil2dSym == 'Full' or self.Pupil2dSym == 'Half-ax0' or self.Pupil2dSym == 'Half-ax1':
             for i in range(self.nlam):
                 field_Dtmp[i] = sft(field_A, self.nImg2d, self.mD_t[i], 
                       CtrBtwnPix=self.CtrBtwnPix2)
-        else:            
+        elif self.Pupil2dSym == 'Quarter':            
             for i in range(self.nlam):
                 field_Dtmp[i] = sft_even(field_A, self.nImg2d, self.mD_t[i], 
-                      CtrBtwnPix=self.CtrBtwnPix2)    
-                            
+                      CtrBtwnPix=self.CtrBtwnPix2)
+        else:
+            raise NameError('{0}: Not an existing pupil symmetry type!'.format(self.Pupil2dSym))             
+               
         return field_Dtmp
  
 #%%
@@ -2442,14 +2459,16 @@ class SP2d(Coronagraph):
         field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
                               dtype='complex128')
 
-        if self.Pupil2dSym == False:
+        if self.Pupil2dSym == 'Full' or self.Pupil2dSym == 'Half-ax0' or self.Pupil2dSym == 'Half-ax1':
             for i in range(self.nlam):
                 field_Dtmp[i] = sft(field_A, self.nImg2d, self.mD_t[i], 
                       CtrBtwnPix=self.CtrBtwnPix2)
-        else:            
+        elif self.Pupil2dSym == 'Quarter':           
             for i in range(self.nlam):
                 field_Dtmp[i] = sft_even(field_A, self.nImg2d, self.mD_t[i], 
-                      CtrBtwnPix=self.CtrBtwnPix2)    
+                      CtrBtwnPix=self.CtrBtwnPix2)
+        else:
+            raise NameError('{0}: Not an existing pupil symmetry type!'.format(self.Pupil2dSym))
                              
         return field_Dtmp   
 
@@ -2531,18 +2550,20 @@ class DZPM2d(Coronagraph):
         field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
                               dtype='complex128')
         
-        if self.Pupil2dSym == False:
+        if self.Pupil2dSym == 'Full' or self.Pupil2dSym == 'Half-ax0' or self.Pupil2dSym == 'Half-ax1':
             for i in range(self.nlam):
                 field_A    = Apod2d*self.Pupil2d*self.Apod2d_w[i]
                 field_L    = field_A*self.LyotStop2d
                 field_Dtmp[i] = sft(field_L, self.nImg2d, self.mD_t[i], 
                           CtrBtwnPix=self.CtrBtwnPix2)
-        else:
+        elif self.Pupil2dSym == 'Quarter':
             for i in range(self.nlam):
                 field_A    = Apod2d*self.Pupil2d*self.Apod2d_w[i]
                 field_L    = field_A*self.LyotStop2d
                 field_Dtmp[i] = sft_even(field_L, self.nImg2d, self.mD_t[i], 
-                          CtrBtwnPix=self.CtrBtwnPix2)            
+                          CtrBtwnPix=self.CtrBtwnPix2)
+        else:
+            raise NameError('{0}: Not an existing pupil symmetry type!'.format(self.Pupil2dSym))            
     
         return field_Dtmp
  
@@ -2573,7 +2594,7 @@ class DZPM2d(Coronagraph):
         field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
                               dtype='complex128')
         
-        if self.Pupil2dSym == False: 
+        if self.Pupil2dSym == 'Full' or self.Pupil2dSym == 'Half-ax0' or self.Pupil2dSym == 'Half-ax1': 
             for i in range(self.nlam):
                 field_A       = Apod2d*self.Pupil2d*self.Apod2d_w[i] 
                 field_B1      = self.mask2d*sft(field_A, self.nFPM, self.mB1_t[i], 
@@ -2591,7 +2612,7 @@ class DZPM2d(Coronagraph):
                 field_L       = field_C*self.LyotStop2d
                 field_Dtmp[i] = sft(field_L, self.nImg2d, self.mD_t[i], 
                           CtrBtwnPix=self.CtrBtwnPix2)
-        else:
+        elif self.Pupil2dSym == 'Quarter': 
             for i in range(self.nlam):
                 field_A       = Apod2d*self.Pupil2d*self.Apod2d_w[i]
                 field_B1      = self.mask2d*sft_even(field_A, self.nFPM, self.mB1_t[i], 
@@ -2608,7 +2629,9 @@ class DZPM2d(Coronagraph):
                                            
                 field_L       = field_C*self.LyotStop2d
                 field_Dtmp[i] = sft_even(field_L, self.nImg2d, self.mD_t[i], 
-                          CtrBtwnPix=self.CtrBtwnPix2)            
+                          CtrBtwnPix=self.CtrBtwnPix2)
+        else:
+            raise NameError('{0}: Not an existing pupil symmetry type!'.format(self.Pupil2dSym))            
 
         return field_Dtmp   
      

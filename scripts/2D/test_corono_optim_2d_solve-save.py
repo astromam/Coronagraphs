@@ -21,7 +21,7 @@ Parameters
 """
 # Telescope name
 pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
-problem_name = 'MaxContrastL1' # 'MaxTau' # ,'MaxContrastLinf' # 'MaxContrastL1' #
+problem_name = 'MaxTau' # 'MaxTau' # ,'MaxContrastLinf' # 'MaxContrastL1' #
 solver       = 'stdgrb' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
 slvLogToConsole = 0
 slvCrossover    = 0
@@ -56,7 +56,7 @@ tau   = 0.4
 corono_name = 'APLC' # 'SP' or 'APLC'
 CtrBtwnPix  = True
 CtrBtwnPix2 = True
-Pupil2dSym  = True
+Pupil2dSym  = 'Half-ax0' # 'Full', 'Quarter', 'Half-ax0', 'Half-ax1' 
 
 #nlam
 bw   = 0.1
@@ -142,10 +142,20 @@ Generation of full apodizer for quarter pupil optimization
 """
 Apod1_2d = np.reshape(Apod1, (corono0.nPup, corono0.nPup))
 
-if Pupil2dSym == True:
-        Apod1_2dtmp =  Apod1_2d[corono0.nPup//2:, corono0.nPup//2:]
-        Apod1_2d[:corono0.nPup//2, corono0.nPup//2:] = np.flip(Apod1_2dtmp, axis=0)
-        Apod1_2d[:, :corono0.nPup//2]          = np.flip(Apod1_2d[:, corono0.nPup//2:], axis=1)
+if Pupil2dSym == 'Full':
+    pass
+elif Pupil2dSym == 'Quarter':
+    Apod1_2dtmp =  Apod1_2d[corono0.nPup//2:, corono0.nPup//2:]
+    Apod1_2d[:corono0.nPup//2, corono0.nPup//2:] = np.flip(Apod1_2dtmp, axis=0)
+    Apod1_2d[:, :corono0.nPup//2]          = np.flip(Apod1_2d[:, corono0.nPup//2:], axis=1)
+elif Pupil2dSym == 'Half-ax0':
+    Apod1_2dtmp =  Apod1_2d[corono0.nPup//2:, :]
+    Apod1_2d[:corono0.nPup//2, :] = np.flip(Apod1_2dtmp, axis=0)    
+elif Pupil2dSym == 'Half-ax1':
+    Apod1_2dtmp =  Apod1_2d[:, corono0.nPup//2:]
+    Apod1_2d[:, :corono0.nPup//2] = np.flip(Apod1_2dtmp, axis=1)    
+else:
+    raise NameError('{0}: Not an existing pupil symmetry type!'.format(Pupil2dSym))
         
 #%%
 """
