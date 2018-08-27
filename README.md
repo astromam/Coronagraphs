@@ -60,7 +60,7 @@ file for details.
 ## Acknowledgments
 
 * [Space Telescope Science Institute](http://www.stsci.edu/) collaborators, 
-in particular, the Segmented Design and Analysis (SCDA) team.
+in particular, the Segmented Coronagraph Design and Analysis (SCDA) team.
 * the [Lorentz Center](http://www.lorentzcenter.nl/) for hosting and to a large
 extent funding the [Optimal Optical Coronagraph workshop](https://www.lorentzcenter.nl/lc/web/2017/924/info.php3?wsid=924&venue=Snellius) 
 held September 25-29, 2017 at the Lorentz Center in Leiden, the Netherlands. 
