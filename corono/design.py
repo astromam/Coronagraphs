@@ -113,7 +113,7 @@ def get_default_params_Coronagraph():
     tmp = {'PupilID':0.14,'LyotStopID':0.28,'LyotStopOD':1.0,    
            'rho0':5,'rho1':10,
            'rho0direct':0.7, 'rho1direct':6.0,
-           'nPup':200,'nImg':200,'Fmax':25,
+           'nPup':200,'nImg':200,'Fmax':25,'nFPM':50,
            'nImg2d':44, 'Fmax2d':22,
            'bw':0.2,'lam0':1.0,'nlam':5, 'wv':1.593e-6,
            'R':1.0,
