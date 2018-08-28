@@ -1,13 +1,23 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Apr 30 14:10:20 2018
 
+Author: Mamadou N'Diaye <mamadou.ndiaye@oca.eu> (https://github.com/astromam)
+
+License: MIT license
+
+"""
+
+#%% Initialization
 import numpy as np
 import corono.design as ds
 import os
 
-
-
-import gurobipy
-
-
+#%%
+"""
+Test the default params
+"""
 def test_get_default_params():
     
     ds.get_default_params_Coronagraph()
@@ -26,8 +36,10 @@ def test_get_default_params():
     
     ds.get_default_params_DZPM2d()
     
-
-
+#%%
+"""
+Test the Coronagraph class
+"""
 def test_Coronagraph():
     
     cor=ds.Coronagraph()
@@ -53,4 +65,4 @@ def test_Coronagraph():
     #f=cor.compute_nostop_field_1d()
     #assert f.shape[1]==cor.nPup and f.shape[0]==cor.nlam
     
-    
+#%%    

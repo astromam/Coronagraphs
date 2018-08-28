@@ -27,195 +27,7 @@ except ModuleNotFoundError:
 
 import scipy.optimize
 from .utils import update_params        
-from . import design
-
-#%%
-"""
-Default parameters
-"""
-#%%
-def get_default_params_ProblemMatrix():
-    r"""
-    Gets the default parameters for the optimization problem matrix.
-       
-    Parameters
-    ----------
-    cDarkHole : float (default=8)
-        Contrast goal :math:`C` in log scale inside the search area in the 
-        coronagraphic image.
-    
-    tau : float (default=0.2)
-        Integrated amplitude transmission :math:`\tau` of the apodizer 
-        :math:`\Phi` in fraction of the integrated amplitude transmission of 
-        the pupil :math:`P_0`.
-    
-    solver : string (default='stdgrb')
-        solver for the programming problem (linear for the moment). 
-        The user can choose between:
-            
-            - 'gurobipy'     : python implementation of the gurobi solver.
-            Code from gurobi: http://www.gurobi.com/documentation/
-        
-            - 'stdgrb'       : cython wrapper that calls gurobi through its C 
-            interface.        
-            Code by R. Flamary: https://github.com/rflamary/stdgrb
-        
-            - 'scipy.optimize.linprog': linear programming solver from scipy 
-            package.
-            Documentation: https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.linprog.html
-    
-    pupil_name : string (default='sbr')
-        name of the pupil.
-    
-    problem_name : string (default='MaxTau')
-        name of the optimization problem.
-        The user can choose between:
-            
-            - 'MaxTau': maximization of the apodizer transmission for a given 
-            contrast
-            
-            - 'MaxContrastL1': maximization of the contrast for a given 
-            apodizer transmission under L1-norm constraints
-            
-            - 'MaxContrastLinf': maximization of the contrast for a given 
-            apodizer transmission under Linf-norm constraints
-    
-    slvCrossover : integer (default=0)
-        gurobi solver parameter for barrier crossover strategy. 
-        See details: http://www.gurobi.com/documentation/8.0/refman/crossover.html
-        
-    slvLogToConsole : integer (default=0)
-        gurobi solver parameter for control console logging.
-        See details: http://www.gurobi.com/documentation/8.0/refman/logtoconsole.html 
-    
-    slvMethod : integer (default=2)
-        gurobi solver parameter to select the used algorithm to solve problem.
-        See details: http://www.gurobi.com/documentation/8.0/refman/method.html
-        
-        The user can choose between:
-    
-        - -1 : Automatic
-        
-        -  1 : Dual simplex method
-        
-        -  2 : Barrier
-        
-    allLogToConsole : integer (default=0)
-        control console logging for output from this class
-        
-    MinIsland : bool (default=False)
-        introduce constraints on the first derivative of the apodizer 
-        transmission in the optimization problem to minimize the number of 
-        islands in the apodization.
-        
-    FirstDerGlobalLim : float (default=0.01)
-        Upper limit on the integral of the absolute first derivative of the 
-        apodizer transmission.
-        
-    Binarity : bool (default=False)
-        introduce constraints of the apodizer transmission in the optimization 
-        problem to maximize the number of binary points in the apodization.
-    
-    BinarityReg : float (default=0.01)
-        Regularization term on the binarity of the apodizer transmission.
-    
-    Returns    
-    ----------
-    tmp : dict
-        Dictionary of parameters with their default values.
-        
-    References
-    ----------        
-    .. [1] Gurobi Optimization, LLC, Gurobi Optimizer Reference Manual (2018).
-    
-           http://www.gurobi.com
-        
-    """
-    tmp = {'cDarkHole':8, 'tau':0.2, 'solver':'stdgrb', 
-           'pupil_name':'sbr', 
-           'problem_name':'MaxTau',
-           'slvCrossover':0, 'slvLogToConsole':1, 'slvMethod':2,
-           'allLogToConsole':0,
-           'MinIsland':False, 'FirstDerGlobalLim':0.01,
-           'Binarity':False, 'BinarityReg':0.1,
-           'ImPart':True, 'LSRobustness':False}
-    return tmp
-
-#%%
-def get_default_params_MaxTauProblemMatrix():
-    r"""
-    Gets the default parameters for the Max contrast optimization problem.
-    
-    Parameters
-    ---------- 
-    tmp : dict
-        Dictionary from the get_default_matrix_pb
-        
-    Lnorm : string (default= 'L1')
-        L-norm type for the optimization problem 
-        ('Linf' : :math:`L_{\infty}` norm, 'L1' : :math:`L_1`-norm)
-    
-    problem_name : string (default='MaxTau')
-        name of the optimization problem.
-        The user can choose between:
-            
-            - 'MaxTau': maximization of the apodizer transmission for a given 
-            contrast
-            
-            - 'MaxContrastL1': maximization of the contrast for a given 
-            apodizer transmission under L1-norm constraints
-            
-            - 'MaxContrastLinf': maximization of the contrast for a given 
-            apodizer transmission under Linf-norm constraints
-        
-    Returns    
-    ----------
-    tmp : dict
-        Updated dictionary
-        
-    """    
-    tmp = get_default_params_ProblemMatrix()
-    tmp.update({'problem_name':'MaxTau'})
-    
-    return tmp
-
-#%%
-def get_default_params_MaxContrastProblemMatrix():
-    r"""
-    Gets the default parameters for the Max contrast optimization problem.
-    
-    Parameters
-    ---------- 
-    tmp : dict
-        Dictionary from the get_default_matrix_pb
-        
-    Lnorm : string (default= 'L1')
-        L-norm type for the optimization problem 
-        ('Linf' : :math:`L_{\infty}` norm, 'L1' : :math:`L_1`-norm)
-
-    problem_name : string (default='MaxTau')
-        name of the optimization problem.
-        The user can choose between:
-            
-            - 'MaxTau': maximization of the apodizer transmission for a given 
-            contrast
-            
-            - 'MaxContrastL1': maximization of the contrast for a given 
-            apodizer transmission under L1-norm constraints
-            
-            - 'MaxContrastLinf': maximization of the contrast for a given 
-            apodizer transmission under Linf-norm constraints
-            
-    Returns    
-    ----------
-    tmp : dict
-        Updated dictionary
-        
-    """    
-    tmp = get_default_params_ProblemMatrix()
-    tmp.update({'Lnorm':'L1', 'problem_name':'MaxContrastL1'})
-    
-    return tmp
+from . import design, default
 
 #%%
 """
@@ -225,7 +37,7 @@ class ProblemMatrix(object):
     r"""
     Defines the class for Matrix of optimization problem
     """
-    default_params = get_default_params_ProblemMatrix()
+    default_params = default.get_default_params_2d_ProblemMatrix()
   
     def __init__(self,corono=design.APLC2d(), **kwargs):
         r"""
@@ -636,7 +448,7 @@ class MaxTau(ProblemMatrix):
     :math:`C` in the search area inside the coronagraphic image.
     
     """
-    default_params = get_default_params_MaxTauProblemMatrix()
+    default_params = default.get_default_params_2d_MaxTauProblemMatrix()
 
     def __init__(self, **kwargs):
         """
@@ -1049,7 +861,7 @@ class MaxContrast(ProblemMatrix):
     maximizes the contrast in a given search area for a given integrated 
     apodizer transmission :math:`\tau`.
     """
-    default_params = get_default_params_MaxContrastProblemMatrix()
+    default_params = default.get_default_params_2d_MaxContrastProblemMatrix()
     
     def __init__(self, **kwargs):
         r"""
