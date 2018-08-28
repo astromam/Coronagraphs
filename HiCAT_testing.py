@@ -1,38 +1,16 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Apr 25 17:52:23 2018
-
-Author: Mamadou N'Diaye <mamadou.ndiaye@oca.eu> (https://github.com/astromam)
-
-License: MIT license
-
-"""
-
 import numpy as np
 import time
 import os
 from pathlib import Path
+from astropy.io import fits
 
 import corono as coro
 
-from astropy.io import fits
+pupil_name   = 'HiCAT'
 
-#%% parameters
-"""
-Parameters
-"""
-# Telescope name
-corono_name  = 'APLC' # 'SP' or 'APLC'
-pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
-<<<<<<< HEAD
-problem_name = 'MaxTau' # 'MaxTau' # ,'MaxContrastLinf' # 'MaxContrastL1' #
-solver       = 'gurobipy' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
-=======
-problem_name = 'MaxContrastL1' # 'MaxTau' # ,'MaxContrastLinf' # 'MaxContrastL1' #
+problem_name = 'MaxTau' # 'MaxContrastL1' # 'MaxTau' # ,'MaxContrastLinf' # #  
 solver       = 'stdgrb' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
->>>>>>> e581090dbd6d99a473bbc84fd6e6d2b24ffbf02a
-slvLogToConsole = 0
+slvLogToConsole = 1
 slvCrossover    = 0
 slvMethod       = 2
 allLogToConsole = 0
@@ -42,57 +20,71 @@ Binarity    = False
 FirstDerGlobalLim = 100.
 BinarityReg       = 0.1
 
-#nPup = corono0.params['nPup']
-nPup = 50
+nPup = 96
 nFPM = 50
-Fmax2d = 22.5
-nImg2d = 45
+Fmax2d = 16
+nImg2d = 32
 
-# mask radius in lam0/D units
-rMask = 4.0
+rMask = 8.543/2
 
-# dark zone bounds (inner and outer edges) in lam0/D unit
-rho0 =  5.0
-rho1 = 10.0
+rho0 =  3.75
+rho1 = 15.0
 
-# contrast in the dark region
-cDarkHole = 7.0
+cDarkHole = 8.0
 
-# tau (integrated Pupil transmission)
 tau   = 0.4
 
-# CtrBtwnPix2
+corono_name = 'APLC' # 'SP' or 'APLC'
 CtrBtwnPix  = True
 CtrBtwnPix2 = True
-Pupil2dSym  = True
+Pupil2dSym  = False
+ImPart      = True
 
-#nlam
 bw   = 0.1
 nlam = 5
 
+pix_max   = 1
+
 do_fits = True
 
-#%%
-"""
-File reading for Pupil and Lyot stop
-"""
-fdir = Path('../../data/2D/pupils/').resolve()
+fdir = Path('./pupils/2D/').resolve()
 if pupil_name == 'lvr':
     fname_pup = 'ATLAST_Aperture_nPup={0}.fits'.format(nPup,)
     fname_lys = 'ATLAST_LyotStop_nPup={0}.fits'.format(nPup,)
+elif pupil_name == 'HiCAT':
+    fname_pup = 'HiCAT-Aper_F-N00{0}_Hex3-Ctr0972-Obs0195-SpX0017-Gap0004.fits'.format(nPup,)
+    fname_lys = 'HiCAT-Lyot_F-N00{0}_LS-Ann-gy-ID0345-OD0807-SpX0036.fits'.format(nPup,)
 else:
     fname_pup = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
     fname_lys = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
-
+    
 fpath_pup = fdir / fname_pup
 fpath_lys = fdir / fname_lys
 Pupil2d    = fits.getdata(fpath_pup)
 LyotStop2d = fits.getdata(fpath_lys)
 
+#circ = coro.utils.uniform_disk(nPup, 0.95*nPup/2, CtrBtwnPix=True)
+#LyotStop2d *= circ
+
+LyotStop2d_t = [LyotStop2d]
+
+pix_t = []
+if pix_max >= 1:
+    pix_pos_t = 1+np.arange(pix_max)
+    pix_neg_t = - pix_pos_t
+    pix_t = list(-pix_pos_t) + list(pix_pos_t)
+    pix_t.sort()
+    
+for j in range(2):
+    for i in range(len(pix_t)):
+        LyotStop2d_t.append(np.roll(LyotStop2d, pix_t[i], axis=j))
+
+ncorono      = len(LyotStop2d_t)
+print('# of coronagraph configurations: {0}'.format(ncorono))
 
 if solver != 'gurobipy' and solver != 'stdgrb':
     solver = 'scipy'
-
+    
 params = coro.to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
                  rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau, 
                  CtrBtwnPix=CtrBtwnPix, CtrBtwnPix2 = CtrBtwnPix2,
@@ -106,64 +98,54 @@ params = coro.to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
                  slvCrossover = slvCrossover, slvMethod = slvMethod,
                  allLogToConsole = allLogToConsole,
                  MinIsland = MinIsland, FirstDerGlobalLim = FirstDerGlobalLim,
-                 Binarity = Binarity, BinarityReg = BinarityReg)
+                 Binarity = Binarity, BinarityReg = BinarityReg,
+                 ImPart = ImPart)
 
-#%%  
-""" 
-Coronagraph defintion
-"""
+params_t = []
+for k in range(ncorono):
+    params_t.append(coro.update_params(params, LyotStop2d=LyotStop2d_t[k])) 
+    
+corono_t = []
+
 if corono_name == 'SP':
-    corono0 = coro.design.SP2d(**params)
+    corono_t.append(coro.design.SP2d(**params))
 elif corono_name == 'APLC':
-    corono0 = coro.design.APLC2d(**params)
+    for k in range(ncorono):
+        corono_t.append(coro.design.APLC2d(**params_t[k])) 
 else:
     raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
-
-#%%
-"""
-Problem defintion
-"""
+    
+# generation of a optimzation problem object
 if problem_name == 'MaxTau':
     # Maximization of the integrated amplitude transmission of the apodizer
-    problem1 = coro.optim_2d.MaxTau(corono=corono0, **params)
+    problem1 = coro.optim_2d.MaxTau(corono=corono_t, **params)
 elif problem_name == 'MaxContrastL1':
     # Maximization of the contrast under L1-norm
-    problem1 = coro.optim_2d.MaxContrast(corono=corono0, Lnorm='L1',**params)
+    problem1 = coro.optim_2d.MaxContrast(corono=corono_t, Lnorm='L1',**params)
 elif problem_name == 'MaxContrastLinf':
     # Maximization of the contrast under L-infinite norm
-    problem1 = coro.optim_2d.MaxContrast(corono=corono0, Lnorm='Linf',**params)
+    problem1 = coro.optim_2d.MaxContrast(corono=corono_t, Lnorm='Linf',**params)
 else:
     raise NameError('{0}: Not an existing optimization problem!'.format(problem_name))
-
-#%% Apodizer solution for the problems
-"""
-Apodizer solutions
-"""
+    
 t0 = time.time()
 Apod1 = problem1.solve_model()
 t1 = time.time()
 print('optimization time             : {0:.2f}s'.format(t1-t0))
 
-#%% Display of the apodizer
-"""
-Generation of full apodizer for quarter pupil optimization
-"""
-Apod1_2d = np.reshape(Apod1, (corono0.nPup, corono0.nPup))
+Apod1_2d = np.reshape(Apod1, (corono_t[0].nPup, corono_t[0].nPup))
 
 if Pupil2dSym == True:
-        Apod1_2dtmp =  Apod1_2d[corono0.nPup//2:, corono0.nPup//2:]
-        Apod1_2d[:corono0.nPup//2, corono0.nPup//2:] = np.flip(Apod1_2dtmp, axis=0)
-        Apod1_2d[:, :corono0.nPup//2]          = np.flip(Apod1_2d[:, corono0.nPup//2:], axis=1)
+        Apod1_2dtmp =  Apod1_2d[corono_t[0].nPup//2:, corono_t[0].nPup//2:]
+        Apod1_2d[:corono_t[0].nPup//2, corono_t[0].nPup//2:] = np.flip(Apod1_2dtmp, axis=0)
+        Apod1_2d[:, :corono_t[0].nPup//2]          = np.flip(Apod1_2d[:, corono_t[0].nPup//2:], axis=1)
         
-#%%
-"""
-Save apodizer
-"""
-fdir = Path('../../results/2D/dat_pyth').resolve() / pupil_name
+
+fdir = Path('./results/2D/dat_pyth').resolve() / pupil_name
 if not os.path.exists(fdir):
     os.makedirs(fdir)
     
-fname = problem1.get_filename() + '.fits'
+fname = problem1.get_filename() + '_pix_max=1.fits'
 fpath = fdir / fname
 
 if do_fits is True:
