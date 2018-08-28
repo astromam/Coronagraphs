@@ -23,9 +23,10 @@ from astropy.io import fits
 Parameters
 """
 # Telescope name
+corono_name  = 'APLC' # 'SP' or 'APLC'
 pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
 problem_name = 'MaxContrastL1' # 'MaxTau' # ,'MaxContrastLinf' # 'MaxContrastL1' #
-solver       = 'xxx' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
+solver       = 'stdgrb' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
 slvLogToConsole = 0
 slvCrossover    = 0
 slvMethod       = 2
@@ -56,7 +57,6 @@ cDarkHole = 7.0
 tau   = 0.4
 
 # CtrBtwnPix2
-corono_name = 'APLC' # 'SP' or 'APLC'
 CtrBtwnPix  = True
 CtrBtwnPix2 = True
 Pupil2dSym  = True

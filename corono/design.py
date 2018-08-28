@@ -153,12 +153,6 @@ class Coronagraph(object):
         
         # clear Pupil
         self.ClearPupil1d = np.ones((self.nPup))
-
-        # Telescope aperture
-        self.Pupil1d      = (self.r>self.PupilID)*1.0
-        
-        # Lyot stop 
-        self.LyotStop1d   = (self.r>self.LyotStopID)*(self.r<self.LyotStopOD)*1.0
         
         # Final image plane coordinate
         self.xi  = np.arange(self.nImg+1)*self.Fmax/self.nImg
@@ -174,6 +168,7 @@ class Coronagraph(object):
 
         # clear Pupil
         self.ClearPupil2d = uniform_disk(self.nPup, self.nPup/2., CtrBtwnPix=self.CtrBtwnPix)
+
         # Focal plane mask
         self.mask2d       = uniform_disk(self.nFPM, self.nFPM/2., CtrBtwnPix=self.CtrBtwnPix)
 
@@ -634,6 +629,14 @@ class APLC1d(Coronagraph):
 #        self.hankel_kernel_iFPM_all = besselJ0(
 #                np.pi/self.R*np.einsum('ik,j -> ijk', self.xi_FPM_lam, self.r))
 
+        # Telescope aperture
+        if self.Pupil1d is None:
+            self.Pupil1d      = (self.r>self.PupilID)*1.0
+        
+        # Lyot stop 
+        if self.LyotStop1d is None:
+            self.LyotStop1d   = (self.r>self.LyotStopID)*(self.r<self.LyotStopOD)*1.0
+
         
 #%% # direct propagation (no focal plane mask)
     def compute_direct_field_1d(self,Apod):
@@ -781,7 +784,11 @@ class SP1d(Coronagraph):
                            <self.rMask_t[:,None]*self.nFPM)
         self.xi_FPM_lam = np.arange(self.nFPM_max+1)[None,:]\
                 *self.mask_lam/self.nFPM
-        
+
+        # Telescope aperture
+        if self.Pupil1d is None:
+            self.Pupil1d      = (self.r>self.PupilID)*1.0
+                
 #%% # direct propagation (no focal plane mask)
     def compute_direct_field_1d(self,Apod):
         """
@@ -979,6 +986,14 @@ class DZPM1d(Coronagraph):
         self.Apod_w = \
         1j*np.sin(2.*np.pi*(self.r/2)**2*self.beta*self.lam0/self.lam_t[:,None])\
         + np.cos(2.*np.pi*(self.r/2)**2*self.beta*self.lam0/self.lam_t[:,None])
+
+        # Telescope aperture
+        if self.Pupil1d is None:
+            self.Pupil1d      = (self.r>self.PupilID)*1.0
+        
+        # Lyot stop 
+        if self.LyotStop1d is None:
+            self.LyotStop1d   = (self.r>self.LyotStopID)*(self.r<self.LyotStopOD)*1.0
 
 
 #%% direct propagation (no focal plane mask)
@@ -1204,6 +1219,13 @@ class HDZPM1d(Coronagraph):
         self.hankel_kernel_iFPM2_all = besselJ0(
                 np.pi/self.R*self.xi_FPM2_lam[:,None,:]*self.r[None,:,None])
 
+        # Telescope aperture
+        if self.Pupil1d is None:
+            self.Pupil1d      = (self.r>self.PupilID)*1.0
+        
+        # Lyot stop 
+        if self.LyotStop1d is None:
+            self.LyotStop1d   = (self.r>self.LyotStopID)*(self.r<self.LyotStopOD)*1.0
 
 
 #%% direct propagation (no focal plane mask)
@@ -1445,6 +1467,13 @@ class HTZPM1d(Coronagraph):
         self.hankel_kernel_iFPM3_all = besselJ0(
                 np.pi/self.R*self.xi_FPM3_lam[:,None,:]*self.r[None,:,None])
 
+        # Telescope aperture
+        if self.Pupil1d is None:
+            self.Pupil1d      = (self.r>self.PupilID)*1.0
+        
+        # Lyot stop 
+        if self.LyotStop1d is None:
+            self.LyotStop1d   = (self.r>self.LyotStopID)*(self.r<self.LyotStopOD)*1.0
 
 
 #%% direct propagation (no focal plane mask)
@@ -1569,6 +1598,16 @@ class APLC2d(Coronagraph):
         # mask size at a given wavelength for SFT
         self.mB_t  = 2.*self.rMask*(self.lam0/self.lam_t)
         self.mD_t  = self.Fmax2d*(self.lam0/self.lam_t)
+
+        # Telescope aperture
+        if self.Pupil2d is None:
+            self.Pupil2d      = uniform_disk(self.nPup, self.nPup/2., CtrBtwnPix=self.CtrBtwnPix)\
+            - uniform_disk(self.nPup, self.PupilID*self.nPup/2., CtrBtwnPix=self.CtrBtwnPix)
+            
+        # Lyot stop 
+        if self.LyotStop2d is None:
+            self.LyotStop2d   = uniform_disk(self.nPup, self.nPup/2., CtrBtwnPix=self.CtrBtwnPix)\
+            - uniform_disk(self.nPup, self.LyotStopID*self.nPup/2., CtrBtwnPix=self.CtrBtwnPix)
         
 #%% direct propagation (no focal plane mask)
     def compute_direct_field_2d(self,Apod2d):
@@ -1795,6 +1834,11 @@ class SP2d(Coronagraph):
         
         # mask size at a given wavelength for SFT
         self.mD_t  = self.Fmax2d*(self.lam0/self.lam_t)
+
+        # Telescope aperture
+        if self.Pupil2d is None:
+            self.Pupil2d      = uniform_disk(self.nPup, self.nPup/2., CtrBtwnPix=self.CtrBtwnPix)\
+            - uniform_disk(self.nPup, self.PupilID*self.nPup/2., CtrBtwnPix=self.CtrBtwnPix)
         
 #%% direct propagation (no focal plane mask)
     def compute_direct_field_2d(self,Apod2d):
@@ -1918,6 +1962,15 @@ class DZPM2d(Coronagraph):
         self.Apod2d_w = 1j*np.sin(2.*np.pi*(self.rr)**2*self.beta*self.lam0/self.lam_t[:,None,None])\
         + np.cos(2.*np.pi*(self.rr)**2*self.beta*self.lam0/self.lam_t[:,None,None])
 
+        # Telescope aperture
+        if self.Pupil2d is None:
+            self.Pupil2d      = uniform_disk(self.nPup, self.nPup/2., CtrBtwnPix=self.CtrBtwnPix)\
+            - uniform_disk(self.nPup, self.PupilID*self.nPup/2., CtrBtwnPix=self.CtrBtwnPix)
+            
+        # Lyot stop 
+        if self.LyotStop2d is None:
+            self.LyotStop2d   = uniform_disk(self.nPup, self.nPup/2., CtrBtwnPix=self.CtrBtwnPix)\
+            - uniform_disk(self.nPup, self.LyotStopID*self.nPup/2., CtrBtwnPix=self.CtrBtwnPix)
         
 #%% direct propagation (no focal plane mask)
     def compute_direct_field_2d(self,Apod2d):

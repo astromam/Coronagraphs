@@ -45,7 +45,7 @@ R    = 1
 bw   = 0.1
 nlam = 5
 
-PupilID    = 0.10
+PupilID    = 0.20
 rMask       = 4.4
 
 rMask1      = 2.0
