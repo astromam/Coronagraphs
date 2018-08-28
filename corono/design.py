@@ -153,6 +153,12 @@ class Coronagraph(object):
         
         # clear Pupil
         self.ClearPupil1d = np.ones((self.nPup))
+
+        # Telescope aperture
+        self.Pupil1d      = (self.r>self.PupilID)*1.0
+        
+        # Lyot stop 
+        self.LyotStop1d   = (self.r>self.LyotStopID)*(self.r<self.LyotStopOD)*1.0
         
         # Final image plane coordinate
         self.xi  = np.arange(self.nImg+1)*self.Fmax/self.nImg

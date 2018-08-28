@@ -140,15 +140,6 @@ def get_default_params_APLC1d():
     tmp = get_default_params_Coronagraph()  
     tmp.update({'rMask':2.8,'nFPM':50, 'corono_name':'APLC'})
 
-    # Pupil radial coordinate
-    r   = np.arange(tmp['nPup'])*tmp['R']/tmp['nPup']\
-                +tmp['R']/(2*tmp['nPup'])
-    # Telescope aperture
-    Pupil1d      = (r>tmp['PupilID'])*1.0
-    # Lyot stop 
-    LyotStop1d   = (r>tmp['LyotStopID'])*(r<tmp['LyotStopOD'])*1.0
-    
-    tmp.update({'r':r, 'Pupil1d':Pupil1d, 'LyotStop1d':LyotStop1d})
     return tmp
 
 #%%
@@ -173,13 +164,6 @@ def get_default_params_SP1d():
     """
     tmp = get_default_params_Coronagraph()
     tmp.update({'rMask':5.0,'nFPM':50, 'corono_name':'SP'})
-
-    # Pupil radial coordinate    
-    r   = np.arange(tmp['nPup'])*tmp['R']/tmp['nPup']\
-                +tmp['R']/(2*tmp['nPup'])
-    # Telescope aperture
-    Pupil1d      = (r>tmp['PupilID'])*1.0    
-    tmp.update({'r':r, 'Pupil1d':Pupil1d})
     
     return tmp
 
@@ -256,15 +240,6 @@ def get_default_params_DZPM1d():
            'nFPM':68.82312456985547,
            'corono_name':'DZPM'})
 
-    # Pupil radial coordinate        
-    r   = np.arange(tmp['nPup'])*tmp['R']/tmp['nPup']\
-                +tmp['R']/(2*tmp['nPup'])
-    # Telescope aperture
-    Pupil1d      = (r>tmp['PupilID'])*1.0
-    # Lyot stop 
-    LyotStop1d   = (r>tmp['LyotStopID'])*(r<tmp['LyotStopOD'])*1.0
-    
-    tmp.update({'r':r, 'Pupil1d':Pupil1d, 'LyotStop1d':LyotStop1d})
     return tmp
 
 #%%
@@ -335,15 +310,6 @@ def get_default_params_HDZPM1d():
            'nFPM':68.82312456985547,
            'corono_name':'HDZPM'})
 
-    # Pupil radial coordinate        
-    r   = np.arange(tmp['nPup'])*tmp['R']/tmp['nPup']\
-                +tmp['R']/(2*tmp['nPup'])
-    # Telescope aperture
-    Pupil1d      = (r>tmp['PupilID'])*1.0
-    # Lyot stop 
-    LyotStop1d   = (r>tmp['LyotStopID'])*(r<tmp['LyotStopOD'])*1.0
-    
-    tmp.update({'r':r, 'Pupil1d':Pupil1d, 'LyotStop1d':LyotStop1d})
     return tmp
 
 #%%
@@ -422,15 +388,6 @@ def get_default_params_HTZPM1d():
            'nFPM':68.82312456985547,
            'corono_name':'HTZPM'})
 
-    # Pupil radial coordinate        
-    r   = np.arange(tmp['nPup'])*tmp['R']/tmp['nPup']\
-                +tmp['R']/(2*tmp['nPup'])
-    # Telescope aperture
-    Pupil1d      = (r>tmp['PupilID'])*1.0
-    # Lyot stop 
-    LyotStop1d   = (r>tmp['LyotStopID'])*(r<tmp['LyotStopOD'])*1.0
-    
-    tmp.update({'r':r, 'Pupil1d':Pupil1d, 'LyotStop1d':LyotStop1d})
     return tmp
 
 
