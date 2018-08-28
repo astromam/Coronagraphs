@@ -20,7 +20,7 @@ Binarity    = False
 FirstDerGlobalLim = 100.
 BinarityReg       = 0.1
 
-nPup = 136
+nPup = 96
 nFPM = 50
 Fmax2d = 16
 nImg2d = 32
@@ -43,7 +43,7 @@ ImPart      = True
 bw   = 0.1
 nlam = 5
 
-pix_max   = 0
+pix_max   = 1
 
 do_fits = True
 
@@ -52,8 +52,8 @@ if pupil_name == 'lvr':
     fname_pup = 'ATLAST_Aperture_nPup={0}.fits'.format(nPup,)
     fname_lys = 'ATLAST_LyotStop_nPup={0}.fits'.format(nPup,)
 elif pupil_name == 'HiCAT':
-    fname_pup = 'HiCAT-Aper_F-N0{0}_Hex3-Ctr0972-Obs0195-SpX0017-Gap0004.fits'.format(nPup,)
-    fname_lys = 'HiCAT-Lyot_F-N0{0}_LS-Ann-gy-ID0345-OD0740-SpX0036.fits'.format(nPup,)
+    fname_pup = 'HiCAT-Aper_F-N00{0}_Hex3-Ctr0972-Obs0195-SpX0017-Gap0004.fits'.format(nPup,)
+    fname_lys = 'HiCAT-Lyot_F-N00{0}_LS-Ann-gy-ID0345-OD0807-SpX0036.fits'.format(nPup,)
 else:
     fname_pup = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
     fname_lys = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
@@ -145,7 +145,7 @@ fdir = Path('./results/2D/dat_pyth').resolve() / pupil_name
 if not os.path.exists(fdir):
     os.makedirs(fdir)
     
-fname = problem1.get_filename() + '_pix_max=0.fits'
+fname = problem1.get_filename() + '_pix_max=1.fits'
 fpath = fdir / fname
 
 if do_fits is True:

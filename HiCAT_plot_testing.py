@@ -18,7 +18,7 @@ MinIsland    = False
 FirstDerGlobalLim = 100.
     
 # sampling
-nPup = 136
+nPup = 96
 nFPM = 50
 Fmax2d = 16
 nImg2d = 32
@@ -61,8 +61,8 @@ if pupil_name == 'lvr':
     fname_pup = 'ATLAST_Aperture_nPup={0}.fits'.format(nPup,)
     fname_lys = 'ATLAST_LyotStop_nPup={0}.fits'.format(nPup,)
 elif pupil_name == 'HiCAT':
-    fname_pup = 'HiCAT-Aper_F-N0{0}_Hex3-Ctr0972-Obs0195-SpX0017-Gap0004.fits'.format(nPup,)
-    fname_lys = 'HiCAT-Lyot_F-N0{0}_LS-Ann-gy-ID0345-OD0740-SpX0036.fits'.format(nPup,)
+    fname_pup = 'HiCAT-Aper_F-N00{0}_Hex3-Ctr0972-Obs0195-SpX0017-Gap0004.fits'.format(nPup,)
+    fname_lys = 'HiCAT-Lyot_F-N00{0}_LS-Ann-gy-ID0345-OD0807-SpX0036.fits'.format(nPup,)
 else:
     fname_pup = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
     fname_lys = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
@@ -201,7 +201,7 @@ for k in range(ncorono):
         poly_direct_image_t.append(corono_t[k].compute_direct_intensity_2d(corono_t[k].Pupil2d))
     poly_corono_image_t.append(corono_t[k].compute_corono_intensity_2d(Apod_pyth))
 
-fname = fname_gen + '_lyotstop_ampl_config={0}.pdf'.format(k)
+fname = fname_gen + '_lyotstop_config={0}.pdf'.format(k)
 fpath = fdir_pdf / fname
     
 pl.figure(6)
@@ -212,7 +212,7 @@ pl.tight_layout()
 pl.savefig(str(fpath), transparent=True)
 
 
-fname = fname_gen + '_direct_image_config={0}.pdf'.format(k)
+fname = fname_gen + '_direct_image_config={0}_pix_max={1}.pdf'.format(k,pix_max)
 fpath = fdir_pdf / fname
 
 pl.figure(10*k)
@@ -224,7 +224,7 @@ cbar.set_label('Normalized intensity in log scale')
 pl.tight_layout()
 pl.savefig(str(fpath), transparent=True)
     
-fname = fname_gen + '_apodized_image_config={0}.pdf'.format(k)
+fname = fname_gen + '_apodized_image_config={0}_pix_max={1}.pdf'.format(k,pix_max)
 fpath = fdir_pdf / fname
     
 pl.figure(10*k+1)
@@ -241,7 +241,7 @@ if nImg2dbis%2 == 0:
     xi2d = corono_t[k].xi2d_ctr
     
 nImg2d = corono_t[k].params['nImg2d']
-fname = fname_gen + '_intensity_profiles_config={0}.pdf'.format(k)
+fname = fname_gen + '_intensity_profiles_config={0}_pix_max={1}.pdf'.format(k,pix_max)
 fpath = fdir_pdf / fname
     
 pl.figure(10*k+2)
