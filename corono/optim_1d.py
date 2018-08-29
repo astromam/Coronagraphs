@@ -38,7 +38,7 @@ class ProblemMatrix(object):
     """
     default_params = default.get_default_params_1d_ProblemMatrix()
   
-    def __init__(self,corono=design.APLC1d(),**kwargs):
+    def __init__(self,corono=None,**kwargs):
         r"""
         __init__ : method
             Constructor for the ProblemMatrix class
@@ -112,7 +112,10 @@ class ProblemMatrix(object):
         self.params  = kwargs
         self.check_params()
         
-        self.corono  = corono
+        if corono is None:
+            self.corono = design.APLC1d()
+        else:
+            self.corono = corono
         
         self.dz      = (self.corono.xi >= self.corono.rho0) \
                 & (self.corono.xi <= self.corono.rho1)
