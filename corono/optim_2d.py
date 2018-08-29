@@ -39,7 +39,7 @@ class ProblemMatrix(object):
     """
     default_params = default.get_default_params_2d_ProblemMatrix()
   
-    def __init__(self,corono=design.APLC2d(), **kwargs):
+    def __init__(self,corono=None, **kwargs):
         r"""
         __init__ : method
             Constructor for the ProblemMatrix class
@@ -107,7 +107,11 @@ class ProblemMatrix(object):
         if isinstance(corono, list) == True:
             self.corono_t = corono
         else:
-            self.corono_t = [corono]
+            if corono is None:
+                self.corono_t = [design.APLC2d()]
+                print('Warning: default coronagraph')
+            else:
+                self.corono_t = [corono]
         
         if self.LSRobustness == False:
             self.corono_t = [self.corono_t[0]]

@@ -25,13 +25,8 @@ Parameters
 # Telescope name
 corono_name  = 'APLC' # 'SP' or 'APLC'
 pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
-<<<<<<< HEAD
 problem_name = 'MaxTau' # 'MaxTau' # ,'MaxContrastLinf' # 'MaxContrastL1' #
-solver       = 'gurobipy' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
-=======
-problem_name = 'MaxContrastL1' # 'MaxTau' # ,'MaxContrastLinf' # 'MaxContrastL1' #
 solver       = 'stdgrb' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
->>>>>>> e581090dbd6d99a473bbc84fd6e6d2b24ffbf02a
 slvLogToConsole = 0
 slvCrossover    = 0
 slvMethod       = 2
