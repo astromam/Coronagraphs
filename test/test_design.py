@@ -11,30 +11,8 @@ License: MIT license
 
 #%% Initialization
 import numpy as np
-import corono.design as ds
+import corono as coro
 import os
-
-#%%
-"""
-Test the default params
-"""
-def test_get_default_params():
-    
-    ds.get_default_params_Coronagraph()
-    
-    ds.get_default_params_APLC1d()
-    
-    ds.get_default_params_SP1d()
-    
-    ds.get_default_params_DZPM1d()
-    
-    ds.get_default_params_HDZPM1d()
-
-    ds.get_default_params_APLC2d()
-    
-    ds.get_default_params_SP2d()
-    
-    ds.get_default_params_DZPM2d()
     
 #%%
 """
@@ -42,27 +20,152 @@ Test the Coronagraph class
 """
 def test_Coronagraph():
     
-    cor=ds.Coronagraph()
+    corono0=coro.design.Coronagraph()
     
     # load and save params
-    cor.save_params('temp.file')
-    cor.load_params('temp.file')
+    corono0.save_params('temp.file')
+    corono0.load_params('temp.file')
     os.remove('temp.file')
     
     # print and filename
-    print(cor)
-    print(cor.get_filename())
+    print(corono0)
+    print(corono0.get_filename())
     
     # test params
-    assert 'nFPM' in cor
-    assert not 'mamadoupowa' in cor
+    assert 'nFPM' in corono0
+    assert not 'mamadoupowa' in corono0
     
     # test values
-    np.testing.assert_allclose(cor.ClearPupil1d,1)
+    np.testing.assert_allclose(corono0.ClearPupil1d,1)
     
     # test function call
+    assert 'Pupil1d' in corono0 
+    corono0.compute_nostop_field_1d()
     
-    #f=cor.compute_nostop_field_1d()
-    #assert f.shape[1]==cor.nPup and f.shape[0]==cor.nlam
+    corono0.compute_nostop_intensity_1d(poly=True)
+    corono0.compute_nostop_intensity_1d(poly=False)
+    
+    
+    corono0.generate_area()
+    corono0.params['Pupil2dSym'] = True
+    corono0.generate_area()
+    
+#    assert f.shape[1]==corono0.nPup and f.shape[0]==corono0.nlam
+
+#    Apod = corono0.Pupil1d
+#    corono0.compute_direct_intensity_1d(Apod, poly=True)
+
     
 #%%    
+def test_APLC1d():
+    
+    corono0=coro.design.APLC1d()
+    
+    Apod = corono0.Pupil1d
+    corono0.compute_direct_field_1d(Apod)
+    corono0.compute_corono_field_1d(Apod)
+    
+
+#%%    
+def test_SP1d():
+    
+    corono0=coro.design.SP1d()
+    
+    Apod = corono0.Pupil1d
+    corono0.compute_direct_field_1d(Apod)
+    corono0.compute_corono_field_1d(Apod)
+       
+    
+#%%
+def test_DZPM1d():
+
+    corono0=coro.design.DZPM1d()
+    
+    Apod = corono0.Pupil1d
+    corono0.compute_direct_field_1d(Apod)
+    corono0.compute_corono_field_1d(Apod)
+    
+#%%
+def test_HDZPM1d():
+
+    corono0=coro.design.HDZPM1d()
+    
+    Apod = corono0.Pupil1d
+    corono0.compute_direct_field_1d(Apod)
+    corono0.compute_corono_field_1d(Apod)
+    
+
+#%%
+def test_HTZPM1d():
+
+    corono0=coro.design.HTZPM1d()
+    
+    Apod = corono0.Pupil1d
+    corono0.compute_direct_field_1d(Apod)
+    corono0.compute_corono_field_1d(Apod)
+    
+
+#%%
+def test_APLC2d():
+
+    corono0=coro.design.APLC2d()
+    
+    Apod = corono0.Pupil2d
+    corono0.compute_direct_field_2d(Apod)
+    corono0.compute_corono_field_2d(Apod)
+    corono0.compute_direct_lyot_field_2d(Apod)
+    corono0.compute_corono_lyot_field_2d(Apod)
+    
+    params = coro.to_dict() 
+    params2 = coro.update_params(params, Pupil2dSym=True)
+    corono0=coro.design.APLC2d(**params2)
+    corono0.compute_direct_field_2d(Apod)
+    corono0.compute_corono_field_2d(Apod)
+    corono0.compute_direct_lyot_field_2d(Apod)
+    corono0.compute_corono_lyot_field_2d(Apod)
+    
+    OPDmap2d = corono0.Pupil2d
+    params3 = coro.update_params(params, OPDmap2d=OPDmap2d)
+    corono0=coro.design.APLC2d(**params3)
+    corono0.compute_direct_field_2d(Apod)
+    corono0.compute_corono_field_2d(Apod)
+    corono0.compute_direct_lyot_field_2d(Apod)
+    corono0.compute_corono_lyot_field_2d(Apod)
+
+    Ampmap2d = corono0.Pupil2d    
+    params4 = coro.update_params(params, Ampmap2d=Ampmap2d)
+    corono0=coro.design.APLC2d(**params4)
+    corono0.compute_direct_field_2d(Apod)
+    corono0.compute_corono_field_2d(Apod)
+    corono0.compute_direct_lyot_field_2d(Apod)
+    corono0.compute_corono_lyot_field_2d(Apod)
+    
+#%%
+def test_SP2d():
+
+    corono0=coro.design.SP2d()
+    
+    Apod = corono0.Pupil2d
+    corono0.compute_direct_field_2d(Apod)
+    corono0.compute_corono_field_2d(Apod)
+    
+    params = coro.to_dict() 
+    params2 = coro.update_params(params, Pupil2dSym=True)
+    corono0=coro.design.SP2d(**params2)
+    corono0.compute_direct_field_2d(Apod)
+    corono0.compute_corono_field_2d(Apod)
+
+ #%%
+def test_DZPM2d():
+
+    corono0=coro.design.DZPM2d()
+    
+    Apod = corono0.Pupil2d
+    corono0.compute_direct_field_2d(Apod)
+    corono0.compute_corono_field_2d(Apod)
+
+    params = coro.to_dict() 
+    params2 = coro.update_params(params, Pupil2dSym=True)
+    corono0=coro.design.DZPM2d(**params2)
+    corono0.compute_direct_field_2d(Apod)
+    corono0.compute_corono_field_2d(Apod)    
