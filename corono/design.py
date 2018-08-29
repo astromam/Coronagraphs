@@ -245,10 +245,8 @@ class Coronagraph(object):
             Filename with the appended varname.
                 
         """
-        try:
-            self.get_filename()+ '_' + varname
-        except FileNotFoundError:
-            return False
+        return self.get_filename()+ '_' + varname
+
         
 #%%        
     def check_params(self):

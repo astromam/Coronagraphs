@@ -30,6 +30,10 @@ def test_Coronagraph():
     # print and filename
     print(corono0)
     print(corono0.get_filename())
+
+    # print and filename
+    varname = 'test'
+    print(corono0.get_cache(varname))
     
     # test params
     assert 'nFPM' in corono0
@@ -65,6 +69,11 @@ def test_APLC1d():
     corono0.compute_direct_field_1d(Apod)
     corono0.compute_corono_field_1d(Apod)
     
+    corono0.compute_direct_intensity_1d(Apod, poly=True)
+    corono0.compute_direct_intensity_1d(Apod, poly=False)
+    corono0.compute_corono_intensity_1d(Apod, poly=True)
+    corono0.compute_corono_intensity_1d(Apod, poly=False)
+    
 
 #%%    
 def test_SP1d():
@@ -74,6 +83,11 @@ def test_SP1d():
     Apod = corono0.Pupil1d
     corono0.compute_direct_field_1d(Apod)
     corono0.compute_corono_field_1d(Apod)
+    
+    corono0.compute_direct_intensity_1d(Apod, poly=True)
+    corono0.compute_direct_intensity_1d(Apod, poly=False)
+    corono0.compute_corono_intensity_1d(Apod, poly=True)
+    corono0.compute_corono_intensity_1d(Apod, poly=False)
        
     
 #%%
@@ -85,6 +99,11 @@ def test_DZPM1d():
     corono0.compute_direct_field_1d(Apod)
     corono0.compute_corono_field_1d(Apod)
     
+    corono0.compute_direct_intensity_1d(Apod, poly=True)
+    corono0.compute_direct_intensity_1d(Apod, poly=False)
+    corono0.compute_corono_intensity_1d(Apod, poly=True)
+    corono0.compute_corono_intensity_1d(Apod, poly=False)
+    
 #%%
 def test_HDZPM1d():
 
@@ -93,6 +112,11 @@ def test_HDZPM1d():
     Apod = corono0.Pupil1d
     corono0.compute_direct_field_1d(Apod)
     corono0.compute_corono_field_1d(Apod)
+    
+    corono0.compute_direct_intensity_1d(Apod, poly=True)
+    corono0.compute_direct_intensity_1d(Apod, poly=False)
+    corono0.compute_corono_intensity_1d(Apod, poly=True)
+    corono0.compute_corono_intensity_1d(Apod, poly=False)
     
 
 #%%
@@ -103,6 +127,11 @@ def test_HTZPM1d():
     Apod = corono0.Pupil1d
     corono0.compute_direct_field_1d(Apod)
     corono0.compute_corono_field_1d(Apod)
+    
+    corono0.compute_direct_intensity_1d(Apod, poly=True)
+    corono0.compute_direct_intensity_1d(Apod, poly=False)
+    corono0.compute_corono_intensity_1d(Apod, poly=True)
+    corono0.compute_corono_intensity_1d(Apod, poly=False)
     
 
 #%%
@@ -115,6 +144,14 @@ def test_APLC2d():
     corono0.compute_corono_field_2d(Apod)
     corono0.compute_direct_lyot_field_2d(Apod)
     corono0.compute_corono_lyot_field_2d(Apod)
+    
+    corono0.compute_direct_intensity_2d(Apod, poly=True)
+    corono0.compute_direct_intensity_2d(Apod, poly=False)
+    corono0.compute_corono_intensity_2d(Apod, poly=True)
+    corono0.compute_corono_intensity_2d(Apod, poly=False)
+    
+    corono0.compute_direct_field_2d_vec(Apod)
+    corono0.compute_corono_field_2d_vec(Apod)
     
     params = coro.to_dict() 
     params2 = coro.update_params(params, Pupil2dSym=True)
@@ -148,6 +185,14 @@ def test_SP2d():
     Apod = corono0.Pupil2d
     corono0.compute_direct_field_2d(Apod)
     corono0.compute_corono_field_2d(Apod)
+
+    corono0.compute_direct_intensity_2d(Apod, poly=True)
+    corono0.compute_direct_intensity_2d(Apod, poly=False)
+    corono0.compute_corono_intensity_2d(Apod, poly=True)
+    corono0.compute_corono_intensity_2d(Apod, poly=False)
+    
+    corono0.compute_direct_field_2d_vec(Apod)
+    corono0.compute_corono_field_2d_vec(Apod)
     
     params = coro.to_dict() 
     params2 = coro.update_params(params, Pupil2dSym=True)
@@ -163,6 +208,14 @@ def test_DZPM2d():
     Apod = corono0.Pupil2d
     corono0.compute_direct_field_2d(Apod)
     corono0.compute_corono_field_2d(Apod)
+    
+    corono0.compute_direct_intensity_2d(Apod, poly=True)
+    corono0.compute_direct_intensity_2d(Apod, poly=False)
+    corono0.compute_corono_intensity_2d(Apod, poly=True)
+    corono0.compute_corono_intensity_2d(Apod, poly=False)
+    
+    corono0.compute_direct_field_2d_vec(Apod)
+    corono0.compute_corono_field_2d_vec(Apod)
 
     params = coro.to_dict() 
     params2 = coro.update_params(params, Pupil2dSym=True)
