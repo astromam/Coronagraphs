@@ -196,6 +196,22 @@ class ProblemMatrix(object):
         for key in self.default_params:
             if not key in self.params:
                 self.params[key] = self.default_params[key]
+
+#%%        
+    def save_params(self, fname):
+        """
+        Saves params in fname using JavaScript Object Notation (JSON).
+        
+        Parameters
+        ---------- 
+        fname : string
+            Filename in which parameters are to be written
+        
+        """
+        f=open(fname,'w')
+        f.write(json.dumps(self.params,sort_keys=True,indent=4))
+        f.close()
+
   
 #%%    
     def load_params(self, fname):

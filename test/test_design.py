@@ -61,6 +61,9 @@ def test_Coronagraph():
 
     
 #%%    
+"""
+Test the APLC1d subclass
+"""
 def test_APLC1d():
     
     corono0=coro.design.APLC1d()
@@ -76,6 +79,9 @@ def test_APLC1d():
     
 
 #%%    
+"""
+Test the SP1d subclass
+"""
 def test_SP1d():
     
     corono0=coro.design.SP1d()
@@ -91,6 +97,9 @@ def test_SP1d():
        
     
 #%%
+"""
+Test the DZPM1d subclass
+"""
 def test_DZPM1d():
 
     corono0=coro.design.DZPM1d()
@@ -105,6 +114,9 @@ def test_DZPM1d():
     corono0.compute_corono_intensity_1d(Apod, poly=False)
     
 #%%
+"""
+Test the HDZPM1d subclass
+"""
 def test_HDZPM1d():
 
     corono0=coro.design.HDZPM1d()
@@ -120,6 +132,9 @@ def test_HDZPM1d():
     
 
 #%%
+"""
+Test the HTZPM1d subclass
+"""
 def test_HTZPM1d():
 
     corono0=coro.design.HTZPM1d()
@@ -135,6 +150,9 @@ def test_HTZPM1d():
     
 
 #%%
+"""
+Test the APLC2d subclass
+"""
 def test_APLC2d():
 
     corono0=coro.design.APLC2d()
@@ -178,6 +196,9 @@ def test_APLC2d():
     corono0.compute_corono_lyot_field_2d(Apod)
     
 #%%
+"""
+Test the SP2d subclass
+"""
 def test_SP2d():
 
     corono0=coro.design.SP2d()
@@ -201,6 +222,9 @@ def test_SP2d():
     corono0.compute_corono_field_2d(Apod)
 
  #%%
+"""
+Test the DZPM2d subclass
+"""
 def test_DZPM2d():
 
     corono0=coro.design.DZPM2d()
