@@ -649,7 +649,7 @@ def get_default_params_1d_ProblemMatrix():
         
     """
     tmp = {'cDarkHole':8, 'tau':0.2, 'solver':'stdgrb', 
-           'problem_name':'MaxTau','corono_name':'APLC',
+           'problem_name':'MaxTau',
            'slvCrossover':0, 'slvLogToConsole':0, 'slvMethod':2,
            'allLogToConsole':0, 
            'FirstDer':False, 'FirstDerLim':0.01, 
