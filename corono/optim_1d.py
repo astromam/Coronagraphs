@@ -163,6 +163,24 @@ class ProblemMatrix(object):
             
         """
         return item in self.params
+
+#%%
+    def __repr__(self):        
+        """
+        Prints the official string representation of all 
+        the values in the params object.
+        
+        Returns    
+        ----------
+        res
+            Displays all the values in the object params
+            
+        """
+        res=''
+        for key in sorted(self.params):
+            res+='{:>20s} : {}\n'.format(key,self.params[key])        
+        return res
+
     
 #%%     
     def __getattr__(self, name):
@@ -513,7 +531,7 @@ class MaxTau(ProblemMatrix):
         super(MaxTau, self).__init__(**kwargs)
 
         self.neps = 0
-
+        self.npp_bis = 0
         self.nvv  = 0
         if self.MinIsland is True:
             self.npp_bis = self.npp-1
@@ -667,7 +685,7 @@ class MaxTau(ProblemMatrix):
         self.b = np.concatenate((self.b, b2,  b3))
         
 #%%        
-    def compute_problem_matrices_1stder(self):
+    def compute_problem_matrices_1stDer(self):
         r"""
         Computes matrices to add constraints on the apodizer first derivative.
 
@@ -933,7 +951,8 @@ class MaxContrast(ProblemMatrix):
             self.neps = self.ndz
         else:
             raise NameError('{0}: Not an existing L-type norm!'.format(self.problem_name))
-        
+
+        self.npp_bis = 0        
         self.nvv   = 0
         if self.MinIsland is True:
             self.npp_bis = self.npp-1
