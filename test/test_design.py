@@ -13,15 +13,12 @@ License: MIT license
 import numpy as np
 import corono as coro
 import os
-    
+
 #%%
 """
-Test the Coronagraph class
+Function to check basics in the class and subclass
 """
-def test_Coronagraph():
-    
-    corono0=coro.design.Coronagraph()
-    
+def check_basics(corono0):
     # load and save params
     corono0.save_params('temp.file')
     corono0.load_params('temp.file')
@@ -37,37 +34,12 @@ def test_Coronagraph():
     
     # test params
     assert 'nFPM' in corono0
-    assert not 'mamadoupowa' in corono0
-    
-    # test values
-    np.testing.assert_allclose(corono0.ClearPupil1d,1)
-    
-    # test function call
-    assert 'Pupil1d' in corono0 
-    corono0.compute_nostop_field_1d()
-    
-    corono0.compute_nostop_intensity_1d(poly=True)
-    corono0.compute_nostop_intensity_1d(poly=False)
-    
-    
-    corono0.generate_area()
-    corono0.params['Pupil2dSym'] = True
-    corono0.generate_area()
-    
-#    assert f.shape[1]==corono0.nPup and f.shape[0]==corono0.nlam
+    assert not 'mamadoupowa' in corono0    
 
-#    Apod = corono0.Pupil1d
-#    corono0.compute_direct_intensity_1d(Apod, poly=True)
-
-    
-#%%    
 """
-Test the APLC1d subclass
+Function to check the corono methods for 1d design
 """
-def test_APLC1d():
-    
-    corono0=coro.design.APLC1d()
-    
+def check_1d_corono_methods(corono0):
     Apod = corono0.Pupil1d
     corono0.compute_direct_field_1d(Apod)
     corono0.compute_corono_field_1d(Apod)
@@ -75,160 +47,12 @@ def test_APLC1d():
     corono0.compute_direct_intensity_1d(Apod, poly=True)
     corono0.compute_direct_intensity_1d(Apod, poly=False)
     corono0.compute_corono_intensity_1d(Apod, poly=True)
-    corono0.compute_corono_intensity_1d(Apod, poly=False)
-    
+    corono0.compute_corono_intensity_1d(Apod, poly=False)   
 
-#%%    
 """
-Test the SP1d subclass
-"""
-def test_SP1d():
-    
-    corono0=coro.design.SP1d()
-    
-    Apod = corono0.Pupil1d
-    corono0.compute_direct_field_1d(Apod)
-    corono0.compute_corono_field_1d(Apod)
-    
-    corono0.compute_direct_intensity_1d(Apod, poly=True)
-    corono0.compute_direct_intensity_1d(Apod, poly=False)
-    corono0.compute_corono_intensity_1d(Apod, poly=True)
-    corono0.compute_corono_intensity_1d(Apod, poly=False)
-       
-    
-#%%
-"""
-Test the DZPM1d subclass
-"""
-def test_DZPM1d():
-
-    corono0=coro.design.DZPM1d()
-    
-    Apod = corono0.Pupil1d
-    corono0.compute_direct_field_1d(Apod)
-    corono0.compute_corono_field_1d(Apod)
-    
-    corono0.compute_direct_intensity_1d(Apod, poly=True)
-    corono0.compute_direct_intensity_1d(Apod, poly=False)
-    corono0.compute_corono_intensity_1d(Apod, poly=True)
-    corono0.compute_corono_intensity_1d(Apod, poly=False)
-    
-#%%
-"""
-Test the HDZPM1d subclass
-"""
-def test_HDZPM1d():
-
-    corono0=coro.design.HDZPM1d()
-    
-    Apod = corono0.Pupil1d
-    corono0.compute_direct_field_1d(Apod)
-    corono0.compute_corono_field_1d(Apod)
-    
-    corono0.compute_direct_intensity_1d(Apod, poly=True)
-    corono0.compute_direct_intensity_1d(Apod, poly=False)
-    corono0.compute_corono_intensity_1d(Apod, poly=True)
-    corono0.compute_corono_intensity_1d(Apod, poly=False)
-    
-
-#%%
-"""
-Test the HTZPM1d subclass
-"""
-def test_HTZPM1d():
-
-    corono0=coro.design.HTZPM1d()
-    
-    Apod = corono0.Pupil1d
-    corono0.compute_direct_field_1d(Apod)
-    corono0.compute_corono_field_1d(Apod)
-    
-    corono0.compute_direct_intensity_1d(Apod, poly=True)
-    corono0.compute_direct_intensity_1d(Apod, poly=False)
-    corono0.compute_corono_intensity_1d(Apod, poly=True)
-    corono0.compute_corono_intensity_1d(Apod, poly=False)
-    
-
-#%%
-"""
-Test the APLC2d subclass
-"""
-def test_APLC2d():
-
-    corono0=coro.design.APLC2d()
-    
-    Apod = corono0.Pupil2d
-    corono0.compute_direct_field_2d(Apod)
-    corono0.compute_corono_field_2d(Apod)
-    corono0.compute_direct_lyot_field_2d(Apod)
-    corono0.compute_corono_lyot_field_2d(Apod)
-    
-    corono0.compute_direct_intensity_2d(Apod, poly=True)
-    corono0.compute_direct_intensity_2d(Apod, poly=False)
-    corono0.compute_corono_intensity_2d(Apod, poly=True)
-    corono0.compute_corono_intensity_2d(Apod, poly=False)
-    
-    corono0.compute_direct_field_2d_vec(Apod)
-    corono0.compute_corono_field_2d_vec(Apod)
-    
-    params = coro.to_dict() 
-    params2 = coro.update_params(params, Pupil2dSym=True)
-    corono0=coro.design.APLC2d(**params2)
-    corono0.compute_direct_field_2d(Apod)
-    corono0.compute_corono_field_2d(Apod)
-    corono0.compute_direct_lyot_field_2d(Apod)
-    corono0.compute_corono_lyot_field_2d(Apod)
-    
-    OPDmap2d = corono0.Pupil2d
-    params3 = coro.update_params(params, OPDmap2d=OPDmap2d)
-    corono0=coro.design.APLC2d(**params3)
-    corono0.compute_direct_field_2d(Apod)
-    corono0.compute_corono_field_2d(Apod)
-    corono0.compute_direct_lyot_field_2d(Apod)
-    corono0.compute_corono_lyot_field_2d(Apod)
-
-    Ampmap2d = corono0.Pupil2d    
-    params4 = coro.update_params(params, Ampmap2d=Ampmap2d)
-    corono0=coro.design.APLC2d(**params4)
-    corono0.compute_direct_field_2d(Apod)
-    corono0.compute_corono_field_2d(Apod)
-    corono0.compute_direct_lyot_field_2d(Apod)
-    corono0.compute_corono_lyot_field_2d(Apod)
-    
-#%%
-"""
-Test the SP2d subclass
-"""
-def test_SP2d():
-
-    corono0=coro.design.SP2d()
-    
-    Apod = corono0.Pupil2d
-    corono0.compute_direct_field_2d(Apod)
-    corono0.compute_corono_field_2d(Apod)
-
-    corono0.compute_direct_intensity_2d(Apod, poly=True)
-    corono0.compute_direct_intensity_2d(Apod, poly=False)
-    corono0.compute_corono_intensity_2d(Apod, poly=True)
-    corono0.compute_corono_intensity_2d(Apod, poly=False)
-    
-    corono0.compute_direct_field_2d_vec(Apod)
-    corono0.compute_corono_field_2d_vec(Apod)
-    
-    params = coro.to_dict() 
-    params2 = coro.update_params(params, Pupil2dSym=True)
-    corono0=coro.design.SP2d(**params2)
-    corono0.compute_direct_field_2d(Apod)
-    corono0.compute_corono_field_2d(Apod)
-
- #%%
-"""
-Test the DZPM2d subclass
-"""
-def test_DZPM2d():
-
-    corono0=coro.design.DZPM2d()
-    
+Function to check the corono methods for 2d design
+"""    
+def check_2d_corono_methods(corono0):
     Apod = corono0.Pupil2d
     corono0.compute_direct_field_2d(Apod)
     corono0.compute_corono_field_2d(Apod)
@@ -245,4 +69,171 @@ def test_DZPM2d():
     params2 = coro.update_params(params, Pupil2dSym=True)
     corono0=coro.design.DZPM2d(**params2)
     corono0.compute_direct_field_2d(Apod)
-    corono0.compute_corono_field_2d(Apod)    
+    corono0.compute_corono_field_2d(Apod) 
+       
+    OPDmap2d = corono0.Pupil2d
+    params3 = coro.update_params(params, OPDmap2d=OPDmap2d)
+    corono0=coro.design.APLC2d(**params3)
+    corono0.compute_direct_field_2d(Apod)
+    corono0.compute_corono_field_2d(Apod)
+    corono0.compute_direct_lyot_field_2d(Apod)
+    corono0.compute_corono_lyot_field_2d(Apod)
+
+    Ampmap2d = corono0.Pupil2d    
+    params4 = coro.update_params(params, Ampmap2d=Ampmap2d)
+    corono0=coro.design.APLC2d(**params4)
+    corono0.compute_direct_field_2d(Apod)
+    corono0.compute_corono_field_2d(Apod)
+    corono0.compute_direct_lyot_field_2d(Apod)
+    corono0.compute_corono_lyot_field_2d(Apod)
+    
+    
+#%%
+"""
+Test the Coronagraph class
+"""
+def test_Coronagraph():
+
+    # define corono    
+    corono0=coro.design.Coronagraph()
+
+    # test basics
+    check_basics(corono0)    
+    
+    # test values
+    np.testing.assert_allclose(corono0.ClearPupil1d,1)
+    
+    # test function call
+    assert 'Pupil1d' in corono0 
+    corono0.compute_nostop_field_1d()
+    
+    corono0.compute_nostop_intensity_1d(poly=True)
+    corono0.compute_nostop_intensity_1d(poly=False)
+    
+    
+    corono0.generate_area()
+    corono0.params['Pupil2dSym'] = True
+    corono0.generate_area()
+        
+#%%    
+"""
+Test the APLC1d subclass
+"""
+def test_APLC1d():
+
+    # define corono    
+    corono0=coro.design.APLC1d()
+    
+    # test basics
+    check_basics(corono0) 
+
+    # test corono methods
+    check_1d_corono_methods(corono0)    
+
+#%%    
+"""
+Test the SP1d subclass
+"""
+def test_SP1d():
+    
+    # define corono    
+    corono0=coro.design.SP1d()
+    
+    # test basics
+    check_basics(corono0)
+    
+    # test corono methods
+    check_1d_corono_methods(corono0)    
+       
+    
+#%%
+"""
+Test the DZPM1d subclass
+"""
+def test_DZPM1d():
+    
+    # define corono
+    corono0=coro.design.DZPM1d()
+    
+    # test basics
+    check_basics(corono0)
+    
+    # test corono methods
+    check_1d_corono_methods(corono0)    
+    
+#%%
+"""
+Test the HDZPM1d subclass
+"""
+def test_HDZPM1d():
+    
+    # define corono
+    corono0=coro.design.HDZPM1d()
+    
+    # test basics
+    check_basics(corono0)
+    
+    # test corono methods
+    check_1d_corono_methods(corono0)    
+    
+
+#%%
+"""
+Test the HTZPM1d subclass
+"""
+def test_HTZPM1d():
+    
+    # define corono
+    corono0=coro.design.HTZPM1d()
+    
+    # test basics
+    check_basics(corono0)
+    
+    # test corono methods
+    check_1d_corono_methods(corono0)    
+    
+
+#%%
+"""
+Test the APLC2d subclass
+"""
+def test_APLC2d():
+    
+    # define corono
+    corono0=coro.design.APLC2d()
+    
+    # test basics
+    check_basics(corono0)
+    
+    # test methods
+    check_2d_corono_methods(corono0)
+    
+#%%
+"""
+Test the SP2d subclass
+"""
+def test_SP2d():
+    
+    # define corono
+    corono0=coro.design.SP2d()
+    
+    # test basics
+    check_basics(corono0)
+    
+    # test methods
+    check_2d_corono_methods(corono0)
+
+#%%
+"""
+Test the DZPM2d subclass
+"""
+def test_DZPM2d():
+    
+    # define corono
+    corono0=coro.design.DZPM2d()
+    
+    # test basics
+    check_basics(corono0)
+    
+    # test methods
+    check_2d_corono_methods(corono0)
