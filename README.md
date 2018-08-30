@@ -12,6 +12,8 @@ solution. The tool currently works with the following solvers:
 - [gurobi](http://www.gurobi.com)
 - [stdgrb](https://github.com/rflamary/stdgrb) (recommended)
 
+![Example](https://github.com/astromam/Coronagraphs/images/contributors/atlast-aplc_eng_v2.pdf)
+
 ### Prerequisites
 - Gurobi solver for Python. For installation and license, see instructions at 
 [gurobipy](http://www.gurobi.com/documentation/7.5/quickstart_mac/the_gurobi_python_interfac.html).
