@@ -64,28 +64,22 @@ def check_2d_corono_methods(corono0):
     
     corono0.compute_direct_field_2d_vec(Apod)
     corono0.compute_corono_field_2d_vec(Apod)
-
+   
     params = coro.to_dict() 
     params2 = coro.update_params(params, Pupil2dSym=True)
-    corono0=coro.design.DZPM2d(**params2)
+    
+    if corono0.corono_name == 'SP':
+        corono0 = coro.design.SP2d(**params2)
+    elif corono0.corono_name == 'APLC':
+        corono0 = coro.design.APLC2d(**params2)
+    elif corono0.corono_name == 'DZPM':
+        corono0=coro.design.DZPM2d(**params2)        
+    else:
+        raise NameError('{0}: Not an existing coronagraph!'.format(corono0.corono_name))
+        
     corono0.compute_direct_field_2d(Apod)
     corono0.compute_corono_field_2d(Apod) 
-       
-    OPDmap2d = corono0.Pupil2d
-    params3 = coro.update_params(params, OPDmap2d=OPDmap2d)
-    corono0=coro.design.APLC2d(**params3)
-    corono0.compute_direct_field_2d(Apod)
-    corono0.compute_corono_field_2d(Apod)
-    corono0.compute_direct_lyot_field_2d(Apod)
-    corono0.compute_corono_lyot_field_2d(Apod)
 
-    Ampmap2d = corono0.Pupil2d    
-    params4 = coro.update_params(params, Ampmap2d=Ampmap2d)
-    corono0=coro.design.APLC2d(**params4)
-    corono0.compute_direct_field_2d(Apod)
-    corono0.compute_corono_field_2d(Apod)
-    corono0.compute_direct_lyot_field_2d(Apod)
-    corono0.compute_corono_lyot_field_2d(Apod)
     
     
 #%%
@@ -207,6 +201,35 @@ def test_APLC2d():
     
     # test methods
     check_2d_corono_methods(corono0)
+
+    Apod = corono0.Pupil2d    
+    params = coro.to_dict() 
+
+    params = coro.to_dict() 
+    params2 = coro.update_params(params, Pupil2dSym=True)
+    corono0 = coro.design.APLC2d(**params2) 
+    corono0.compute_direct_lyot_field_2d(Apod)
+    corono0.compute_corono_lyot_field_2d(Apod)
+       
+    OPDmap2d = corono0.Pupil2d
+    params3 = coro.update_params(params, OPDmap2d=OPDmap2d)
+
+    corono0 = coro.design.APLC2d(**params3)    
+    corono0.compute_direct_field_2d(Apod)
+    corono0.compute_corono_field_2d(Apod)
+    corono0.compute_direct_lyot_field_2d(Apod)
+    corono0.compute_corono_lyot_field_2d(Apod)
+
+    Ampmap2d = corono0.Pupil2d    
+    params4 = coro.update_params(params, Ampmap2d=Ampmap2d)
+    
+    corono0 = coro.design.APLC2d(**params4)    
+    corono0.compute_direct_field_2d(Apod)
+    corono0.compute_corono_field_2d(Apod)
+    corono0.compute_direct_lyot_field_2d(Apod)
+    corono0.compute_corono_lyot_field_2d(Apod)
+
+    
     
 #%%
 """
@@ -237,3 +260,5 @@ def test_DZPM2d():
     
     # test methods
     check_2d_corono_methods(corono0)
+
+
