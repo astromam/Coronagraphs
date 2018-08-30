@@ -12,7 +12,7 @@ solution. The tool currently works with the following solvers:
 - [gurobi](http://www.gurobi.com)
 - [stdgrb](https://github.com/rflamary/stdgrb) (recommended)
 
-![Alt Example](./images/atlast-aplc_eng_v2.pdf)
+![Illustration of coronagraph design](/images/atlast-aplc_eng_v2.pdf)
 
 ### Prerequisites
 - Gurobi solver for Python. For installation and license, see instructions at 
