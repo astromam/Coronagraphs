@@ -12,7 +12,9 @@ solution. The tool currently works with the following solvers:
 - [gurobi](http://www.gurobi.com)
 - [stdgrb](https://github.com/rflamary/stdgrb) (recommended)
 
-![](./images/atlast-aplc_eng_v2.png)
+![](./images/images_aplc_systeme_solaire_eng.png)*Figure 1: Left: Binary pupil apodisation 
+for the Apodized Pupil Lyot Coronagraph (APLC) for a LUVOIR-like mission (N’Diaye et al., 2016). 
+.*
 
 
 ### Prerequisites
