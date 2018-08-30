@@ -15,14 +15,13 @@ solution. The tool currently works with the following solvers:
 ![](./images/images_aplc_systeme_solaire_eng.png)* **Figure 1**: **Left**: 
 Binary pupil apodisation for the Apodized Pupil Lyot Coronagraph (APLC) for a 
 LUVOIR-like mission ([N’Diaye et al., 2016](http://iopscience.iop.org/article/10.3847/0004-637X/818/2/163/meta)). 
-**Middle**: Coronagraphic image provided by the the coronagraph for wide 
-spectral band of 10%. A dark zone with a 10^10 contrast is produced with the 
-segmented telescope aperture. **Right**: Modeled multi-colored image of a solar
-system at 13.5 pc with a 12m telescope and the coronagraphic solution with 40h 
-exposure time, in the absence of aberrations and in the presence of photon 
-noise only. Linear and log scale inside and outside the high-contrast ragion, 
-paving the way for the observation of habitable worlds (credit: 
-L. Pueyo/M. N'Diaye/A. Roberge).
+**Middle**: Image provided by the coronagraph for a wide spectral band of 10%. 
+A dark zone with a 10^10 contrast is produced with the segmented telescope 
+aperture. **Right**: Modeled multi-colored image of a solar system at 13.5 pc 
+with a 12m telescope and the coronagraphic solution with 40h exposure time, in 
+the absence of aberrations and in the presence of photon noise only. Linear and
+ log scale inside and outside the high-contrast ragion, paving the way for the 
+ observation of habitable worlds (credit: L. Pueyo/M. N'Diaye/A. Roberge).
 
 ### Prerequisites
 - Gurobi solver for Python. For installation and license, see instructions at 
