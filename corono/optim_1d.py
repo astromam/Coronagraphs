@@ -351,6 +351,7 @@ class ProblemMatrix(object):
                                            crossover=self.slvCrossover, 
                                            logtoconsole=self.slvLogToConsole, 
                                            method=self.slvMethod)
+            self.sol=Apodtmp
             self.Apod[self.idx_pup] = Apodtmp[:self.npp]
 
         elif gb and self.solver == 'gurobipy':
@@ -364,6 +365,9 @@ class ProblemMatrix(object):
                 self.m.Params.Crossover    = self.slvCrossover
                 
                 self.m.optimize()
+                
+                # TODO check it works
+                self.sol=np.array((temp.x for temp in self.m.getVars()))
     
                 for i, val in enumerate(self.idx_pup):
                     self.Apod[val] = self.m.getVars()[i].x
@@ -381,10 +385,92 @@ class ProblemMatrix(object):
             sol=scipy.optimize.linprog(self.c,self.A.T,self.b,
                                        method='interior-point',
                                        bounds=bds, options={'sparse':False})
+            
+            self.sol=sol.x
             self.Apod[self.idx_pup]=sol.x
             
         t1 = time.time()
         self.print_log('solving time: {0:.2f}s\n'.format(t1-t0))
+        return self.Apod
+
+#%%        
+    def solve_model_dc(self,reg=0,niter=10,thr=1e-6):
+        """
+        Solves the DC optimization problem model for the model with the selected 
+        solver.
+               
+        Returns
+        -------
+        Apod
+            Apodizer solution :math:`\Phi` for the optimization problem.
+        
+        """
+        self.compute_matrices()
+        
+        
+
+        t0 = time.time()
+        
+        c0=np.copy(self.c)
+        
+        
+        def solve():        
+            self.solve_model()
+            return self.sol
+        
+        def loss(sol):
+            loss0=np.dot(c0,sol)
+            return loss0,loss0-reg/2*np.sum(np.square(sol[:self.npp]-0.5)-0.25)
+        
+        def update(sol):
+            self.c[:self.npp]=c0[:self.npp]+reg*(0.5-sol[:self.npp])
+        
+        i=0
+        
+        sol=solve()
+        l=loss(sol)
+        
+        
+        
+        print(' {: 6d} | {:1.6e} | {:1.6e} |'.format(i,l[0],l[1]))
+        
+        if reg:
+            
+            loop=True
+            
+            while loop:
+                
+                i+=1
+                loss_old=l[1]
+                
+                
+                # update loss matrix
+                update(sol)
+                
+                # solve problem
+                sol=solve()
+                
+                # compute loss
+                l=loss(sol)
+        
+                print(' {: 6d} | {:1.6e} | {:1.6e} |'.format(i,l[0],l[1]))
+                
+                # test max iter
+                if i>=niter:
+                    loop=False
+                
+                # test convergence loss
+                if abs(l[1]-loss_old)/loss_old<thr:
+                    print('Relative loss stopping criterion')
+                    loop=False
+        
+        self.Apod[self.idx_pup]=sol[:self.npp]
+            
+        t1 = time.time()
+        self.print_log('solving time: {0:.2f}s\n'.format(t1-t0))
+        
+        self.c=c0
+        
         return self.Apod
 
 
