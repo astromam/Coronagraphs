@@ -282,8 +282,7 @@ class ProblemMatrix(object):
             response matrix for all the points in the pupil :math:`P_0` and 
             at all the wavelengths
         
-        """
-
+        """            
         if self.problem_name == 'MaxTau':
             direct_field_t_tmp = np.zeros((self.npp, self.corono.nlam, 
                                        self.corono.nImg+1), dtype='complex128')
@@ -299,7 +298,7 @@ class ProblemMatrix(object):
             t1 = time.time()
             self.print_log('direct matrix computation time: {0:.2f}s'.format(t1-t0))
 
-            
+
         corono_field_t_tmp = np.zeros((self.npp, self.corono.nlam, 
                                    self.corono.nImg+1), dtype='complex128')
 
@@ -540,6 +539,7 @@ class MaxTau(ProblemMatrix):
         self.nbb  = 0
         if self.Binarity is True:
             self.nbb  = 2*self.npp
+
             
 #%%        
     def compute_problem_matrices(self):
@@ -611,11 +611,21 @@ class MaxTau(ProblemMatrix):
         cst = 10.**(-self.cDarkHole/2.)/np.sqrt(2.)
 
         # Compute contrast constraints on the coronagraphic electric field
-        A0  =  self.corono_field_t \
+        if self.direct_field_re_t_tmp is None or self.corono_field_t is None:
+            self.compute_response_matrices()
+
+        A0tmp  =  self.corono_field_t \
         - cst*self.direct_field_re_t_tmp[:,(self.corono.nlam-1)//2,0, None]
-        A1  = -self.corono_field_t \
+        A1tmp  = -self.corono_field_t \
         - cst*self.direct_field_re_t_tmp[:,(self.corono.nlam-1)//2,0, None]
-         
+        
+        # Add terms corresponding to the binarity auxiliary variables        
+        AZ0bb = np.zeros((self.nbb, np.shape(A0tmp)[1])) 
+        AZ0vv = np.zeros((self.nvv, np.shape(A0tmp)[1]))
+        
+        A0 = np.concatenate((A0tmp, AZ0bb, AZ0vv))
+        A1 = np.concatenate((A1tmp, AZ0bb, AZ0vv))
+        
         # Yield the A and b matrices for the optimization problem                               
         self.A = np.concatenate((A0,A1), axis=1)
         self.b = np.zeros((2*self.corono.nlam*self.ndz*2))
@@ -673,16 +683,31 @@ class MaxTau(ProblemMatrix):
             
             in which :math:`r` represents the radial coordinate of the pupil.
         
-        """
+        """        
         # Compute constraints on the apodizer transmission
-        A2  = -np.identity(self.npp)
+        A2tmp  = -np.identity(self.npp)
         
+        # Add terms corresponding to the binarity auxiliary variables        
+        AZ0bb = np.zeros((self.nbb, self.npp))
+        AZ0vv = np.zeros((self.nvv, self.npp))
+
+        A2 = np.concatenate((A2tmp, AZ0bb, AZ0vv))
+
+        # Add constraints on the apodizer first derivative with 
+        # auxiliary variables                        
         b2  = np.zeros(self.npp)
         b3  = np.ones(self.npp)
         
         # Update the A, b, and c matrices
-        self.A = np.concatenate((self.A, A2, -A2), axis=1)
-        self.b = np.concatenate((self.b, b2,  b3))
+        if self.A is None:
+            self.A = np.concatenate((A2, -A2), axis=1)
+        else:
+            self.A = np.concatenate((self.A, A2, -A2), axis=1)
+        
+        if self.b is None:
+            self.b = np.concatenate((b2,  b3))
+        else:
+            self.b = np.concatenate((self.b, b2,  b3))
         
 #%%        
     def compute_problem_matrices_1stDer(self):
@@ -701,7 +726,13 @@ class MaxTau(ProblemMatrix):
                             
         """
         # Compute the apodizer first derivative constraints
-        A4  = np.diff(np.identity(self.npp), axis=1)
+        A4tmp= np.diff(np.identity(self.npp), axis=1)
+        
+        AZ0bb = np.zeros((self.nbb, self.npp-1))
+        AZ0vv = np.zeros((self.nvv, self.npp-1))
+        
+        A4 = np.concatenate((A4tmp, AZ0bb, AZ0vv))
+        
         b4  = self.FirstDerLim*np.ones(self.npp)
         
         # Update the A, b, and c matrices
@@ -725,73 +756,17 @@ class MaxTau(ProblemMatrix):
                             
         """
         # Compute the apodizer second derivative constraints        
-        A5  = np.diff(np.diff(np.identity(self.npp), axis=1), axis=1)
+        A5tmp  = np.diff(np.diff(np.identity(self.npp), axis=1), axis=1)
         b5  = self.SecondDerLim*np.ones(self.npp)
+        
+        AZ0bb = np.zeros((self.nbb, self.npp-2))
+        AZ0vv = np.zeros((self.nvv, self.npp-2))
+        
+        A5 = np.concatenate((A5tmp, AZ0bb, AZ0vv))
         
         # Update the A, b, and c matrices
         self.A = np.concatenate((self.A, A5, -A5), axis=1)
         self.b = np.concatenate((self.b, b5,  b5))        
-
-#%%
-    def compute_problem_matrices_Binarity(self):
-        r"""
-        Computes matrices to add constraints on the apodizer binarity.
-        
-        Notes
-        -----
-        A6, b6 : array_like, array_like
-            Constraint on the apodization transmission such that
-            
-            :math:`\Phi(r) - w^{+}(r) + w^{-}(r) \leq 0.5`,
-            
-            :math:`-\Phi(r) + w^{+}(r) - w^{-}(r) \leq -0.5`.
-            
-            where :math:`w^{+}` and :math:`w^{-}` are two auxiliary variables
-            to constrain the absolute value of the derivative to remain 
-            positive. 
-                        
-        A8 : array_like
-            Constraint on the auxiliary variable :math:`w^{+}` to force it 
-            to be positive with
-            
-            :math:`- w^{+}(r) \leq 0`.
-        
-        A9 : array_like
-            Constraint on the auxiliary variable :math:`w^{-}` to force it 
-            to be positive with
-            
-            :math:`- w^{-}(r) \leq 0`.        
-        
-        """
-        # Reshape the matrice A to account for the auxialiary variables
-        A00    = np.zeros((self.nbb, np.shape(self.A)[1]))            
-        self.A = np.concatenate((self.A, A00))
-
-        # Compute an intermediate matrix for further computation of A matrices
-        AI     = np.identity(self.npp)
-        
-        # Add constraints on the apodizer transmission with auxiliary variables
-        A6     = np.concatenate(( AI, -AI,  AI))
-
-        # Compute an intermediate matrix for further computation of A matrices        
-        AZ     = np.zeros((self.npp, self.npp))                       
-
-        # Add positivity constraints on the auxiliary variables
-        A8     = np.concatenate((AZ, -AI,  AZ))
-        A9     = np.concatenate((AZ,  AZ, -AI))
-
-        # Compute the b terms corresponding to A11 and A12 matrices        
-        b6     = 0.5*np.ones(self.npp)
-        
-        # Compute an intermediate matrix for b terms for A13 and A14 
-        bZ     = np.zeros((self.npp))
-       
-        # Update the A, b, and c matrices
-        self.A = np.concatenate((self.A, A6, -A6, A8, A9), axis=1)
-        self.b = np.concatenate((self.b, b6, -b6, bZ, bZ))
-        
-        # Warning on the code
-        print('Constraint matrix for apodizer binarity is not yet validated!!!')
 
 #%%
     def compute_problem_matrices_MinIsland(self):
@@ -834,10 +809,6 @@ class MaxTau(ProblemMatrix):
             :math:`\int_{P_0} (v^{+}(r) + v^{-}(r))dr \leq \delta`.
         
         """
-        # Reshape the matrice A to account for the auxialiary variables
-        A00    = np.zeros((self.nvv, np.shape(self.A)[1]))            
-        self.A = np.concatenate((self.A, A00))
-
         # Compute the derivative operator of the pupil
         AD  = np.diff(np.identity(self.npp), axis=1)
         
@@ -860,7 +831,7 @@ class MaxTau(ProblemMatrix):
         A12  = np.concatenate((AZ1, AZ0, -AI, AZ2))
         A13  = np.concatenate((AZ1, AZ0, AZ2, -AI))
 
-        # Compute an intermediate matrix for b terms for A6, A7, A8, and A9 
+        # Compute an intermediate matrix for b terms for A10, A11, A12, and A13 
         bZ  = np.zeros((4*self.npp_bis))
 
         # Add boundary constraints on the apodizer first derivative
@@ -892,6 +863,9 @@ class MaxTau(ProblemMatrix):
             Gurobi model of the MaxTau problem to solve
             
         """
+        if self.A is None or self.b is None or self.c is None:
+            self.compute_problem_matrices()
+        
         # Compute the length of the A matrix along axis=1  
         nA = np.shape(self.A)[1]
     
@@ -1124,7 +1098,8 @@ class MaxContrast(ProblemMatrix):
 
         # Add apodizer binarity constraints
         if self.Binarity is True:
-            self.compute_problem_matrices_Binarity()
+            print('Warning: keyword Binarity is not working now.')
+            pass
 
         # Add apodizer minimal islands constraints
         if self.MinIsland is True:

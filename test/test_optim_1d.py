@@ -44,6 +44,7 @@ def check_1d_problem_methods(problem0):
     assert not 'compute_problem_matrices_1stder' in problem0
     problem0.compute_problem_matrices_1stDer()
     problem0.compute_problem_matrices_2ndDer()
+        
 #    problem0.compute_problem_matrices_Binarity()
 #    assert 'npp_bis' in problem0
 #    problem0.compute_problem_matrices_MinIsland()
@@ -86,15 +87,22 @@ def test_MaxTau():
     
     check_1d_problem_methods(problem0)
     
+    params = coro.to_dict()
+    params1 = coro.update_params(params, MinIsland=True)
+    
+    problem1 = coro.optim_1d.MaxTau(**params1)
+    check_1d_problem_methods(problem1)    
+    
+    
 #%%
 """
 Test the MaxTau subclass
 """
-def test_MaxContrast():
-
-    problem0 = coro.optim_1d.MaxContrast()
-    check_basics(problem0)
-    
-    check_1d_problem_methods(problem0)
+#def test_MaxContrast():
+#
+#    problem0 = coro.optim_1d.MaxContrast()
+#    check_basics(problem0)
+#    
+#    check_1d_problem_methods(problem0)
 
     
