@@ -34,8 +34,8 @@ def check_basics(corono0):
     
     # test params
     assert 'nFPM' in corono0
-    assert not 'mamadoupowa' in corono0    
-
+    assert not 'mamadoupowa' in corono0  
+#%%
 """
 Function to check the corono methods for 1d design
 """
@@ -80,7 +80,32 @@ def check_2d_corono_methods(corono0):
     corono0.compute_direct_field_2d(Apod)
     corono0.compute_corono_field_2d(Apod) 
 
+"""
+Function to check the 1d corono class
+"""
+def check_corono_1d(class_corono):
+    # define corono    
+    corono0=class_corono()
     
+    # test basics
+    check_basics(corono0) 
+
+    # test corono methods
+    check_1d_corono_methods(corono0)
+
+"""
+Function to check the 2d corono class
+"""
+def check_corono_2d(class_corono):
+    # define corono    
+    corono0=class_corono()
+    
+    # test basics
+    check_basics(corono0) 
+
+    # test corono methods
+    check_2d_corono_methods(corono0)     
+
     
 #%%
 """
@@ -108,84 +133,42 @@ def test_Coronagraph():
     corono0.generate_area()
     corono0.params['Pupil2dSym'] = True
     corono0.generate_area()
+    
         
 #%%    
 """
 Test the APLC1d subclass
 """
 def test_APLC1d():
-
-    # define corono    
-    corono0=coro.design.APLC1d()
-    
-    # test basics
-    check_basics(corono0) 
-
-    # test corono methods
-    check_1d_corono_methods(corono0)    
+    check_corono_1d(coro.design.APLC1d)
 
 #%%    
 """
 Test the SP1d subclass
 """
 def test_SP1d():
-    
-    # define corono    
-    corono0=coro.design.SP1d()
-    
-    # test basics
-    check_basics(corono0)
-    
-    # test corono methods
-    check_1d_corono_methods(corono0)    
-       
+    check_corono_1d(coro.design.SP1d)
     
 #%%
 """
 Test the DZPM1d subclass
 """
 def test_DZPM1d():
-    
-    # define corono
-    corono0=coro.design.DZPM1d()
-    
-    # test basics
-    check_basics(corono0)
-    
-    # test corono methods
-    check_1d_corono_methods(corono0)    
+    check_corono_1d(coro.design.DZPM1d)
     
 #%%
 """
 Test the HDZPM1d subclass
 """
 def test_HDZPM1d():
-    
-    # define corono
-    corono0=coro.design.HDZPM1d()
-    
-    # test basics
-    check_basics(corono0)
-    
-    # test corono methods
-    check_1d_corono_methods(corono0)    
-    
+    check_corono_1d(coro.design.HDZPM1d)    
 
 #%%
 """
 Test the HTZPM1d subclass
 """
 def test_HTZPM1d():
-    
-    # define corono
-    corono0=coro.design.HTZPM1d()
-    
-    # test basics
-    check_basics(corono0)
-    
-    # test corono methods
-    check_1d_corono_methods(corono0)    
-    
+    check_corono_1d(coro.design.HTZPM1d)        
 
 #%%
 """
@@ -236,29 +219,11 @@ def test_APLC2d():
 Test the SP2d subclass
 """
 def test_SP2d():
-    
-    # define corono
-    corono0=coro.design.SP2d()
-    
-    # test basics
-    check_basics(corono0)
-    
-    # test methods
-    check_2d_corono_methods(corono0)
+    check_corono_2d(coro.design.SP2d)    
 
 #%%
 """
 Test the DZPM2d subclass
 """
 def test_DZPM2d():
-    
-    # define corono
-    corono0=coro.design.DZPM2d()
-    
-    # test basics
-    check_basics(corono0)
-    
-    # test methods
-    check_2d_corono_methods(corono0)
-
-
+    check_corono_2d(coro.design.DZPM2d)    

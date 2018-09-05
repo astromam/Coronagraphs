@@ -233,23 +233,27 @@ class Coronagraph(object):
             generic string of characters for a filename
                 
         """
-        if self.corono_name == 'APLC' or self.corono_name == 'SP': 
-            str_cor = '_rMask={rMask:.3f}'
-        elif self.corono_name == 'DZPM':
-            str_cor = '_rMask1={rMask1:.3f}_rMask2={rMask2:.3f}'
-        elif self.corono_name == 'HDZPM':
-            str_cor = '_rMask1={rMask1:.3f}_rMask2={rMask2:.3f}'
-        elif self.corono_name == 'HTZPM':
-            str_cor = '_rMask1={rMask1:.3f}_rMask2={rMask2:.3f}_rMask3={rMask3:.3f}'
+        if 'corono_name' in self.params:
+            if self.corono_name == 'APLC' or self.corono_name == 'SP': 
+                str_cor = '_rMask={rMask:.3f}'
+            elif self.corono_name == 'DZPM':
+                str_cor = '_rMask1={rMask1:.3f}_rMask2={rMask2:.3f}'
+            elif self.corono_name == 'HDZPM':
+                str_cor = '_rMask1={rMask1:.3f}_rMask2={rMask2:.3f}'
+            elif self.corono_name == 'HTZPM':
+                str_cor = '_rMask1={rMask1:.3f}_rMask2={rMask2:.3f}_rMask3={rMask3:.3f}'
+            else:
+                raise ValueError('{0}: Not an existing coronagraph!'.format(self.corono_name))
+    
+            fname_gen_corono   = '{corono_name}_obs={PupilID:.2f}' \
+            + '_lsid={LyotStopID:.2f}_lsod={LyotStopOD:.2f}' \
+            + '_IWA={rho0}_OWA={rho1}_BW={bw:.2f}_nlam={nlam:02d}' \
+            + '_1D_N={nPup:04d}_nFPM={nFPM:03f}'+ str_cor 
+    
+            return fname_gen_corono.format(**self.params)
         else:
-            raise ValueError('{0}: Not an existing coronagraph!'.format(self.corono_name))
-
-        fname_gen_corono   = '{corono_name}_obs={PupilID:.2f}' \
-        + '_lsid={LyotStopID:.2f}_lsod={LyotStopOD:.2f}' \
-        + '_IWA={rho0}_OWA={rho1}_BW={bw:.2f}_nlam={nlam:02d}' \
-        + '_1D_N={nPup:04d}_nFPM={nFPM:03f}'+ str_cor 
-
-        return fname_gen_corono.format(**self.params)
+            print('Warning: no parameters with Coronagraph class for get_filename()')
+            return 'test'
     
 #%%    
     def get_cache(self,varname):
