@@ -114,6 +114,7 @@ class ProblemMatrix(object):
         
         if corono is None:
             self.corono = design.APLC1d()
+            print('Warning: default coronagraph')
         else:
             self.corono = corono
         

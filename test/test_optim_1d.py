@@ -99,6 +99,7 @@ def check_1d_problem_methods_parameters(class_optim, Lnorm='L1'):
     check_1d_problem_methods(problem6)    
 
 """
+Check the problem class
 """
 def check_problem(class_optim):
     problem0 = class_optim()
@@ -109,7 +110,7 @@ def check_problem(class_optim):
 """
 Test the ProblemMatrix class
 """
-def test_ProblemMatrix():
+def test_ProblemMatrix_1d():
     
     problem0 = coro.optim_1d.ProblemMatrix()
     check_basics(problem0)
@@ -118,21 +119,21 @@ def test_ProblemMatrix():
 """
 Test the MaxTau subclass
 """
-def test_MaxTau():
+def test_MaxTau_1d():
     check_problem(coro.optim_1d.MaxTau)
         
 #%%
 """
 Test the MaxContrast subclass
 """
-def test_MaxContrast():
+def test_MaxContrast_1d():
     check_problem(coro.optim_1d.MaxContrast)
         
 #%%
 """
 Test the MaxTau subclass methods
 """
-def test_MaxTau_methods():
+def test_MaxTau_1d_methods():
     check_1d_problem_methods_constraints(coro.optim_1d.MaxTau)    
     check_1d_problem_methods_parameters(coro.optim_1d.MaxTau)
         
@@ -140,7 +141,7 @@ def test_MaxTau_methods():
 """
 Test the MaxContrast subclass methods
 """
-def test_MaxContrast_methods():
+def test_MaxContrast_1d_methods():
     check_1d_problem_methods_constraints(coro.optim_1d.MaxContrast)
     check_1d_problem_methods_parameters(coro.optim_1d.MaxContrast)
     check_1d_problem_methods_parameters(coro.optim_1d.MaxContrast, Lnorm='Linf')

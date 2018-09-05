@@ -66,7 +66,7 @@ def check_2d_corono_methods(corono0):
     corono0.compute_corono_field_2d_vec(Apod)
    
     params = coro.to_dict() 
-    params2 = coro.update_params(params, Pupil2dSym=True)
+    params2 = coro.update_params(params, Pupil2dSym=False)
     
     if corono0.corono_name == 'SP':
         corono0 = coro.design.SP2d(**params2)
@@ -212,6 +212,25 @@ def test_APLC2d():
     corono0.compute_direct_lyot_field_2d(Apod)
     corono0.compute_corono_lyot_field_2d(Apod)
 
+
+    OPDmap2d = corono0.Pupil2d
+    params5 = coro.update_params(params, OPDmap2d=OPDmap2d, Pupil2dSym=False)
+
+    corono0 = coro.design.APLC2d(**params5)    
+    corono0.compute_direct_field_2d(Apod)
+    corono0.compute_corono_field_2d(Apod)
+    corono0.compute_direct_lyot_field_2d(Apod)
+    corono0.compute_corono_lyot_field_2d(Apod)
+
+
+    Ampmap2d = corono0.Pupil2d    
+    params6 = coro.update_params(params, Ampmap2d=Ampmap2d, Pupil2dSym=False)
+    
+    corono0 = coro.design.APLC2d(**params6)    
+    corono0.compute_direct_field_2d(Apod)
+    corono0.compute_corono_field_2d(Apod)
+    corono0.compute_direct_lyot_field_2d(Apod)
+    corono0.compute_corono_lyot_field_2d(Apod)
     
     
 #%%

@@ -98,15 +98,15 @@ def get_default_params_Coronagraph():
             
     """
     tmp = {'PupilID':0.14,'LyotStopID':0.28,'LyotStopOD':1.0,    
-           'rho0':5,'rho1':10,
+           'rho0':9,'rho1':10,
            'rho0direct':0.7, 'rho1direct':6.0,
-           'nPup':200,'nImg':200,'Fmax':25,'nFPM':50,
+           'nPup':50,'nImg':50,'Fmax':25,'nFPM':25,
            'nImg2d':44, 'Fmax2d':22,
-           'bw':0.2,'lam0':1.0,'nlam':5, 'wv':1.593e-6,
+           'bw':0.2,'lam0':1.0,'nlam':1, 'wv':1.593e-6,
            'R':1.0,
            'fdir':'',
            'CtrBtwnPix':True, 'CtrBtwnPix2':False, 
-           'Pupil2dSym':False, 
+           'Pupil2dSym':True, 
            'Pupil1d':None, 'LyotStop1d':None,
            'Pupil2d':None, 'LyotStop2d':None
            }
@@ -426,7 +426,7 @@ def get_default_params_APLC2d():
     """    
     tmp = get_default_params_Coronagraph()
     tmp.update({'rMask':2.8,
-                'nPup':50, 'nFPM':25,
+                'nPup':30, 'nFPM':25,
                 'corono_name':'APLC',
                 'Pupil2d':None, 'LyotStop2d':None,
                 'OPDmap2d':None, 'Ampmap2d':None})
@@ -461,7 +461,7 @@ def get_default_params_SP2d():
     """    
     tmp = get_default_params_Coronagraph()
     tmp.update({'rMask':2.8,
-                'nPup':50, 'nFPM':25, 
+                'nPup':30, 'nFPM':25, 
                 'corono_name':'SP',
                 'Pupil2d':None, 'LyotStop2d':None,
                 'OPDmap2d':None, 'Ampmap2d':None
@@ -543,7 +543,7 @@ def get_default_params_DZPM2d():
     tmp.update({'rMask1':0.875/2, 'rMask2':1.453/2.,
            'OPDx1':0.309, 'OPDx2':0.672,
            'ome1':-2.340, 'ome2':2.051, 'beta':-0.236,
-           'nFPM':25, 'nPup':50,
+           'nFPM':25, 'nPup':30,
            'corono_name':'DZPM',
            'Pupil2d':None, 'LyotStop2d':None,
            'OPDmap2d':None, 'Ampmap2d':None})
@@ -641,7 +641,7 @@ def get_default_params_1d_ProblemMatrix():
            http://www.gurobi.com
         
     """
-    tmp = {'cDarkHole':8, 'tau':0.2, 'solver':'stdgrb', 
+    tmp = {'cDarkHole':6, 'tau':0.1, 'solver':'stdgrb', 
            'problem_name':'MaxTau',
            'slvCrossover':0, 'slvLogToConsole':0, 'slvMethod':2,
            'allLogToConsole':0, 
@@ -818,7 +818,7 @@ def get_default_params_2d_ProblemMatrix():
            http://www.gurobi.com
         
     """
-    tmp = {'cDarkHole':8, 'tau':0.2, 'solver':'stdgrb', 
+    tmp = {'cDarkHole':8, 'tau':0.8, 'solver':'stdgrb', 
            'pupil_name':'sbr', 
            'problem_name':'MaxTau',
            'slvCrossover':0, 'slvLogToConsole':1, 'slvMethod':2,
