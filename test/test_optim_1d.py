@@ -20,6 +20,7 @@ def check_basics(problem0):
     
     assert 'cDarkHole' in problem0
 
+    print(problem0)
     print(problem0.params['cDarkHole'])    
     print(problem0.params)
     
@@ -39,22 +40,64 @@ Function to check the corono methods for 1d design
 def check_1d_problem_methods(problem0):
     
     problem0.compute_problem_matrices()
-    problem0.compute_problem_matrices_gurobi()
     
     assert not 'compute_problem_matrices_1stder' in problem0
     problem0.compute_problem_matrices_1stDer()
     problem0.compute_problem_matrices_2ndDer()
-        
-#    problem0.compute_problem_matrices_Binarity()
-#    assert 'npp_bis' in problem0
-#    problem0.compute_problem_matrices_MinIsland()
+    problem0.compute_problem_matrices_MinIsland()
     problem0.compute_gurobi_model()
     
     problem0.compute_response_matrices()
     problem0.solve_model()
     
     problem0.compute_matrices()
-#    problem0.get_filename()
+    problem0.get_filename()
+    
+    assert not 'Binarity' in problem0
+    assert not 'nbb' in problem0
+ 
+def check_1d_problem_methods_constraints(class_optim):
+    
+    problem00 = class_optim()
+    problem00.compute_problem_matrices_gurobi()
+    
+    problem01 = class_optim()
+    problem01.compute_problem_matrices_1stDer()
+    
+    problem02 = class_optim()
+    problem02.compute_problem_matrices_2ndDer()
+    
+    problem03 = class_optim()
+    problem03.compute_problem_matrices_MinIsland()    
+
+def check_1d_problem_methods_parameters(class_optim, Lnorm='L1'):
+
+    params = coro.to_dict(Lnorm=Lnorm)
+
+    params1 = coro.update_params(params, MinIsland=True)    
+    problem1 = class_optim(**params1)
+    check_1d_problem_methods(problem1)    
+
+    params2 = coro.update_params(params, allLogToConsole=True)
+    problem2 = class_optim(**params2)
+    check_1d_problem_methods(problem2)
+    
+    params3 = coro.update_params(params, FirstDer=True)
+    problem3 = class_optim(**params3)
+    check_1d_problem_methods(problem3)
+    
+    params4 = coro.update_params(params, SecondDer=True)
+    problem4 = class_optim(**params4)
+    check_1d_problem_methods(problem4)
+    
+    params5 = coro.update_params(params, solver='gurobipy')
+    problem5 = class_optim(**params5)
+    check_1d_problem_methods(problem5)
+
+    params6 = coro.update_params(params, solver='xxx')
+    problem6 = class_optim(**params6)
+    check_1d_problem_methods(problem6)    
+
     
 
 #%%
@@ -65,16 +108,17 @@ def test_ProblemMatrix():
     
     problem0 = coro.optim_1d.ProblemMatrix()
     check_basics(problem0)
+        
+#    params = coro.to_dict()
     
-    problem1 = coro.optim_1d.ProblemMatrix(corono=coro.design.APLC1d())
+#    params1 = coro.update_params(params, corono=coro.design.HDZPM1d())
+#    problem1 = coro.optim_1d.ProblemMatrix(**params1)
+#    problem1.get_filename()
+#    
+#    params2 = coro.update_params(params, corono=coro.design.HTZPM1d())
+#    problem2 = coro.optim_1d.ProblemMatrix(**params2)
+#    problem2.get_filename()
     
-
-#    assert 'corono_name' in problem0
-#    problem0.get_filename()
-
-#    problem0.compute_problem_matrices()
-#
-#    problem0.solve_model()
 
 #%%
 """
@@ -84,25 +128,30 @@ def test_MaxTau():
 
     problem0 = coro.optim_1d.MaxTau()
     check_basics(problem0)
-    
     check_1d_problem_methods(problem0)
+
+    check_1d_problem_methods_constraints(coro.optim_1d.MaxTau)
     
-    params = coro.to_dict()
-    params1 = coro.update_params(params, MinIsland=True)
-    
-    problem1 = coro.optim_1d.MaxTau(**params1)
-    check_1d_problem_methods(problem1)    
-    
+    check_1d_problem_methods_parameters(coro.optim_1d.MaxTau)
+        
+#%%
+"""
+Test the MaxTau subclass
+"""
+def test_MaxContrast():
+
+    problem0 = coro.optim_1d.MaxContrast()
+    check_basics(problem0)
+    check_1d_problem_methods(problem0)
+
+    check_1d_problem_methods_constraints(coro.optim_1d.MaxContrast)
     
 #%%
 """
 Test the MaxTau subclass
 """
-#def test_MaxContrast():
-#
-#    problem0 = coro.optim_1d.MaxContrast()
-#    check_basics(problem0)
-#    
-#    check_1d_problem_methods(problem0)
+def test_MaxContrastLnorm():
 
+    check_1d_problem_methods_parameters(coro.optim_1d.MaxContrast)
     
+    check_1d_problem_methods_parameters(coro.optim_1d.MaxContrast, Lnorm='Linf')

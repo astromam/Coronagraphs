@@ -109,6 +109,7 @@ def get_default_params_Coronagraph():
            'Pupil2dSym':False, 
            'Pupil1d':None, 'LyotStop1d':None,
            'Pupil2d':None, 'LyotStop2d':None,
+           'corono_name':'APLC'
            }
             
     return tmp
@@ -628,14 +629,7 @@ def get_default_params_1d_ProblemMatrix():
     FirstDerGlobalLim : float (default=0.01)
         Upper limit on the integral of the absolute first derivative of the 
         apodizer transmission.
-        
-    Binarity : bool (default=False)
-        introduce constraints of the apodizer transmission in the optimization 
-        problem to maximize the number of binary points in the apodization.
-    
-    BinarityReg : float (default=0.01)
-        Regularization term on the binarity of the apodizer transmission.
-    
+            
     Returns    
     ----------
     tmp : dict
@@ -654,8 +648,7 @@ def get_default_params_1d_ProblemMatrix():
            'allLogToConsole':0, 
            'FirstDer':False, 'FirstDerLim':0.01, 
            'SecondDer': False, 'SecondDerLim':0.0001,
-           'MinIsland':False, 'FirstDerGlobalLim':0.01,
-           'Binarity':False, 'BinarityReg':0.1}
+           'MinIsland':False, 'FirstDerGlobalLim':0.01}
     
     return tmp
 
@@ -813,14 +806,7 @@ def get_default_params_2d_ProblemMatrix():
     FirstDerGlobalLim : float (default=0.01)
         Upper limit on the integral of the absolute first derivative of the 
         apodizer transmission.
-        
-    Binarity : bool (default=False)
-        introduce constraints of the apodizer transmission in the optimization 
-        problem to maximize the number of binary points in the apodization.
-    
-    BinarityReg : float (default=0.01)
-        Regularization term on the binarity of the apodizer transmission.
-    
+            
     Returns    
     ----------
     tmp : dict
@@ -839,7 +825,6 @@ def get_default_params_2d_ProblemMatrix():
            'slvCrossover':0, 'slvLogToConsole':1, 'slvMethod':2,
            'allLogToConsole':0,
            'MinIsland':False, 'FirstDerGlobalLim':0.01,
-           'Binarity':False, 'BinarityReg':0.1,
            'ImPart':True, 'LSRobustness':False}
     return tmp
 

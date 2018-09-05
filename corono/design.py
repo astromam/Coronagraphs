@@ -219,15 +219,37 @@ class Coronagraph(object):
 #%%        
     def get_filename(self):
         """
-        Gets params from the params list.
+        Generate a string of characters to define a filename with all the 
+        parameters
+        
+        Parameters
+        --------
+        kwargs : dict
+            parameters given by the user for the keys with the values to update
         
         Returns
-        -------
-        res 
-            Params from the list.
+        --------
+        fname_gen : str
+            generic string of characters for a filename
                 
         """
-        return self.fname_format.format(**self.params)
+        if self.corono_name == 'APLC' or self.corono_name == 'SP': 
+            str_cor = '_rMask={rMask:.3f}'
+        elif self.corono_name == 'DZPM':
+            str_cor = '_rMask1={rMask1:.3f}_rMask2={rMask2:.3f}'
+        elif self.corono_name == 'HDZPM':
+            str_cor = '_rMask1={rMask1:.3f}_rMask2={rMask2:.3f}'
+        elif self.corono_name == 'HTZPM':
+            str_cor = '_rMask1={rMask1:.3f}_rMask2={rMask2:.3f}_rMask3={rMask3:.3f}'
+        else:
+            raise ValueError('{0}: Not an existing coronagraph!'.format(self.corono_name))
+
+        fname_gen_corono   = '{corono_name}_obs={PupilID:.2f}' \
+        + '_lsid={LyotStopID:.2f}_lsod={LyotStopOD:.2f}' \
+        + '_IWA={rho0}_OWA={rho1}_BW={bw:.2f}_nlam={nlam:02d}' \
+        + '_1D_N={nPup:04d}_nFPM={nFPM:03f}'+ str_cor 
+
+        return fname_gen_corono.format(**self.params)
     
 #%%    
     def get_cache(self,varname):

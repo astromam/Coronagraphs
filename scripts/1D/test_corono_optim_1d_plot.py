@@ -28,11 +28,9 @@ if False:
     FirstDer    = False
     SecondDer   = False
     MinIsland   = True
-    Binarity    = False
     FirstDerLim = 0.01
     SecondDerLim= 0.001 
-    FirstDerGlobalLim = 1.
-    BinarityReg       = 10.
+    FirstDerGlobalLim = 10.
     
     nPup = 500
     nFPM = 50
