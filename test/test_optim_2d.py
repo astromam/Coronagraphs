@@ -11,6 +11,17 @@ License: MIT license
 
 import corono as coro
 import os
+import pytest
+
+try:
+    import stdgrb
+except ModuleNotFoundError:
+    stdgrb = False
+
+try:
+    import gurobipy as gb
+except ModuleNotFoundError:
+    gb = False
 
 #%%
 """
@@ -74,9 +85,9 @@ def check_2d_problem_methods_parameters(class_optim, Lnorm='L1'):
     problem2 = class_optim(**params2)
     check_2d_problem_methods(problem2)
         
-    params5 = coro.update_params(params, solver='gurobipy')
-    problem5 = class_optim(**params5)
-    check_2d_problem_methods(problem5)
+#    params5 = coro.update_params(params, solver='gurobipy')
+#    problem5 = class_optim(**params5)
+#    check_2d_problem_methods(problem5)
 
 #    params6 = coro.update_params(params, solver='xxx')
 #    problem6 = class_optim(**params6)
@@ -100,6 +111,32 @@ def check_2d_problem_methods_parameters(class_optim, Lnorm='L1'):
     params9 = coro.update_params(params, LSRobustness='True')
     problem9 = class_optim(**params9, corono=corono0)
     check_2d_problem_methods(problem9)
+
+def check_2d_problem_methods_parameters_gurobipy(class_optim, Lnorm='L1'):
+    
+    params = coro.to_dict(Lnorm=Lnorm)
+    
+    params1 = coro.update_params(params, solver='gurobipy')
+    problem1 = class_optim(**params1)
+    check_2d_problem_methods(problem1)
+    
+    
+def check_2d_problem_methods_parameters_scipy(class_optim, Lnorm='L1'):
+    
+    params = coro.to_dict(Lnorm=Lnorm)
+    
+    params1 = coro.update_params(params, solver='xxx')
+    problem1 = class_optim(**params1)
+    check_2d_problem_methods(problem1)    
+    
+def check_2d_problem_methods_parameters_stdgrb(class_optim, Lnorm='L1'):
+    
+    params = coro.to_dict(Lnorm=Lnorm)
+    
+    params1 = coro.update_params(params, solver='stdgrb')
+    problem1 = class_optim(**params1)
+    check_2d_problem_methods(problem1)        
+
 
     
 """
@@ -157,3 +194,23 @@ def test_MaxContrast_2d_methods():
     check_2d_problem_methods_constraints(coro.optim_2d.MaxContrast)
     check_2d_problem_methods_parameters(coro.optim_2d.MaxContrast)
     check_2d_problem_methods_parameters(coro.optim_2d.MaxContrast, Lnorm='Linf')
+
+
+#%%
+"""
+Test solvers
+"""
+@pytest.mark.skipif(not gb, reason="Missing gurobipy")
+def test_optim_gurobipy():
+    check_2d_problem_methods_parameters_gurobipy(coro.optim_2d.MaxTau)
+    check_2d_problem_methods_parameters_gurobipy(coro.optim_2d.MaxContrast)
+    
+@pytest.mark.skipif(not stdgrb, reason="Missing stdgrb")
+def test_optim_stdgrb():
+    check_2d_problem_methods_parameters_stdgrb(coro.optim_2d.MaxTau)
+    check_2d_problem_methods_parameters_stdgrb(coro.optim_2d.MaxContrast)    
+    
+def test_optim_scipy():
+    check_2d_problem_methods_parameters_scipy(coro.optim_2d.MaxTau)
+    check_2d_problem_methods_parameters_scipy(coro.optim_2d.MaxContrast)    
+        

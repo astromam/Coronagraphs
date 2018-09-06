@@ -13,7 +13,6 @@ import corono as coro
 import os
 import pytest
 
-
 try:
     import stdgrb
 except ModuleNotFoundError:
@@ -106,26 +105,26 @@ def check_1d_problem_methods_parameters_gurobipy(class_optim, Lnorm='L1'):
     
     params = coro.to_dict(Lnorm=Lnorm)
     
-    params5 = coro.update_params(params, solver='gurobipy')
-    problem5 = class_optim(**params5)
-    check_1d_problem_methods(problem5)
+    params1 = coro.update_params(params, solver='gurobipy')
+    problem1 = class_optim(**params1)
+    check_1d_problem_methods(problem1)
     
     
 def check_1d_problem_methods_parameters_scipy(class_optim, Lnorm='L1'):
     
     params = coro.to_dict(Lnorm=Lnorm)
     
-    params6 = coro.update_params(params, solver='xxx')
-    problem6 = class_optim(**params6)
-    check_1d_problem_methods(problem6)    
+    params1 = coro.update_params(params, solver='xxx')
+    problem1 = class_optim(**params1)
+    check_1d_problem_methods(problem1)    
     
 def check_1d_problem_methods_parameters_stdgrb(class_optim, Lnorm='L1'):
     
     params = coro.to_dict(Lnorm=Lnorm)
     
-    params6 = coro.update_params(params, solver='stdgrb')
-    problem6 = class_optim(**params6)
-    check_1d_problem_methods(problem6)        
+    params1 = coro.update_params(params, solver='stdgrb')
+    problem1 = class_optim(**params1)
+    check_1d_problem_methods(problem1)        
 
 """
 Check the problem class
