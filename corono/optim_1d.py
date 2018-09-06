@@ -376,11 +376,11 @@ class ProblemMatrix(object):
                         
         else:
             self.print_log('solving problem with scipy.optimize')
-            bds = np.zeros((self.npp+self.neps+self.nvv, 2))
-            bds[:,1] = 1.
-            sol=scipy.optimize.linprog(self.c,self.A.T,self.b,
+#            bds = np.zeros((self.npp+self.neps+self.nvv, 2))
+#            bds[:,1] = 1.
+            sol=scipy.optimize.linprog(self.c,(self.A).T,self.b,
                                        method='interior-point',
-                                       bounds=bds, options={'sparse':False})
+                                       options={'sparse':False})
             self.Apod[self.idx_pup]=sol.x[:self.npp]
             
         t1 = time.time()
@@ -706,12 +706,12 @@ class MaxTau(ProblemMatrix):
             
             A4 = np.concatenate((A4tmp, AZ0vv))
             
-            b4  = self.FirstDerLim*np.ones(self.npp)
-            
+            b4  = self.FirstDerLim*np.ones(self.npp-1)
+
             # Update the A, b, and c matrices
             self.A = np.concatenate((self.A, A4, -A4), axis=1)
             self.b = np.concatenate((self.b, b4,  b4))
-                
+            
         else:
             print('Warning: Set FirstDer keyword to True to add its constraints!')
                 
@@ -735,7 +735,7 @@ class MaxTau(ProblemMatrix):
         if self.SecondDer is True:
             # Compute the apodizer second derivative constraints        
             A5tmp  = np.diff(np.diff(np.identity(self.npp), axis=1), axis=1)
-            b5  = self.SecondDerLim*np.ones(self.npp)
+            b5  = self.SecondDerLim*np.ones(self.npp-2)
             
             AZ0vv = np.zeros((self.nvv, self.npp-2))
             
@@ -1171,7 +1171,7 @@ class MaxContrast(ProblemMatrix):
             
             A4 = np.concatenate((A4tmp, AZ0vv))
             
-            b4  = self.FirstDerLim*np.ones(self.npp)
+            b4  = self.FirstDerLim*np.ones(self.npp-1)
             
             # Update the A, b, and c matrices
             self.A = np.concatenate((self.A, A4, -A4), axis=1)
@@ -1205,7 +1205,7 @@ class MaxContrast(ProblemMatrix):
             
             A5 = np.concatenate((A5tmp, AZ0vv))        
             
-            b5  = self.SecondDerLim*np.ones(self.npp)
+            b5  = self.SecondDerLim*np.ones(self.npp-2)
             
             # Update the A, b, and c matrices
             self.A = np.concatenate((self.A, A5, -A5), axis=1)
