@@ -28,7 +28,7 @@ slvMethod       = 2
 allLogToConsole = 0
 
 FirstDer    = False
-SecondDer   = True
+SecondDer   = False
 MinIsland   = False
 FirstDerLim = 0.01
 SecondDerLim= 0.001 

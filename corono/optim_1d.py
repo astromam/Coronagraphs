@@ -376,11 +376,11 @@ class ProblemMatrix(object):
                         
         else:
             self.print_log('solving problem with scipy.optimize')
-#            bds = np.zeros((self.npp+self.neps+self.nvv, 2))
-#            bds[:,1] = 1.
+            bds = np.zeros((self.npp+self.neps+self.nvv, 2))
+            bds[:,1] = 1.
             sol=scipy.optimize.linprog(self.c,(self.A).T,self.b,
                                        method='interior-point',
-                                       options={'sparse':False})
+                                       bounds=bds, options={'sparse':False})
             self.Apod[self.idx_pup]=sol.x[:self.npp]
             
         t1 = time.time()

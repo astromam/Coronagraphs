@@ -100,6 +100,15 @@ def check_1d_problem_methods_parameters(class_optim, Lnorm='L1'):
     params4 = coro.update_params(params, SecondDer=True)
     problem4 = class_optim(**params4)
     check_1d_problem_methods(problem4)
+
+def check_1d_problem_methods_parameters_stdgrb(class_optim, Lnorm='L1'):
+    
+    params = coro.to_dict(Lnorm=Lnorm)
+    
+    params1 = coro.update_params(params, solver='stdgrb')
+    problem1 = class_optim(**params1)
+    check_1d_problem_methods(problem1)        
+
     
 def check_1d_problem_methods_parameters_gurobipy(class_optim, Lnorm='L1'):
     
@@ -118,13 +127,6 @@ def check_1d_problem_methods_parameters_scipy(class_optim, Lnorm='L1'):
     problem1 = class_optim(**params1)
     check_1d_problem_methods(problem1)    
     
-def check_1d_problem_methods_parameters_stdgrb(class_optim, Lnorm='L1'):
-    
-    params = coro.to_dict(Lnorm=Lnorm)
-    
-    params1 = coro.update_params(params, solver='stdgrb')
-    problem1 = class_optim(**params1)
-    check_1d_problem_methods(problem1)        
 
 """
 Check the problem class

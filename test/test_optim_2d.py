@@ -104,6 +104,15 @@ def check_2d_problem_methods_parameters(class_optim, Lnorm='L1'):
     problem9 = class_optim(**params9, corono=corono0)
     check_2d_problem_methods(problem9)
 
+def check_2d_problem_methods_parameters_stdgrb(class_optim, Lnorm='L1'):
+    
+    params = coro.to_dict(Lnorm=Lnorm)
+    
+    params1 = coro.update_params(params, solver='stdgrb')
+    problem1 = class_optim(**params1)
+    check_2d_problem_methods(problem1)        
+
+
 def check_2d_problem_methods_parameters_gurobipy(class_optim, Lnorm='L1'):
     
     params = coro.to_dict(Lnorm=Lnorm)
@@ -120,15 +129,6 @@ def check_2d_problem_methods_parameters_scipy(class_optim, Lnorm='L1'):
     params1 = coro.update_params(params, solver='xxx')
     problem1 = class_optim(**params1)
     check_2d_problem_methods(problem1)    
-    
-def check_2d_problem_methods_parameters_stdgrb(class_optim, Lnorm='L1'):
-    
-    params = coro.to_dict(Lnorm=Lnorm)
-    
-    params1 = coro.update_params(params, solver='stdgrb')
-    problem1 = class_optim(**params1)
-    check_2d_problem_methods(problem1)        
-
 
     
 """
@@ -195,14 +195,14 @@ def test_optim_gurobipy():
     check_2d_problem_methods_parameters_gurobipy(coro.optim_2d.MaxContrast)
     check_2d_problem_methods_parameters_gurobipy(coro.optim_2d.MaxContrast, Lnorm='Linf')
 
-    
 @pytest.mark.skipif(not stdgrb, reason="Missing stdgrb")
 def test_optim_stdgrb():
     check_2d_problem_methods_parameters_stdgrb(coro.optim_2d.MaxTau)
     check_2d_problem_methods_parameters_stdgrb(coro.optim_2d.MaxContrast)    
     check_2d_problem_methods_parameters_stdgrb(coro.optim_2d.MaxContrast, Lnorm='Linf')
     
-#def test_optim_scipy():
-#    check_2d_problem_methods_parameters_scipy(coro.optim_2d.MaxTau)
-#    check_2d_problem_methods_parameters_scipy(coro.optim_2d.MaxContrast)    
+def test_optim_scipy():
+    check_2d_problem_methods_parameters_scipy(coro.optim_2d.MaxTau)
+    check_2d_problem_methods_parameters_scipy(coro.optim_2d.MaxContrast)    
+    check_2d_problem_methods_parameters_stdgrb(coro.optim_2d.MaxContrast, Lnorm='Linf')
         
