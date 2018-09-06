@@ -173,7 +173,8 @@ Test the MaxContrast subclass
 """
 def test_MaxContrast_2d():
     check_problem(coro.optim_2d.MaxContrast)
-
+    check_2d_problem_methods_parameters(coro.optim_2d.MaxTau)
+    
 #%%
 """
 Test the MaxContrast subclass methods
@@ -183,7 +184,8 @@ def test_MaxContrast_2d_methods():
     problem0.update_tau()
     
     check_2d_problem_methods_constraints(coro.optim_2d.MaxContrast)
-
+    check_2d_problem_methods_parameters(coro.optim_2d.MaxContrast)
+    check_2d_problem_methods_parameters(coro.optim_2d.MaxContrast, Lnorm='Linf')
 
 #%%
 """
