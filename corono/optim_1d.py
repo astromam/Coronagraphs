@@ -381,7 +381,7 @@ class ProblemMatrix(object):
             sol=scipy.optimize.linprog(self.c,self.A.T,self.b,
                                        method='interior-point',
                                        bounds=bds, options={'sparse':False})
-            self.Apod[self.idx_pup]=sol.x
+            self.Apod[self.idx_pup]=sol.x[:self.npp]
             
         t1 = time.time()
         self.print_log('solving time: {0:.2f}s\n'.format(t1-t0))

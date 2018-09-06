@@ -11,7 +11,19 @@ License: MIT license
 
 import corono as coro
 import os
+import pytest
 
+
+try:
+    import stdgrb
+except ModuleNotFoundError:
+    stdgrb = False
+
+try:
+    import gurobipy as gb
+except ModuleNotFoundError:
+    gb = False
+    
 #%%
 """
 Function to check basics in the class and subclass
@@ -90,13 +102,30 @@ def check_1d_problem_methods_parameters(class_optim, Lnorm='L1'):
     problem4 = class_optim(**params4)
     check_1d_problem_methods(problem4)
     
+def check_1d_problem_methods_parameters_gurobipy(class_optim, Lnorm='L1'):
+    
+    params = coro.to_dict(Lnorm=Lnorm)
+    
     params5 = coro.update_params(params, solver='gurobipy')
     problem5 = class_optim(**params5)
     check_1d_problem_methods(problem5)
-
+    
+    
+def check_1d_problem_methods_parameters_scipy(class_optim, Lnorm='L1'):
+    
+    params = coro.to_dict(Lnorm=Lnorm)
+    
     params6 = coro.update_params(params, solver='xxx')
     problem6 = class_optim(**params6)
     check_1d_problem_methods(problem6)    
+    
+def check_1d_problem_methods_parameters_stdgrb(class_optim, Lnorm='L1'):
+    
+    params = coro.to_dict(Lnorm=Lnorm)
+    
+    params6 = coro.update_params(params, solver='stdgrb')
+    problem6 = class_optim(**params6)
+    check_1d_problem_methods(problem6)        
 
 """
 Check the problem class
@@ -145,3 +174,22 @@ def test_MaxContrast_1d_methods():
     check_1d_problem_methods_constraints(coro.optim_1d.MaxContrast)
     check_1d_problem_methods_parameters(coro.optim_1d.MaxContrast)
     check_1d_problem_methods_parameters(coro.optim_1d.MaxContrast, Lnorm='Linf')
+
+
+"""
+Test solvers
+"""
+@pytest.mark.skipif(not gb, reason="Missing gurobipy")
+def test_optim_gurobipy():
+    check_1d_problem_methods_parameters_gurobipy(coro.optim_1d.MaxTau)
+    check_1d_problem_methods_parameters_gurobipy(coro.optim_1d.MaxContrast)
+    
+@pytest.mark.skipif(not stdgrb, reason="Missing stdgrb")
+def test_optim_stdgrb():
+    check_1d_problem_methods_parameters_stdgrb(coro.optim_1d.MaxTau)
+    check_1d_problem_methods_parameters_stdgrb(coro.optim_1d.MaxContrast)    
+    
+def test_optim_scipy():
+    check_1d_problem_methods_parameters_scipy(coro.optim_1d.MaxTau)
+    check_1d_problem_methods_parameters_scipy(coro.optim_1d.MaxContrast)    
+    
