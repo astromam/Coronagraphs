@@ -20,14 +20,14 @@ import corono as coro
 Parameters
 """
 pl.close('all')
-if False:
+if True:
     corono_name  = 'APLC' # 'APLC' or 'SP'
     problem_name = 'MaxTau' # 'MaxContrastL1' #,'MaxContrastLinf' # 'MaxTau' #
     solver       = 'stdgrb' # 'stdgrb', 'gurobipy', 'scipy.linprog'
     
     FirstDer    = False
     SecondDer   = False
-    MinIsland   = True
+    MinIsland   = False
     FirstDerLim = 0.01
     SecondDerLim= 0.001 
     FirstDerGlobalLim = 10.
@@ -84,7 +84,7 @@ if False:
                      FirstDer = FirstDer, SecondDer = SecondDer,
                      FirstDerLim = FirstDerLim, SecondDerLim = SecondDerLim,
                      MinIsland = MinIsland, FirstDerGlobalLim = FirstDerGlobalLim,
-                     Binarity = Binarity, BinarityReg = BinarityReg)
+                     )
 
 nlambis = 11
 nImgbis = 110
