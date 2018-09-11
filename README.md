@@ -10,6 +10,18 @@ with a linear program (LP) model and calls for a solver to find the best
 solution. The tool currently works with the following solvers:
 - [scipy.linprog](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.linprog.html)
 - [gurobi](http://www.gurobi.com)
+- [stdgrb](https://github.com/rflamary/stdgrb) (recommended)
+
+![](./images/images_aplc_systeme_solaire_eng.png)* **Figure 1**: **Left**: 
+Binary pupil apodisation for the Apodized Pupil Lyot Coronagraph (APLC) for a 
+LUVOIR-like mission ([N’Diaye et al., 2016](http://iopscience.iop.org/article/10.3847/0004-637X/818/2/163/meta)). 
+**Middle**: Image provided by the coronagraph for a wide spectral band of 10%. 
+A dark zone with a 10^10 contrast is produced with the segmented telescope 
+aperture. **Right**: Modeled multi-colored image of a solar system at 13.5 pc 
+with a 12m telescope and the coronagraphic solution with 40h exposure time, in 
+the absence of aberrations and in the presence of photon noise only. Linear and
+ log scale inside and outside the high-contrast ragion, paving the way for the 
+ observation of habitable worlds (credit: L. Pueyo/M. N'Diaye/A. Roberge).
 
 ### Prerequisites
 - Gurobi solver for Python. For installation and license, see instructions at 
@@ -22,16 +34,26 @@ The only strong dependencies are
 - numpy
 - scipy
 - astropy
-- pylab
+- matplotlib
+
+```bash
+python setup.py install numpy scipy astropy matplotlib # --user if local install
+```
+
 
 You can install the module with
-```
+
+```bash
 python setup.py install # --user if local install
 ```
 
 ## Built With
 - [spyder](https://pythonhosted.org/spyder/installation.html) the used python 
 editor.
+
+## Contributing
+- Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on the process for
+ submitting pull requests to us.
 
 ## Versioning
 We use [SemVer](http://semver.org/) for versioning. For the versions available,
@@ -40,6 +62,8 @@ see the [tags on this repository](https://github.com/astromam/Coronagraphs/tags)
 ## Authors
 
 * **Mamadou N'Diaye** - *Initial work* - [astromam](https://github.com/astromam)
+* **[Rémi Flamary](https://remi.flamary.com/)** - *Initial work* - [rflamary](https://github.com/rflamary)
+
 
 See also the list of [contributors](https://github.com/astromam/Coronagraphs/graphs/contributors) 
 who participated in this project.
@@ -50,10 +74,8 @@ file for details.
 
 ## Acknowledgments
 
-* [Rémy Flamary](https://github.com/rflamary) for providing countless guidance 
-in Python coding and optimization.
-* [Space Telescope Science Institute](http://www.stsci.edu/) collaborators, 
-in particular, the Segmented Design and Analysis (SCDA) team.
+* the [Space Telescope Science Institute](http://www.stsci.edu/) collaborators, 
+in particular, the Segmented Coronagraph Design and Analysis (SCDA) team.
 * the [Lorentz Center](http://www.lorentzcenter.nl/) for hosting and to a large
 extent funding the [Optimal Optical Coronagraph workshop](https://www.lorentzcenter.nl/lc/web/2017/924/info.php3?wsid=924&venue=Snellius) 
 held September 25-29, 2017 at the Lorentz Center in Leiden, the Netherlands. 

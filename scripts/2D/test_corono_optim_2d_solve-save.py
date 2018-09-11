@@ -3,7 +3,10 @@
 """
 Created on Wed Apr 25 17:52:23 2018
 
-@author: mndiaye
+Author: Mamadou N'Diaye <mamadou.ndiaye@oca.eu> (https://github.com/astromam)
+
+License: MIT license
+
 """
 
 import numpy as np
@@ -20,9 +23,15 @@ from astropy.io import fits
 Parameters
 """
 # Telescope name
+corono_name  = 'SP' # 'SP' or 'APLC'
 pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
+<<<<<<< HEAD
 problem_name = 'MaxTau' # 'MaxTau' # ,'MaxContrastLinf' # 'MaxContrastL1' #
 solver       = 'stdgrb' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
+=======
+problem_name = 'MaxContrastLinf' # 'MaxTau' # ,'MaxContrastLinf' # 'MaxContrastL1' #
+solver       = 'xxx' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
+>>>>>>> master
 slvLogToConsole = 0
 slvCrossover    = 0
 slvMethod       = 2
@@ -53,7 +62,6 @@ cDarkHole = 7.0
 tau   = 0.4
 
 # CtrBtwnPix2
-corono_name = 'APLC' # 'SP' or 'APLC'
 CtrBtwnPix  = True
 CtrBtwnPix2 = True
 Pupil2dSym  = 'Half-ax0' # 'Full', 'Quarter', 'Half-ax0', 'Half-ax1' 
@@ -68,7 +76,7 @@ do_fits = True
 """
 File reading for Pupil and Lyot stop
 """
-fdir = Path('../../pupils/2D/').resolve()
+fdir = Path('../../data/2D/pupils/').resolve()
 if pupil_name == 'lvr':
     fname_pup = 'ATLAST_Aperture_nPup={0}.fits'.format(nPup,)
     fname_lys = 'ATLAST_LyotStop_nPup={0}.fits'.format(nPup,)

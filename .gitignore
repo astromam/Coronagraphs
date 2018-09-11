@@ -126,3 +126,7 @@ test_corono_design_2d_sphere_compute-save.py
 test_corono_design_2d_sphere_plot.py
 test_print.py
 test_2d_pupil_derivative.py
+cov_html/
+.pytest_cache/README.md
+.pytest_cache/v/cache/lastfailed
+.pytest_cache/v/cache/nodeids

@@ -3,7 +3,10 @@
 """
 Created on Mon Apr 30 14:10:20 2018
 
-@author: mndiaye
+Author: Mamadou N'Diaye <mamadou.ndiaye@oca.eu> (https://github.com/astromam)
+
+License: MIT license
+
 """
 import numpy as np
 import pylab as pl
@@ -58,7 +61,7 @@ do_fits = True
 """
 File reading for Pupil and Lyot stop
 """
-fdir = Path('../../pupils/2D/').resolve()
+fdir = Path('../../data/2D/pupils/').resolve()
 if pupil_name == 'lvr':
     fname_pup = 'ATLAST_Aperture_nPup={0}.fits'.format(nPup,)
     fname_lys = 'ATLAST_LyotStop_nPup={0}.fits'.format(nPup,)
@@ -74,7 +77,7 @@ LyotStop2d = fits.getdata(fpath_lys)
 if solver != 'gurobipy' and solver != 'stdgrb':
     solver = 'scipy'
 
-params = coro.to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
+params = coro.to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d,
                  rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau, 
                  CtrBtwnPix=CtrBtwnPix, CtrBtwnPix2 = CtrBtwnPix2,
                  nlam=nlam, bw=bw,

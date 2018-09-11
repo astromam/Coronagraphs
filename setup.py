@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 """
+Author: Mamadou N'Diaye <mamadou.ndiaye@oca.eu> (https://github.com/astromam)
+
+License: MIT license
+
 """
 
 

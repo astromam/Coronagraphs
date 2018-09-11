@@ -3,7 +3,10 @@
 """
 Created on Thu May  3 10:26:11 2018
 
-@author: mndiaye
+Author: Mamadou N'Diaye <mamadou.ndiaye@oca.eu> (https://github.com/astromam)
+
+License: MIT license
+
 """
 import numpy as np
 import time
@@ -27,11 +30,9 @@ allLogToConsole = 0
 FirstDer    = False
 SecondDer   = False
 MinIsland   = False
-Binarity    = False
 FirstDerLim = 0.01
 SecondDerLim= 0.001 
 FirstDerGlobalLim = 10.
-BinarityReg       = 0.000000001
 
 nPup = 500
 nFPM = 50
@@ -86,8 +87,7 @@ params = coro.to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
                  allLogToConsole = allLogToConsole,
                  FirstDer = FirstDer, SecondDer = SecondDer,
                  FirstDerLim = FirstDerLim, SecondDerLim = SecondDerLim,
-                 MinIsland = MinIsland, FirstDerGlobalLim = FirstDerGlobalLim,
-                 Binarity = Binarity, BinarityReg = BinarityReg)
+                 MinIsland = MinIsland, FirstDerGlobalLim = FirstDerGlobalLim)
 
 #%%
 """

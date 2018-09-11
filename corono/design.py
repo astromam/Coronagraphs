@@ -3,7 +3,10 @@
 """
 Created on Wed Mar  7 21:57:28 2018
 
-@author: mndiaye
+Author: Mamadou N'Diaye <mamadou.ndiaye@oca.eu> (https://github.com/astromam)
+
+License: MIT license
+
 
 Class for different types of coronagraphs
 """
@@ -16,9 +19,10 @@ import numpy as np
 #import pylab as pl
 #from astropy.io import fits
 from .utils import besselJ0, sft, isft, uniform_disk, radius_disk, sft_even, isft_even
-
+from . import default
 import json
 
+<<<<<<< HEAD
 #%% 
 """
 Default parameters
@@ -613,6 +617,8 @@ def get_default_params_DZPM2d():
     
     tmp.update({'Pupil2d':Pupil2d, 'LyotStop2d':LyotStop2d})
     return tmp
+=======
+>>>>>>> master
 
 #%%
 """
@@ -631,7 +637,7 @@ class Coronagraph(object):
     """
     Defines the class for coronagraphs.
     """    
-    default_params = get_default_params_Coronagraph()
+    default_params = default.get_default_params_Coronagraph()
     fname_format   = fname_coronagraph
 #%%
     def __init__(self, **kwargs):
@@ -744,6 +750,10 @@ class Coronagraph(object):
         
         # clear Pupil
         self.ClearPupil1d = np.ones((self.nPup))
+
+        # Telescope aperture
+        if self.Pupil1d is None:
+            self.Pupil1d      = (self.r>self.PupilID)*1.0
         
         # Final image plane coordinate
         self.xi  = np.arange(self.nImg+1)*self.Fmax/self.nImg
@@ -759,6 +769,7 @@ class Coronagraph(object):
 
         # clear Pupil
         self.ClearPupil2d = uniform_disk(self.nPup, self.nPup/2., CtrBtwnPix=self.CtrBtwnPix)
+
         # Focal plane mask
         self.mask2d       = uniform_disk(self.nFPM, self.nFPM/2., CtrBtwnPix=self.CtrBtwnPix)
 
@@ -805,15 +816,41 @@ class Coronagraph(object):
 #%%        
     def get_filename(self):
         """
-        Gets params from the params list.
+        Generate a string of characters to define a filename with all the 
+        parameters
+        
+        Parameters
+        --------
+        kwargs : dict
+            parameters given by the user for the keys with the values to update
         
         Returns
-        -------
-        res 
-            Params from the list.
+        --------
+        fname_gen : str
+            generic string of characters for a filename
                 
         """
-        return self.fname_format.format(**self.params)
+        if 'corono_name' in self.params:
+            if self.corono_name == 'APLC' or self.corono_name == 'SP': 
+                str_cor = '_rMask={rMask:.3f}'
+            elif self.corono_name == 'DZPM':
+                str_cor = '_rMask1={rMask1:.3f}_rMask2={rMask2:.3f}'
+            elif self.corono_name == 'HDZPM':
+                str_cor = '_rMask1={rMask1:.3f}_rMask2={rMask2:.3f}'
+            elif self.corono_name == 'HTZPM':
+                str_cor = '_rMask1={rMask1:.3f}_rMask2={rMask2:.3f}_rMask3={rMask3:.3f}'
+            else:
+                raise ValueError('{0}: Not an existing coronagraph!'.format(self.corono_name))
+    
+            fname_gen_corono   = '{corono_name}_obs={PupilID:.2f}' \
+            + '_lsid={LyotStopID:.2f}_lsod={LyotStopOD:.2f}' \
+            + '_IWA={rho0}_OWA={rho1}_BW={bw:.2f}_nlam={nlam:02d}' \
+            + '_1D_N={nPup:04d}_nFPM={nFPM:03f}'+ str_cor 
+    
+            return fname_gen_corono.format(**self.params)
+        else:
+            print('Warning: no parameters with Coronagraph class for get_filename()')
+            return 'test'
     
 #%%    
     def get_cache(self,varname):
@@ -831,10 +868,8 @@ class Coronagraph(object):
             Filename with the appended varname.
                 
         """
-        try:
-            self.get_filename()+ '_' + varname
-        except FileNotFoundError:
-            return False
+        return self.get_filename()+ '_' + varname
+
         
 #%%        
     def check_params(self):
@@ -1170,7 +1205,7 @@ class APLC1d(Coronagraph):
     Defines the Coronagraph subclass for the Apodized Pupil Lyot Coronagraph
     (APLC) for 1D geometry.
     """
-    default_params = get_default_params_APLC1d()
+    default_params = default.get_default_params_APLC1d()
     
     def __init__(self, **kwargs):
         """
@@ -1217,16 +1252,14 @@ class APLC1d(Coronagraph):
                 *self.mask_lam/self.nFPM
 
         # Hankel kernel for the focal plane mask (FPM) 
-#        t0 = time.time()
         self.hankel_kernel_FPM_all  = besselJ0(
                 np.pi/self.R*self.xi_FPM_lam[:,:,None]*self.r[None,None,:])
         self.hankel_kernel_iFPM_all = besselJ0(
                 np.pi/self.R*self.xi_FPM_lam[:,None,:]*self.r[None,:,None])
-        
-#        self.hankel_kernel_FPM_all  = besselJ0(
-#                np.pi/self.R*np.einsum('ij,k -> ijk', self.xi_FPM_lam, self.r))
-#        self.hankel_kernel_iFPM_all = besselJ0(
-#                np.pi/self.R*np.einsum('ik,j -> ijk', self.xi_FPM_lam, self.r))
+                
+        # Lyot stop 
+        if self.LyotStop1d is None:
+            self.LyotStop1d   = (self.r>self.LyotStopID)*(self.r<self.LyotStopOD)*1.0
 
         
 #%% # direct propagation (no focal plane mask)
@@ -1287,39 +1320,6 @@ class APLC1d(Coronagraph):
         
         return self.lam0/self.lam_t[:,None]*np.pi\
             *corono_field_tmp*self.R/self.nPup
-
-#%% # propagation through coronagraph (with focal plane mask)
-    def compute_corono_field_1d0(self,Apod):
-        """
-        Computes the electric field of the coronagraphic image with APLC
-        for the 1D problem.
-        
-        Parameters
-        ---------- 
-        Apod : array_like
-            Entrance pupil apodization :math:`\Phi`
-                
-        Returns    
-        ----------
-        res : array_like
-            Coronagraphic electric field :math:`\Psi_D` at all the wavelengths
-            
-        """
-        FPM_field  = np.pi*self.hankel_kernel_FPM_all.dot(
-                Apod*self.Pupil1d*self.r/self.R)\
-                *(self.R/self.nPup)*self.xi_FPM_lam
-                
-        iFPM_field = np.pi*(1/self.nFPM)*np.einsum('ijk,ik -> ij', 
-                           self.hankel_kernel_iFPM_all, FPM_field)
-                
-        lyot_field = (Apod[None,:]*self.Pupil1d[None,:]-iFPM_field)\
-                *self.r[None,:]/self.R*self.LyotStop1d[None, :]
-                
-        corono_field_tmp = np.einsum('ij,ikj -> ik', lyot_field, self.hankel_kernel_all)
-        
-        return self.lam0/self.lam_t[:,None]*np.pi\
-            *corono_field_tmp*self.R/self.nPup
-
             
 #%% 
 """
@@ -1330,7 +1330,7 @@ class SP1d(Coronagraph):
     Defines the Coronagraph subclass for the Shaped Pupil Coronagraph
     (SP) for 1D geometry.
     """
-    default_params = get_default_params_SP1d()
+    default_params = default.get_default_params_SP1d()
     
     def __init__(self, **kwargs):
         """
@@ -1375,7 +1375,7 @@ class SP1d(Coronagraph):
                            <self.rMask_t[:,None]*self.nFPM)
         self.xi_FPM_lam = np.arange(self.nFPM_max+1)[None,:]\
                 *self.mask_lam/self.nFPM
-        
+                
 #%% # direct propagation (no focal plane mask)
     def compute_direct_field_1d(self,Apod):
         """
@@ -1427,7 +1427,7 @@ class DZPM1d(Coronagraph):
     Defines the Coronagraph subclass for the Dual Zone Phase Mask (DZPM) 
     Coronagraph for one-dimension geometry.
     """    
-    default_params = get_default_params_DZPM1d()    
+    default_params = default.get_default_params_DZPM1d()    
 
     def __init__(self, **kwargs):
         r"""
@@ -1574,6 +1574,10 @@ class DZPM1d(Coronagraph):
         1j*np.sin(2.*np.pi*(self.r/2)**2*self.beta*self.lam0/self.lam_t[:,None])\
         + np.cos(2.*np.pi*(self.r/2)**2*self.beta*self.lam0/self.lam_t[:,None])
 
+        # Lyot stop 
+        if self.LyotStop1d is None:
+            self.LyotStop1d   = (self.r>self.LyotStopID)*(self.r<self.LyotStopOD)*1.0
+
 
 #%% direct propagation (no focal plane mask)
     def compute_direct_field_1d(self,Apod):
@@ -1660,7 +1664,7 @@ class HDZPM1d(Coronagraph):
     Defines the Coronagraph subclass for the Dual Zone Phase Mask (DZPM) 
     Coronagraph for one-dimension geometry.
     """    
-    default_params = get_default_params_HDZPM1d()    
+    default_params = default.get_default_params_HDZPM1d()    
 
     def __init__(self, **kwargs):
         r"""
@@ -1797,7 +1801,10 @@ class HDZPM1d(Coronagraph):
                 np.pi/self.R*self.xi_FPM2_lam[:,:,None]*self.r[None,None,:])
         self.hankel_kernel_iFPM2_all = besselJ0(
                 np.pi/self.R*self.xi_FPM2_lam[:,None,:]*self.r[None,:,None])
-
+        
+        # Lyot stop 
+        if self.LyotStop1d is None:
+            self.LyotStop1d   = (self.r>self.LyotStopID)*(self.r<self.LyotStopOD)*1.0
 
 
 #%% direct propagation (no focal plane mask)
@@ -1885,7 +1892,7 @@ class HTZPM1d(Coronagraph):
     Defines the Coronagraph subclass for the Dual Zone Phase Mask (DZPM) 
     Coronagraph for one-dimension geometry.
     """    
-    default_params = get_default_params_HTZPM1d()    
+    default_params = default.get_default_params_HTZPM1d()    
 
     def __init__(self, **kwargs):
         r"""
@@ -2038,7 +2045,10 @@ class HTZPM1d(Coronagraph):
                 np.pi/self.R*self.xi_FPM3_lam[:,:,None]*self.r[None,None,:])
         self.hankel_kernel_iFPM3_all = besselJ0(
                 np.pi/self.R*self.xi_FPM3_lam[:,None,:]*self.r[None,:,None])
-
+        
+        # Lyot stop 
+        if self.LyotStop1d is None:
+            self.LyotStop1d   = (self.r>self.LyotStopID)*(self.r<self.LyotStopOD)*1.0
 
 
 #%% direct propagation (no focal plane mask)
@@ -2140,7 +2150,7 @@ class APLC2d(Coronagraph):
     Defines the Coronagraph subclass for the Apodized Pupil Lyot Coronagraph
     for two-dimension geometry.
     """
-    default_params = get_default_params_APLC2d()
+    default_params = default.get_default_params_APLC2d()
 
     def __init__(self, **kwargs):
         r"""
@@ -2163,6 +2173,16 @@ class APLC2d(Coronagraph):
         # mask size at a given wavelength for SFT
         self.mB_t  = 2.*self.rMask*(self.lam0/self.lam_t)
         self.mD_t  = self.Fmax2d*(self.lam0/self.lam_t)
+
+        # Telescope aperture
+        if self.Pupil2d is None:
+            self.Pupil2d      = uniform_disk(self.nPup, self.nPup/2., CtrBtwnPix=self.CtrBtwnPix)\
+            - uniform_disk(self.nPup, self.PupilID*self.nPup/2., CtrBtwnPix=self.CtrBtwnPix)
+            
+        # Lyot stop 
+        if self.LyotStop2d is None:
+            self.LyotStop2d   = uniform_disk(self.nPup, self.nPup/2., CtrBtwnPix=self.CtrBtwnPix)\
+            - uniform_disk(self.nPup, self.LyotStopID*self.nPup/2., CtrBtwnPix=self.CtrBtwnPix)
         
 #%% direct propagation (no focal plane mask)
     def compute_direct_field_2d(self,Apod2d):
@@ -2373,7 +2393,7 @@ class SP2d(Coronagraph):
     Defines the Coronagraph subclass for the Apodized Pupil Lyot Coronagraph
     for two-dimension geometry.
     """
-    default_params = get_default_params_SP2d()
+    default_params = default.get_default_params_SP2d()
 
     def __init__(self, **kwargs):
         r"""
@@ -2395,6 +2415,11 @@ class SP2d(Coronagraph):
         
         # mask size at a given wavelength for SFT
         self.mD_t  = self.Fmax2d*(self.lam0/self.lam_t)
+
+        # Telescope aperture
+        if self.Pupil2d is None:
+            self.Pupil2d      = uniform_disk(self.nPup, self.nPup/2., CtrBtwnPix=self.CtrBtwnPix)\
+            - uniform_disk(self.nPup, self.PupilID*self.nPup/2., CtrBtwnPix=self.CtrBtwnPix)
         
 #%% direct propagation (no focal plane mask)
     def compute_direct_field_2d(self,Apod2d):
@@ -2481,7 +2506,7 @@ class DZPM2d(Coronagraph):
     Defines the Coronagraph subclass for the Dual-Zone Phase Mask Coronagraph
     for two-dimension geometry.
     """
-    default_params = get_default_params_DZPM2d()
+    default_params = default.get_default_params_DZPM2d()
 
     def __init__(self, **kwargs):
         r"""
@@ -2522,6 +2547,15 @@ class DZPM2d(Coronagraph):
         self.Apod2d_w = 1j*np.sin(2.*np.pi*(self.rr)**2*self.beta*self.lam0/self.lam_t[:,None,None])\
         + np.cos(2.*np.pi*(self.rr)**2*self.beta*self.lam0/self.lam_t[:,None,None])
 
+        # Telescope aperture
+        if self.Pupil2d is None:
+            self.Pupil2d      = uniform_disk(self.nPup, self.nPup/2., CtrBtwnPix=self.CtrBtwnPix)\
+            - uniform_disk(self.nPup, self.PupilID*self.nPup/2., CtrBtwnPix=self.CtrBtwnPix)
+            
+        # Lyot stop 
+        if self.LyotStop2d is None:
+            self.LyotStop2d   = uniform_disk(self.nPup, self.nPup/2., CtrBtwnPix=self.CtrBtwnPix)\
+            - uniform_disk(self.nPup, self.LyotStopID*self.nPup/2., CtrBtwnPix=self.CtrBtwnPix)
         
 #%% direct propagation (no focal plane mask)
     def compute_direct_field_2d(self,Apod2d):

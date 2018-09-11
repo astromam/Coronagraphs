@@ -3,7 +3,10 @@
 """
 Created on Fri Aug 17 15:13:19 2018
 
-@author: mndiaye
+Author: Mamadou N'Diaye <mamadou.ndiaye@oca.eu> (https://github.com/astromam)
+
+License: MIT license
+
 """
 
 import numpy as np
@@ -91,7 +94,7 @@ else:
 File reading for Pupil and Lyot stop
 """
 if False:
-    fdir = Path('../../pupils/2D/').resolve()
+    fdir = Path('../../data/2D/pupils/').resolve()
     if pupil_name == 'lvr':
         fname_pup = 'ATLAST_Aperture_nPup={0}.fits'.format(nPup,)
         fname_lys = 'ATLAST_LyotStop_nPup={0}.fits'.format(nPup,)
