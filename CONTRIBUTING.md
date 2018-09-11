@@ -19,8 +19,8 @@ GitHub, clone, and develop on a branch. Steps:
 2. Clone your fork of the scikit-learn repo from your GitHub account to your local disk:
 
    ```bash
-   $ git clone git@github.com:YourLogin/POT.git
-   $ cd POT
+   $ git clone git@github.com:YourLogin/Coronagraphs.git
+   $ cd Coronagraphs
    ```
 
 3. Create a ``feature`` branch to hold your development changes:
@@ -157,7 +157,6 @@ following rules before submitting:
   import sys; print("Python", sys.version)
   import numpy; print("NumPy", numpy.__version__)
   import scipy; print("SciPy", scipy.__version__)
-  import ot; print("POT", ot.__version__)
   ```
 
 -  Please be specific about what estimators and/or functions are involved
