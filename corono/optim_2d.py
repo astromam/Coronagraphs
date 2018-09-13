@@ -17,12 +17,12 @@ import time
 
 try:
     import stdgrb
-except ModuleNotFoundError:
+except ImportError:
     stdgrb = False
 
 try:
     import gurobipy as gb
-except ModuleNotFoundError:
+except ImportError:
     gb = False
 
 import scipy.optimize
@@ -460,7 +460,7 @@ class ProblemMatrix(object):
         
         """
         if self.allLogToConsole == 1:
-            return print(string)
+            print(string)
 
         
 #%%
