@@ -54,7 +54,7 @@ if False:
     corono_name   = 'SP' # 'SP' or 'APLC'
     CtrBtwnPix  = True
     CtrBtwnPix2 = True
-    Pupil2dSym  = 'Full' # 'Full', 'Quarter', 'Half-ax0', 'Half-ax1' 
+    Pupil2dSym  = 'Half-ax0' # 'Full', 'Quarter', 'Half-ax0', 'Half-ax1' 
     
     #nlam
     bw   = 0.1

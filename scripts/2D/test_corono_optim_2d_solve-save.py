@@ -25,8 +25,8 @@ Parameters
 # Telescope name
 corono_name  = 'SP' # 'SP' or 'APLC'
 pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
-problem_name = 'MaxContrastLinf' # 'MaxTau' # ,'MaxContrastLinf' # 'MaxContrastL1' #
-solver       = 'xxx' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
+problem_name = 'MaxTau' # 'MaxTau' # ,'MaxContrastLinf' # 'MaxContrastL1' #
+solver       = 'stdgrb' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
 slvLogToConsole = 0
 slvCrossover    = 0
 slvMethod       = 2
@@ -60,6 +60,7 @@ tau   = 0.4
 CtrBtwnPix  = True
 CtrBtwnPix2 = True
 Pupil2dSym  = 'Half-ax0' # 'Full', 'Quarter', 'Half-ax0', 'Half-ax1' 
+ImPart = True
 
 #nlam
 bw   = 0.1
@@ -144,6 +145,11 @@ print('optimization time             : {0:.2f}s'.format(t1-t0))
 Generation of full apodizer for quarter pupil optimization
 """
 Apod1_2d = np.reshape(Apod1, (corono0.nPup, corono0.nPup))
+
+import pylab as pl
+pl.figure(1)
+pl.imshow(Apod1_2d)
+pl.show()
 
 if Pupil2dSym == 'Full':
     pass

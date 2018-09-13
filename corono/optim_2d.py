@@ -128,11 +128,11 @@ class ProblemMatrix(object):
             Pupil2dquarter = np.zeros_like(self.corono.Pupil2d)
             Pupil2dquarter[self.corono.nPup//2:, self.corono.nPup//2:] = 1.
             self.Pupil_vec = np.reshape(self.corono.Pupil2d*Pupil2dquarter, (self.corono.nPup**2))
-        elif self.Pupil2dSym == 'Half-ax0': 
+        elif self.corono.Pupil2dSym == 'Half-ax0': 
             Pupil2dhalf = np.zeros_like(self.corono.Pupil2d)
             Pupil2dhalf[self.corono.nPup//2:, :] = 1.
             self.Pupil_vec = np.reshape(self.corono.Pupil2d*Pupil2dhalf, (self.corono.nPup**2))
-        elif self.Pupil2dSym == 'Half-ax1':
+        elif self.corono.Pupil2dSym == 'Half-ax1':
             Pupil2dhalf = np.zeros_like(self.corono.Pupil2d)
             Pupil2dhalf[:, self.corono.nPup//2:] = 1.
             self.Pupil_vec = np.reshape(self.corono.Pupil2d*Pupil2dhalf, (self.corono.nPup**2))             
@@ -152,11 +152,11 @@ class ProblemMatrix(object):
             Image2dquarter = np.zeros_like(self.dz2d)
             Image2dquarter[self.corono.nImg2d//2:, self.corono.nImg2d//2:] = 1.
             self.dz = np.reshape(self.dz2d*Image2dquarter, (self.corono.nImg2d**2))
-        elif self.Pupil2dSym == 'Half-ax0':
+        elif self.corono.Pupil2dSym == 'Half-ax0':
             Image2dhalf = np.zeros_like(self.dz2d)
             Image2dhalf[self.corono.nImg2d//2:, :] = 1.
             self.dz = np.reshape(self.dz2d*Image2dhalf, (self.corono.nImg2d**2))
-        elif self.Pupil2dSym == 'Half-ax1':
+        elif self.corono.Pupil2dSym == 'Half-ax1':
             Image2dhalf = np.zeros_like(self.dz2d)
             Image2dhalf[:, self.corono.nImg2d//2:] = 1.
             self.dz = np.reshape(self.dz2d*Image2dhalf, (self.corono.nImg2d**2))            
