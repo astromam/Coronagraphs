@@ -460,7 +460,7 @@ class ProblemMatrix(object):
         
         """
         if self.allLogToConsole == 1:
-            return print(string)
+            print(string)
 
         
 #%%

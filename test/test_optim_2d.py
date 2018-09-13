@@ -15,12 +15,12 @@ import pytest
 
 try:
     import stdgrb
-except ModuleNotFoundError:
+except ImportError:
     stdgrb = False
 
 try:
     import gurobipy as gb
-except ModuleNotFoundError:
+except ImportError:
     gb = False
 
 #%%
@@ -90,18 +90,18 @@ def check_2d_problem_methods_parameters(class_optim, Lnorm='L1'):
     check_2d_problem_methods(problem6)
 
     params7 = coro.update_params(params, LSRobustness='True')
-    problem7 = class_optim(**params7, corono=[coro.design.APLC2d(), coro.design.APLC2d()])
+    problem7 = class_optim(corono=[coro.design.APLC2d(), coro.design.APLC2d()], **params7)
     check_2d_problem_methods(problem7)
 
     params8 = coro.update_params(params, LSRobustness='True')
-    problem8 = class_optim(**params8, corono=coro.design.APLC2d())
+    problem8 = class_optim(corono=coro.design.APLC2d(), **params8)
     check_2d_problem_methods(problem8)
 
     params = coro.to_dict() 
     params2 = coro.update_params(params, Pupil2dSym=False)    
     corono0 = coro.design.APLC2d(**params2)
     params9 = coro.update_params(params, LSRobustness='True')
-    problem9 = class_optim(**params9, corono=corono0)
+    problem9 = class_optim(corono=corono0, **params9)
     check_2d_problem_methods(problem9)
 
 def check_2d_problem_methods_parameters_stdgrb(class_optim, Lnorm='L1'):
