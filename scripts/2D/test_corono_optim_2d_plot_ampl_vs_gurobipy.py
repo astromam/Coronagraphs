@@ -21,13 +21,14 @@ import corono as coro
 Parameters
 """
 # Telescope name
-pupil_name = 'sbr' # 'vlt' or 'sbr' or 'lvr'
+corono_name  = 'APLC' # 'SP' or 'APLC'
+pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
 problem_name = 'MaxTau' # 'MaxContrastL1' # 'MaxTau' # ,'MaxContrastL1' # #  
 solver       = 'gurobipy' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
 
 #nPup = corono0.params['nPup']
-nPup = 50
-
+nPup = 100
+nFPM = 50
 Fmax2d = 50 
 nImg2d = 500
 
@@ -45,7 +46,6 @@ cDarkHole = 7
 tau   = 0.4
 
 # CtrBtwnPix2
-corono_name   = 'SP' # 'SP' or 'APLC'
 CtrBtwnPix  = True
 CtrBtwnPix2 = True
 Pupil2dSym  = True
@@ -77,7 +77,7 @@ LyotStop2d = fits.getdata(fpath_lys)
 if solver != 'gurobipy' and solver != 'stdgrb':
     solver = 'scipy'
 
-params = coro.to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d,
+params = coro.to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
                  rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau, 
                  CtrBtwnPix=CtrBtwnPix, CtrBtwnPix2 = CtrBtwnPix2,
                  nlam=nlam, bw=bw,

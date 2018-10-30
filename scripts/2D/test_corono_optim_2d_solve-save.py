@@ -23,10 +23,10 @@ from astropy.io import fits
 Parameters
 """
 # Telescope name
-corono_name  = 'SP' # 'SP' or 'APLC'
+corono_name  = 'APLC' # 'SP' or 'APLC'
 pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
-problem_name = 'MaxContrastLinf' # 'MaxTau' # ,'MaxContrastLinf' # 'MaxContrastL1' #
-solver       = 'xxx' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
+problem_name = 'MaxTau' # 'MaxTau' # ,'MaxContrastLinf' # 'MaxContrastL1' #
+solver       = 'gurobipy' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
 slvLogToConsole = 0
 slvCrossover    = 0
 slvMethod       = 2
@@ -38,13 +38,13 @@ FirstDerGlobalLim = 100.
 BinarityReg       = 0.1
 
 #nPup = corono0.params['nPup']
-nPup = 50
+nPup = 100
 nFPM = 50
 Fmax2d = 22.5
 nImg2d = 45
 
 # mask radius in lam0/D units
-rMask = 4.0
+rMask = 2.8
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
 rho0 =  5.0
@@ -163,3 +163,5 @@ fpath = fdir / fname
 
 if do_fits is True:
     fits.writeto(fpath, Apod1_2d, overwrite=True)
+    
+    
