@@ -420,7 +420,7 @@ class ProblemMatrix(object):
         + str_opt + str_FirstDerGlobal + str_LSRobustness \
         + '_{solver}'        
         
-        return '{pupil_name}_' + fname_corono + fname_gen_optim.format(**params)
+        return '{pupil_name}_'.format(**params) + fname_corono + fname_gen_optim.format(**params)
 
 #%%    
     def compute_matrices(self):
