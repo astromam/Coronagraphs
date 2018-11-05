@@ -131,3 +131,7 @@ cov_html/
 .pytest_cache/v/cache/lastfailed
 .pytest_cache/v/cache/nodeids
 data/2D/ZELDA/
+scripts/2D/results/2D/plots/SPHERE/corono_poly_img_t_OPDmap=0_disp.pdf
+scripts/2D/results/2D/plots/SPHERE/corono_poly_lyot_t_OPDmap=0_disp.pdf
+scripts/2D/results/2D/plots/SPHERE/corono_poly_prf_std_t_OPDmap=0_plot.pdf
+scripts/2D/results/2D/plots/SPHERE/corono_poly_prf_std_t_OPDmap=all_plot.pdf
