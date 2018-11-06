@@ -186,7 +186,7 @@ pl.clf()
 pl.imshow(corono0.Pupil2d, cmap = cm.Greys_r)
 pl.title('Pupil transmission')
 
-fname = fname_gen + '_apodisation_ampl.pdf'
+fname = fname_gen + '_apodisation_ampl_nPup={0}.pdf'.format(nPup)
 fpath = fdir_pdf / fname
 
 #pl.figure(5)
@@ -271,14 +271,14 @@ if nImg2dbis%2 == 0:
 
 #%%
 
-fname_image_plane_f_disp = 'corono_poly_img_f_disp.pdf'
+fname_image_plane_f_disp = 'corono_poly_img_f_nPup={0}_disp.pdf'.format(nPup)
 fpath_image_plane_f_disp = fdir_pdf / fname_image_plane_f_disp
 
 
 f2 = pl.figure(23, figsize=(8,4.5))
 pl.clf()
 exec('ax{0} = f2.add_subplot(1,{1},{0})'.format(1,1))
-exec('im = ax{0}.imshow(np.log10(poly_corono_image1/poly_direct_image1.max()), cmap = "inferno", vmin=-7.5, vmax=-3.5)'.format(1))
+exec('im = ax{0}.imshow(np.log10(corono_poly_img_f/direct_poly_img_f.max()), cmap = "inferno", vmin=-7.5, vmax=-3.5)'.format(1))
 #exec('ax{0}.text(nImg2d/2, 0.1*nImg2d, "nmap={1:05d}", fontsize=16, horizontalalignment="center", color = "white")'.format(1,1))
 exec('ax{0}.tick_params(axis="x", which="both", bottom="off", top="off", labelbottom="off")'.format(1,))
 exec('ax{0}.tick_params(axis="y", which="both", left="off", right="off", labelleft="off")'.format(1,))
@@ -296,7 +296,7 @@ pl.show()
 
 #%% plot displays at multiple wavelengths
 
-fname_image_plane_mono_plot = 'corono_poly_prf_std_t_mono_plot.pdf'
+fname_image_plane_mono_plot = 'corono_poly_prf_std_t_mono_nPup={0}_plot.pdf'.format(nPup)
 fpath_image_plane_mono_plot = fdir_pdf / fname_image_plane_mono_plot
 
 
@@ -333,7 +333,7 @@ pl.show()
 
 #%% Intensity profiles of the direct and coronagraphic images
 
-fname_image_plane_plot = 'corono_poly_prf_std_t_plot.pdf'
+fname_image_plane_plot = 'corono_poly_prf_std_t_nPup={0}_plot.pdf'.format(nPup)
 fpath_image_plane_plot = fdir_pdf / fname_image_plane_plot
 
 rad_corono = np.arange(nImg2dbis//2)
