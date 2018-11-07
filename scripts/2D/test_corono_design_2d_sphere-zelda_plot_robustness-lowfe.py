@@ -15,7 +15,7 @@ import os
 import pylab as pl
 from pathlib import Path
 from astropy.io import fits
-from pyzelda.utils import aperture, imutils
+from pyzelda.utils import aperture, imutils, zernike
 import corono as coro
 
 import time
@@ -509,243 +509,151 @@ pl.savefig(str(fpath_image_allmaps_plot), transparent=True)
 
 pl.show()
 
-
 #%%
 """
-results from Paranal run
+Robustness to low-order aberrations
 """
-#%%
-#path_root     = Path('/Users/mndiaye/Dropbox/python/zelda/ZELDA-2018')
-#path_data_int = path_root / '2018-04-03' / 'data'
-#path_data_sky = path_root / '2018-04-03_night' / 'data'
-#pixel_irdis = 12.25
-#
-##%%
-#prefix = 'aplc_internal_source'
-#
-## read images for normalisation
-#psf_def_img  = fits.getdata(path_data_int / '{:s}_psf_ref_image.fits'.format(prefix))
-#psf_def_norm_int = psf_def_img.max()
-#
-#psf_zel_img = fits.getdata(path_data_int / '{:s}_psf_zel_image.fits'.format(prefix))
-#psf_zel_norm_int = psf_zel_img.max()
-#
-## read profiles
-#psf_def_prf_int = fits.getdata(path_data_int / '{:s}_psf_ref_profile.fits'.format(prefix))
-#psf_zel_prf_int = fits.getdata(path_data_int / '{:s}_psf_zel_profile.fits'.format(prefix))
-#
-#cor_def_prf_int = fits.getdata(path_data_int / '{:s}_coro_ref_profile_std.fits'.format(prefix))
-#cor_zel_prf_int = fits.getdata(path_data_int / '{:s}_coro_zel_profile_std.fits'.format(prefix))
-#
-## separations
-#psf_sep_int = np.arange(len(psf_def_prf_int))*pixel_irdis
-#cor_sep_int = np.arange(cor_def_prf_int.shape[1])*pixel_irdis
+direct_poly_img_f = direct_poly_img_t[0]
 
-#%% tools for throughput
-#%% 
-def generate_phot_aperture(mD=50, nImg=500, sep=5.0, ee_rad=0.7, axis=0):
-    ''' --------------------------------------------------------------
-    Compute the list of points with a given area in the final image plane 
-    of the coronagraph. The area is defined by a circle centered at a given 
-    angular separation from the star.
-    
-    Parameters:
-    ---------- 
-    
-    - mD     : spatial frequency range in the final image plane D in lam0/D
-    - nImg   : linear number of points in the final image plane D
-    - sep    : angular separation from the star for the area 
-    - ee_rad : angular radius of the photometric aperture
-    - axis   : axis along which the photometric aperture is set (0: y-axis, 1: x-axis)
-    
-    Output:
-    ----------
-    
-     - res    : 2D array with 1 and 0 for points inside and outside the area in the 
-    coronagraphic image
-    
-    -------------------------------------------------------------- '''
-    # conversion of values to float
-    mD     = float(mD)
-    nImg   = float(nImg)
-    
-    # array of angular distances in the final image plane
-    sep_pix = sep*(nImg/mD)
-    if axis == 0:
-        xx,yy   = np.meshgrid(np.arange(nImg)-nImg/2-sep_pix, np.arange(nImg)-nImg/2)
-    else:
-        xx,yy   = np.meshgrid(np.arange(nImg)-nImg/2, np.arange(nImg)-nImg/2-sep_pix)
-    mydist  = (mD/nImg)*np.hypot(yy,xx)
-    
-    # array with 1 and 0 for points inside and outside the area in the coronagraphic image
-    res    = np.zeros_like(mydist)
-    res[(mydist <= ee_rad)] = 1.0
-    return res
+test = zernike.zernike1(1, npix=nPup)
+test[np.isnan(test)] = 0.
 
-#%% 
-def estimate_contrast(image, res):
-    ''' --------------------------------------------------------------
-    Estimate the averaged intensity inside a given area in the final image plane.
-    
-    Parameters:
-    ---------- 
-    
-    - image   : 2D array of the image in the final image plane
-    - res     : linear number of points in the final image plane D
-    
-    Output:
-    ----------
-    
-    - 2D array with averaged intensity inside a given area in the coronagraphic image
-    
-    -------------------------------------------------------------- ''' 
-    return np.mean(image[res == 1.0]), np.std(image[res == 1.0])
-    
-#%% 
-def estimate_energy(image, res):
-    ''' --------------------------------------------------------------
-    Estimate the energy inside a given area in the final image plane.
-    
-    Parameters:
-    ---------- 
-    
-    - image   : 2D array of the image in the final image plane
-    - res     : linear number of points in the final image plane D
-    
-    Output:
-    ----------
-    
-    - 2D array with energy inside a given area in the coronagraphic image
-    
-    -------------------------------------------------------------- ''' 
-    return np.sum(image[res == 1.0])
-
-#%%
-# vector of angular separation for the computation of planet transmission
-sep_min  = 0.0
-sep_max  = 11.0
-sep_stp  = 0.5
-nsep     = int(round(1+(sep_max-sep_min)/sep_stp))
-sep_vec  = sep_min + sep_stp*np.arange(nsep)
-print('{0:5d} sep'.format(nsep))
-
-'''
-### read aperture PSF
-'''
-int_D0 = np.empty((nImg2d, nImg2d))
-int_D0 = direct_poly_img_t[0]/np.max(direct_poly_img_t[0])
-
-'''
-### estimate energy within photometric aperture w/o coronagraph
-'''
-planet_area0 = generate_phot_aperture(mD=Fmax2d, nImg=nImg2d, sep=0., ee_rad=0.7)
-energy_D0    = estimate_energy(int_D0, planet_area0)
-print('energy w/o  coronagraph: {0}'.format(energy_D0))
-energy_0     = np.sum(int_D0)
-print('total energy: {0}'.format(energy_0))
-
-
-#%%
-
-'''
-### computation of a tip mode for planet location
-''' 
-xx,yy   = np.meshgrid(np.arange(nPup)-nPup/2, np.arange(nPup)-nPup/2)
-rr      = (2./np.float(nPup))*np.hypot(yy,xx)
-theta   = np.arctan2(yy,xx)
-Z       = 2.*rr*np.cos(theta)   
-
-#%%
-'''
-### computation of the coronagraphic image
-'''
-int_D1_arr = np.empty((nsep, nImg2d, nImg2d))       
-for l in range(nsep):
-    sep = sep_vec[l]
-    opd = sep*(1./4.) * Z
-    params   = coro.update_params(params, OPDmap2d = opd, Ampmap2d = None, LyotStop2d = LyotStop2d)
-    corono0  = coro.design.APLC2d(**params)
-    int_D1_arr[l] = corono0.compute_corono_intensity_2d(Apod2d)
-    int_D1_arr[l] /= np.max(direct_poly_img_t[0])
-
-#%%
-pl.figure(30)
+pl.figure(1)
 pl.clf()
-pl.imshow(np.log10(int_D1_arr[0]), cmap = 'inferno')
+pl.imshow(test, cmap='inferno')
+
+mode_init = 2
+mode_final= 11
+nmodes = mode_final - mode_init + 1
 
 
+nopd   = 14
+opd_nm_t = 10.**(0.25*(np.arange(nopd)-2))
+opd_t = opd_nm_t*1e-9
+
+zern_t = np.zeros((nmodes,nPup,nPup))
+for i in range(nmodes):
+    zern_t[i] = zernike.zernike1(mode_init + i, npix=nPup)
+    zern_t[i, np.isnan(zern_t[i])] = 0.
+
+#%%
     
-#%%
-'''
-### estimate energy within photometric aperture with coronagraph at a given location
-# eta_S: fraction of star light in the ROI (region of interest: photometric aperture of 0.7lam/D)
-# eta_P: fraction of planet light in the ROI
-'''
-eta_P = np.empty((nsep))
-eta_S = np.empty((nsep))
-t0 = time.time()
-for l in range(nsep):
-    sep = sep_vec[l]
-    ROI = generate_phot_aperture(mD=Fmax2d, nImg=nImg2d, sep=sep, ee_rad=0.7)
-
-    print('{0:05d}/{1:05d} computation'.format(l+1,nsep))
-    index_S = 0
-    index_P = l
-    energy_S = estimate_energy(int_D1_arr[index_S], ROI)
-    energy_P = estimate_energy(int_D1_arr[index_P], ROI)
-    eta_S[l] = energy_S/energy_0  
-    eta_P[l] = energy_P/energy_0 
-    print('fraction of star   light in the ROI: {0}'.format(eta_S[l])) 
-    print('fraction of planet light in the ROI: {0}'.format(eta_P[l]))
-t1 = time.time()
-print('exec time: {0}s'.format(t1-t0))
-print('')
-
-#%%
-'''
-array of angular distances in x and y
-'''
-xx1,yy1   = np.meshgrid(np.arange(nImg)-nImg/2., np.arange(nImg)-nImg/2.)
-mydist1   = (mD/float(nImg))*np.hypot(yy1,xx1)
-
-'''
-### 1d and 2D fit of the planet transmission eta_P
-'''
-nsample     = 50
-sep_vec_new = np.arange(0, sep_max, sep_stp/nsample)
-eta_P_1dfit = np.empty((np.shape(sep_vec_new)[0]))
-eta_S_1dfit = np.empty((np.shape(sep_vec_new)[0]))
-eta_P_2dfit = np.empty((ndesign, nImg, nImg))
-eta_S_2dfit = np.empty((ndesign, nImg, nImg))
-for i in range(nOD):
-    for j in range(nID):  
-        for k in range(nfpm):
-            tck_P = interpolate.splrep(sep_vec, eta_P[i,j,k], s=0)
-            tck_S = interpolate.splrep(sep_vec, eta_S[i,j,k], s=0)            
-            eta_P_1dfit[i,j,k] = interpolate.splev(sep_vec_new, tck_P, der=0)
-            eta_S_1dfit[i,j,k] = interpolate.splev(sep_vec_new, tck_S, der=0)
-            index_sub = i*nID*nfpm+j*nfpm+k
-            eta_P_2dfit[index_sub] = interpolate.splev(mydist1, tck_P, der=0)
-            eta_S_2dfit[index_sub] = interpolate.splev(mydist1, tck_S, der=0)
-
-
-#%%
-'''
-### check radial planet transmission profiles
-'''
-lamD_vec   = (Fmax2d/float(nImg2d))*np.arange(nImg2d/2)
-
-
-fig = pl.figure(5)
+pl.figure(2)
 pl.clf()
-ax  = fig.add_subplot(111)
-#ax.set_yscale('log')
-#ax.set_color_cycle([cm0(1.*i/(ncurves-1)) for i in range(ncurves)])
-ax.plot(sep_vec, eta_P, label = 'corono')
-#ax.axhline(y=0.5, linewidth=1, color='k', linestyle='--')
-ax.set_xlabel(r'Ang. sep. in $\lambda$/D')
-ax.set_ylabel(r'Normalized intensity')
-ax.legend(loc = 0, labelspacing=0.01, title = 'images')
-fig.tight_layout()
+pl.imshow(zern_t[2], cmap='inferno')
+
+#%%
+val = 0
+if nImg2d%2 == 0:
+    val = 1/2
+
+sepbis=2.5
+septer=5.0
 
 
+# array of angular distances in the final image plane
+xx,yy  = np.meshgrid(np.arange(nImg2d)-nImg2d//2+val, np.arange(nImg2d)-nImg2d//2+val)
+mydist = (Fmax2d/nImg2d)*np.hypot(yy,xx)        
+resbis = (mydist <= sepbis +0.5)*(mydist >= sepbis -0.5)
+rester = (mydist <= septer +0.5)*(mydist >= septer -0.5)
+
+pl.figure(3)
+pl.clf()
+pl.imshow(resbis)
+
+#%%
+direct_poly_img_aberr_t = np.zeros((nmodes,nopd, nImg2d, nImg2d))
+corono_poly_img_aberr_t = np.zeros((nmodes,nopd, nImg2d, nImg2d))
+
+params3  = coro.update_params(params, nlam=nlam, 
+                              Fmax2d = Fmax2d, nImg2d = nImg2d)
+
+for imode in range(nmodes):
+    for iopd in range(nopd):
+        OPDmap2d = opd_t[iopd]*zern_t[imode]
+        params3  = coro.update_params(params3, OPDmap2d = OPDmap2d)
+        corono3  = coro.design.APLC2d(**params3)
+        direct_poly_img_aberr_t[imode, iopd] = corono3.compute_direct_intensity_2d(Apod2d)
+        corono_poly_img_aberr_t[imode, iopd] = corono3.compute_corono_intensity_2d(Apod2d)
+
+#%%
+corono_poly_avg_resbis_aberr_t = np.zeros((nmodes,nopd))
+corono_poly_avg_rester_aberr_t = np.zeros((nmodes,nopd))
+
+for imode in range(nmodes):
+    for iopd in range(nopd):
+        corono_poly_avg_resbis_aberr_t[imode, iopd] = np.mean(corono_poly_img_aberr_t[imode, iopd, resbis != 0])
+        corono_poly_avg_resbis_aberr_t[imode, iopd] /= direct_poly_img_f.max()
+        corono_poly_avg_rester_aberr_t[imode, iopd] = np.mean(corono_poly_img_aberr_t[imode, iopd, rester != 0])
+        corono_poly_avg_rester_aberr_t[imode, iopd] /= direct_poly_img_f.max()
+
+#%%
+f2 = pl.figure(30, figsize=(10,4.5))
+pl.clf()
+for imode in range(nmodes):
+    for iopd in range(nopd):
+        exec('ax{2} = f2.add_subplot({0},{1},{2})'.format(nmodes,nopd,imode*nopd+iopd+1))
+        exec('im = ax{0}.imshow(np.log10(corono_poly_img_aberr_t[{1}, {2}]/direct_poly_img_f.max()), cmap = "inferno", vmin=-7, vmax=-3)'.format(imode*nopd+iopd+1,imode,iopd))
+        exec('ax{0}.text(nImg2dbis/2, 0.1*nImg2dbis, "{1:.1f} nm rms" , fontsize=8, horizontalalignment="center", color = "black")'.format(imode*nopd+iopd+1,opd_nm_t[iopd]))
+        exec('ax{0}.tick_params(axis="x", which="both", bottom="off", top="off", labelbottom="off")'.format(imode*nopd+iopd+1,))
+        exec('ax{0}.tick_params(axis="y", which="both", left="off", right="off", labelleft="off")'.format(imode*nopd+iopd+1,))
+    
+f2.subplots_adjust(bottom=0.1, top=0.9, left=0.1, right=0.8,
+                    wspace=0.02, hspace=0.02)
+
+f2.subplots_adjust(right=0.85)
+cbar_ax = f2.add_axes([0.85, 0.15, 0.05, 0.7])
+cbar    = f2.colorbar(im, cax=cbar_ax)
+cbar.ax.set_ylabel('corono image', rotation=270, labelpad = 10)
+#        pl.savefig(str(fpath_image_plane_disp), transparent=True)
+pl.tight_layout()
+pl.show()
+
+#%%
+
+colors_modes = pl.cm.rainbow(np.linspace(0,1,nmodes))
+name_modes = ['TIP', 'TILT', 'DEFO', 'ASTI 45', 'ASTI 0', 'COMA 60', 'COMA 0', 'TREF 30', 'TREF 0', 'SPHE']
+
+fname_lowfe_plot = 'corono_poly_lowfe_sensitivity_sep={0:.1f}_plot.pdf'.format(sepbis)
+fpath_lowfe_plot = fdir_plots / fname_lowfe_plot
+
+pl.figure(31)
+pl.clf()
+for imode in range(nmodes):
+    pl.loglog(opd_nm_t, corono_poly_avg_resbis_aberr_t[imode], 
+                label=name_modes[imode], color = colors_modes[imode])
+pl.xlabel(r'Aberration amplitude in nm RMS ($\lambda_0={0:.3f}\mu$m)'.format(corono00.wv*1e6))
+pl.ylabel(r'Averaged normalized intensity'.format(sepbis))
+pl.axhline(10**(-cDarkHole+2), xmin=np.log10(opd_nm_t.min()), xmax=np.log10(opd_nm_t.max()), 
+           linewidth=1, color='k', linestyle='--')    
+pl.xlim(3e-1, 3e2)
+pl.ylim(3e-8, 3e-4)  
+pl.title(r'Averaged intensity at {1:.1f}$\lambda_0$/D in broadband light ($\Delta\lambda/\lambda_0$={0:.1f}%)'.format(bw*100, sepbis)) 
+pl.legend()
+pl.tight_layout()
+pl.savefig(str(fpath_lowfe_plot), transparent=True)
+
+
+#%%
+
+fname_lowfe_plot = 'corono_poly_lowfe_sensitivity_sep={0:.1f}_plot.pdf'.format(septer)
+fpath_lowfe_plot = fdir_plots / fname_lowfe_plot
+
+pl.figure(32)
+pl.clf()
+for imode in range(nmodes):
+    pl.loglog(opd_nm_t, corono_poly_avg_rester_aberr_t[imode], 
+                label=name_modes[imode], color = colors_modes[imode])
+pl.xlabel(r'Aberration amplitude in nm RMS ($\lambda_0={0:.3f}\mu$m)'.format(corono00.wv*1e6))
+pl.ylabel(r'Averaged normalized intensity'.format(septer))
+pl.axhline(10**(-cDarkHole), xmin=np.log10(opd_nm_t.min()), xmax=np.log10(opd_nm_t.max()), 
+           linewidth=1, color='k', linestyle='--')    
+pl.xlim(3e-1, 3e2)
+pl.ylim(3e-8, 3e-4)
+pl.title(r'Averaged intensity at {1:.1f}$\lambda_0$/D in broadband light ($\Delta\lambda/\lambda_0$={0:.1f}%)'.format(bw*100, septer))    
+pl.legend()
+pl.tight_layout()
+pl.savefig(str(fpath_lowfe_plot), transparent=True)
+
+#%%
+pl.show()
