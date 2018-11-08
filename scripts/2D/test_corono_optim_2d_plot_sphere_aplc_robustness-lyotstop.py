@@ -37,9 +37,10 @@ if True:
     Binarity    = False
     FirstDerGlobalLim = 1.
     BinarityReg       = 0.1
+    LSRobustness = True
     
     #nPup = corono0.params['nPup']
-    nPup = 100
+    nPup = 50
     nFPM = 50
     Fmax2d = 22.5
     nImg2d = 45
@@ -49,7 +50,7 @@ if True:
     
     # dark zone bounds (inner and outer edges) in lam0/D unit
     rho0 =  2.0
-    rho1 = 10.0
+    rho1 = 20.0
     
     # contrast in the dark region
     cDarkHole = 6.0
@@ -61,6 +62,7 @@ if True:
     CtrBtwnPix  = True
     CtrBtwnPix2 = True
     Pupil2dSym  = False # set it True only for optimization
+    ImPart      = True
     
     #nlam
     bw   = 0.2
@@ -107,7 +109,8 @@ params = coro.to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
                  solver = solver, 
                  corono_name = corono_name, pupil_name = pupil_name,
                  MinIsland = MinIsland, FirstDerGlobalLim = FirstDerGlobalLim,
-                 Binarity = Binarity, BinarityReg = BinarityReg)
+                 Binarity = Binarity, BinarityReg = BinarityReg,
+                 ImPart = ImPart, LSRobustness = LSRobustness)
 
 #%%
 """
@@ -494,7 +497,7 @@ plot_lines = []
 
 idx = list((npix-1)//2+npix*np.arange(npix))
 
-pl.figure(31, figsize=(8,4.5))
+pl.figure(31)
 pl.clf()
 l1, = pl.semilogy(100*pix_t/nPup, corono_poly_avg_resbis_aberr_t[npix*(npix-1)//2:npix*((npix-1)//2+1)],
             color = colors_shifts[0], marker='x', ls ='-')
