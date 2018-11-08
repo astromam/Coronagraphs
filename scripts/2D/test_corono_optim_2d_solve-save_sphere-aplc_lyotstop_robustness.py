@@ -38,6 +38,7 @@ MinIsland   = False
 Binarity    = False
 FirstDerGlobalLim = 100.
 BinarityReg       = 0.1
+LSRobustness = True
 
 #nPup = corono0.params['nPup']
 nPup = 50
@@ -62,10 +63,14 @@ tau   = 0.756
 CtrBtwnPix  = True
 CtrBtwnPix2 = True
 Pupil2dSym  = False
+ImPart      = True
 
 #nlam
 bw   = 0.2
 nlam = 5
+
+# maximum pixel shift along a given axis for Lyot stop 
+pix_max   = 1
 
 do_fits = True
 
@@ -91,9 +96,31 @@ Pupil2d    = fits.getdata(fpath_pup)
 LyotStop2dtmp = fits.getdata(fpath_lys)
 LyotStop2d = imresize(LyotStop2dtmp, (nPup, nPup))
 
+# List of Lyot stops for the design optimization
+LyotStop2d_t = [LyotStop2d]
+
+# List construction for Lyot stop position shifts
+pix_t = []
+if pix_max >= 1 and LSRobustness == True:
+    pix_pos_t = 1+np.arange(pix_max)
+    pix_neg_t = - pix_pos_t
+    pix_t = list(-pix_pos_t) + list(pix_pos_t)
+    pix_t.sort()
+
+# List construstion for the Lyot stops 
+for j in range(2):
+    for i in range(len(pix_t)):
+        LyotStop2d_t.append(np.roll(LyotStop2d, pix_t[i], axis=j))
+
+# number of coronagraph configuration
+ncorono      = len(LyotStop2d_t)
+print('# of coronagraph configurations: {0}'.format(ncorono))
+
+
 if solver != 'gurobipy' and solver != 'stdgrb':
     solver = 'scipy'
 
+# list parameters for the coronagraph and the optimization problem
 params = coro.to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
                  rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau, 
                  CtrBtwnPix=CtrBtwnPix, CtrBtwnPix2 = CtrBtwnPix2,
@@ -107,16 +134,26 @@ params = coro.to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
                  slvCrossover = slvCrossover, slvMethod = slvMethod,
                  allLogToConsole = allLogToConsole,
                  MinIsland = MinIsland, FirstDerGlobalLim = FirstDerGlobalLim,
-                 Binarity = Binarity, BinarityReg = BinarityReg)
+                 Binarity = Binarity, BinarityReg = BinarityReg,
+                 ImPart = ImPart, LSRobustness = LSRobustness)
+
+# list of parameters for each coronagraph configuration
+params_t = []
+for k in range(ncorono):
+    params_t.append(coro.update_params(params, LyotStop2d=LyotStop2d_t[k])) 
+
+# initialization of coronagraph list
+corono_t = []
 
 #%%  
 """ 
 Coronagraph defintion
 """
 if corono_name == 'SP':
-    corono0 = coro.design.SP2d(**params)
+    corono_t.append(coro.design.SP2d(**params))
 elif corono_name == 'APLC':
-    corono0 = coro.design.APLC2d(**params)
+    for k in range(ncorono):
+        corono_t.append(coro.design.APLC2d(**params_t[k])) 
 else:
     raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
 
@@ -124,15 +161,16 @@ else:
 """
 Problem defintion
 """
+# generation of a optimzation problem object
 if problem_name == 'MaxTau':
     # Maximization of the integrated amplitude transmission of the apodizer
-    problem1 = coro.optim_2d.MaxTau(corono=corono0, **params)
+    problem1 = coro.optim_2d.MaxTau(corono=corono_t, **params)
 elif problem_name == 'MaxContrastL1':
     # Maximization of the contrast under L1-norm
-    problem1 = coro.optim_2d.MaxContrast(corono=corono0, Lnorm='L1',**params)
+    problem1 = coro.optim_2d.MaxContrast(corono=corono_t, Lnorm='L1',**params)
 elif problem_name == 'MaxContrastLinf':
     # Maximization of the contrast under L-infinite norm
-    problem1 = coro.optim_2d.MaxContrast(corono=corono0, Lnorm='Linf',**params)
+    problem1 = coro.optim_2d.MaxContrast(corono=corono_t, Lnorm='Linf',**params)
 else:
     raise NameError('{0}: Not an existing optimization problem!'.format(problem_name))
 
@@ -149,12 +187,12 @@ print('optimization time             : {0:.2f}s'.format(t1-t0))
 """
 Generation of full apodizer for quarter pupil optimization
 """
-Apod1_2d = np.reshape(Apod1, (corono0.nPup, corono0.nPup))
+Apod1_2d = np.reshape(Apod1, (corono_t[0].nPup, corono_t[0].nPup))
 
 if Pupil2dSym == True:
-        Apod1_2dtmp =  Apod1_2d[corono0.nPup//2:, corono0.nPup//2:]
-        Apod1_2d[:corono0.nPup//2, corono0.nPup//2:] = np.flip(Apod1_2dtmp, axis=0)
-        Apod1_2d[:, :corono0.nPup//2]          = np.flip(Apod1_2d[:, corono0.nPup//2:], axis=1)
+        Apod1_2dtmp =  Apod1_2d[corono_t[0].nPup//2:, corono_t[0].nPup//2:]
+        Apod1_2d[:corono_t[0].nPup//2, corono_t[0].nPup//2:] = np.flip(Apod1_2dtmp, axis=0)
+        Apod1_2d[:, :corono_t[0].nPup//2]          = np.flip(Apod1_2d[:, corono_t[0].nPup//2:], axis=1)
         
 #%%
 """

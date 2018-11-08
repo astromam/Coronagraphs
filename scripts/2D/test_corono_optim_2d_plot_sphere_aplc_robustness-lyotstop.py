@@ -494,7 +494,7 @@ plot_lines = []
 
 idx = list((npix-1)//2+npix*np.arange(npix))
 
-pl.figure(31)
+pl.figure(31, figsize=(8,4.5))
 pl.clf()
 l1, = pl.semilogy(100*pix_t/nPup, corono_poly_avg_resbis_aberr_t[npix*(npix-1)//2:npix*((npix-1)//2+1)],
             color = colors_shifts[0], marker='x', ls ='-')
