@@ -588,26 +588,27 @@ for imode in range(nmodes):
         corono_poly_avg_rester_aberr_t[imode, iopd] /= direct_poly_img_f.max()
 
 #%%
-f2 = pl.figure(30, figsize=(10,4.5))
-pl.clf()
-for imode in range(nmodes):
-    for iopd in range(nopd):
-        exec('ax{2} = f2.add_subplot({0},{1},{2})'.format(nmodes,nopd,imode*nopd+iopd+1))
-        exec('im = ax{0}.imshow(np.log10(corono_poly_img_aberr_t[{1}, {2}]/direct_poly_img_f.max()), cmap = "inferno", vmin=-7, vmax=-3)'.format(imode*nopd+iopd+1,imode,iopd))
-        exec('ax{0}.text(nImg2dbis/2, 0.1*nImg2dbis, "{1:.1f} nm rms" , fontsize=8, horizontalalignment="center", color = "black")'.format(imode*nopd+iopd+1,opd_nm_t[iopd]))
-        exec('ax{0}.tick_params(axis="x", which="both", bottom="off", top="off", labelbottom="off")'.format(imode*nopd+iopd+1,))
-        exec('ax{0}.tick_params(axis="y", which="both", left="off", right="off", labelleft="off")'.format(imode*nopd+iopd+1,))
+if nopd <= 5:
+    f2 = pl.figure(30, figsize=(10,4.5))
+    pl.clf()
+    for imode in range(nmodes):
+        for iopd in range(nopd):
+            exec('ax{2} = f2.add_subplot({0},{1},{2})'.format(nmodes,nopd,imode*nopd+iopd+1))
+            exec('im = ax{0}.imshow(np.log10(corono_poly_img_aberr_t[{1}, {2}]/direct_poly_img_f.max()), cmap = "inferno", vmin=-7, vmax=-3)'.format(imode*nopd+iopd+1,imode,iopd))
+            exec('ax{0}.text(nImg2dbis/2, 0.1*nImg2dbis, "{1:.1f} nm rms" , fontsize=8, horizontalalignment="center", color = "black")'.format(imode*nopd+iopd+1,opd_nm_t[iopd]))
+            exec('ax{0}.tick_params(axis="x", which="both", bottom="off", top="off", labelbottom="off")'.format(imode*nopd+iopd+1,))
+            exec('ax{0}.tick_params(axis="y", which="both", left="off", right="off", labelleft="off")'.format(imode*nopd+iopd+1,))
+        
+    f2.subplots_adjust(bottom=0.1, top=0.9, left=0.1, right=0.8,
+                        wspace=0.02, hspace=0.02)
     
-f2.subplots_adjust(bottom=0.1, top=0.9, left=0.1, right=0.8,
-                    wspace=0.02, hspace=0.02)
-
-f2.subplots_adjust(right=0.85)
-cbar_ax = f2.add_axes([0.85, 0.15, 0.05, 0.7])
-cbar    = f2.colorbar(im, cax=cbar_ax)
-cbar.ax.set_ylabel('corono image', rotation=270, labelpad = 10)
-#        pl.savefig(str(fpath_image_plane_disp), transparent=True)
-pl.tight_layout()
-pl.show()
+    f2.subplots_adjust(right=0.85)
+    cbar_ax = f2.add_axes([0.85, 0.15, 0.05, 0.7])
+    cbar    = f2.colorbar(im, cax=cbar_ax)
+    cbar.ax.set_ylabel('corono image', rotation=270, labelpad = 10)
+    #        pl.savefig(str(fpath_image_plane_disp), transparent=True)
+    pl.tight_layout()
+    pl.show()
 
 #%%
 
@@ -629,6 +630,8 @@ pl.axhline(10**(-cDarkHole+2), xmin=np.log10(opd_nm_t.min()), xmax=np.log10(opd_
 pl.xlim(3e-1, 3e2)
 pl.ylim(3e-8, 3e-4)  
 pl.title(r'Averaged intensity at {1:.1f}$\lambda_0$/D in broadband light ($\Delta\lambda/\lambda_0$={0:.1f}%)'.format(bw*100, sepbis)) 
+pl.grid(True,which="both",ls="--")
+
 pl.legend()
 pl.tight_layout()
 pl.savefig(str(fpath_lowfe_plot), transparent=True)
@@ -651,6 +654,8 @@ pl.axhline(10**(-cDarkHole), xmin=np.log10(opd_nm_t.min()), xmax=np.log10(opd_nm
 pl.xlim(3e-1, 3e2)
 pl.ylim(3e-8, 3e-4)
 pl.title(r'Averaged intensity at {1:.1f}$\lambda_0$/D in broadband light ($\Delta\lambda/\lambda_0$={0:.1f}%)'.format(bw*100, septer))    
+pl.grid(True,which="both",ls="--")
+
 pl.legend()
 pl.tight_layout()
 pl.savefig(str(fpath_lowfe_plot), transparent=True)

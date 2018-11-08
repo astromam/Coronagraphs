@@ -39,7 +39,7 @@ if True:
     BinarityReg       = 0.1
     
     #nPup = corono0.params['nPup']
-    nPup = 50
+    nPup = 100
     nFPM = 50
     Fmax2d = 22.5
     nImg2d = 45
@@ -253,8 +253,7 @@ for i in range(corono0.nlam):
     direct_mono_prf_avg_t[i], rad_direct = imutils.profile(direct_mono_img_t[i], type='mean')
     corono_mono_prf_avg_t[i], rad_corono = imutils.profile(corono_mono_img_t[i], type='mean')
     direct_mono_prf_std_t[i], rad_direct = imutils.profile(direct_mono_img_t[i], type='std')
-    corono_mono_prf_std_t[i], rad_corono = imutils.profile(corono_mono_img_t[i], type='std')
-    
+    corono_mono_prf_std_t[i], rad_corono = imutils.profile(corono_mono_img_t[i], type='std')    
 
 #%% Intensity profiles of the direct and coronagraphic images
 """
@@ -282,7 +281,6 @@ if nImg2dbis%2 == 0:
 
 fname_image_plane_f_disp = 'corono_poly_img_f_nPup={0}_disp.pdf'.format(nPup)
 fpath_image_plane_f_disp = fdir_pdf / fname_image_plane_f_disp
-
 
 f2 = pl.figure(23, figsize=(8,4.5))
 pl.clf()
@@ -368,36 +366,48 @@ pl.title(r'Intensity profile in broadband light ($\Delta\lambda/\lambda_0$={0:.1
 pl.tight_layout()
 pl.savefig(str(fpath_image_plane_plot), transparent=True)
 
-#%%
-"""
-Robustness to low-order aberrations
-"""
-test = zernike.zernike1(1, npix=nPup)
-test[np.isnan(test)] = 0.
-
-pl.figure(1)
-pl.clf()
-pl.imshow(test, cmap='inferno')
-
-mode_init = 2
-mode_final= 11
-nmodes = mode_final - mode_init + 1
-
-
-nopd   = 14
-opd_nm_t = 10.**(0.25*(np.arange(nopd)-2))
-opd_t = opd_nm_t*1e-9
-
-zern_t = np.zeros((nmodes,nPup,nPup))
-for i in range(nmodes):
-    zern_t[i] = zernike.zernike1(mode_init + i, npix=nPup)
-    zern_t[i, np.isnan(zern_t[i])] = 0.
 
 #%%
-    
-pl.figure(2)
-pl.clf()
-pl.imshow(zern_t[2], cmap='inferno')
+"""
+Robustness to Lyot stop misalignments
+"""
+# maximum pixel shift along a given axis for Lyot stop 
+pix_max   = 2
+
+pix_t = np.arange(2*pix_max+1)-pix_max
+npix = len(pix_t)
+
+LyotStop2d_t = []
+for j in range(npix-1, -1, -1):
+    for i in range(npix):
+        LyotStop2d_t.append(np.roll(np.roll(LyotStop2d, pix_t[i], axis=1), pix_t[j], axis=0))
+        print('{0:.2f}, {1:.2f}'.format(pix_t[j], pix_t[i]))
+        
+#%%
+# number of coronagraph configuration
+ncorono      = len(LyotStop2d_t)
+print('# of coronagraph configurations: {0}'.format(ncorono))
+
+#%%
+      
+# list of parameters for each coronagraph configuration
+params_t = []
+for k in range(ncorono):
+    params_t.append(coro.update_params(params, LyotStop2d=LyotStop2d_t[k])) 
+
+corono_t = []
+
+params2_t  = []
+for k in range(ncorono):
+    params2_t.append(coro.update_params(params_t[k], nlam=nlambis, Fmax2d = Fmax2dbis, nImg2d = nImg2dbis)) 
+
+if corono_name == 'SP':
+    corono_t.append(coro.design.SP2d(**params2_t[0]))
+elif corono_name == 'APLC':
+    for k in range(ncorono):
+        corono_t.append(coro.design.APLC2d(**params2_t[k])) 
+else:
+    raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
 
 #%%
 val = 0
@@ -419,41 +429,47 @@ pl.clf()
 pl.imshow(resbis)
 
 #%%
-direct_poly_img_aberr_t = np.zeros((nmodes,nopd, nImg2dbis, nImg2dbis))
-corono_poly_img_aberr_t = np.zeros((nmodes,nopd, nImg2dbis, nImg2dbis))
+direct_poly_img_aberr_t = [] 
+corono_poly_img_aberr_t = []
 
-params3  = coro.update_params(params, nlam=nlambis, 
-                              Fmax2d = Fmax2dbis, nImg2d = nImg2dbis)
+values = range(nlambis)
+colors = pl.cm.rainbow(np.linspace(0,1,nlambis))
 
-for imode in range(nmodes):
-    for iopd in range(nopd):
-        OPDmap2d = opd_t[iopd]*zern_t[imode]
-        params3  = coro.update_params(params3, OPDmap2d = OPDmap2d)
-        corono3  = coro.design.APLC2d(**params3)
-        direct_poly_img_aberr_t[imode, iopd] = corono3.compute_direct_intensity_2d(Apod_pyth)
-        corono_poly_img_aberr_t[imode, iopd] = corono3.compute_corono_intensity_2d(Apod_pyth)
+for k in range(ncorono):
+    if corono_name == 'APLC':
+        direct_poly_img_aberr_t.append(corono_t[k].compute_direct_intensity_2d(Apod_pyth))
+    else:
+        direct_poly_img_aberr_t.append(corono_t[k].compute_direct_intensity_2d(corono_t[k].Pupil2d))
+    corono_poly_img_aberr_t.append(corono_t[k].compute_corono_intensity_2d(Apod_pyth))
 
-#%%
-corono_poly_avg_resbis_aberr_t = np.zeros((nmodes,nopd))
-corono_poly_avg_rester_aberr_t = np.zeros((nmodes,nopd))
-
-for imode in range(nmodes):
-    for iopd in range(nopd):
-        corono_poly_avg_resbis_aberr_t[imode, iopd] = np.mean(corono_poly_img_aberr_t[imode, iopd, resbis != 0])
-        corono_poly_avg_resbis_aberr_t[imode, iopd] /= direct_poly_img_f.max()
-        corono_poly_avg_rester_aberr_t[imode, iopd] = np.mean(corono_poly_img_aberr_t[imode, iopd, rester != 0])
-        corono_poly_avg_rester_aberr_t[imode, iopd] /= direct_poly_img_f.max()
+direct_poly_img_aberr_t = np.asarray(direct_poly_img_aberr_t)
+corono_poly_img_aberr_t = np.asarray(corono_poly_img_aberr_t)
 
 #%%
-f2 = pl.figure(30, figsize=(10,4.5))
+pl.figure(1)
 pl.clf()
-for imode in range(nmodes):
-    for iopd in range(nopd):
-        exec('ax{2} = f2.add_subplot({0},{1},{2})'.format(nmodes,nopd,imode*nopd+iopd+1))
-        exec('im = ax{0}.imshow(np.log10(corono_poly_img_aberr_t[{1}, {2}]/direct_poly_img_f.max()), cmap = "inferno", vmin=-7, vmax=-3)'.format(imode*nopd+iopd+1,imode,iopd))
-        exec('ax{0}.text(nImg2dbis/2, 0.1*nImg2dbis, "{1:.1f} nm rms" , fontsize=8, horizontalalignment="center", color = "black")'.format(imode*nopd+iopd+1,opd_nm_t[iopd]))
-        exec('ax{0}.tick_params(axis="x", which="both", bottom="off", top="off", labelbottom="off")'.format(imode*nopd+iopd+1,))
-        exec('ax{0}.tick_params(axis="y", which="both", left="off", right="off", labelleft="off")'.format(imode*nopd+iopd+1,))
+pl.imshow(rester)
+
+
+#%%
+corono_poly_avg_resbis_aberr_t = []
+corono_poly_avg_rester_aberr_t = []
+
+for i in range(ncorono):
+    corono_poly_avg_resbis_aberr_t.append(np.mean(corono_poly_img_aberr_t[i, resbis != 0])/direct_poly_img_f.max())
+    corono_poly_avg_rester_aberr_t.append(np.mean(corono_poly_img_aberr_t[i, rester != 0])/direct_poly_img_f.max())
+
+#%%
+if ncorono <= 9: 
+    f2 = pl.figure(30, figsize=(10,4.5))
+    pl.clf()
+    for j in range(npix):
+        for i in range(npix):
+            exec('ax{2} = f2.add_subplot({0},{1},{2})'.format(npix,npix,j*npix+i+1))
+            exec('im = ax{0}.imshow(np.log10(corono_poly_img_aberr_t[{1}]/direct_poly_img_f.max()), cmap = "inferno", vmin=-7, vmax=-3)'.format(j*npix+i+1,j*npix+i))
+            exec('ax{0}.text(nImg2dbis/2, 0.1*nImg2dbis, "({1:.1f}, {2:.1f}) pix shift" , fontsize=8, horizontalalignment="center", color = "black")'.format(j*npix+i+1,pix_t[npix-1-j],pix_t[i]))
+            exec('ax{0}.tick_params(axis="x", which="both", bottom="off", top="off", labelbottom="off")'.format(j*npix+i+1,))
+            exec('ax{0}.tick_params(axis="y", which="both", left="off", right="off", labelleft="off")'.format(j*npix+i+1,))
     
 f2.subplots_adjust(bottom=0.1, top=0.9, left=0.1, right=0.8,
                     wspace=0.02, hspace=0.02)
@@ -468,49 +484,44 @@ pl.show()
 
 #%%
 
-colors_modes = pl.cm.rainbow(np.linspace(0,1,nmodes))
-name_modes = ['TIP', 'TILT', 'DEFO', 'ASTI 45', 'ASTI 0', 'COMA 60', 'COMA 0', 'TREF 30', 'TREF 0', 'SPHE']
+colors_shifts = pl.cm.rainbow(np.linspace(0,1,2))
+ls_shifts = ["-", "--"]
 
-fname_lowfe_plot = 'corono_poly_lowfe_sensitivity_sep={0:.1f}_plot.pdf'.format(sepbis)
+fname_lowfe_plot = 'corono_poly_lyotstop_sensitivity_plot.pdf'
 fpath_lowfe_plot = fdir_pdf / fname_lowfe_plot
+
+plot_lines = []
+
+idx = list((npix-1)//2+npix*np.arange(npix))
 
 pl.figure(31)
 pl.clf()
-for imode in range(nmodes):
-    pl.loglog(opd_nm_t, corono_poly_avg_resbis_aberr_t[imode], 
-                label=name_modes[imode], color = colors_modes[imode])
-pl.xlabel(r'Aberration amplitude in nm RMS ($\lambda_0={0:.3f}\mu$m)'.format(corono0.wv*1e6))
+l1, = pl.semilogy(100*pix_t/nPup, corono_poly_avg_resbis_aberr_t[npix*(npix-1)//2:npix*((npix-1)//2+1)],
+            color = colors_shifts[0], marker='x', ls ='-')
+l2, = pl.semilogy(100*pix_t/nPup, corono_poly_avg_rester_aberr_t[npix*(npix-1)//2:npix*((npix-1)//2+1)],
+            color = colors_shifts[1], marker='x', ls ='-')
+l3, = pl.semilogy(100*pix_t/nPup, np.asarray(corono_poly_avg_resbis_aberr_t)[idx],
+            color = colors_shifts[0], marker='x', ls='--')
+l4, = pl.semilogy(100*pix_t/nPup, np.asarray(corono_poly_avg_rester_aberr_t)[idx],
+            color = colors_shifts[1], marker='x', ls='--')
+
+l5, = pl.semilogy([], [], color = "k", ls='-')
+l6, = pl.semilogy([], [], color = "k", ls='--')
+
+pl.xlabel(r'Lyot stop shift in pupil diameter [%]')
 pl.ylabel(r'Averaged normalized intensity'.format(sepbis))
-pl.axhline(10**(-cDarkHole+2), xmin=np.log10(opd_nm_t.min()), xmax=np.log10(opd_nm_t.max()), 
+pl.axhline(10**(-cDarkHole+2), xmin=pix_t.min(), xmax=pix_t.max(), 
            linewidth=1, color='k', linestyle='--')    
-pl.xlim(3e-1, 3e2)
+pl.axhline(10**(-cDarkHole), xmin=pix_t.min(), xmax=pix_t.max(), 
+           linewidth=1, color='k', linestyle='--')    
+pl.xlim(-2.5, 2.5)
 pl.ylim(3e-8, 3e-4)  
-pl.title(r'Averaged intensity at {1:.1f}$\lambda_0$/D in broadband light ($\Delta\lambda/\lambda_0$={0:.1f}%)'.format(bw*100, sepbis)) 
-pl.legend()
+pl.title(r'Averaged intensity in broadband light ($\Delta\lambda/\lambda_0$={0:.1f}%)'.format(bw*100))
+pl.grid(True,which="both",ls="--")
+
+legend1 = pl.legend([l5,l6], ["x-axis", "y-axis"], loc=3)
+pl.gca().add_artist(legend1)
+pl.legend([l1,l2], [r'{0:.1f} $\lambda_0/D$'.format(sepbis), r'{0:.1f} $\lambda_0/D$'.format(septer)], loc=4)
+
 pl.tight_layout()
 pl.savefig(str(fpath_lowfe_plot), transparent=True)
-
-
-#%%
-
-fname_lowfe_plot = 'corono_poly_lowfe_sensitivity_sep={0:.1f}_plot.pdf'.format(septer)
-fpath_lowfe_plot = fdir_pdf / fname_lowfe_plot
-
-pl.figure(32)
-pl.clf()
-for imode in range(nmodes):
-    pl.loglog(opd_nm_t, corono_poly_avg_rester_aberr_t[imode], 
-                label=name_modes[imode], color = colors_modes[imode])
-pl.xlabel(r'Aberration amplitude in nm RMS ($\lambda_0={0:.3f}\mu$m)'.format(corono0.wv*1e6))
-pl.ylabel(r'Averaged normalized intensity'.format(septer))
-pl.axhline(10**(-cDarkHole), xmin=np.log10(opd_nm_t.min()), xmax=np.log10(opd_nm_t.max()), 
-           linewidth=1, color='k', linestyle='--')    
-pl.xlim(3e-1, 3e2)
-pl.ylim(3e-8, 3e-4)
-pl.title(r'Averaged intensity at {1:.1f}$\lambda_0$/D in broadband light ($\Delta\lambda/\lambda_0$={0:.1f}%)'.format(bw*100, septer))    
-pl.legend()
-pl.tight_layout()
-pl.savefig(str(fpath_lowfe_plot), transparent=True)
-
-#%%
-pl.show()
