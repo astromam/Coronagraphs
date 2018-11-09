@@ -40,7 +40,7 @@ if True:
     LSRobustness = True
     
     #nPup = corono0.params['nPup']
-    nPup = 50
+    nPup = 100
     nFPM = 50
     Fmax2d = 22.5
     nImg2d = 45

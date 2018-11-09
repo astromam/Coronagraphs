@@ -40,7 +40,7 @@ FirstDerGlobalLim = 100.
 BinarityReg       = 0.1
 
 #nPup = corono0.params['nPup']
-nPup = 50
+nPup = 200
 nFPM = 50
 Fmax2d = 22.5
 nImg2d = 45
