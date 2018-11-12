@@ -31,16 +31,16 @@ if True:
     corono_name  = 'APLC' # 'SP' or 'APLC'
     pupil_name   = 'vlt' # 'vlt' or 'sbr' or 'lvr'
     problem_name = 'MaxContrastL1' # 'MaxContrastL1' #'MaxTau' # , 'MaxContrastLinf' # #  
-    solver       = 'stdgrb' # 'stdgrb' #  'gurobipy', 'scipy.linprog'
+    solver       = 'gurobipy' # 'stdgrb' #  'gurobipy', 'scipy.linprog'
     
     MinIsland   = False
     Binarity    = False
     FirstDerGlobalLim = 1.
     BinarityReg       = 0.1
-    LSRobustness = True
+    LSRobustness = False
     
     #nPup = corono0.params['nPup']
-    nPup = 100
+    nPup = 200
     nFPM = 50
     Fmax2d = 22.5
     nImg2d = 45
@@ -72,7 +72,9 @@ if True:
 
 nlambis = 11    
 Fmax2dbis = 60
-nImg2dbis = 600    
+nImg2dbis = 600
+
+do_plot = False    
 
 #%%
 """
@@ -212,7 +214,8 @@ pl.clf()
 pl.imshow(Apod_pyth*corono0.Pupil2d, cmap = 'inferno')
 pl.title('Apodized entrance pupil')
 pl.tight_layout()
-pl.savefig(str(fpath), transparent=True)
+if do_plot is True:
+    pl.savefig(str(fpath), transparent=True)
 
 
 #%% Signal in intensity
@@ -300,7 +303,8 @@ f2.subplots_adjust(right=0.8)
 cbar_ax = f2.add_axes([0.85, 0.15, 0.05, 0.7])
 cbar    = f2.colorbar(im, cax=cbar_ax)
 cbar.ax.set_ylabel('intensity in log scale', rotation=270, labelpad = 10)
-pl.savefig(str(fpath_image_plane_f_disp), transparent=True)
+if do_plot is True:
+    pl.savefig(str(fpath_image_plane_f_disp), transparent=True)
 pl.tight_layout()
 pl.show()
 
@@ -336,7 +340,8 @@ pl.ylim(3e-8, 3e-4)
 pl.legend()
 pl.title('Intensity profile in monochromatic light')
 pl.tight_layout()
-pl.savefig(str(fpath_image_plane_mono_plot), transparent=True)
+if do_plot is True:
+    pl.savefig(str(fpath_image_plane_mono_plot), transparent=True)
 
 pl.show()
 
@@ -367,7 +372,8 @@ pl.ylim(3e-8, 3e-4)
 pl.legend()
 pl.title(r'Intensity profile in broadband light ($\Delta\lambda/\lambda_0$={0:.1f}%)'.format(bw*100))
 pl.tight_layout()
-pl.savefig(str(fpath_image_plane_plot), transparent=True)
+if do_plot is True:
+    pl.savefig(str(fpath_image_plane_plot), transparent=True)
 
 
 #%%
@@ -527,4 +533,5 @@ pl.gca().add_artist(legend1)
 pl.legend([l1,l2], [r'{0:.1f} $\lambda_0/D$'.format(sepbis), r'{0:.1f} $\lambda_0/D$'.format(septer)], loc=4)
 
 pl.tight_layout()
-pl.savefig(str(fpath_lowfe_plot), transparent=True)
+if do_plot is True:
+    pl.savefig(str(fpath_lowfe_plot), transparent=True)
