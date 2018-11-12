@@ -32,6 +32,7 @@ solver       = 'stdgrb' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
 slvLogToConsole = 1
 slvCrossover    = 0
 slvMethod       = 2
+slvSparse       = 1
 allLogToConsole = 1
 
 MinIsland   = False
@@ -40,7 +41,7 @@ FirstDerGlobalLim = 100.
 BinarityReg       = 0.1
 
 #nPup = corono0.params['nPup']
-nPup = 200
+nPup = 50
 nFPM = 50
 Fmax2d = 22.5
 nImg2d = 45
@@ -105,6 +106,7 @@ params = coro.to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
                  corono_name = corono_name, pupil_name = pupil_name,
                  slvLogToConsole = slvLogToConsole,
                  slvCrossover = slvCrossover, slvMethod = slvMethod,
+                 slvSparse = slvSparse,
                  allLogToConsole = allLogToConsole,
                  MinIsland = MinIsland, FirstDerGlobalLim = FirstDerGlobalLim,
                  Binarity = Binarity, BinarityReg = BinarityReg)

@@ -25,6 +25,7 @@ try:
 except ImportError:
     gb = False
 
+import scipy
 import scipy.optimize
 from .utils import update_params        
 from . import design, default
@@ -337,11 +338,21 @@ class ProblemMatrix(object):
 
         if stdgrb and self.solver == 'stdgrb':
             self.print_log('solving problem with stdgrb package')
-            Apodtmp, val = stdgrb.lp_solve(self.c, A=(self.A).T, b=self.b, 
-                                           ub = np.ones(self.npp+self.neps+self.nvv),                                           
-                                           crossover=self.slvCrossover, 
-                                           logtoconsole=self.slvLogToConsole, 
-                                           method=self.slvMethod)
+            if self.slvSparse == 0:
+                Apodtmp, val = stdgrb.lp_solve(self.c, A=(self.A).T, b=self.b, 
+                                               ub = np.ones(self.npp+self.neps+self.nvv),                                           
+                                               crossover=self.slvCrossover, 
+                                               logtoconsole=self.slvLogToConsole, 
+                                               method=self.slvMethod)
+            else:
+            # convert A matrix into sparse matrix
+                print('Conversion of A into sparse matrix')
+                As=scipy.sparse.csr_matrix((self.A).T)
+                Apodtmp, val = stdgrb.lp_solve_sparse(self.c, A=As, b=self.b, 
+                                               ub = np.ones(self.npp+self.neps+self.nvv),                                           
+                                               crossover=self.slvCrossover, 
+                                               logtoconsole=self.slvLogToConsole, 
+                                               method=self.slvMethod)
             self.Apod[self.idx_pup] = Apodtmp[:self.npp]
         
         elif gb and self.solver == 'gurobipy':
