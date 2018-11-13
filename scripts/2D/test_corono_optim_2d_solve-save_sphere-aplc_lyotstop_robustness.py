@@ -33,6 +33,7 @@ slvLogToConsole = 1
 slvCrossover    = 0
 slvMethod       = 2
 allLogToConsole = 1
+slvSparse       = 1
 
 MinIsland   = False
 Binarity    = False
@@ -41,7 +42,7 @@ BinarityReg       = 0.1
 LSRobustness = True
 
 #nPup = corono0.params['nPup']
-nPup = 200
+nPup = 50
 nFPM = 20
 Fmax2d = 22.5
 nImg2d = 45
@@ -131,7 +132,7 @@ params = coro.to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
                  solver = solver, 
                  corono_name = corono_name, pupil_name = pupil_name,
                  slvLogToConsole = slvLogToConsole,
-                 slvCrossover = slvCrossover, slvMethod = slvMethod,
+                 slvCrossover = slvCrossover, slvMethod = slvMethod, slvSparse= slvSparse,
                  allLogToConsole = allLogToConsole,
                  MinIsland = MinIsland, FirstDerGlobalLim = FirstDerGlobalLim,
                  Binarity = Binarity, BinarityReg = BinarityReg,
