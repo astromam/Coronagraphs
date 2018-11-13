@@ -41,8 +41,8 @@ BinarityReg       = 0.1
 LSRobustness = True
 
 #nPup = corono0.params['nPup']
-nPup = 100
-nFPM = 50
+nPup = 200
+nFPM = 20
 Fmax2d = 22.5
 nImg2d = 45
 
