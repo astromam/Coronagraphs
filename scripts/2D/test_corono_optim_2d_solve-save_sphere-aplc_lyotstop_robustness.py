@@ -20,6 +20,8 @@ from astropy.io import fits
 
 from scipy.misc import imresize
 
+import sys
+
 #%% parameters
 """
 Parameters
@@ -52,7 +54,7 @@ rMask = 2.252
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
 rho0 =  2.0
-rho1 = 10.0
+rho1 = 20.0
 
 # contrast in the dark region
 cDarkHole = 6.0
@@ -208,3 +210,15 @@ fpath = fdir / fname
 
 if do_fits is True:
     fits.writeto(fpath, Apod1_2d, overwrite=True)
+    
+#%%
+"""
+Save console output
+"""
+
+fname_output = problem1.get_filename() + '.txt'
+fpath_output = fdir / fname_output
+sys.stdout = open(fpath_output, 'w')
+
+    
+    

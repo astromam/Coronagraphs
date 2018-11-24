@@ -31,17 +31,17 @@ if True:
     corono_name  = 'APLC' # 'SP' or 'APLC'
     pupil_name   = 'vlt' # 'vlt' or 'sbr' or 'lvr'
     problem_name = 'MaxContrastL1' # 'MaxContrastL1' #'MaxTau' # , 'MaxContrastLinf' # #  
-    solver       = 'stdgrb' # 'stdgrb' #  'gurobipy', 'scipy.linprog'
+    solver       = 'gurobipy' # 'stdgrb' #  'gurobipy', 'scipy.linprog'
     
     MinIsland   = False
     Binarity    = False
     FirstDerGlobalLim = 1.
     BinarityReg       = 0.1
-    LSRobustness = False
+    LSRobustness = True
     
     #nPup = corono0.params['nPup']
     nPup = 200
-    nFPM = 50
+    nFPM = 20
     Fmax2d = 22.5
     nImg2d = 45
     
