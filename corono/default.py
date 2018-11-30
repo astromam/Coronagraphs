@@ -600,6 +600,10 @@ def get_default_params_1d_ProblemMatrix():
         -  1 : Dual simplex method
         
         -  2 : Barrier
+
+    slvSparse : integer (default=0)
+        stdgrb parameter to transform A into a sparse matrix and give it to 
+        the gurobi solver.
         
     allLogToConsole : integer (default=0)
         control console logging for output from this class
@@ -643,7 +647,7 @@ def get_default_params_1d_ProblemMatrix():
     """
     tmp = {'cDarkHole':6, 'tau':0.1, 'solver':'stdgrb', 
            'problem_name':'MaxTau',
-           'slvCrossover':0, 'slvLogToConsole':0, 'slvMethod':2,
+           'slvCrossover':0, 'slvLogToConsole':0, 'slvMethod':2, 'slvSparse':0,
            'allLogToConsole':0, 
            'FirstDer':False, 'FirstDerLim':0.01, 
            'SecondDer': False, 'SecondDerLim':0.0001,

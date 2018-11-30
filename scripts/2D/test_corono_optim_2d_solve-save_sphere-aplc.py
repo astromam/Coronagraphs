@@ -18,19 +18,22 @@ import corono as coro
 
 from astropy.io import fits
 
+from scipy.misc import imresize
+
 #%% parameters
 """
 Parameters
 """
 # Telescope name
 corono_name  = 'APLC' # 'SP' or 'APLC'
-pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
-problem_name = 'MaxTau' # 'MaxTau' # ,'MaxContrastLinf' # 'MaxContrastL1' #
-solver       = 'gurobipy' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
-slvLogToConsole = 0
+pupil_name   = 'vlt' # 'vlt' or 'sbr' or 'lvr'
+problem_name = 'MaxContrastL1' # 'MaxTau' # ,'MaxContrastLinf' # 'MaxContrastL1' #
+solver       = 'stdgrb' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
+slvLogToConsole = 1
 slvCrossover    = 0
 slvMethod       = 2
-allLogToConsole = 0
+slvSparse       = 1
+allLogToConsole = 1
 
 MinIsland   = False
 Binarity    = False
@@ -38,31 +41,31 @@ FirstDerGlobalLim = 100.
 BinarityReg       = 0.1
 
 #nPup = corono0.params['nPup']
-nPup = 100
+nPup = 200
 nFPM = 50
 Fmax2d = 22.5
 nImg2d = 45
 
 # mask radius in lam0/D units
-rMask = 2.8
+rMask = 2.252
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
-rho0 =  5.0
+rho0 =  2.0
 rho1 = 10.0
 
 # contrast in the dark region
-cDarkHole = 7.0
+cDarkHole = 6.0
 
 # tau (integrated Pupil transmission)
-tau   = 0.4
+tau   = 0.756
 
 # CtrBtwnPix2
 CtrBtwnPix  = True
 CtrBtwnPix2 = True
-Pupil2dSym  = True
+Pupil2dSym  = False
 
 #nlam
-bw   = 0.1
+bw   = 0.2
 nlam = 5
 
 do_fits = True
@@ -75,6 +78,9 @@ fdir = Path('../../data/2D/pupils/').resolve()
 if pupil_name == 'lvr':
     fname_pup = 'ATLAST_Aperture_nPup={0}.fits'.format(nPup,)
     fname_lys = 'ATLAST_LyotStop_nPup={0}.fits'.format(nPup,)
+elif pupil_name == 'vlt':
+    fname_pup = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
+    fname_lys = 'SPHERE/sphere_stop_ST_ALC2.fits' 
 else:
     fname_pup = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
     fname_lys = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
@@ -82,8 +88,9 @@ else:
 fpath_pup = fdir / fname_pup
 fpath_lys = fdir / fname_lys
 Pupil2d    = fits.getdata(fpath_pup)
-LyotStop2d = fits.getdata(fpath_lys)
 
+LyotStop2dtmp = fits.getdata(fpath_lys)
+LyotStop2d = imresize(LyotStop2dtmp, (nPup, nPup))
 
 if solver != 'gurobipy' and solver != 'stdgrb':
     solver = 'scipy'
@@ -99,6 +106,7 @@ params = coro.to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
                  corono_name = corono_name, pupil_name = pupil_name,
                  slvLogToConsole = slvLogToConsole,
                  slvCrossover = slvCrossover, slvMethod = slvMethod,
+                 slvSparse = slvSparse,
                  allLogToConsole = allLogToConsole,
                  MinIsland = MinIsland, FirstDerGlobalLim = FirstDerGlobalLim,
                  Binarity = Binarity, BinarityReg = BinarityReg)
@@ -163,5 +171,3 @@ fpath = fdir / fname
 
 if do_fits is True:
     fits.writeto(fpath, Apod1_2d, overwrite=True)
-    
-    
