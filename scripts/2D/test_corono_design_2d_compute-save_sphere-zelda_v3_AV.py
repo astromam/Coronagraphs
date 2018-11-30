@@ -56,7 +56,14 @@ kw_2nddate   = True
 kw_skyobs    = True
 kw_aftercorr = True
 kw_saxo      = True
-nsaxomap     = 10
+saxomap_i    = 0
+saxomap_f    = 9
+
+if saxomap_i <= saxomap_f:
+    nsaxomap     = saxomap_f - saxomap_i + 1
+else:
+    raise NameError('initial saxo map (saxomap_i={0}) must be smaller than final saxo map (saxomap_f={1})!'.format(saxomap_i, saxomap_f))
+
 
 #%% 
 if kw_aberr is False:
@@ -175,6 +182,7 @@ if kw_aberr is True:
         SAXOmapnm3d = []
         for i in range(nmap):
             SAXOmapnm3d.append(imutils.scale(SAXOmapnm3d_tmp[i], 0, new_dim=(384,384), method='interp'))
+            print('SAXO map before scaling: {0:.2f} nm RMS, after: {1:.2f} nm RMS'.format(np.std(SAXOmapnm3d_tmp[i, pupil_tmp != 0]), np.std(np.asarray(SAXOmapnm3d)[i, pupil != 0])))
         
         SAXOmapnm3d = np.asarray(SAXOmapnm3d)
 
@@ -218,7 +226,7 @@ for imap in range(nmap):
     if kw_aberr is True:
         OPDmap2d = ZELDAmapnm3d[imap0]*1e-9
         if kw_saxo is True and kw_2nddate is True:
-            OPDmap2d += SAXOmapnm3d[imap]*1e-9
+            OPDmap2d += SAXOmapnm3d[saxomap_i+imap]*1e-9
         
         params   = coro.update_params(params, OPDmap2d = OPDmap2d, Ampmap2d = Ampmap2d, LyotStop2d = LyotStop2d)
         corono0  = coro.design.APLC2d(**params)

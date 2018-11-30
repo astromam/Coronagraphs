@@ -56,7 +56,14 @@ kw_2nddate   = True
 kw_skyobs    = True
 kw_aftercorr = True
 kw_saxo      = True
-nsaxomap     = 10
+saxomap_i    = 0
+saxomap_f    = 9
+
+if saxomap_i <= saxomap_f:
+    nsaxomap     = saxomap_f - saxomap_i + 1
+else:
+    raise NameError('initial saxo map (saxomap_i={0}) must be smaller than final saxo map (saxomap_f={1})!'.format(saxomap_i, saxomap_f))
+
 
 #%%
 if kw_aberr is False:
