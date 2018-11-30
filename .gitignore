@@ -130,3 +130,5 @@ cov_html/
 .pytest_cache/README.md
 .pytest_cache/v/cache/lastfailed
 .pytest_cache/v/cache/nodeids
+*.pdf
+*.fits
