@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Oct 17 16:33:20 2018
+Created on Fri Nov 30 15:29:29 2018
 
 Author: Mamadou N'Diaye <mamadou.ndiaye@oca.eu> 
 
@@ -51,11 +51,12 @@ nlam   = 5
 bw     = width/wv 
 nFPM   = 200
 
-kw_aberr     = False
+kw_aberr     = True
 kw_2nddate   = True    
 kw_skyobs    = True
-kw_aftercorr = False
+kw_aftercorr = True
 kw_saxo      = True
+nsaxomap     = 10
 
 #%%
 if kw_aberr is False:
@@ -84,7 +85,7 @@ else:
         imap0    = 3
     if kw_saxo is True and kw_2nddate is True:
         str_saxo = 'with_saxo'
-        nmap     = 1000
+        nmap     = nsaxomap*1
 
 fdir = Path('../../').resolve()
 
@@ -113,13 +114,13 @@ fname_LyotStop2d = 'sphere_stop_ST_ALC2.fits'
 
 if kw_aberr is True:
     if kw_skyobs is True:
-        fname_OPDmapnm3d = '2018-04-01_night_ncpa_loop_700modes_5_ncpa_loop_opd.fits'
+        fname_ZELDAmapnm3d = '2018-04-01_night_ncpa_loop_700modes_5_ncpa_loop_opd.fits'
         if kw_2nddate is True:
-            fname_OPDmapnm3d = '2018-04-03_night_ncpa_loop_sky_2_ncpa_loop_opd.fits'
+            fname_ZELDAmapnm3d = '2018-04-03_night_ncpa_loop_sky_2_ncpa_loop_opd.fits'
     else:
-        fname_OPDmapnm3d = '2018-04-01_ncpa_loop_700modes_2_ncpa_loop_opd.fits'        
+        fname_ZELDAmapnm3d = '2018-04-01_ncpa_loop_700modes_2_ncpa_loop_opd.fits'        
         if kw_2nddate is True:        
-            fname_OPDmapnm3d = '2018-04-03_ncpa_loop_700modes_ncpa_loop_opd.fits'
+            fname_ZELDAmapnm3d = '2018-04-03_ncpa_loop_700modes_ncpa_loop_opd.fits'
     
     if kw_saxo is True and kw_2nddate is True:    
         fname_SAXOmapnm3d = '2018-04-04T03_06_15-saxo_residual_turbulence.fits'
@@ -130,7 +131,7 @@ fpath_Apod2d     = fdir_pupils / fname_Apod2d
 fpath_Ampmap2d   = fdir_pupils / fname_Ampmap2d
 
 if kw_aberr is True:
-    fpath_OPDmapnm3d = fdir_zelda  / fname_OPDmapnm3d   
+    fpath_ZELDAmapnm3d = fdir_zelda  / fname_ZELDAmapnm3d   
     if kw_saxo is True:
         fpath_SAXOmapnm3d = fdir_saxo / fname_SAXOmapnm3d
     
@@ -210,7 +211,7 @@ if kw_aberr is True:
 
 #%% Phase errors
 if kw_aberr is True:
-    OPDmapnm3d = fits.getdata(fpath_OPDmapnm3d)
+    OPDmapnm3d = fits.getdata(fpath_ZELDAmapnm3d)
     OPDmapnm2d = OPDmapnm3d[imap0]
     OPDmap2d   = OPDmapnm2d*1e-9
         
@@ -282,25 +283,42 @@ corono_poly_prf_std_f = fits.getdata(fpath_corono_poly_prf_std_f)
 rad_corono = np.arange(nImg2d//2)
 colors_cor = pl.cm.rainbow(np.linspace(0,1,nmap))
 
+lam0D2mas = (wv/8.)*(360*60*60*1000/(2.*np.pi))
+
+x_lam0D = rad_corono*Fmax2d/nImg2d
+x_mas   = x_lam0D*lam0D2mas
+
+kw_mas = False
+if kw_mas is True:
+    fac   = lam0D2mas*1
+    unit  = 'mas'
+else:
+    fac   = 1.
+    unit  = '$\lambda_0$/D'
+
+x_abs = x_lam0D*fac
+
+
 i0 = 0
 
 pl.figure(11)
 pl.clf()
-pl.semilogy(rad_corono*Fmax2d/nImg2d, corono_poly_prf_std_f/direct_poly_img_f.max(),
+pl.semilogy(x_abs, corono_poly_prf_std_f/direct_poly_img_f.max(),
         label='map {0}'.format(imap0), color = colors_cor[i0])
 
-pl.axvline(x=rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
-pl.axvline(x=rho0, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
-pl.axvline(x=rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
-pl.axhline(10**(-cDarkHole), xmin=corono00.xi2d.min(), xmax=corono00.xi2d.max(), 
+pl.axvline(x=rMask*fac, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
+pl.axvline(x=rho0*fac, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
+pl.axvline(x=rho1*fac, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
+pl.axhline(10**(-cDarkHole), xmin=corono00.xi2d.min()*fac, xmax=corono00.xi2d.max()*fac, 
            linewidth=1, color='k', linestyle='--')
-pl.xlabel(r'Angular separation in $\lambda_0$/D')
+pl.xlabel(r'Angular separation in {0}'.format(unit))
 pl.ylabel(r'1$\sigma$ normalized intensity in log scale')
 pl.ylim(3e-8, 3e-4)
 pl.legend()
 pl.title(r'Intensity profile in broadband light ($\Delta\lambda/\lambda_0$={0:.1f}%)'.format(bw*100))
 pl.tight_layout()
-pl.savefig(str(fpath_image_plane_plot), transparent=True)
+if kw_mas is False:
+    pl.savefig(str(fpath_image_plane_plot), transparent=True)
 
 
 #%%

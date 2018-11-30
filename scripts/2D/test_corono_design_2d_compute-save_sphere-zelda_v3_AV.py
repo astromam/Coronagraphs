@@ -51,11 +51,12 @@ nlam   = 5
 bw     = width/wv 
 nFPM   = 200
    
-kw_aberr     = False
+kw_aberr     = True
 kw_2nddate   = True    
 kw_skyobs    = True
-kw_aftercorr = False
+kw_aftercorr = True
 kw_saxo      = True
+nsaxomap     = 10
 
 #%% 
 if kw_aberr is False:
@@ -83,7 +84,7 @@ else:
         imap0    = 3
     if kw_saxo is True and kw_2nddate is True:
         str_saxo = 'with_saxo'
-        nmap     = 1
+        nmap     = nsaxomap*1
 
 fdir = Path('../../').resolve()
 
@@ -104,11 +105,11 @@ fname_LyotStop2d = 'sphere_stop_ST_ALC2.fits'
 
 if kw_aberr is True:
     if kw_skyobs is True:
-        fname_OPDmapnm3d = '2018-04-01_night_ncpa_loop_700modes_5_ncpa_loop_opd.fits'
+        fname_ZELDAmapnm3d = '2018-04-01_night_ncpa_loop_700modes_5_ncpa_loop_opd.fits'
         if kw_2nddate is True:
             fname_ZELDAmapnm3d = '2018-04-03_night_ncpa_loop_sky_2_ncpa_loop_opd.fits'
     else:
-        fname_OPDmapnm3d = '2018-04-01_ncpa_loop_700modes_2_ncpa_loop_opd.fits'        
+        fname_ZELDAmapnm3d = '2018-04-01_ncpa_loop_700modes_2_ncpa_loop_opd.fits'        
         if kw_2nddate is True:        
             fname_ZELDAmapnm3d = '2018-04-03_ncpa_loop_700modes_ncpa_loop_opd.fits'
     
@@ -196,19 +197,22 @@ params = coro.to_dict(nPup=nPup, nImg2d=nImg2d, Fmax2d = Fmax2d, nFPM = nFPM,
                  OPDmap2d = None, Ampmap2d = None)
 
 #%%
+# define the array of images for each map
 direct_poly_img_t = np.zeros((nmap, nImg2d, nImg2d))
 corono_poly_img_t = np.zeros((nmap, nImg2d, nImg2d))
 
+# define the averaged image
 direct_poly_img_f = np.zeros((nImg2d, nImg2d))
 corono_poly_img_f = np.zeros((nImg2d, nImg2d))
 
+# define the averaged and standard deviation profiles of the images
 direct_poly_prf_avg_f = np.zeros((nImg2d//2))
 corono_poly_prf_avg_f = np.zeros((nImg2d//2))
 direct_poly_prf_std_f = np.zeros((nImg2d//2))
 corono_poly_prf_std_f = np.zeros((nImg2d//2))
 
 #%%
-
+# definition of the coronagraph class
 for imap in range(nmap):
     t0 = time.time()
     if kw_aberr is True:
@@ -228,18 +232,24 @@ for imap in range(nmap):
     t1 = time.time()
     print('map {1}/{2}, computation time: {0:.2f}s'.format(t1-t0, imap+1, nmap))
 
+# computation of the averaged images
 if nmap > 1:
     direct_poly_img_f = np.mean(direct_poly_img_t, axis=0)
     corono_poly_img_f = np.mean(corono_poly_img_t, axis=0)
 else:
     direct_poly_img_f = direct_poly_img_t[0]
     corono_poly_img_f = corono_poly_img_t[0]
-    
+
+# image normalization
+direct_peak_val = direct_poly_img_f.max()
+direct_poly_img_f /= direct_peak_val
+corono_poly_img_f /= direct_peak_val
+     
+# computation of the averaged and standard deviation profiles of the images   
 direct_poly_prf_avg_f, rad_direct = imutils.profile(direct_poly_img_f, type='mean')
 corono_poly_prf_avg_f, rad_corono = imutils.profile(corono_poly_img_f, type='mean')
 direct_poly_prf_std_f, rad_direct = imutils.profile(direct_poly_img_f, type='std')
 corono_poly_prf_std_f, rad_corono = imutils.profile(corono_poly_img_f, type='std')
-
 
 #%% saving of the images
 fits.writeto(fpath_direct_poly_img_t, direct_poly_img_t, overwrite=True)
@@ -252,138 +262,3 @@ fits.writeto(fpath_direct_poly_prf_avg_f, direct_poly_prf_avg_f, overwrite=True)
 fits.writeto(fpath_corono_poly_prf_avg_f, corono_poly_prf_avg_f, overwrite=True)
 fits.writeto(fpath_direct_poly_prf_std_f, direct_poly_prf_std_f, overwrite=True)
 fits.writeto(fpath_corono_poly_prf_std_f, corono_poly_prf_std_f, overwrite=True)
-
-#%%
-#
-##%%
-#import pylab as pl
-#
-#map_t = [ZELDAmapnm3d[imap0], SAXOmapnm3d[0], OPDmap2d*1e9]
-#label_t = ['ZELDA map', 'SAXO map', 'Total map']
-#ncase = np.shape(map_t)[0]
-#
-#
-#if ncase <= 10: 
-#    f2 = pl.figure(30, figsize=(8,4.5))
-#    pl.clf()
-#    for i, val in enumerate(map_t):
-#        exec('ax{0} = f2.add_subplot(1,{1},{0})'.format(i+1,ncase))
-#        if i < ncase: 
-#            exec('im = ax{0}.imshow(val, cmap = "inferno", vmin=-300, vmax=300)'.format(i+1))
-#            exec('ax{0}.text(nPup/2, 0.1*nPup, "{1}", fontsize=8, horizontalalignment="center", color = "white")'.format(i+1,label_t[i]))
-#        exec('ax{0}.tick_params(axis="x", which="both", bottom="off", top="off", labelbottom="off")'.format(i+1,))
-#        exec('ax{0}.tick_params(axis="y", which="both", left="off", right="off", labelleft="off")'.format(i+1,))
-#        
-#    f2.subplots_adjust(bottom=0.1, top=0.9, left=0.1, right=0.8,
-#                        wspace=0.02, hspace=0.02)
-#    
-#    f2.subplots_adjust(right=0.8)
-#    cbar_ax = f2.add_axes([0.85, 0.15, 0.05, 0.7])
-#    cbar    = f2.colorbar(im, cax=cbar_ax)
-#    cbar.ax.set_ylabel('phase map in nm', rotation=270, labelpad = 10)
-##        pl.savefig(str(fpath_image_plane_disp), transparent=True)
-#    pl.tight_layout()
-#    pl.show()
-#   
-#
-##%%
-#from pyzelda import ztools
-#psd_2d_zel_tmp, psd_1d_zel_tmp, freq_zel = ztools.compute_psd(ZELDAmapnm3d[imap0], mask = Pupil2d)
-##psd_2d_sax_tmp, psd_1d_sax_tmp, freq_sax = ztools.compute_psd(SAXOmapnm3d_tmp[0], mask = pupil_tmp)
-#psd_2d_sax_tmp, psd_1d_sax_tmp, freq_sax = ztools.compute_psd(SAXOmapnm3d[0], mask = Pupil2d)
-#psd_2d_sum_tmp, psd_1d_sum_tmp, freq_sum = ztools.compute_psd(OPDmap2d*1e9, mask = Pupil2d)
-#
-#dim_zel = np.shape(psd_2d_zel_tmp)[0]
-#dim_sax = np.shape(psd_2d_sax_tmp)[0]
-#dim_sum = np.shape(psd_2d_sum_tmp)[0]
-#
-##nSax = np.shape(SAXOmapnm3d_tmp)[1]
-#nSax = np.shape(SAXOmapnm3d)[1]
-#
-#psd_2d_zel = psd_2d_zel_tmp[(dim_zel-nPup)//2:(dim_zel+nPup)//2, (dim_zel-nPup)//2:(dim_zel+nPup)//2]
-#psd_2d_sax = psd_2d_sax_tmp[(dim_sax-nSax)//2:(dim_sax+nSax)//2, (dim_sax-nSax)//2:(dim_sax+nSax)//2]
-#psd_2d_sum = psd_2d_sum_tmp[(dim_sum-nPup)//2:(dim_sum+nPup)//2, (dim_sum-nPup)//2:(dim_sum+nPup)//2]
-#
-##%%
-#
-#psd_t = [psd_2d_zel, psd_2d_sax, psd_2d_sum]
-#label_t = ['zelda map psd', 'saxo map psd', 'total map psd']
-#
-#fname_t = ['zelda_map_psd.pdf', 'saxo_map_psd.pdf', 'total_map_psd.pdf']
-#
-#if ncase <= 10: 
-#    f2 = pl.figure(31, figsize=(8,4.5))
-#    pl.clf()
-#    for i, val in enumerate(psd_t):
-#        exec('ax{0} = f2.add_subplot(1,{1},{0})'.format(i+1,ncase))
-#        if i < ncase: 
-#            exec('im = ax{0}.imshow(np.log10(val), cmap = "inferno", vmin=-3, vmax=2)'.format(i+1))
-#            exec('ax{0}.text(nPup/2, 0.1*nPup, "{1}", fontsize=8, horizontalalignment="center", color = "white")'.format(i+1,label_t[i]))
-#        exec('ax{0}.tick_params(axis="x", which="both", bottom="off", top="off", labelbottom="off")'.format(i+1,))
-#        exec('ax{0}.tick_params(axis="y", which="both", left="off", right="off", labelleft="off")'.format(i+1,))
-#      
-#        f2.subplots_adjust(bottom=0.1, top=0.9, left=0.1, right=0.8,
-#                            wspace=0.02, hspace=0.02) 
-#        
-#        f2.subplots_adjust(right=0.8)
-#        cbar_ax = f2.add_axes([0.85, 0.15, 0.05, 0.7])
-#        cbar    = f2.colorbar(im, cax=cbar_ax)
-#        cbar.ax.set_ylabel('psd in log scale [nm RMS/(cycle/pup)]', rotation=270, labelpad = 10)
-#    #    pl.savefig(str(fdir_results / fname_t[i]), transparent=True)
-#        pl.tight_layout()
-#        pl.show()
-#
-##%%
-#
-#psd_zel_avg_f, rad_zel = imutils.profile(psd_2d_zel, type='mean')
-#psd_zel_std_f, rad_zel = imutils.profile(psd_2d_zel, type='std')
-#psd_zel_avg_f[psd_zel_avg_f <= 1e-10] = 0
-#psd_zel_std_f[psd_zel_std_f <= 1e-10] = 0
-#
-#psd_sax_avg_f, rad_sax = imutils.profile(psd_2d_sax, type='mean')
-#psd_sax_std_f, rad_sax = imutils.profile(psd_2d_sax, type='std')
-#psd_sax_avg_f[psd_sax_avg_f <= 1e-10] = 0
-#psd_sax_std_f[psd_sax_std_f <= 1e-10] = 0
-#
-#psd_sum_avg_f, rad_sum = imutils.profile(psd_2d_sum, type='mean')
-#psd_sum_std_f, rad_sum = imutils.profile(psd_2d_sum, type='std')
-#psd_sum_avg_f[psd_sum_avg_f <= 1e-10] = 0
-#psd_sum_std_f[psd_sum_std_f <= 1e-10] = 0
-#
-##%%
-##pl.figure(20)
-##pl.clf()
-##pl.imshow(pupil_tmp)
-#
-#fname = 'avg_psd_prf.pdf'
-#fpath = fdir_results / fname
-#
-#pl.figure(21)
-#pl.clf()
-#pl.plot(rad_zel*nPup/dim_zel, np.log10(psd_zel_avg_f), label='zelda')
-#pl.plot(rad_sax*nPup/dim_sax, np.log10(psd_sax_avg_f), label='saxo')
-#pl.plot(rad_sum*nPup/dim_sum, np.log10(psd_sum_avg_f), label='total')
-#pl.title('psd mean profile')
-#pl.xlabel('spatial frequency in cycle/pup')
-#pl.ylabel('psd in log scale [nm RMS/(cycle/pup)]')
-#pl.savefig(str(fpath))
-#pl.legend()
-#
-#
-#fname = 'std_psd_prf.pdf'
-#fpath = fdir_results / fname
-#
-#pl.figure(22)
-#pl.clf()
-#pl.plot(rad_zel*nPup/dim_zel, np.log10(psd_zel_std_f), label='zelda')
-#pl.plot(rad_sax*nPup/dim_sax, np.log10(psd_sax_std_f), label='saxo')
-#pl.plot(rad_sum*nPup/dim_sum, np.log10(psd_sum_std_f), label='total')
-#pl.title('psd std profile')
-#pl.xlabel('spatial frequency in cycle/pup')
-#pl.ylabel('psd in log scale [nm RMS/(cycle/pup)]')
-#pl.savefig(str(fpath))
-#pl.legend()
-#
-##    
-##%%
-#print('ok')
