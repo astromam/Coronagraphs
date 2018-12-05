@@ -30,7 +30,7 @@ Parameters
 corono_name  = 'APLC' # 'SP' or 'APLC'
 pupil_name   = 'vlt' # 'vlt' or 'sbr' or 'lvr'
 problem_name = 'MaxContrastL1' # 'MaxTau' # ,'MaxContrastLinf' # 'MaxContrastL1' #
-solver       = 'gurobipy' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
+solver       = 'stdgrb' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
 slvLogToConsole = 1
 slvCrossover    = 0
 slvMethod       = 2
@@ -41,20 +41,20 @@ MinIsland   = False
 Binarity    = False
 FirstDerGlobalLim = 100.
 BinarityReg       = 0.1
-LSRobustness = True
+LSRobustness = False
 
 #nPup = corono0.params['nPup']
-nPup = 200
+nPup = 50
 nFPM = 20
-Fmax2d = 45
-nImg2d = 90
+Fmax2d = 22.5
+nImg2d = 45
 
 # mask radius in lam0/D units
 rMask = 2.252
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
 rho0 =  2.0
-rho1 = 20.0
+rho1 = 10.0
 
 # contrast in the dark region
 cDarkHole = 6.0
