@@ -1,0 +1,18 @@
+# All hidden files
+# Use `git add -f <.filename>` to overide
+.*
+
+# Temp files
+*~
+
+# data files
+*.fits
+*.dat
+
+# Compiled files
+*.py[cod]
+*.a
+*.o
+*.so
+*.pyd
+__pycache__

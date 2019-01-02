@@ -1,0 +1,211 @@
+#################################################################
+### AMPL script to design APLC/SP hybrid coronagraph with quarter pupil for HiCAT
+### Written by Mamadou N'Diaye on 2016/08/16
+### 2016-12-02: modification of the file paths
+#################################################################
+### parameters set by the user
+#################################################################
+#---------------------
+### directory definition
+param directoryInput symbolic;
+param directoryFPM symbolic;
+param directoryOutput symbolic;
+let directoryInput := "/user/kstlaurent/SCDA_2/input_files/";
+let directoryFPM := "/user/kstlaurent/SCDA_2/input_files/";
+let directoryOutput := "/user/kstlaurent/SCDA_2/apodizers/";
+
+#---------------------
+### pi defintion
+param pi := 4*atan(1);
+
+#---------------------
+### spectral bandwidth (la0: arbitrary unit, bw: bandwidth in % of lam0, dlam: bandwidth in arbitrary unit, nlam: spectral sampling)
+### optimization in monochromatic light is done by setting bw=0 (and not nlam=1)
+param lam0 := 1.;
+param bw   := 0.10;
+param dlam := bw*lam0;
+param nlam := 5;
+
+#---------------------
+# entrance pupil parameter
+
+#---------------------
+### FPM radius in lam0/D
+param rMask := 2.8;
+
+#---------------------
+### Outer diameter of each region in lam0/D
+param rho0 := 5.0;
+param rho1 := 10.0; 
+
+#---------------------
+### contrast definition in the different regions of the coronagraphic image
+param cDarkHoleRegion :=7;
+
+#---------------------
+### discretization parameter (nPup: pupil, nFPM: mask, nImg: image, Fmax: max spatial frequency in image plane)
+### be careful, sampling is given for half mask
+param nPup := 50;				
+param nFPM := 25;
+param nImg := 22;
+param Fmax := 11;
+
+#################################################################
+### filename definitions
+#################################################################
+#---------------------
+### files for import
+param filenameAperture symbolic;
+param filenameFPM symbolic;
+param filenameLyotStop symbolic;
+
+let filenameAperture := "SubaruPupil_N=" & sprintf("%.04d", nPup) & "_center_quarter.dat";
+
+let filenameFPM := "CircPupil_N=00" & nFPM & "_obs=00_center_quarter.dat";
+
+let filenameLyotStop := "SubaruPupil_N=" & sprintf("%.04d", nPup) & "_center_quarter.dat";
+
+#---------------------
+### files for export
+param filenameApodizer symbolic;
+param filenameApodizerDat symbolic;
+
+let filenameApodizer := "APLC_IWA=" & sprintf("%.1f", rho0) & "_OWA=" & sprintf("%.1f", rho1) & "_BW=" & sprintf("%.1f", bw) & "_nlam=" & sprintf("%.02d", nlam) & "_C=" & sprintf("%.1f", cDarkHoleRegion) & "_2D_nPup=" & sprintf("%.04d", 2*nPup) & "_ampl";
+let filenameApodizerDat := sprintf("%s", filenameApodizer) & ".dat" ;
+
+
+#################################################################
+### vector definitions
+#################################################################
+#---------------------
+### array of wavelengths
+set Ls := setof {l in 1..nlam} lam0*(1+((l-1)/(nlam-1)-0.5)*dlam);
+#set Ls := setof {l in 1..nlam} lam0;
+
+#---------------------
+### discretization in each plane ({dx,dy}: pupil planes, {dmx, dmy}: first focal plane, {dxi, deta}: final image plane)
+param dx := 1/(2*nPup);
+param dy := dx;
+
+param dmx := 2.*rMask/(2*nFPM);
+param dmy := dmx;
+
+param dxi := (Fmax/nImg);
+param deta := dxi;
+
+#---------------------
+### coordinate vectors for each plane ({Xs,Ys}: pupil planes, {MXs, MYs}: first focal plane, {Xis, Etas}: final image plane)
+set Xs := setof {i in 0.5..nPup-0.5 by 1} i*dx;
+set Ys := setof {j in 0.5..nPup-0.5 by 1} j*dy;
+
+set MXs := setof {i in 0.5..nFPM-0.5 by 1} i*dmx;
+set MYs := setof {j in 0.5..nFPM-0.5 by 1} j*dmy;
+
+set Xis := setof {i in 0..nImg by 1} i*dxi; 
+set Etas := setof {j in 0..nImg by 1} j*deta;
+
+#---------------------
+### set of points in the final image plane, only for 360deg masks.
+set CoroDarkHoleRegion := setof {xi in Xis, eta in Etas: sqrt(xi^2+eta^2) >= rho0 && sqrt(xi^2+eta^2) <= rho1} (xi,eta);
+
+#################################################################
+### file import and mask definition
+#################################################################
+#---------------------
+### import Pupil, Mask (FPM), and Lyot stop files 
+param PupilFile {x in Xs,y in Ys};
+read {x in Xs,y in Ys} PupilFile[x,y] < (sprintf("%s%s", directoryInput, filenameAperture)); 
+close (sprintf("%s%s", directoryInput, filenameAperture));
+
+param MaskFile {mx in MXs, my in MYs};
+read {mx in MXs, my in MYs} MaskFile[mx,my] < (sprintf("%s%s", directoryFPM, filenameFPM));
+close (sprintf("%s%s", directoryFPM, filenameFPM));
+
+param LyotFile {x in Xs,y in Ys};
+read {x in Xs,y in Ys} LyotFile[x,y] < (sprintf("%s%s", directoryInput,filenameLyotStop));
+close (sprintf("%s%s", directoryInput, filenameLyotStop));
+
+#---------------------
+### definition of set of points where Pupil, Mask, and Lyot are non null
+set Pupil := setof {x in Xs, y in Ys: PupilFile[x,y] != 0.} (x,y);
+set Mask := setof {mx in MXs, my in MYs: MaskFile[mx,my] != 0.} (mx,my);
+set Lyot := setof {x in Xs, y in Ys: LyotFile[x,y] != 0.} (x,y);
+
+#---------------------
+### transmission of the Pupil. Used for calibration.
+param TR := sum {x in Xs, y in Ys} PupilFile[x,y]*dx*dy; 
+
+#################################################################
+### propagation through APLC coronagraph
+#################################################################
+#---------------------
+### variable A apodizer with transmission to optimize, values ranging between 0 and 1, default value 0.5
+var A {x in Xs, y in Ys} >= 0, <= 1, := 0.5;
+
+#---------------------
+### electric field within the FPM in plane B
+var EBm_real_X {mx in MXs, y in Ys, lam in Ls} := 0.0;
+var EBm_real {mx in MXs, my in MYs, lam in Ls} := 0.0;
+
+subject to st_EBm_real_X {mx in MXs, y in Ys, lam in Ls}: EBm_real_X[mx,y,lam] = 2.*sum {x in Xs: (x,y) in Pupil} A[x,y]*PupilFile[x,y]*cos(2.*pi*x*mx*(lam0/lam))*dx;
+subject to st_EBm_real {(mx, my) in Mask, lam in Ls}: EBm_real[mx,my,lam] = 2.*(lam0/lam)*sum {y in Ys} EBm_real_X[mx,y,lam]*cos(2.*pi*y*my*(lam0/lam))*dy;
+
+#---------------------
+### electric field in plane C (before Lyot stop), be careful, FPM is assumed to be binary. If not, add MaskFile in the expression
+var ECm_real_X {x in Xs, my in MYs, lam in Ls} := 0.0;
+var ECm_real {x in Xs, y in Ys, lam in Ls} := 0.0;
+
+subject to st_ECm_real_X {x in Xs, my in MYs, lam in Ls}: ECm_real_X[x,my,lam] = 2.*sum {mx in MXs: (mx,my) in Mask} EBm_real[mx,my,lam]*cos(2.*pi*x*mx*(lam0/lam))*dmx;
+subject to st_ECm_real {(x,y) in Lyot, lam in Ls}: ECm_real[x,y,lam] = 2.*(lam0/lam)*sum {my in MYs} ECm_real_X[x,my,lam]*cos(2.*pi*y*my*(lam0/lam))*dmy;
+
+#---------------------
+### electric field in plane D (final image)
+var ED_real_X {xi in Xis, y in Ys, lam in Ls} := 0.0;
+var ED_real {xi in Xis, eta in Etas, lam in Ls} := 0.0;
+
+subject to st_ED_real_X {xi in Xis, y in Ys, lam in Ls}: ED_real_X[xi,y,lam] = 2.*sum {x in Xs: (x,y) in Lyot} (A[x,y]*PupilFile[x,y]-ECm_real[x,y,lam])*LyotFile[x,y]*cos(2.*pi*x*xi*(lam0/lam))*dx;
+subject to st_ED_real {(xi, eta) in CoroDarkHoleRegion, lam in Ls}: ED_real[xi,eta,lam] = 2.*(lam0/lam)*sum {y in Ys} ED_real_X[xi,y,lam]*cos(2.*pi*y*eta*(lam0/lam))*dy;
+
+#---------------------
+### electric field peak of the image at lam0 (no coronagraph mask) 
+var ED00_real := 0.0;
+subject to st_ED00_real: ED00_real = 4.*sum {x in Xs, y in Ys: (x,y) in Lyot} (A[x,y]*PupilFile[x,y]*LyotFile[x,y])*dx*dy;
+
+#################################################################
+### optimization problem
+#################################################################
+#---------------------
+### maximization of the apodizer throughput/transmission
+maximize throughput: sum{(x,y) in Pupil} A[x,y]*dx*dy/TR;
+
+#---------------------
+### constraints in the dark hole region
+subject to sidelobe_zero_real_pos_darkhole {(xi,eta) in CoroDarkHoleRegion, lam in Ls}: ED_real[xi,eta,lam] <= 10^(-cDarkHoleRegion/2)*ED00_real/sqrt(2.); 
+subject to sidelobe_zero_real_neg_darkhole {(xi,eta) in CoroDarkHoleRegion, lam in Ls}: ED_real[xi,eta,lam] >= -10^(-cDarkHoleRegion/2)*ED00_real/sqrt(2.);
+
+#################################################################
+### solver for optimization problem
+#################################################################
+#---------------------
+### options for AMPL
+option times 1;
+option gentimes 1;
+option show_stats 1;
+# option TMPDIR '/ssdfast1/tmp';
+
+#---------------------
+### options for gurobi solver with linear programming method
+option solver gurobi;
+option gurobi_options "outlev=1 lpmethod=2 crossover=0";
+
+#---------------------
+### solve and display of the result
+solve;
+display solve_result_num, solve_result;
+
+#################################################################
+### export solution
+#################################################################
+#---------------------
+### export solution A (apodizer/shaped pupil for APLC) 
+printf {x in Xs, y in Ys}: "%15g %15g %15g \n", x, y, A[x,y] > (sprintf("%s%s", directoryOutput, filenameApodizerDat));
