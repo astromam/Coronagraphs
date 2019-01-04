@@ -17,6 +17,13 @@ from astropy.io import fits
 
 t0_total = time.time()
 
+"""
+Apodizers for comparison
+
+apodizers/HiCAT/Test_S_telserv3_HiCAT_MaxTau_nPup=0048_nFPM=050_APLC_rMask=4.271_IWA=5.0_OWA=10.0_BW=0.10_nlam=03_C=8.0_LS-Ann-bw-ID345-OD0807_gurobipy.fits
+apodizers/HiCAT/Test_S_telserv3_HiCAT_MaxTau_nPup=0048_nFPM=050_APLC_rMask=4.271_IWA=5.0_OWA=10.0_BW=0.10_nlam=03_C=8.0_LS-Ann-bw-ID345-OD0807_stdgrb.fits
+"""
+
 #%% parameters
 """
 Parameters
