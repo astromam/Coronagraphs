@@ -44,7 +44,7 @@ CtrBtwnPix2 = True
 
 # Telescope aperture type and size and sampling
 pup  = 'HiCAT' # 'vlt' or 'sbr' or 'lvr'
-nPup = 486
+nPup = 48
 Fmax2d = 32.5 
 nImg2d = 65
 
@@ -65,8 +65,8 @@ cDarkHole = 8.0
 tau   = 0.4
 
 #bandwidth and number of wavelengths used
-bw   = 0
-nlam = 1
+bw   = 0.10
+nlam = 3
 
 # lyot stop inner and outer diameter, percentage of aperture -> inscribed/circumscribed??? 
 LS_ID = 34.5
@@ -227,7 +227,7 @@ fdir = Path('apodizers/HiCAT/').resolve()
 if not os.path.exists(fdir):
     os.makedirs(fdir)
     
-fname = 'Test_S_telserv3_' + problem1.get_filename() + '_sparse_float32.fits'
+fname = 'Test_S_jnoss_' + problem1.get_filename() + '.fits'
 fpath = fdir / fname
 
 if do_fits is True:

@@ -460,8 +460,8 @@ class ProblemMatrix(object):
         if corono is None:
             pass
         else:        
-            corono_field_re_t_tmp = np.empty((self.npp, self.corono.nlam, self.corono.nImg2d**2), dtype = np.float32)
-            corono_field_im_t_tmp = np.empty((self.npp, self.corono.nlam, self.corono.nImg2d**2), dtype = np.float32)
+            corono_field_re_t_tmp = np.empty((self.npp, self.corono.nlam, self.corono.nImg2d**2))
+            corono_field_im_t_tmp = np.empty((self.npp, self.corono.nlam, self.corono.nImg2d**2))
     
             Apod2d = np.zeros((self.corono.nPup, self.corono.nPup), dtype = np.float32)
     
@@ -624,7 +624,7 @@ class MaxTau(ProblemMatrix):
             A1tmp  = -corono_field_t - cst*self.Pupil_vec[self.idx_pup, None]*LyotStop_vec[self.idx_pup, None]
             
             # Add terms corresponding to the MinIsland auxiliary variables        
-            AZ0vv = np.zeros((self.nvv, np.shape(A0tmp)[1]), dtype = np.float32) 
+            AZ0vv = np.zeros((self.nvv, np.shape(A0tmp)[1])) 
             A0tmp_shape = np.shape(corono_field_t - cst*self.Pupil_vec[self.idx_pup, None]*LyotStop_vec[self.idx_pup, None])
             
             A0 = np.concatenate((A0tmp, AZ0vv))
@@ -690,23 +690,23 @@ class MaxTau(ProblemMatrix):
         print(self.nvv)
        
         # Compute constraints on the apodizer transmission
-        #A2tmp  = -np.identity(self.npp, dtype = np.float32)
-        A2tmp = -sparse.identity(self.npp)
+        A2tmp  = -np.identity(self.npp, dtype = np.float32)
+        #A2tmp = -sparse.identity(self.npp)
         
         print('A2tmp')
         describe_array(A2tmp)
         
         # Add terms corresponding to the MinIsland auxiliary variables        
        
-        #AZ0vv = np.zeros((self.nvv, self.npp), dtype = np.float32)
-        AZ0vv = sparse.csr_matrix((self.nvv, self.npp))
+        AZ0vv = np.zeros((self.nvv, self.npp), dtype = np.float32)
+        #AZ0vv = sparse.csr_matrix((self.nvv, self.npp))
         
         print('AZ0vv')
         describe_array(AZ0vv)
         
-        #A2 = np.concatenate((A2tmp,AZ0vv))
-        A2 = sparse.vstack((A2tmp,AZ0vv))
-        A2 = sparse.csr_matrix(A2)
+        A2 = np.concatenate((A2tmp,AZ0vv))
+        #A2 = sparse.vstack((A2tmp,AZ0vv))
+        #A2 = sparse.csr_matrix(A2)
         
         print('A2')
         describe_array(A2)
@@ -722,16 +722,16 @@ class MaxTau(ProblemMatrix):
         
         # Update the A, b, and c matrices
         if self.A is None:
-            #self.A = np.concatenate((A2, -A2), axis=1)
-            self.A = sparse.hstack((self.A,A2,-A2))
-            self.A = sparse.csr_matrix(self.A)
+            self.A = np.concatenate((A2, -A2), axis=1)
+            #self.A = sparse.hstack((self.A,A2,-A2))
+            #self.A = sparse.csr_matrix(self.A)
             del A2
             gc.collect()
         else:
-        	#self.A = np.concatenate((self.A,A2,-A2), axis = 1)
-        	self.A = sparse.bsr_matrix(self.A)
-        	self.A = sparse.hstack((self.A,A2,-A2))
-        	self.A = sparse.csr_matrix(self.A)
+        	self.A = np.concatenate((self.A,A2,-A2), axis = 1)
+        	#self.A = sparse.bsr_matrix(self.A)
+        	#self.A = sparse.hstack((self.A,A2,-A2))
+        	#self.A = sparse.csr_matrix(self.A)
         	del A2
         	gc.collect()
         	
