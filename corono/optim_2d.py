@@ -463,7 +463,7 @@ class ProblemMatrix(object):
             corono_field_re_t_tmp = np.empty((self.npp, self.corono.nlam, self.corono.nImg2d**2))
             corono_field_im_t_tmp = np.empty((self.npp, self.corono.nlam, self.corono.nImg2d**2))
     
-            Apod2d = np.zeros((self.corono.nPup, self.corono.nPup), dtype = np.float32)
+            Apod2d = np.zeros((self.corono.nPup, self.corono.nPup))#, dtype = np.float32)
     
             for i, val in enumerate(self.idx_pup):
                 (i0,j0) = np.unravel_index(val, (self.corono.nPup, self.corono.nPup))
@@ -690,7 +690,7 @@ class MaxTau(ProblemMatrix):
         print(self.nvv)
        
         # Compute constraints on the apodizer transmission
-        A2tmp  = -np.identity(self.npp, dtype = np.float32)
+        A2tmp  = -np.identity(self.npp)#, dtype = np.float32)
         #A2tmp = -sparse.identity(self.npp)
         
         print('A2tmp')
@@ -698,7 +698,7 @@ class MaxTau(ProblemMatrix):
         
         # Add terms corresponding to the MinIsland auxiliary variables        
        
-        AZ0vv = np.zeros((self.nvv, self.npp), dtype = np.float32)
+        AZ0vv = np.zeros((self.nvv, self.npp))#, dtype = np.float32)
         #AZ0vv = sparse.csr_matrix((self.nvv, self.npp))
         
         print('AZ0vv')
