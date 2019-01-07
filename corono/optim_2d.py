@@ -23,12 +23,12 @@ from scipy import sparse
 try:
     import stdgrb
 except ImportError:
-    stdgrb = False
+    stdgrb = None
 
 try:
     import gurobipy as gb
 except ImportError:
-    gb = False
+    gb = None
 
 import scipy.optimize
 from .utils import update_params        
@@ -377,7 +377,7 @@ class ProblemMatrix(object):
 
         t0 = time.time()
 
-        if stdgrb and self.solver == 'stdgrb':
+        if self.solver == 'stdgrb':
             self.print_log('solving problem with stdgrb package')
             Apodtmp, val = stdgrb.lp_solve_sparse(self.c, A=(self.A).T, b=self.b, 
                                            ub = np.ones(self.npp+self.neps+self.nvv),                                           
@@ -386,7 +386,7 @@ class ProblemMatrix(object):
                                            method=self.slvMethod)
             self.Apod[self.idx_pup] = Apodtmp[:self.npp]
         
-        elif gb and self.solver == 'gurobipy':
+        elif self.solver == 'gurobipy':
             self.print_log('generating gurobi model')
             self.compute_gurobi_model()
             
@@ -645,7 +645,7 @@ class MaxTau(ProblemMatrix):
         self.b = np.zeros((len(self.A.T)))
         
         # Add apodizer normalization contraints for gurobi solvers
-        if (stdgrb and self.solver == 'stdgrb') or (gb and self.solver == 'gurobipy'):
+        if self.solver == 'stdgrb' or self.solver == 'gurobipy':
             self.compute_problem_matrices_gurobi()
 
         # Add apodizer minimal islands constraints    
@@ -863,7 +863,7 @@ class MaxTau(ProblemMatrix):
 #        A1  = -self.corono_field_t - cst*self.Pupil_vec[self.idx_pup, None]*self.LyotStop_vec[self.idx_pup, None]    
 #
 #        self.A = np.concatenate((A0,A1), axis=1)
-#        if (stdgrb and self.solver == 'stdgrb') or (gb and self.solver == 'gurobipy'):
+#        if self.solver == 'stdgrb' or self.solver == 'gurobipy':
 #            A2  = -np.identity(self.npp)
 #            A3  =  np.identity(self.npp)
 #            self.A = np.concatenate((self.A,A2,A3), axis=1)
@@ -887,7 +887,7 @@ class MaxTau(ProblemMatrix):
             Gurobi model of the MaxTau problem to solve
             
         """        
-        if gb and self.solver == 'gurobipy':
+        if self.solver == 'gurobipy':
             print('Compute the length of the A matrix along axis=1')
             nA = np.shape(self.A)[1]
         
@@ -1137,8 +1137,7 @@ class MaxContrast(ProblemMatrix):
         self.b = np.concatenate((self.b, b20,b21))
 
         # Add apodizer normalization contraints for gurobi solvers
-        if (stdgrb and self.solver == 'stdgrb')\
-        or (gb and self.solver == 'gurobipy'):        
+        if self.solver == 'stdgrb' or self.solver == 'gurobipy':
             self.compute_problem_matrices_gurobi()
 
         # Add apodizer minimal islands constraints
@@ -1314,7 +1313,7 @@ class MaxContrast(ProblemMatrix):
 #
 #        self.b = np.concatenate((b0,b0,b4,b5))
 #
-#        if (stdgrb and self.solver == 'stdgrb') or (gb and self.solver == 'gurobipy'):        
+#        if self.solver == 'stdgrb' or self.solver == 'gurobipy':
 #            b2  = np.zeros(self.npp)
 #            b3  = np.ones(self.npp)
 #            self.b = np.concatenate((self.b,b2,b3))
@@ -1338,7 +1337,7 @@ class MaxContrast(ProblemMatrix):
             Gurobi model of the MaxContrast problem to solve
             
         """        
-        if gb and self.solver == 'gurobipy':
+        if self.solver == 'gurobipy':
             # Compute the length of the A matrix along axis=1                          
             nA = np.shape(self.A)[1]
     
