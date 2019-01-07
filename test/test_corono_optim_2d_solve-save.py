@@ -17,6 +17,9 @@ from astropy.io import fits
 
 t0_total = time.time()
 
+
+working_path = '/Users/jnoss/dev/makidon-labs/48-test/'
+
 """
 Apodizers for comparison
 
@@ -114,7 +117,7 @@ print()
 """
 File reading for Pupil and Lyot stop
 """
-fdir = 'input_files/'
+fdir = os.path.join(working_path, 'input_files/')
 if pup == 'lvr':
     fname_pup = 'ATLAST_Aperture_nPup={0}.fits'.format(nPup)
     fname_lys = 'ATLAST_LyotStop_nPup={0}.fits'.format(nPup)
@@ -230,7 +233,7 @@ if Pupil2dSym == True:
 """
 Save apodizer
 """
-fdir = Path('apodizers/HiCAT/').resolve()
+fdir = Path(os.path.join(working_path, 'apodizers/HiCAT/')).resolve()
 if not os.path.exists(fdir):
     os.makedirs(fdir)
     
