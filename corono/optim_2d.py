@@ -34,6 +34,16 @@ import scipy.optimize
 from .utils import update_params        
 from . import design, default
 
+def check_solver_import(solver):
+    import_OK = True
+    if solver == 'gurobipy':
+        import_OK = gb
+    elif solver == 'stdgrb':
+        import_OK = stdgrb
+
+    if not import_OK:
+        raise ImportError('{} failed to import'.format(solver))
+
 def MemUse():
 	pid = os.getpid()
 	py = psutil.Process(pid)
@@ -119,7 +129,8 @@ class ProblemMatrix(object):
         """
         self.params  = kwargs
         self.check_params()
-        
+        check_solver_import(self.solver)
+
         if corono is None:
             self.corono_t = [design.APLC2d()]
             print('Warning: default coronagraph')
