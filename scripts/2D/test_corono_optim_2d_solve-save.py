@@ -23,7 +23,7 @@ from astropy.io import fits
 Parameters
 """
 # Telescope name
-corono_name  = 'APLC' # 'SP' or 'APLC'
+corono_name  = 'SP' # 'SP' or 'APLC'
 pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
 problem_name = 'MaxTau' # 'MaxTau' # ,'MaxContrastLinf' # 'MaxContrastL1' #
 solver       = 'gurobipy' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
@@ -38,7 +38,7 @@ FirstDerGlobalLim = 100.
 BinarityReg       = 0.1
 
 #nPup = corono0.params['nPup']
-nPup = 100
+nPup = 50
 nFPM = 50
 Fmax2d = 22.5
 nImg2d = 45
