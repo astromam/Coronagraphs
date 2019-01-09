@@ -25,7 +25,7 @@ tests on APLC 2d class
 corono_name   = 'APLC' # 'SP' or 'APLC' or DZPM
 CtrBtwnPix  = True
 CtrBtwnPix2 = False
-SymPupil2d  = False
+Pupil2dSym  = False
 cDarkHole   = 6
 
 wv        = 1.593e-6
@@ -209,7 +209,7 @@ if corono_name != 'APLC':
 
 params = coro.to_dict(nPup=nPup, nImg2d=nImg2d, Fmax2d = Fmax2d, nFPM = nFPM,
                  rMask = rMask,
-                 SymPupil2d = SymPupil2d, 
+                 Pupil2dSym = Pupil2dSym, 
                  Pupil2d = Pupil2d, LyotStop2d = LyotStop2d, 
                  CtrBtwnPix=CtrBtwnPix,
                  CtrBtwnPix2 = CtrBtwnPix2, 
