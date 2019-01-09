@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Oct 17 16:20:52 2018
+Created on Wed Jan  9 17:18:23 2019
 
 Author: Mamadou N'Diaye <mamadou.ndiaye@oca.eu> 
 
@@ -95,9 +95,12 @@ else:
     if kw_saxo is True and kw_2nddate is True:
         str_saxo = 'with_saxo'
         nmap     = nsaxomap*1
+    else:
+        str_saxo = ''
 
 fdir = Path('../../').resolve()
 
+fdir_pupils_sllc  = fdir / 'data' / '2D' / 'pupils' / 'SPHERE-SLLC'
 fdir_pupils  = fdir / 'data' / '2D' / 'pupils' / 'SPHERE' 
 
 if kw_aberr is True:
@@ -114,7 +117,7 @@ if not os.path.exists(fdir_results):
 
 fname_Apod2d     = 'SPHERE_APO1_field_transmission_map.fits'
 #fname_Apod2d = 'sphere_pupil_APO1_BH.fits'
-fname_Ampmap2d   = 'sphere_pupil_clear_BH_field.fits'
+fname_Ampmap2d   = 'sphere_pupil_clear_BH_amp.fits'
 fname_LyotStop2d = 'sphere_stop_ST_ALC2.fits'
 
 if kw_aberr is True:
@@ -123,7 +126,7 @@ if kw_aberr is True:
         if kw_2nddate is True:
             fname_ZELDAmapnm3d = '2018-04-03_night_ncpa_loop_sky_2_ncpa_loop_opd.fits'
     else:
-        fname_ZELDAmapnm3d = '2018-04-01_ncpa_loop_700modes_2_ncpa_loop_opd.fits'        
+        fname_ZELDAmapnm3d = '20150805_0004_opd_map_modified.fits'        
         if kw_2nddate is True:        
             fname_ZELDAmapnm3d = '2018-04-03_ncpa_loop_700modes_ncpa_loop_opd.fits'
     
@@ -134,10 +137,10 @@ if kw_aberr is True:
 
         
 fpath_Apod2d     = fdir_pupils / fname_Apod2d
-fpath_Ampmap2d   = fdir_pupils / fname_Ampmap2d
+fpath_Ampmap2d   = fdir_pupils_sllc / fname_Ampmap2d
 
 if kw_aberr is True:
-    fpath_ZELDAmapnm3d = fdir_zelda  / fname_ZELDAmapnm3d   
+    fpath_ZELDAmapnm3d = fdir_pupils_sllc  / fname_ZELDAmapnm3d   
     if kw_saxo is True and kw_2nddate is True:
         fpath_SAXOmapnm3d = fdir_saxo / fname_SAXOmapnm3d
     
@@ -145,20 +148,20 @@ fpath_LyotStop2d = fdir_pupils / fname_LyotStop2d
 
 #%%
 
-fname_direct_poly_img_t     = 'direct_poly_img_nmap={0:05d}_t.fits'.format(nmap)
-fname_corono_poly_img_t     = 'corono_poly_img_nmap={0:05d}_t.fits'.format(nmap)
+fname_direct_poly_img_t     = 'direct_poly_img_nmap={0:05d}_t_test.fits'.format(nmap)
+fname_corono_poly_img_t     = 'corono_poly_img_nmap={0:05d}_t_test.fits'.format(nmap)
 fpath_direct_poly_img_t     = fdir_results / fname_direct_poly_img_t
 fpath_corono_poly_img_t     = fdir_results / fname_corono_poly_img_t
 
-fname_direct_poly_img_f     = 'direct_poly_img_nmap={0:05d}_f.fits'.format(nmap)
-fname_corono_poly_img_f     = 'corono_poly_img_nmap={0:05d}_f.fits'.format(nmap)
+fname_direct_poly_img_f     = 'direct_poly_img_nmap={0:05d}_f_test.fits'.format(nmap)
+fname_corono_poly_img_f     = 'corono_poly_img_nmap={0:05d}_f_test.fits'.format(nmap)
 fpath_direct_poly_img_f     = fdir_results / fname_direct_poly_img_f
 fpath_corono_poly_img_f     = fdir_results / fname_corono_poly_img_f
 
-fname_direct_poly_prf_avg_f = 'direct_poly_prf_nmap={0:05d}_avg_f.fits'.format(nmap)
-fname_corono_poly_prf_avg_f = 'corono_poly_prf_nmap={0:05d}_avg_f.fits'.format(nmap)
-fname_direct_poly_prf_std_f = 'direct_poly_prf_nmap={0:05d}_std_f.fits'.format(nmap)
-fname_corono_poly_prf_std_f = 'corono_poly_prf_nmap={0:05d}_std_f.fits'.format(nmap)
+fname_direct_poly_prf_avg_f = 'direct_poly_prf_nmap={0:05d}_avg_f_test.fits'.format(nmap)
+fname_corono_poly_prf_avg_f = 'corono_poly_prf_nmap={0:05d}_avg_f_test.fits'.format(nmap)
+fname_direct_poly_prf_std_f = 'direct_poly_prf_nmap={0:05d}_std_f_test.fits'.format(nmap)
+fname_corono_poly_prf_std_f = 'corono_poly_prf_nmap={0:05d}_std_f_test.fits'.format(nmap)
 fpath_direct_poly_prf_avg_f = fdir_results / fname_direct_poly_prf_avg_f
 fpath_corono_poly_prf_avg_f = fdir_results / fname_corono_poly_prf_avg_f
 fpath_direct_poly_prf_std_f = fdir_results / fname_direct_poly_prf_std_f
@@ -237,7 +240,7 @@ corono_poly_prf_std_f = np.zeros((nImg2d//2))
 for imap in range(nmap):
     t0 = time.time()
     if kw_aberr is True:
-        OPDmap2d = ZELDAmapnm3d[imap0]*1e-9
+        OPDmap2d = ZELDAmapnm3d*1e-9
         if kw_saxo is True and kw_2nddate is True:
             OPDmap2d += SAXOmapnm3d[saxomap_i+imap]*1e-9
         
@@ -298,6 +301,19 @@ pl.show()
 
 pl.figure(1)
 pl.clf()
-pl.imshow(corono_poly_pup_t[0]*LyotStop2d, cmap='inferno')
+pl.imshow(corono_poly_pup_t[0]**0.25*LyotStop2d, cmap='inferno')
 pl.show()
 
+#%%
+pl.figure(2)
+pl.clf()
+pl.imshow(direct_poly_img_t[0]**0.25, cmap='inferno')
+pl.title('direct image')
+pl.show()
+
+pl.figure(3)
+pl.clf()
+pl.imshow(corono_poly_img_t[0]**0.25, cmap='inferno')
+pl.title('coronagraphic image')
+pl.show()
+    

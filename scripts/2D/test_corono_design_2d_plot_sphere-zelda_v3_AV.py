@@ -52,10 +52,10 @@ bw     = width/wv
 nFPM   = 200
 
 kw_aberr     = True
-kw_2nddate   = True    
-kw_skyobs    = True
-kw_aftercorr = True
-kw_saxo      = True
+kw_2nddate   = False    
+kw_skyobs    = False
+kw_aftercorr = False
+kw_saxo      = False
 saxomap_i    = 0
 saxomap_f    = 9
 
@@ -69,7 +69,10 @@ else:
 if kw_aberr is False:
     str_aberr = 'wo_aberr'
     str_date  = ''
-    str_obs   = ''
+    if kw_skyobs is True:
+        str_obs   = 'sky'
+    else:
+        str_obs   = 'internal'
     str_corr  = ''
     str_saxo  = ''
     str_saxoset= ''
@@ -97,7 +100,12 @@ else:
 fdir = Path('../../').resolve()
 
 fdir_pupils  = fdir / 'data' / '2D' / 'pupils' / 'SPHERE' 
-fdir_results = fdir / 'results' / '2D' / 'data' / 'SPHERE' / str_aberr / str_date / str_obs / str_saxo / str_corr  
+
+if kw_aberr is True:
+    fdir_results = fdir / 'results' / '2D' / 'data' / 'SPHERE' / str_aberr / str_date / str_obs / str_saxo / str_corr  
+else:
+    fdir_results = fdir / 'results' / '2D' / 'data' / 'SPHERE' / str_aberr / str_obs / str_saxo / str_corr  
+
 fdir_zelda   = fdir / 'data' / '2D' / 'ZELDA' / str_date / str_obs  
 fdir_saxo    = fdir / 'data' / '2D' / 'ZELDA' / '2018-04-03'
 
@@ -180,7 +188,10 @@ fpath_image_plane_disp   = fdir_plots / fname_image_plane_disp
 fpath_image_plane_f_disp = fdir_plots / fname_image_plane_f_disp
 
 #%% Entrance pupil
-Pupil2d = aperture.vlt_pupil(nPup, nPup, dead_actuator_diameter=0)
+if kw_skyobs is True:
+    Pupil2d = aperture.vlt_pupil(nPup, nPup, dead_actuator_diameter=0)
+else:
+    Pupil2d = aperture.disc(nPup, nPup/2)
 
 fpath = fdir_pupimages / 'Aperture.pdf'
 
@@ -295,7 +306,7 @@ lam0D2mas = (wv/8.)*(360*60*60*1000/(2.*np.pi))
 x_lam0D = rad_corono*Fmax2d/nImg2d
 x_mas   = x_lam0D*lam0D2mas
 
-kw_mas = False
+kw_mas = True
 if kw_mas is True:
     fac   = lam0D2mas*1
     unit  = 'mas'
@@ -339,7 +350,8 @@ if nmap <= 10:
             exec('ax{0}.text(nImg2d/2, 0.1*nImg2d, "map {1}", fontsize=8, horizontalalignment="center", color = "white")'.format(i+1,i))
         exec('ax{0}.tick_params(axis="x", which="both", bottom="off", top="off", labelbottom="off")'.format(i+1,))
         exec('ax{0}.tick_params(axis="y", which="both", left="off", right="off", labelleft="off")'.format(i+1,))
-    
+        ax1.set_title('{0}'.format(str_corr))
+        
     f2.subplots_adjust(bottom=0.1, top=0.9, left=0.1, right=0.8,
                         wspace=0.02, hspace=0.02)
     
@@ -352,7 +364,7 @@ if nmap <= 10:
     pl.show()
 
 #%%
-f2 = pl.figure(23, figsize=(8,4.5))
+f2 = pl.figure(24, figsize=(8,4.5))
 pl.clf()
 exec('ax{0} = f2.add_subplot(1,{1},{0})'.format(1,1))
 exec('im = ax{0}.imshow(np.log10(corono_poly_img_f/direct_poly_img_f.max()), cmap = "inferno", vmin=-7.5, vmax=-3.5)'.format(1))
@@ -364,11 +376,13 @@ f2.subplots_adjust(bottom=0.1, top=0.9, left=0.1, right=0.8,
                     wspace=0.02, hspace=0.02)
 
 f2.subplots_adjust(right=0.8)
+ax1.set_title('{0}'.format(str_corr))
 cbar_ax = f2.add_axes([0.85, 0.15, 0.05, 0.7])
 cbar    = f2.colorbar(im, cax=cbar_ax)
 cbar.ax.set_ylabel('intensity in log scale', rotation=270, labelpad = 10)
 pl.savefig(str(fpath_image_plane_f_disp), transparent=True)
 pl.tight_layout()
+
 pl.show()
 
 #%%

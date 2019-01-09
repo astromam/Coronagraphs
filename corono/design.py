@@ -1660,6 +1660,7 @@ class APLC2d(Coronagraph):
             
         field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
                                   dtype='complex128')
+        
 
         for i in range(self.nlam):
             if self.OPDmap2d is None:
@@ -1674,6 +1675,12 @@ class APLC2d(Coronagraph):
                 field_L       = field_C*self.LyotStop2d
                 field_Dtmp[i] = sft(field_L, self.nImg2d, self.mD_t[i], 
                           CtrBtwnPix=self.CtrBtwnPix2)
+                print('coucou')
+                
+                print(type(field_B))
+                print(type(field_C))
+                print(type(field_L))
+                print(type(field_Dtmp))
             else:
                 field_B       = self.mask2d*sft_even(field, self.nFPM, self.mB_t[i], 
                                                 CtrBtwnPix=self.CtrBtwnPix)
