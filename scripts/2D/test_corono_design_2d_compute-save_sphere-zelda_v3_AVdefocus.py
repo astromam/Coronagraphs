@@ -113,7 +113,7 @@ else:
     if kw_saxo is True and kw_2nddate is True:
         str_saxo = 'with_saxo'
         nmap     = nsaxomap*1
-        beta_wfs = 1.0
+        beta_wfs = 1./0.6
 
 #%%
 fdir = Path('../../').resolve()
@@ -218,11 +218,11 @@ Tilt_mapnm2d = zernike.zernike1(3, npix=nPup, outside=0.)
 """
 #%% array initialization
 # define the array of images for each map
-direct_poly_img_t = np.zeros((nmap, nImg2d, nImg2d))
-corono_poly_img_t = np.zeros((nmap, nImg2d, nImg2d))
+#direct_poly_img_t = np.zeros((nmap, nImg2d, nImg2d))
+#corono_poly_img_t = np.zeros((nmap, nImg2d, nImg2d))
 
-direct_poly_pup_t = np.zeros((nmap, nPup, nPup))
-corono_poly_pup_t = np.zeros((nmap, nPup, nPup))
+#direct_poly_pup_t = np.zeros((nmap, nPup, nPup))
+#corono_poly_pup_t = np.zeros((nmap, nPup, nPup))
 
 # define the averaged image
 direct_poly_img_f = np.zeros((nImg2d, nImg2d))
@@ -289,20 +289,16 @@ for i, defo_ampl in enumerate(defo_ampl_arr):
             params  = coro.update_params(params, OPDmap2d = None, Ampmap2d = None, LyotStop2d = LyotStop2d)
             corono0 = coro.design.APLC2d(**params)    
                     
-        direct_poly_img_t[imap] = corono0.compute_direct_intensity_2d(Apod2d)
-        corono_poly_img_t[imap] = corono0.compute_corono_intensity_2d(Apod2d)    
+        direct_poly_img_f += corono0.compute_direct_intensity_2d(Apod2d)
+        corono_poly_img_f += corono0.compute_corono_intensity_2d(Apod2d)    
     
         t1 = time.time()
         if (imap+1) % 10 == 0: 
             print('map {1}/{2}, computation time: {0:.2f}s'.format(t1-t0, imap+1, nmap))
     
     # computation of the averaged images
-    if nmap > 1:
-        direct_poly_img_f = np.mean(direct_poly_img_t, axis=0)
-        corono_poly_img_f = np.mean(corono_poly_img_t, axis=0)
-    else:
-        direct_poly_img_f = direct_poly_img_t[0]
-        corono_poly_img_f = corono_poly_img_t[0]
+    direct_poly_img_f /= nmap
+    corono_poly_img_f /= nmap
     
     # image normalization
     direct_peak_val = direct_poly_img_f.max()
