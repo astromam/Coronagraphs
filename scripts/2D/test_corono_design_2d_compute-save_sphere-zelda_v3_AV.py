@@ -63,7 +63,7 @@ kw_skyobs    = True
 kw_aftercorr = False
 kw_saxo      = True
 saxomap_i    = 0    # saxo first screen
-saxomap_f    = 99    # saxo last screen
+saxomap_f    = 0    # saxo last screen
 
 # test on the order of the min and max number of saxo phase screen
 if saxomap_i <= saxomap_f:
@@ -281,7 +281,7 @@ for imap in range(nmap):
     corono_poly_img_t[imap] = corono0.compute_corono_intensity_2d(Apod2d)    
 
     t1 = time.time()
-    if (imap+1 % 10) == 0:
+    if (imap+1) % 10 == 0: 
         print('map {1}/{2}, computation time: {0:.2f}s'.format(t1-t0, imap+1, nmap))
 
 # computation of the averaged images
