@@ -58,12 +58,12 @@ bw     = width/wv
 
 # simulation configuration   
 kw_aberr     = True
-kw_2nddate   = False    
-kw_skyobs    = False
-kw_aftercorr = True
-kw_saxo      = False
+kw_2nddate   = True    
+kw_skyobs    = True
+kw_aftercorr = False
+kw_saxo      = True
 saxomap_i    = 0    # saxo first screen
-saxomap_f    = 0    # saxo last screen
+saxomap_f    = 100    # saxo last screen
 
 # test on the order of the min and max number of saxo phase screen
 if saxomap_i <= saxomap_f:
@@ -72,7 +72,9 @@ else:
     raise NameError('initial saxo map (saxomap_i={0}) must be smaller than final saxo map (saxomap_f={1})!'.format(saxomap_i, saxomap_f))
 
 ndefo = 21
-defo_ampl_arr = -100 + 10.*np.arange(21)
+defo_ampl_arr = [50.]#-100 + 10.*np.arange(21)
+tipp_ampl = 0
+tilt_ampl = 0 
 
 for i, defo_ampl in enumerate(defo_ampl_arr):
     print('defo={0}nm rms'.format(defo_ampl))
@@ -169,21 +171,21 @@ for i, defo_ampl in enumerate(defo_ampl_arr):
     """
     ### Filepaths for the file results
     """        
-    fname_direct_poly_img_t     = 'direct_poly_img_nmap={0:05d}_defo={1:.1f}_t.fits'.format(nmap, defo_ampl)
-    fname_corono_poly_img_t     = 'corono_poly_img_nmap={0:05d}_defo={1:.1f}_t.fits'.format(nmap, defo_ampl)
+    fname_direct_poly_img_t     = 'direct_poly_img_nmap={0:05d}_defo={1:.1f}_tip={2:.1f}_tilt={3:.1f}_t.fits'.format(nmap, defo_ampl, tipp_ampl, tilt_ampl)
+    fname_corono_poly_img_t     = 'corono_poly_img_nmap={0:05d}_defo={1:.1f}_tip={2:.1f}_tilt={3:.1f}_t.fits'.format(nmap, defo_ampl, tipp_ampl, tilt_ampl)
     fpath_direct_poly_img_t     = fdir_results / fname_direct_poly_img_t
     fpath_corono_poly_img_t     = fdir_results / fname_corono_poly_img_t
     
-    fname_direct_poly_img_f     = 'direct_poly_img_nmap={0:05d}_defo={1:.1f}_f.fits'.format(nmap, defo_ampl)
-    fname_corono_poly_img_f     = 'corono_poly_img_nmap={0:05d}_defo={1:.1f}_f.fits'.format(nmap, defo_ampl)
+    fname_direct_poly_img_f     = 'direct_poly_img_nmap={0:05d}_defo={1:.1f}_tip={2:.1f}_tilt={3:.1f}_f.fits'.format(nmap, defo_ampl, tipp_ampl, tilt_ampl)
+    fname_corono_poly_img_f     = 'corono_poly_img_nmap={0:05d}_defo={1:.1f}_tip={2:.1f}_tilt={3:.1f}_f.fits'.format(nmap, defo_ampl, tipp_ampl, tilt_ampl)
     fpath_direct_poly_img_f     = fdir_results / fname_direct_poly_img_f
     fpath_corono_poly_img_f     = fdir_results / fname_corono_poly_img_f
     
     #%%
-    fname_direct_poly_prf_avg_f = 'direct_poly_prf_nmap={0:05d}_defo={1:.1f}_avg_f.fits'.format(nmap, defo_ampl)
-    fname_corono_poly_prf_avg_f = 'corono_poly_prf_nmap={0:05d}_defo={1:.1f}_avg_f.fits'.format(nmap, defo_ampl)
-    fname_direct_poly_prf_std_f = 'direct_poly_prf_nmap={0:05d}_defo={1:.1f}_std_f.fits'.format(nmap, defo_ampl)
-    fname_corono_poly_prf_std_f = 'corono_poly_prf_nmap={0:05d}_defo={1:.1f}_std_f.fits'.format(nmap, defo_ampl)
+    fname_direct_poly_prf_avg_f = 'direct_poly_prf_nmap={0:05d}_defo={1:.1f}_tip={2:.1f}_tilt={3:.1f}_avg_f.fits'.format(nmap, defo_ampl, tipp_ampl, tilt_ampl)
+    fname_corono_poly_prf_avg_f = 'corono_poly_prf_nmap={0:05d}_defo={1:.1f}_tip={2:.1f}_tilt={3:.1f}_avg_f.fits'.format(nmap, defo_ampl, tipp_ampl, tilt_ampl)
+    fname_direct_poly_prf_std_f = 'direct_poly_prf_nmap={0:05d}_defo={1:.1f}_tip={2:.1f}_tilt={3:.1f}_std_f.fits'.format(nmap, defo_ampl, tipp_ampl, tilt_ampl)
+    fname_corono_poly_prf_std_f = 'corono_poly_prf_nmap={0:05d}_defo={1:.1f}_tip={2:.1f}_tilt={3:.1f}_std_f.fits'.format(nmap, defo_ampl, tipp_ampl, tilt_ampl)
     fpath_direct_poly_prf_avg_f = fdir_results / fname_direct_poly_prf_avg_f
     fpath_corono_poly_prf_avg_f = fdir_results / fname_corono_poly_prf_avg_f
     fpath_direct_poly_prf_std_f = fdir_results / fname_direct_poly_prf_std_f
@@ -219,15 +221,13 @@ for i, defo_ampl in enumerate(defo_ampl_arr):
             SAXOmapnm3d_tmp = fits.getdata(fpath_SAXOmapnm3d)
             nsaxo_all = len(SAXOmapnm3d_tmp)        
             pupil_tmp = aperture.sphere_saxo_pupil()
-            pupil = np.round(imutils.scale(pupil_tmp, 0, new_dim=(384,384), method='interp'))
+            pupil = np.round(imutils.scale(pupil_tmp, 0, new_dim=(nPup,nPup), method='interp'))
     
             # rescale NCPA map
-            SAXOmapnm3d = []
+            SAXOmapnm3d = np.empty((nsaxo_all, nPup, nPup))
             for i in range(nmap):
-                SAXOmapnm3d.append(imutils.scale(SAXOmapnm3d_tmp[i], 0, new_dim=(384,384), method='interp'))
-                print('SAXO map before scaling: {0:.2f} nm RMS, after: {1:.2f} nm RMS'.format(np.std(SAXOmapnm3d_tmp[i, pupil_tmp != 0]), np.std(np.asarray(SAXOmapnm3d)[i, pupil != 0])))
-            
-            SAXOmapnm3d = np.asarray(SAXOmapnm3d)
+                SAXOmapnm3d[i] = imutils.scale(SAXOmapnm3d_tmp[i+saxomap_i], 0, new_dim=(nPup,nPup), method='interp')
+                print('{0:05}/{1:05}: SAXO map before scaling: {2:.2f} nm RMS, after: {3:.2f} nm RMS'.format(i+1, nmap, np.std(SAXOmapnm3d_tmp[i, pupil_tmp != 0]), np.std(np.asarray(SAXOmapnm3d)[i, pupil != 0])))
     
     
     #%% Lyot Stop
@@ -235,6 +235,8 @@ for i, defo_ampl in enumerate(defo_ampl_arr):
     
     #%%
     Defo_mapnm2d = zernike.zernike1(4, npix=nPup, outside=0.)
+    Tipp_mapnm2d = zernike.zernike1(2, npix=nPup, outside=0.)
+    Tilt_mapnm2d = zernike.zernike1(3, npix=nPup, outside=0.)
     
     #%%
     """
@@ -269,18 +271,23 @@ for i, defo_ampl in enumerate(defo_ampl_arr):
                      CtrBtwnPix=CtrBtwnPix,
                      CtrBtwnPix2 = CtrBtwnPix2, 
                      nlam=nlam, bw = bw, wv =wv,
-                     OPDmap2d = None, Ampmap2d = None)
+                     OPDmap2d = None, Ampmap2d = None,
+                     OPDmap2d_post = None)
     
     #%%
     # definition of the coronagraph class
     for imap in range(nmap):
         t0 = time.time()
         if kw_aberr is True:
-            OPDmap2d = (beta_wfs*ZELDAmapnm3d[imap0]+Apod2d_OPDmapnm+defo_ampl*Defo_mapnm2d)*1e-9
+            OPDmap2d = (beta_wfs*ZELDAmapnm3d[imap0]+Apod2d_OPDmapnm\
+                        +defo_ampl*Defo_mapnm2d\
+                        +tipp_ampl*Tipp_mapnm2d\
+                        +tilt_ampl*Tilt_mapnm2d)*1e-9           
             if kw_saxo is True and kw_2nddate is True:
                 OPDmap2d += SAXOmapnm3d[saxomap_i+imap]*1e-9
             
-            params   = coro.update_params(params, OPDmap2d = OPDmap2d, Ampmap2d = Ampmap2d, LyotStop2d = LyotStop2d)
+            params   = coro.update_params(params, OPDmap2d = OPDmap2d, \
+                                          Ampmap2d = Ampmap2d, LyotStop2d = LyotStop2d)
             corono0  = coro.design.APLC2d(**params)
         else:
             params  = coro.update_params(params, OPDmap2d = None, Ampmap2d = None, LyotStop2d = LyotStop2d)
@@ -326,9 +333,4 @@ for i, defo_ampl in enumerate(defo_ampl_arr):
     fits.writeto(fpath_corono_poly_prf_avg_f, corono_poly_prf_avg_f, overwrite=True)
     fits.writeto(fpath_direct_poly_prf_std_f, direct_poly_prf_std_f, overwrite=True)
     fits.writeto(fpath_corono_poly_prf_std_f, corono_poly_prf_std_f, overwrite=True)
-
-#%%
-    
-    
-    
-        
+   
