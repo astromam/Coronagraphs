@@ -59,9 +59,9 @@ bw     = width/wv
 # simulation configuration   
 kw_aberr     = True
 kw_2nddate   = True    
-kw_skyobs    = True
-kw_aftercorr = False
-kw_saxo      = True
+kw_skyobs    = False
+kw_aftercorr = True
+kw_saxo      = False
 saxomap_i    = 0    # saxo first screen
 saxomap_f    = 0    # saxo last screen
 

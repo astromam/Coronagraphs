@@ -59,11 +59,11 @@ bw     = width/wv
 # simulation configuration   
 kw_aberr     = True
 kw_2nddate   = True    
-kw_skyobs    = True
-kw_aftercorr = False
-kw_saxo      = True
+kw_skyobs    = False
+kw_aftercorr = True
+kw_saxo      = False
 saxomap_i    = 0
-saxomap_f    = 99
+saxomap_f    = 0
 
 # test on the order of the min and max number of saxo phase screen
 if saxomap_i <= saxomap_f:
@@ -120,7 +120,7 @@ fdir = Path('../../').resolve()
 fdir_pupils  = fdir / 'data' / '2D' / 'pupils' / 'SPHERE' 
 fdir_zelda   = fdir / 'data' / '2D' / 'ZELDA' / str_date / str_obs  
 fdir_saxo    = fdir / 'data' / '2D' / 'ZELDA' / '2018-04-03'
-fdir_plots    = fdir / 'results' / '2D' / 'plots' / 'SPHERE' / str_aberr / str_date / str_obs / str_corr  
+fdir_plots   = fdir / 'results' / '2D' / 'plots' / 'SPHERE' / str_aberr / str_date / str_obs / str_corr  
 
 if kw_aberr is True:
     fdir_results = fdir / 'results' / '2D' / 'data' / 'SPHERE' / str_aberr / str_date / str_obs / str_saxo / str_corr  
@@ -425,8 +425,8 @@ if nmap <= 10:
 f2 = pl.figure(24, figsize=(8,4.5))
 pl.clf()
 exec('ax{0} = f2.add_subplot(1,{1},{0})'.format(1,1))
-exec('im = ax{0}.imshow(np.log10(corono_poly_img_f/direct_poly_img_f.max()), cmap = "inferno", vmin=-7.5, vmax=-3.5)'.format(1))
-exec('ax{0}.text(nImg2d/2, 0.1*nImg2d, "nmap={1:05d}", fontsize=16, horizontalalignment="center", color = "white")'.format(1,nmap))
+exec('im = ax{0}.imshow(np.log10(np.fliplr(corono_poly_img_f)/direct_poly_img_f.max()), cmap = "inferno", vmin=-7.5, vmax=-3.5)'.format(1))
+exec('ax{0}.text(nImg2d/2, 0.1*nImg2d, "nmap={1:05d} (flip lr)", fontsize=16, horizontalalignment="center", color = "white")'.format(1,nmap))
 exec('ax{0}.tick_params(axis="x", which="both", bottom="off", top="off", labelbottom="off")'.format(1,))
 exec('ax{0}.tick_params(axis="y", which="both", left="off", right="off", labelleft="off")'.format(1,))
 
