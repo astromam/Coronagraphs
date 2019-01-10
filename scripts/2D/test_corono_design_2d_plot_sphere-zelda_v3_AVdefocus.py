@@ -189,11 +189,6 @@ ncase = len(label_lst)
 """
 ### Filepaths for the file results
 """        
-fname_direct_poly_img_t     = 'direct_poly_img_nmap={0:05d}_defo={1:.1f}_tip={2:.1f}_tilt={3:.1f}_t.fits'.format(nmap, defo_ampl, tipp_ampl, tilt_ampl)
-fname_corono_poly_img_t     = 'corono_poly_img_nmap={0:05d}_defo={1:.1f}_tip={2:.1f}_tilt={3:.1f}_t.fits'.format(nmap, defo_ampl, tipp_ampl, tilt_ampl)
-fpath_direct_poly_img_t     = fdir_results / fname_direct_poly_img_t
-fpath_corono_poly_img_t     = fdir_results / fname_corono_poly_img_t
-
 fname_direct_poly_img_f     = 'direct_poly_img_nmap={0:05d}_defo={1:.1f}_tip={2:.1f}_tilt={3:.1f}_f.fits'.format(nmap, defo_ampl, tipp_ampl, tilt_ampl)
 fname_corono_poly_img_f     = 'corono_poly_img_nmap={0:05d}_defo={1:.1f}_tip={2:.1f}_tilt={3:.1f}_f.fits'.format(nmap, defo_ampl, tipp_ampl, tilt_ampl)
 fpath_direct_poly_img_f     = fdir_results / fname_direct_poly_img_f
@@ -326,10 +321,6 @@ pl.savefig(str(fpath), transparent=True)
 Image reading
 """
 #%% array initialization
-# read the images for each map
-direct_poly_img_t = fits.getdata(fpath_direct_poly_img_t)
-corono_poly_img_t = fits.getdata(fpath_corono_poly_img_t)
-
 # read the averaged image
 direct_poly_img_f = fits.getdata(fpath_direct_poly_img_f)
 corono_poly_img_f = fits.getdata(fpath_corono_poly_img_f)
@@ -401,31 +392,6 @@ pl.title(r'Intensity profile in broadband light ($\Delta\lambda/\lambda_0$={0:.1
 pl.tight_layout()
 if kw_mas is False:
     pl.savefig(str(fpath_image_plane_plot), transparent=True)
-
-
-#%%
-if nmap <= 10: 
-    f2 = pl.figure(22, figsize=(8,4.5))
-    pl.clf()
-    for i in range(nmap):
-        exec('ax{0} = f2.add_subplot(1,{1},{0})'.format(i+1,nmap))
-        if i < nmap: 
-            exec('im = ax{0}.imshow(np.log10(corono_poly_img_t[{1}]/direct_poly_img_t[{1}].max()), cmap = "inferno", vmin=-7.5, vmax=-3.5)'.format(i+1,i))
-            exec('ax{0}.text(nImg2d/2, 0.1*nImg2d, "map {1}", fontsize=8, horizontalalignment="center", color = "white")'.format(i+1,i))
-        exec('ax{0}.tick_params(axis="x", which="both", bottom="off", top="off", labelbottom="off")'.format(i+1,))
-        exec('ax{0}.tick_params(axis="y", which="both", left="off", right="off", labelleft="off")'.format(i+1,))
-        ax1.set_title('{0}'.format(str_corr))
-        
-    f2.subplots_adjust(bottom=0.1, top=0.9, left=0.1, right=0.8,
-                        wspace=0.02, hspace=0.02)
-    
-    f2.subplots_adjust(right=0.8)
-    cbar_ax = f2.add_axes([0.85, 0.15, 0.05, 0.7])
-    cbar    = f2.colorbar(im, cax=cbar_ax)
-    cbar.ax.set_ylabel('intensity in log scale', rotation=270, labelpad = 10)
-    pl.savefig(str(fpath_image_plane_disp), transparent=True)
-    pl.tight_layout()
-    pl.show()
 
 #%%
 f2 = pl.figure(24, figsize=(8,4.5))

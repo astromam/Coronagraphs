@@ -253,13 +253,7 @@ params = coro.to_dict(nPup=nPup, nImg2d=nImg2d, Fmax2d = Fmax2d, nFPM = nFPM,
 ### Filepaths for the file results
 """        
 for i, defo_ampl in enumerate(defo_ampl_arr):
-    print('defo={0}nm rms'.format(defo_ampl))
-
-    fname_direct_poly_img_t     = 'direct_poly_img_nmap={0:05d}_defo={1:.1f}_tip={2:.1f}_tilt={3:.1f}_t.fits'.format(nmap, defo_ampl, tipp_ampl, tilt_ampl)
-    fname_corono_poly_img_t     = 'corono_poly_img_nmap={0:05d}_defo={1:.1f}_tip={2:.1f}_tilt={3:.1f}_t.fits'.format(nmap, defo_ampl, tipp_ampl, tilt_ampl)
-    fpath_direct_poly_img_t     = fdir_results / fname_direct_poly_img_t
-    fpath_corono_poly_img_t     = fdir_results / fname_corono_poly_img_t
-    
+    print('defo={0}nm rms'.format(defo_ampl))    
     fname_direct_poly_img_f     = 'direct_poly_img_nmap={0:05d}_defo={1:.1f}_tip={2:.1f}_tilt={3:.1f}_f.fits'.format(nmap, defo_ampl, tipp_ampl, tilt_ampl)
     fname_corono_poly_img_f     = 'corono_poly_img_nmap={0:05d}_defo={1:.1f}_tip={2:.1f}_tilt={3:.1f}_f.fits'.format(nmap, defo_ampl, tipp_ampl, tilt_ampl)
     fpath_direct_poly_img_f     = fdir_results / fname_direct_poly_img_f
@@ -325,9 +319,6 @@ for i, defo_ampl in enumerate(defo_ampl_arr):
     """
     ### File saving
     """
-    fits.writeto(fpath_direct_poly_img_t, direct_poly_img_t, overwrite=True)
-    fits.writeto(fpath_corono_poly_img_t, corono_poly_img_t, overwrite=True)
-    
     fits.writeto(fpath_direct_poly_img_f, direct_poly_img_f, overwrite=True)
     fits.writeto(fpath_corono_poly_img_f, corono_poly_img_f, overwrite=True)
     
