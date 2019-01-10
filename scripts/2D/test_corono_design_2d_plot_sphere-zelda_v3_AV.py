@@ -10,6 +10,9 @@ License: MIT license
 """
 
 #%% Initialization
+"""
+### Initialization
+"""
 import numpy as np
 import os
 import pylab as pl
@@ -20,52 +23,63 @@ import corono as coro
 
 #%% APLC2d tests
 """
-tests on APLC 2d class
+### Parameters
 """
+# Coronagraph type
 corono_name   = 'APLC' # 'SP' or 'APLC' or DZPM
 CtrBtwnPix  = True
 CtrBtwnPix2 = False
-SymPupil2d  = False
-cDarkHole   = 6
+Pupil2dSym  = False
 
+# Spectral bandwidth
 wv        = 1.593e-6
 width     = 52e-9
 
+# Telescope characteristics
 dAper     = 8
-
-mas2rad   = np.pi/(180.*3600)
-
-rMask_m   = 287e-6/2.
 Fratio    = 40
 
+# Focal plane mask
+mas2rad   = np.pi/(180.*3600)
+rMask_m   = 287e-6/2.
 rMask  = rMask_m/(wv*Fratio)
 rMask_mas = 1000.*rMask * (wv/dAper)/mas2rad
 print('Mask radius: {0:.2f} mas at {1:.3f}um'.format(rMask_mas, wv*1e6))
 
-rho0   = 5.
-rho1   = 20.
-nPup   = 384
-nImg2d = 600
-Fmax2d = 60
+# sampling
+nPup   = 384   # pupil
+nFPM   = 200   # focal plane mask
+nImg2d = 600   # final image plane 
+Fmax2d = 60    # spatial frequencies in the final image plane
+
+# wavelength sampling
 nlam   = 5
 bw     = width/wv 
-nFPM   = 200
 
+# simulation configuration   
 kw_aberr     = True
-kw_2nddate   = False    
-kw_skyobs    = False
+kw_2nddate   = True    
+kw_skyobs    = True
 kw_aftercorr = False
-kw_saxo      = False
+kw_saxo      = True
 saxomap_i    = 0
-saxomap_f    = 9
+saxomap_f    = 99
 
+# test on the order of the min and max number of saxo phase screen
 if saxomap_i <= saxomap_f:
     nsaxomap     = saxomap_f - saxomap_i + 1
 else:
     raise NameError('initial saxo map (saxomap_i={0}) must be smaller than final saxo map (saxomap_f={1})!'.format(saxomap_i, saxomap_f))
 
+# plot parameters for final image plane
+rho0   = 5.
+rho1   = 20.
+cDarkHole   = 6
 
 #%%
+"""
+### Directories
+"""    
 if kw_aberr is False:
     str_aberr = 'wo_aberr'
     str_date  = ''
@@ -85,6 +99,7 @@ else:
     str_corr  = 'before_correction'
     imap0     = 0
     nmap      = 1
+    beta_wfs  = 1./0.90
     str_saxo_tmp  = 'wo_saxo'
     if kw_2nddate is True:
         str_date = '2018-04-03'
@@ -93,26 +108,27 @@ else:
     if kw_aftercorr is True:
         str_corr = 'after_correction'
         imap0    = 3
+        beta_wfs = 1./0.95
     if kw_saxo is True and kw_2nddate is True:
         str_saxo = 'with_saxo'
         nmap     = nsaxomap*1
+        beta_wfs = 1.0
 
+#%%
 fdir = Path('../../').resolve()
 
 fdir_pupils  = fdir / 'data' / '2D' / 'pupils' / 'SPHERE' 
+fdir_zelda   = fdir / 'data' / '2D' / 'ZELDA' / str_date / str_obs  
+fdir_saxo    = fdir / 'data' / '2D' / 'ZELDA' / '2018-04-03'
+fdir_plots    = fdir / 'results' / '2D' / 'plots' / 'SPHERE' / str_aberr / str_date / str_obs / str_corr  
 
 if kw_aberr is True:
     fdir_results = fdir / 'results' / '2D' / 'data' / 'SPHERE' / str_aberr / str_date / str_obs / str_saxo / str_corr  
 else:
     fdir_results = fdir / 'results' / '2D' / 'data' / 'SPHERE' / str_aberr / str_obs / str_saxo / str_corr  
 
-fdir_zelda   = fdir / 'data' / '2D' / 'ZELDA' / str_date / str_obs  
-fdir_saxo    = fdir / 'data' / '2D' / 'ZELDA' / '2018-04-03'
-
-fdir_plots    = fdir / 'results' / '2D' / 'plots' / 'SPHERE' / str_aberr / str_date / str_obs / str_corr  
 fdir_pupimages = fdir_results / 'pupimages'
 
-#%%
 if not os.path.exists(fdir_results):
     os.makedirs(fdir_results)
     
@@ -122,8 +138,12 @@ if not os.path.exists(fdir_plots):
 if not os.path.exists(fdir_pupimages):
     os.makedirs(fdir_pupimages)  
 
+#%%
+"""
+### Filenames for the sources
+"""
 fname_Apod2d     = 'SPHERE_APO1_field_transmission_map.fits'
-#fname_Apod2d = 'sphere_pupil_APO1_BH.fits'
+fname_Apod2d_OPDmapnm = 'apo_substrate_D1.fits'
 fname_Ampmap2d   = 'sphere_pupil_clear_BH_field.fits'
 fname_LyotStop2d = 'sphere_stop_ST_ALC2.fits'
 
@@ -142,8 +162,10 @@ if kw_aberr is True:
         if kw_aftercorr is True:
             fname_SAXOmapnm3d = '2018-04-04T03_12_50-saxo_residual_turbulence.fits'
 
-fpath_Apod2d     = fdir_pupils / fname_Apod2d
-fpath_Ampmap2d   = fdir_pupils / fname_Ampmap2d
+#%% Filepaths for the file sources
+fpath_Apod2d          = fdir_pupils / fname_Apod2d
+fpath_Apod2d_OPDmapnm = fdir_pupils / fname_Apod2d_OPDmapnm
+fpath_Ampmap2d        = fdir_pupils / fname_Ampmap2d
 
 if kw_aberr is True:
     fpath_ZELDAmapnm3d = fdir_zelda  / fname_ZELDAmapnm3d   
@@ -158,7 +180,9 @@ label_lst = ['no errors']
 ncase = len(label_lst)
 
 #%%
-
+"""
+### Filepaths for the file results
+"""        
 fname_direct_poly_img_t     = 'direct_poly_img_nmap={0:05d}_t.fits'.format(nmap)
 fname_corono_poly_img_t     = 'corono_poly_img_nmap={0:05d}_t.fits'.format(nmap)
 fpath_direct_poly_img_t     = fdir_results / fname_direct_poly_img_t
@@ -169,6 +193,7 @@ fname_corono_poly_img_f     = 'corono_poly_img_nmap={0:05d}_f.fits'.format(nmap)
 fpath_direct_poly_img_f     = fdir_results / fname_direct_poly_img_f
 fpath_corono_poly_img_f     = fdir_results / fname_corono_poly_img_f
 
+#%%
 fname_direct_poly_prf_avg_f = 'direct_poly_prf_nmap={0:05d}_avg_f.fits'.format(nmap)
 fname_corono_poly_prf_avg_f = 'corono_poly_prf_nmap={0:05d}_avg_f.fits'.format(nmap)
 fname_direct_poly_prf_std_f = 'direct_poly_prf_nmap={0:05d}_std_f.fits'.format(nmap)
@@ -188,6 +213,10 @@ fpath_image_plane_disp   = fdir_plots / fname_image_plane_disp
 fpath_image_plane_f_disp = fdir_plots / fname_image_plane_f_disp
 
 #%% Entrance pupil
+"""
+### File reading
+"""
+# Pupil
 if kw_skyobs is True:
     Pupil2d = aperture.vlt_pupil(nPup, nPup, dead_actuator_diameter=0)
 else:
@@ -195,6 +224,7 @@ else:
 
 fpath = fdir_pupimages / 'Aperture.pdf'
 
+#%%
 pl.figure(1)
 pl.clf()
 pl.imshow(Pupil2d, cmap = 'inferno')
@@ -205,6 +235,7 @@ pl.savefig(str(fpath), transparent=True)
 #%% Apodization
 Apod2d = fits.getdata(fpath_Apod2d)
 
+#%%
 fpath = fdir_pupimages / 'Apodizer.pdf'
 
 pl.figure(2)
@@ -214,11 +245,26 @@ pl.title('Apodized entrance pupil')
 pl.tight_layout()
 pl.savefig(str(fpath), transparent=True)
 
+
+#%% Apodization OPD map
+Apod2d_OPDmapnm = fits.getdata(fpath_Apod2d_OPDmapnm)
+Apod2d_OPDmapnm[np.isnan(Apod2d_OPDmapnm)] = 0
+
+#%%
+fpath = fdir_pupimages / 'Apodizer_OPDmapnm.pdf'
+
+pl.figure(20)
+pl.clf()
+pl.imshow(Apod2d_OPDmapnm, cmap = 'inferno')
+pl.title('Apodizer OPD map nm')
+pl.tight_layout()
+pl.savefig(str(fpath), transparent=True)
+
 #%% Amplitude errors
 if kw_aberr is True:
+    Ampmap2d = fits.getdata(fpath_Ampmap2d)
 
     fpath = fdir_pupimages / 'AmplMap.pdf'
-    Ampmap2d = fits.getdata(fpath_Ampmap2d)
 
     pl.figure(3)
     pl.clf()
@@ -231,7 +277,7 @@ if kw_aberr is True:
 if kw_aberr is True:
     OPDmapnm3d = fits.getdata(fpath_ZELDAmapnm3d)
     OPDmapnm2d = OPDmapnm3d[imap0]
-    OPDmap2d   = OPDmapnm2d*1e-9
+    OPDmap2d   = (beta_wfs*OPDmapnm2d+Apod2d_OPDmapnm)*1e-9
         
     if kw_saxo is True:
         SAXOmapnm3d_tmp = fits.getdata(fpath_SAXOmapnm3d)
@@ -248,7 +294,7 @@ if kw_aberr is True:
 
         pl.figure(6)
         pl.clf()
-        pl.imshow(SAXOmapnm3d[0])
+        pl.imshow(SAXOmapnm3d[0], cmap = 'inferno')
         pl.title('Saxo phase map')
 
     pl.figure(4)
@@ -259,6 +305,7 @@ if kw_aberr is True:
 #%% Lyot Stop
 LyotStop2d = fits.getdata(fpath_LyotStop2d)
 
+#%%
 fpath = fdir_pupimages / 'LyotStop.pdf'
 
 pl.figure(5)
@@ -269,13 +316,31 @@ pl.tight_layout()
 pl.savefig(str(fpath), transparent=True)
 
 #%%
+"""
+Image reading
+"""
+#%% array initialization
+# read the images for each map
+direct_poly_img_t = fits.getdata(fpath_direct_poly_img_t)
+corono_poly_img_t = fits.getdata(fpath_corono_poly_img_t)
 
+# read the averaged image
+direct_poly_img_f = fits.getdata(fpath_direct_poly_img_f)
+corono_poly_img_f = fits.getdata(fpath_corono_poly_img_f)
+
+# read the averaged and standard deviation profiles of the images
+direct_poly_prf_avg_f = fits.getdata(fpath_direct_poly_prf_avg_f)
+corono_poly_prf_avg_f = fits.getdata(fpath_corono_poly_prf_avg_f)
+direct_poly_prf_std_f = fits.getdata(fpath_direct_poly_prf_std_f)
+corono_poly_prf_std_f = fits.getdata(fpath_corono_poly_prf_std_f)
+
+#%%
 if corono_name != 'APLC':
     raise NameError('Check the name of the coronagraph!')
     
 params = coro.to_dict(nPup=nPup, nImg2d=nImg2d, Fmax2d = Fmax2d, nFPM = nFPM,
                  rMask = rMask,
-                 SymPupil2d = SymPupil2d, 
+                 Pupil2dSym = Pupil2dSym, 
                  Pupil2d = Pupil2d, LyotStop2d = LyotStop2d, 
                  CtrBtwnPix=CtrBtwnPix,
                  CtrBtwnPix2 = CtrBtwnPix2, 
@@ -284,20 +349,10 @@ params = coro.to_dict(nPup=nPup, nImg2d=nImg2d, Fmax2d = Fmax2d, nFPM = nFPM,
                  OPDmap2d = None, Ampmap2d = None)
 corono00 = coro.design.APLC2d(**params)
 
-#%%
-direct_poly_img_t = fits.getdata(fpath_direct_poly_img_t)
-corono_poly_img_t = fits.getdata(fpath_corono_poly_img_t)
-
-direct_poly_img_f = fits.getdata(fpath_direct_poly_img_f)
-corono_poly_img_f = fits.getdata(fpath_corono_poly_img_f)
-
-direct_poly_prf_avg_f = fits.getdata(fpath_direct_poly_prf_avg_f)
-corono_poly_prf_avg_f = fits.getdata(fpath_corono_poly_prf_avg_f)
-direct_poly_prf_std_f = fits.getdata(fpath_direct_poly_prf_std_f)
-corono_poly_prf_std_f = fits.getdata(fpath_corono_poly_prf_std_f)
-
-
 #%% Intensity profiles of the direct and coronagraphic images
+"""
+### Plot parameters
+"""
 rad_corono = np.arange(nImg2d//2)
 colors_cor = pl.cm.rainbow(np.linspace(0,1,nmap))
 
@@ -316,10 +371,13 @@ else:
 
 x_abs = x_lam0D*fac
 
-
+#%%
+"""
+### Display plot and images
+"""
 i0 = 0
 
-pl.figure(11)
+pl.figure(12)
 pl.clf()
 pl.semilogy(x_abs, corono_poly_prf_std_f/direct_poly_img_f.max(),
         label='map {0}'.format(imap0), color = colors_cor[i0])
@@ -386,5 +444,4 @@ pl.tight_layout()
 pl.show()
 
 #%%
-
 print('ok')
