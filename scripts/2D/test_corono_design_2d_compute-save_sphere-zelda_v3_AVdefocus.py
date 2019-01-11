@@ -217,13 +217,6 @@ Tilt_mapnm2d = zernike.zernike1(3, npix=nPup, outside=0.)
 ### Image generation
 """
 #%% array initialization
-# define the array of images for each map
-#direct_poly_img_t = np.zeros((nmap, nImg2d, nImg2d))
-#corono_poly_img_t = np.zeros((nmap, nImg2d, nImg2d))
-
-#direct_poly_pup_t = np.zeros((nmap, nPup, nPup))
-#corono_poly_pup_t = np.zeros((nmap, nPup, nPup))
-
 # define the averaged image
 direct_poly_img_f = np.zeros((nImg2d, nImg2d))
 corono_poly_img_f = np.zeros((nImg2d, nImg2d))
