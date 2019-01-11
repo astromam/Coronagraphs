@@ -117,11 +117,15 @@ if __name__ == '__main__':
     print('Mask radius: {0:.2f} mas at {1:.3f}um'.format(rMask_mas, wv*1e6))
 
     # sampling
+    pixel  = 12.25 # IRDIS pixel sampling [mas/pix]
     nPup   = 384   # pupil
     nFPM   = 200   # focal plane mask
-    nImg2d = 600   # final image plane 
-    Fmax2d = 60    # spatial frequencies in the final image plane
+    nImg2d = 200   # final image plane 
 
+    # compute spatial frequencies in the final image plane
+    loD    = wv/dAper*180/np.pi*3600*1000/pixel
+    Fmax2d = nImg2d/loD    # spatial frequencies in the final image plane
+    
     # wavelength sampling
     nlam   = 5
     bw     = width/wv 
@@ -134,10 +138,12 @@ if __name__ == '__main__':
     kw_saxo      = True
     saxofudge    = 60/120              # saxo amplitude errors fudge factor
     saxomap_i    = 0               # saxo first screen
-    saxomap_f    = int(5*1380)    # saxo last screen
+    saxomap_f    = int(1*1380)    # saxo last screen
 
+    # multi-processing
+    nproc        = 2             # number of cores to use
+    
     # make sure we have a number of phase screens multiple of the number of CPUs
-    nproc = 11
     nsaxomap  = saxomap_f - saxomap_i + 1
     nsaxomap  = nsaxomap - (nsaxomap % nproc)
 
@@ -283,12 +289,6 @@ if __name__ == '__main__':
     #%% Lyot Stop
     LyotStop2d = fits.getdata(fpath_LyotStop2d)
 
-    import matplotlib.pyplot as plt
-    plt.figure(0)
-    plt.clf()
-    plt.imshow(SAXOmapnm3d.std(axis=0)*LyotStop2d)
-    stop
-    
     #%%
     Defo_mapnm2d = zernike.zernike1(4, npix=nPup, outside=0.)
     Tipp_mapnm2d = zernike.zernike1(2, npix=nPup, outside=0.)
