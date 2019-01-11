@@ -136,12 +136,12 @@ if __name__ == '__main__':
     kw_skyobs    = True
     kw_aftercorr = bool(eval(sys.argv[1]))
     kw_saxo      = True
-    saxofudge    = 60/120              # saxo amplitude errors fudge factor
+    saxofudge    = 1 #60/120              # saxo amplitude errors fudge factor
     saxomap_i    = 0               # saxo first screen
-    saxomap_f    = int(1*1380)    # saxo last screen
+    saxomap_f    = int(2*1380)    # saxo last screen
 
     # multi-processing
-    nproc        = 11            # number of cores to use
+    nproc = multiprocessing.cpu_count()//2 - 1
     
     # make sure we have a number of phase screens multiple of the number of CPUs
     nsaxomap  = saxomap_f - saxomap_i + 1
