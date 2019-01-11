@@ -98,6 +98,7 @@ ENV/
 /site
 
 # mypy
+*.DS_Store
 .mypy_cache/
 test_corono_optim_1d_compare_ampl_python.py
 test_corono_optim_2d_plot_for_romain.py
