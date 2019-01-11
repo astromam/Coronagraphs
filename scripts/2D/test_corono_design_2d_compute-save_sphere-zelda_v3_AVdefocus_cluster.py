@@ -132,9 +132,9 @@ if __name__ == '__main__':
     kw_skyobs    = True
     kw_aftercorr = bool(eval(sys.argv[1]))
     kw_saxo      = True
-    saxofudge    = 80/120              # saxo amplitude errors fudge factor
+    saxofudge    = 60/120              # saxo amplitude errors fudge factor
     saxomap_i    = 0               # saxo first screen
-    saxomap_f    = int(10*1380)    # saxo last screen
+    saxomap_f    = int(5*1380)    # saxo last screen
 
     # make sure we have a number of phase screens multiple of the number of CPUs
     nproc = 11
@@ -258,17 +258,24 @@ if __name__ == '__main__':
         ZELDAmapnm3d = fits.getdata(fpath_ZELDAmapnm3d)
 
         if kw_saxo is True and kw_2nddate is True:
-            SAXOmapnm3d_tmp = fits.getdata(fpath_SAXOmapnm3d)
-            if saxofudge != 1:
-                SAXOmapnm3d_tmp *= fudgesaxo
-            nsaxo_all = len(SAXOmapnm3d_tmp)        
+            # SAXO pupils
             pupil_tmp = aperture.sphere_saxo_pupil()
             pupil = np.round(imutils.scale(pupil_tmp, 0, new_dim=(nPup,nPup), method='interp'))
 
+            # read SAXO phase residuals
+            SAXOmapnm3d_tmp = fits.getdata(fpath_SAXOmapnm3d)
+
+            # select only phase screens that will be actually used
+            SAXOmapnm3d_tmp = SAXOmapnm3d_tmp[saxomap_i:saxomap_f]
+
+            # apply SAXO performance fudge factor
+            if saxofudge != 1:
+                SAXOmapnm3d_tmp *= saxofudge
+            
             # rescale NCPA map
             SAXOmapnm3d = np.empty((nmap, nPup, nPup))
             for i in range(nmap):
-                SAXOmapnm3d[i] = imutils.scale(SAXOmapnm3d_tmp[i+saxomap_i], 0, new_dim=(nPup,nPup), method='interp')
+                SAXOmapnm3d[i] = imutils.scale(SAXOmapnm3d_tmp[i], 0, new_dim=(nPup,nPup), method='interp')
                 print('{0:05}/{1:05}: SAXO map before scaling: {2:.2f} nm RMS, after: {3:.2f} nm RMS'.format(i+1, nmap, np.std(SAXOmapnm3d_tmp[i, pupil_tmp != 0]), np.std(np.asarray(SAXOmapnm3d)[i, pupil != 0])))
 
             del SAXOmapnm3d_tmp
