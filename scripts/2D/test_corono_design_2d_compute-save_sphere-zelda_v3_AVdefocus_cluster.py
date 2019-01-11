@@ -141,7 +141,7 @@ if __name__ == '__main__':
     saxomap_f    = int(1*1380)    # saxo last screen
 
     # multi-processing
-    nproc        = 2             # number of cores to use
+    nproc        = 11            # number of cores to use
     
     # make sure we have a number of phase screens multiple of the number of CPUs
     nsaxomap  = saxomap_f - saxomap_i + 1
