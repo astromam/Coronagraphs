@@ -18,7 +18,7 @@ import os
 import pylab as pl
 from pathlib import Path
 from astropy.io import fits
-from pyzelda.utils import aperture, imutils
+from pyzelda.utils import aperture, imutils, zernike
 import corono as coro
 
 #%% APLC2d tests
@@ -58,12 +58,12 @@ bw     = width/wv
 
 # simulation configuration   
 kw_aberr     = True
-kw_2nddate   = False    
-kw_skyobs    = False
+kw_2nddate   = True    
+kw_skyobs    = True
 kw_aftercorr = False
-kw_saxo      = False
+kw_saxo      = True
 saxomap_i    = 0
-saxomap_f    = 0
+saxomap_f    = 10#int(30*1380)
 
 # test on the order of the min and max number of saxo phase screen
 if saxomap_i <= saxomap_f:
@@ -265,6 +265,7 @@ pl.savefig(str(fpath), transparent=True)
 if kw_aberr is True:
     Ampmap2d = fits.getdata(fpath_Ampmap2d)
 
+#%%
     fpath = fdir_pupimages / 'AmplMap.pdf'
 
     pl.figure(3)
@@ -274,34 +275,28 @@ if kw_aberr is True:
     pl.tight_layout()
     pl.savefig(str(fpath), transparent=True)
 
+#%%
+    
+Defo_mapnm2d = zernike.zernike1(4, npix=nPup, outside=0.)
+Tipp_mapnm2d = zernike.zernike1(2, npix=nPup, outside=0.)
+Tilt_mapnm2d = zernike.zernike1(3, npix=nPup, outside=0.)
+
+
 #%% Phase errors
-if kw_aberr is True:
-    OPDmapnm3d = fits.getdata(fpath_ZELDAmapnm3d)
-    OPDmapnm2d = OPDmapnm3d[imap0]
-    OPDmap2d   = (beta_wfs*OPDmapnm2d+Apod2d_OPDmapnm)*1e-9
-        
-    if kw_saxo is True:
-        SAXOmapnm3d_tmp = fits.getdata(fpath_SAXOmapnm3d)
-        nsaxo_all = len(SAXOmapnm3d_tmp)        
-        pupil_tmp = aperture.sphere_saxo_pupil()
-        pupil = np.round(imutils.scale(pupil_tmp, 0, new_dim=(384,384), method='interp'))
-
-        # rescale NCPA map
-        SAXOmapnm3d = []
-        for i in range(nmap):
-            SAXOmapnm3d.append(imutils.scale(SAXOmapnm3d_tmp[i], 0, new_dim=(384,384), method='interp'))
-        
-        SAXOmapnm3d = np.asarray(SAXOmapnm3d)
-
-        pl.figure(6)
-        pl.clf()
-        pl.imshow(SAXOmapnm3d[0], cmap = 'inferno')
-        pl.title('Saxo phase map')
-
-    pl.figure(4)
-    pl.clf()
-    pl.imshow(OPDmap2d, cmap = 'inferno')
-    pl.title('Phase map')
+#if kw_aberr is True:
+#    ZELDAmapnm3d = fits.getdata(fpath_ZELDAmapnm3d)
+#
+#    if kw_saxo is True and kw_2nddate is True:
+#        SAXOmapnm3d_tmp = fits.getdata(fpath_SAXOmapnm3d)
+#        nsaxo_all = len(SAXOmapnm3d_tmp)        
+#        pupil_tmp = aperture.sphere_saxo_pupil()
+#        pupil = np.round(imutils.scale(pupil_tmp, 0, new_dim=(nPup,nPup), method='interp'))
+#
+#        # rescale NCPA map
+#        SAXOmapnm3d = np.empty((nsaxo_all, nPup, nPup))
+#        for i in range(nmap):
+#            SAXOmapnm3d[i] = imutils.scale(SAXOmapnm3d_tmp[i+saxomap_i], 0, new_dim=(nPup,nPup), method='interp')
+#            print('{0:05}/{1:05}: SAXO map before scaling: {2:.2f} nm RMS, after: {3:.2f} nm RMS'.format(i+1, nmap, np.std(SAXOmapnm3d_tmp[i, pupil_tmp != 0]), np.std(np.asarray(SAXOmapnm3d)[i, pupil != 0])))
 
 #%% Lyot Stop
 LyotStop2d = fits.getdata(fpath_LyotStop2d)

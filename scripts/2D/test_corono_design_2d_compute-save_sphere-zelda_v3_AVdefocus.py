@@ -242,6 +242,15 @@ params = coro.to_dict(nPup=nPup, nImg2d=nImg2d, Fmax2d = Fmax2d, nFPM = nFPM,
                  OPDmap2d_post = None)
     
 #%%
+if kw_aberr is True:               
+    params   = coro.update_params(params, OPDmap2d = None,
+                                  Ampmap2d = Ampmap2d, LyotStop2d = LyotStop2d)
+    corono0  = coro.design.APLC2d(**params)
+else:
+    params  = coro.update_params(params, OPDmap2d = None, 
+                                 Ampmap2d = None, LyotStop2d = LyotStop2d)
+    corono0 = coro.design.APLC2d(**params)    
+
 """
 ### Filepaths for the file results
 """        
@@ -265,25 +274,22 @@ for i, defo_ampl in enumerate(defo_ampl_arr):
 
     #%%
     # definition of the coronagraph class
+    if kw_aberr is True:
+        OPDmap2d0 = (beta_wfs*ZELDAmapnm3d[imap0]+Apod2d_OPDmapnm\
+                    +defo_ampl*Defo_mapnm2d\
+                    +tipp_ampl*Tipp_mapnm2d\
+                    +tilt_ampl*Tilt_mapnm2d)*1e-9
+
     for imap in range(nmap):
         t0 = time.time()
-        if kw_aberr is True:
-            OPDmap2d = (beta_wfs*ZELDAmapnm3d[imap0]+Apod2d_OPDmapnm\
-                        +defo_ampl*Defo_mapnm2d\
-                        +tipp_ampl*Tipp_mapnm2d\
-                        +tilt_ampl*Tilt_mapnm2d)*1e-9           
+        if kw_aberr is True:           
             if kw_saxo is True and kw_2nddate is True:
-                OPDmap2d += SAXOmapnm3d[saxomap_i+imap]*1e-9
-            
-            params   = coro.update_params(params, OPDmap2d = OPDmap2d, \
-                                          Ampmap2d = Ampmap2d, LyotStop2d = LyotStop2d)
-            corono0  = coro.design.APLC2d(**params)
-        else:
-            params  = coro.update_params(params, OPDmap2d = None, Ampmap2d = None, LyotStop2d = LyotStop2d)
-            corono0 = coro.design.APLC2d(**params)    
-                    
-        direct_poly_img_f += corono0.compute_direct_intensity_2d(Apod2d)
-        corono_poly_img_f += corono0.compute_corono_intensity_2d(Apod2d)    
+                OPDmap2d = OPDmap2d0 + SAXOmapnm3d[saxomap_i+imap]*1e-9
+                direct_poly_img_f += corono0.compute_direct_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d)
+                corono_poly_img_f += corono0.compute_corono_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d)                
+        else:                    
+            direct_poly_img_f += corono0.compute_direct_intensity_2d(Apod2d)
+            corono_poly_img_f += corono0.compute_corono_intensity_2d(Apod2d)    
     
         t1 = time.time()
         if (imap+1) % 10 == 0: 
