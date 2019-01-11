@@ -58,7 +58,7 @@ def tpool_init(OPDmap2d0_i, SAXOmapnm3d_i, corono0_i,
     corono_poly_img_cube_shape = corono_poly_img_cube_shape_i
 
     
-def compute_corono_image(img_index, saxomap_i, saxomap_f):
+def compute_corono_image(img_index, saxo_i, saxo_f):
     '''
     Compute a series of coronagraphic images
     '''
@@ -73,11 +73,11 @@ def compute_corono_image(img_index, saxomap_i, saxomap_f):
     corono_poly_img_f = np.zeros((nImg2d, nImg2d))
 
     # loop on phase screens
-    saxomap_i = int(saxomap_i)
-    saxomap_f = int(saxomap_f)
-    nmap = saxomap_f - saxomap_i + 1
+    saxo_i = int(saxo_i)
+    saxo_f = int(saxo_f)
+    nmap = saxo_f - saxo_i + 1
     for imap in range(nmap):
-        OPDmap2d = OPDmap2d0 + SAXOmapnm3d[saxomap_i+imap]*1e-9
+        OPDmap2d = OPDmap2d0 + SAXOmapnm3d[saxo_i+imap]*1e-9
         direct_poly_img_f += corono0.compute_direct_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d)
         corono_poly_img_f += corono0.compute_corono_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d)
 
