@@ -63,7 +63,7 @@ kw_skyobs    = True
 kw_aftercorr = False
 kw_saxo      = True
 saxomap_i    = 0
-saxomap_f    = 10#int(30*1380)
+saxomap_f    = 100#int(30*1380)
 
 # test on the order of the min and max number of saxo phase screen
 if saxomap_i <= saxomap_f:
@@ -389,7 +389,7 @@ if kw_mas is False:
     pl.savefig(str(fpath_image_plane_plot), transparent=True)
 
 #%%
-f2 = pl.figure(24, figsize=(8,4.5))
+f2 = pl.figure(24, figsize=(6,4.5))
 pl.clf()
 exec('ax{0} = f2.add_subplot(1,{1},{0})'.format(1,1))
 exec('im = ax{0}.imshow(np.log10(np.fliplr(corono_poly_img_f)/direct_poly_img_f.max()), cmap = "inferno", vmin=-7.5, vmax=-3.5)'.format(1))
