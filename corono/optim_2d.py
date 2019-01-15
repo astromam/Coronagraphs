@@ -611,20 +611,20 @@ class MaxTau(ProblemMatrix):
             self.c = -self.Pupil_vec[self.idx_pup]/self.TR
 
         # Compute contrast constraints on the coronagraphic electric field
-        if self.ncorono > 1:
-            raise NotImplementedError()
+        self.A = []
+        self.Aconst = []
         for k in range(self.ncorono):
 
             # Compute coronagraph response matrix
             t00 = time.time()
             self.print_log('computing corono response matrix for 2D problem')
-            self.A = self.compute_response_matrices(self.corono_t[k])
+            self.A.append(self.compute_response_matrices(self.corono_t[k]))
 
             t11 = time.time()
             self.print_log('computing time (response matrices): {0:.2f}s\n'.format(t11-t00))
 
-            LyotStop_vec = self.LyotStop_vec_t[k]
-            self.Aconst  = -cst*self.Pupil_vec[self.idx_pup]*LyotStop_vec[self.idx_pup]
+            #LyotStop_vec = self.LyotStop_vec_t[k]
+            self.Aconst.append(-cst*self.Pupil_vec[self.idx_pup]*self.LyotStop_vec_t[k][self.idx_pup])
 
         # Add apodizer minimal islands constraints    
         if self.MinIsland is True:
@@ -772,7 +772,7 @@ class MaxTau(ProblemMatrix):
         """
         if self.solver == 'gurobipy':
             print('Compute the length of the A matrix along axis=1')
-            nA = np.shape(self.A)[1]
+            nA = np.shape(self.A[0])[1]
             time_model0 = time.time()
 
             print('Create a new model')
@@ -793,39 +793,39 @@ class MaxTau(ProblemMatrix):
             print('Add constraint:')
             add_constr_t0 = time.time()
 
-
-            # Add field constraints
-            Aconst = self.Aconst
-            # Aconst + field.real
-            for j in range(nA):
-                vals  = self.A[:,j].real
-                terms =  Aconst + vals
-                lhs = gb.LinExpr(terms, ApodTmpVars)
-                self.m.addLConstr(lhs=lhs, sense=gb.GRB.LESS_EQUAL, rhs=0)
-
-            if self.ImPart is True:
-                # Aconst + field.imag
+            for k, A in enumerate(self.A):
+                # Add field constraints
+                Aconst = self.Aconst[k]
+                # Aconst + field.real
                 for j in range(nA):
-                    vals  = self.A[:,j].imag
+                    vals  = A[:,j].real
                     terms =  Aconst + vals
                     lhs = gb.LinExpr(terms, ApodTmpVars)
                     self.m.addLConstr(lhs=lhs, sense=gb.GRB.LESS_EQUAL, rhs=0)
-
-            # Aconst - field.real
-            for j in range(nA):
-                vals  = self.A[:,j].real
-                terms =  Aconst - vals
-                lhs = gb.LinExpr(terms, ApodTmpVars)
-                self.m.addLConstr(lhs=lhs, sense=gb.GRB.LESS_EQUAL, rhs=0)
-
-            if self.ImPart is True:
-                # Aconst - field.imag
+    
+                if self.ImPart is True:
+                    # Aconst + field.imag
+                    for j in range(nA):
+                        vals  = A[:,j].imag
+                        terms =  Aconst + vals
+                        lhs = gb.LinExpr(terms, ApodTmpVars)
+                        self.m.addLConstr(lhs=lhs, sense=gb.GRB.LESS_EQUAL, rhs=0)
+    
+                # Aconst - field.real
                 for j in range(nA):
-                    vals  = self.A[:,j].imag
+                    vals  = A[:,j].real
                     terms =  Aconst - vals
                     lhs = gb.LinExpr(terms, ApodTmpVars)
                     self.m.addLConstr(lhs=lhs, sense=gb.GRB.LESS_EQUAL, rhs=0)
-
+    
+                if self.ImPart is True:
+                    # Aconst - field.imag
+                    for j in range(nA):
+                        vals  = A[:,j].imag
+                        terms =  Aconst - vals
+                        lhs = gb.LinExpr(terms, ApodTmpVars)
+                        self.m.addLConstr(lhs=lhs, sense=gb.GRB.LESS_EQUAL, rhs=0)
+    
             # Add -Identity <= 0 constraints
             for j in range(self.npp):
                 lhs = gb.LinExpr(-1, ApodTmpVars[j])
@@ -835,7 +835,7 @@ class MaxTau(ProblemMatrix):
             for j in range(self.npp):
                 lhs = gb.LinExpr(1, ApodTmpVars[j])
                 self.m.addLConstr(lhs=lhs, sense=gb.GRB.LESS_EQUAL, rhs=1)
- 
+     
             print('Time taken to ADD constraints: {}'.format(time.time() - add_constr_t0))
 
             print('Update model')
