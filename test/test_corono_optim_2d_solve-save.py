@@ -146,12 +146,17 @@ if pix_max >= 1 and LSRobustness == True:
     pix_neg_t = - pix_pos_t
     pix_t = list(-pix_pos_t) + list(pix_pos_t)
     pix_t.sort()
-    
+
+
+#for j in range(2):
+#    LyotStop2d_t.append(np.roll(LyotStop2d, pix_max, axis=j))
+
+
 for j in range(2):
-   	for i in range(len(pix_t)):
-   		roll_LS = np.roll(LyotStop2d, pix_t[i], axis=j)
-   		LyotStop2d_t.append(roll_LS)
-    
+    for i in range(len(pix_t)):
+        roll_LS = np.roll(LyotStop2d, pix_t[i], axis=j)
+        LyotStop2d_t.append(roll_LS)
+
 # number of coronagraph configuration
 ncorono      = len(LyotStop2d_t)
 print('# of coronagraph configurations: {0}'.format(ncorono))
