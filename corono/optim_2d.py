@@ -795,33 +795,24 @@ class MaxTau(ProblemMatrix):
 
         # Aconst + field.real
         for j in range(nA):
-            vals  = A[:,j].real
-            terms =  Aconst + vals
+            vals  = A[:,j]
+            reals = vals.real
+            terms =  Aconst + reals
             lhs = gb.LinExpr(terms, ApodVars)
             self.m.addLConstr(lhs=lhs, sense=gb.GRB.LESS_EQUAL, rhs=0)
 
-        if self.ImPart is True:
-            # Aconst + field.imag
-            for j in range(nA):
-                vals  = A[:,j].imag
-                terms =  Aconst + vals
-                lhs = gb.LinExpr(terms, ApodVars)
-                self.m.addLConstr(lhs=lhs, sense=gb.GRB.LESS_EQUAL, rhs=0)
-
-        # Aconst - field.real
-        for j in range(nA):
-            vals  = A[:,j].real
-            terms =  Aconst - vals
+            terms =  Aconst - reals
             lhs = gb.LinExpr(terms, ApodVars)
             self.m.addLConstr(lhs=lhs, sense=gb.GRB.LESS_EQUAL, rhs=0)
 
-        if self.ImPart is True:
-            # Aconst - field.imag
-            for j in range(nA):
-                vals  = A[:,j].imag
-                terms =  Aconst - vals
-                lhs = gb.LinExpr(terms, ApodVars)
-                self.m.addLConstr(lhs=lhs, sense=gb.GRB.LESS_EQUAL, rhs=0)
+            imag = vals.imag
+            terms =  Aconst + imag
+            lhs = gb.LinExpr(terms, ApodVars)
+            self.m.addLConstr(lhs=lhs, sense=gb.GRB.LESS_EQUAL, rhs=0)
+
+            terms =  Aconst - imag
+            lhs = gb.LinExpr(terms, ApodVars)
+            self.m.addLConstr(lhs=lhs, sense=gb.GRB.LESS_EQUAL, rhs=0)
 
         self.m.update()
 
