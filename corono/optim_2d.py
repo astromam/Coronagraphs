@@ -475,12 +475,6 @@ class ProblemMatrix(object):
         if corono is None:
             pass
         else:
-            # When this is accessed so as to be added as LinExpr constraints
-            # it is done by column, i.e. self.A[:,j] - make column major for faster access.
-            # Note, if anything else is done to/with this array, order='F', may actaully slow things down.
-
-            if not self.A:
-                self.A = np.empty((self.npp, self.corono.nlam*self.ndz), dtype=self.dtype, order='F')
             Apod2d = np.zeros((self.corono.nPup, self.corono.nPup))
 
             for i, val in enumerate(self.idx_pup):
@@ -616,6 +610,12 @@ class MaxTau(ProblemMatrix):
 
         # Compute contrast constraints on the coronagraphic electric field
         #pdb.set_trace()
+        # When this is accessed so as to be added as LinExpr constraints
+        # it is done by column, i.e. self.A[:,j] - make column major for faster access.
+        # Note, if anything else is done to/with this array, order='F', may actaully slow things down.
+
+        # Rethink order
+        self.A = np.empty((self.npp, self.corono.nlam*self.ndz), dtype=self.dtype, order='F')
         for k, coronagraph in enumerate(self.corono_t):
 
             # Compute coronagraph response matrix
