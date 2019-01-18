@@ -18,6 +18,7 @@ import gc
 import psutil
 import os 
 from scipy import sparse
+import pdb
 
 try:
     import stdgrb
@@ -381,8 +382,9 @@ class ProblemMatrix(object):
         
         """
         print('compute_matrices: ', time.time())
+
         self.compute_matrices()
-        gc.collect()
+        # These have been copied to gurobipy.Model and are no longer needed
 
         t0 = time.time()
 
@@ -397,20 +399,19 @@ class ProblemMatrix(object):
             self.Apod[self.idx_pup] = Apodtmp[:self.npp]
         
         elif self.solver == 'gurobipy':
-            self.print_log('generating gurobi model')
-            self.compute_gurobi_model()
+            #self.print_log('generating gurobi model')
+            #self.compute_gurobi_model()
 
-            # These have been copied to gurobipy.Model and are no longer needed
-            del self.A
-            del self.b
-            del self.c
-            gc.collect()
+            
             
             self.print_log('solving problem with gurobipy package')
             try:                
                 self.m.Params.Method       = self.slvMethod
                 self.m.Params.LogToConsole = self.slvLogToConsole
                 self.m.Params.Crossover    = self.slvCrossover
+
+                #self.m.Params.Presolve = 0
+                #self.m.Params.Threads = 1
 
                 self.optimize()
 
@@ -451,7 +452,7 @@ class ProblemMatrix(object):
         self.print_log('computing time (Abc matrices): {0:.2f}s\n'.format(t11-t00))
 
 #%%    Step 4    
-    def compute_response_matrices(self, corono=None):
+    def compute_response_matrices(self, corono=None, wavelength_indx=1):
         r"""
         Computes the response matrix for the coronagraph with and without 
         the focal plane mask.
@@ -477,23 +478,19 @@ class ProblemMatrix(object):
         if corono is None:
             pass
         else:
-            # When this is accessed so as to be added as LinExpr constraints
-            # it is done by column, i.e. self.A[:,j] - make column major for faster access.
-            # Note, if anything else is done to/with this array, order='F', may actaully slow things down.
-
-            corono_fields = np.empty((self.npp, self.corono.nlam*self.ndz), dtype=self.dtype, order='F')
-            Apod2d = np.zeros((self.corono.nPup, self.corono.nPup))
-
+            Apod2d = self.Apod2dTmp
+            
             for i, val in enumerate(self.idx_pup):
                 (i0,j0) = np.unravel_index(val, (self.corono.nPup, self.corono.nPup))
                 Apod2d[i0,j0] = 1
-                fields = corono.compute_corono_field_2d_vec(Apod2d)
+                field = corono.compute_corono_field_2d(Apod2d, wavelength_indx)
                 Apod2d[i0,j0] = 0
 
-                for j, field in enumerate(fields):
-                    corono_fields[i, self.ndz*j:self.ndz*(j+1)] = field.ravel()[self.idx_dz]
+                # rethink mem order
+                # does this need to be zeroed? I don't think so.
+                self.A[i, :] = field.ravel()[self.idx_dz]
 
-            return corono_fields
+            return #corono_fields
 
 #%%
 """
@@ -605,26 +602,47 @@ class MaxTau(ProblemMatrix):
         cst = (10.**(-self.cDarkHole/2.)/np.sqrt(2.))*self.corono.Fmax2d/(self.corono.nImg2d*self.corono.nPup)
 
         # Compute the cost function
+        del self.c
         if self.nvv:
-            self.c = np.concatenate((-self.Pupil_vec[self.idx_pup]/self.TR, np.zeros(self.nvv)), axis=0)
+            objective = np.concatenate((-self.Pupil_vec[self.idx_pup]/self.TR, np.zeros(self.nvv)), axis=0)
         else:
-            self.c = -self.Pupil_vec[self.idx_pup]/self.TR
+            objective = -self.Pupil_vec[self.idx_pup]/self.TR
+
+        self.init_model(objective)
 
         # Compute contrast constraints on the coronagraphic electric field
-        if self.ncorono > 1:
-            raise NotImplementedError()
-        for k in range(self.ncorono):
+        #pdb.set_trace()
+        # When this is accessed so as to be added as LinExpr constraints
+        # it is done by column, i.e. self.A[:,j] - make column major for faster access.
+        # Note, if anything else is done to/with this array, order='F', may actaully slow things down.
+
+        # Rethink order
+        self.A = np.empty((self.npp, self.ndz), dtype=self.dtype, order='F')
+        self.Apod2dTmp = np.zeros((self.corono.nPup, self.corono.nPup))
+        for k, coronagraph in enumerate(self.corono_t):
 
             # Compute coronagraph response matrix
             t00 = time.time()
-            self.print_log('computing corono response matrix for 2D problem')
-            self.A = self.compute_response_matrices(self.corono_t[k])
+                
+            
+            for wavelength_indx in range(self.nlam):
+            
+                self.print_log('computing corono response matrix for 2D problem')
+                self.compute_response_matrices(coronagraph, wavelength_indx)
+    
+                t11 = time.time()
+                self.print_log('computing time (response matrices): {0:.2f}s\n'.format(t11-t00))
+    
+                #LyotStop_vec = self.LyotStop_vec_t[k]
+                self.Aconst = -cst*self.Pupil_vec[self.idx_pup]*self.LyotStop_vec_t[k][self.idx_pup]
+    
+                self.add_field_constraints()
 
-            t11 = time.time()
-            self.print_log('computing time (response matrices): {0:.2f}s\n'.format(t11-t00))
-
-            LyotStop_vec = self.LyotStop_vec_t[k]
-            self.Aconst  = -cst*self.Pupil_vec[self.idx_pup]*LyotStop_vec[self.idx_pup]
+        del self.A
+        del self.Aconst
+        del self.Apod2dTmp
+        gc.collect()
+        self.add_identity_constrainst()
 
         # Add apodizer minimal islands constraints    
         if self.MinIsland is True:
@@ -754,6 +772,76 @@ class MaxTau(ProblemMatrix):
         print('Warning: update_cDarkHole() method is outdated!!!')            
 
 #%%
+    def init_model(self, objective):
+        if self.solver != 'gurobipy':
+            raise NotImplementedError
+
+        time_model0 = time.time()
+
+        print('Create a new model: ', time.time())
+        self.m = gb.Model("LP max tau new")
+
+        print('Create variables')
+        ApodTmp = self.m.addVars(self.npp + self.nvv, lb=0.0, ub=1.0, 
+                                 name="ApodTmp")
+
+        print('Set objective')
+        obj_expr = gb.LinExpr(objective, ApodTmp.values())
+        self.m.setObjective(obj_expr, sense=gb.GRB.MINIMIZE)
+        self.m.update()
+
+    def add_field_constraints(self):
+        nA = np.shape(self.A)[1]
+        #pdb.set_trace()
+        print('Add constraint: ', time.time())
+        #pdb.set_trace()
+
+        # Add field constraints
+        Aconst = self.Aconst
+        ApodVars = self.m.getVars()
+        A = self.A
+
+        # Aconst + field.real
+        for j in range(nA):
+            vals  = A[:,j]
+            reals = vals.real
+            terms =  Aconst + reals
+            lhs = gb.LinExpr(terms, ApodVars)
+            self.m.addLConstr(lhs=lhs, sense=gb.GRB.LESS_EQUAL, rhs=0)
+
+            terms =  Aconst - reals
+            lhs = gb.LinExpr(terms, ApodVars)
+            self.m.addLConstr(lhs=lhs, sense=gb.GRB.LESS_EQUAL, rhs=0)
+
+            imag = vals.imag
+            terms =  Aconst + imag
+            lhs = gb.LinExpr(terms, ApodVars)
+            self.m.addLConstr(lhs=lhs, sense=gb.GRB.LESS_EQUAL, rhs=0)
+
+            terms =  Aconst - imag
+            lhs = gb.LinExpr(terms, ApodVars)
+            self.m.addLConstr(lhs=lhs, sense=gb.GRB.LESS_EQUAL, rhs=0)
+
+        self.m.update()
+
+    def add_identity_constrainst(self):
+        print("adding identity constraints: ", time.time())
+        ApodVars = self.m.getVars()
+
+        # When working. => for var in ApodVars:
+
+        # Add -Identity <= 0 constraints
+        for j in range(self.npp):
+            lhs = gb.LinExpr(-1, ApodVars[j])
+            self.m.addLConstr(lhs=lhs, sense=gb.GRB.LESS_EQUAL, rhs=0)
+
+        # Add Identity <= 1 constraints
+        for j in range(self.npp):
+            lhs = gb.LinExpr(1, ApodVars[j])
+            self.m.addLConstr(lhs=lhs, sense=gb.GRB.LESS_EQUAL, rhs=1)
+
+        self.m.update()
+
     def compute_gurobi_model(self):
         """
         Generates the gurobi solver model for the MaxTau problem.
@@ -770,9 +858,10 @@ class MaxTau(ProblemMatrix):
             Gurobi model of the MaxTau problem to solve
             
         """
+        raise NotImplementedError
         if self.solver == 'gurobipy':
-            print('Compute the length of the A matrix along axis=1')
-            nA = np.shape(self.A)[1]
+            print('Compute the length of the A matrix along axis=1: ', time.time())
+            nA = np.shape(self.A[0])[1]
             time_model0 = time.time()
 
             print('Create a new model')
@@ -792,40 +881,41 @@ class MaxTau(ProblemMatrix):
 
             print('Add constraint:')
             add_constr_t0 = time.time()
-
-
-            # Add field constraints
-            Aconst = self.Aconst
-            # Aconst + field.real
-            for j in range(nA):
-                vals  = self.A[:,j].real
-                terms =  Aconst + vals
-                lhs = gb.LinExpr(terms, ApodTmpVars)
-                self.m.addLConstr(lhs=lhs, sense=gb.GRB.LESS_EQUAL, rhs=0)
-
-            if self.ImPart is True:
-                # Aconst + field.imag
+            #pdb.set_trace()
+            for k, A in enumerate(self.A):
+                # Add field constraints
+                Aconst = self.Aconst[k]
+                # Aconst + field.real
                 for j in range(nA):
-                    vals  = self.A[:,j].imag
+                    vals  = A[:,j].real
                     terms =  Aconst + vals
                     lhs = gb.LinExpr(terms, ApodTmpVars)
                     self.m.addLConstr(lhs=lhs, sense=gb.GRB.LESS_EQUAL, rhs=0)
-
-            # Aconst - field.real
-            for j in range(nA):
-                vals  = self.A[:,j].real
-                terms =  Aconst - vals
-                lhs = gb.LinExpr(terms, ApodTmpVars)
-                self.m.addLConstr(lhs=lhs, sense=gb.GRB.LESS_EQUAL, rhs=0)
-
-            if self.ImPart is True:
-                # Aconst - field.imag
+    
+                if self.ImPart is True:
+                    # Aconst + field.imag
+                    for j in range(nA):
+                        vals  = A[:,j].imag
+                        terms =  Aconst + vals
+                        lhs = gb.LinExpr(terms, ApodTmpVars)
+                        self.m.addLConstr(lhs=lhs, sense=gb.GRB.LESS_EQUAL, rhs=0)
+    
+                # Aconst - field.real
                 for j in range(nA):
-                    vals  = self.A[:,j].imag
+                    vals  = A[:,j].real
                     terms =  Aconst - vals
                     lhs = gb.LinExpr(terms, ApodTmpVars)
                     self.m.addLConstr(lhs=lhs, sense=gb.GRB.LESS_EQUAL, rhs=0)
-
+    
+                if self.ImPart is True:
+                    # Aconst - field.imag
+                    for j in range(nA):
+                        vals  = A[:,j].imag
+                        terms =  Aconst - vals
+                        lhs = gb.LinExpr(terms, ApodTmpVars)
+                        self.m.addLConstr(lhs=lhs, sense=gb.GRB.LESS_EQUAL, rhs=0)
+    
+            print("adding identity constraints: ", time.time())
             # Add -Identity <= 0 constraints
             for j in range(self.npp):
                 lhs = gb.LinExpr(-1, ApodTmpVars[j])
@@ -835,7 +925,7 @@ class MaxTau(ProblemMatrix):
             for j in range(self.npp):
                 lhs = gb.LinExpr(1, ApodTmpVars[j])
                 self.m.addLConstr(lhs=lhs, sense=gb.GRB.LESS_EQUAL, rhs=1)
- 
+     
             print('Time taken to ADD constraints: {}'.format(time.time() - add_constr_t0))
 
             print('Update model')

@@ -526,26 +526,6 @@ class Coronagraph(object):
         return test_re, test_im
 
 #%%
-    def compute_corono_field_2d_vec(self,Apod2d):
-        """
-        Computes the electric field of the coronagraphic image 
-        for the vectorized 2D problem.
-        
-        Parameters
-        ---------- 
-        Apod2d : array_like
-            Entrance pupil apodization :math:`\Phi`
-                
-        Returns    
-        ----------
-        res : array_like, array_like
-            Real and imag parts of the coronagraphic electric field  :math:`\Psi_D`
-            
-        """ 
-#        test = self.compute_corono_field_2d(Apod2d, Pupil2d, LyotStop2d)
-        return self.compute_corono_field_2d(Apod2d)
-
-#%%
     def generate_area(self,):
         """
         Computes the list of points for a given search area in the final image 
@@ -1624,7 +1604,7 @@ class APLC2d(Coronagraph):
         return field_Dtmp
  
 #%%
-    def compute_corono_field_2d(self,Apod2d):
+    def compute_corono_field_2d(self, Apod2d, wavelength_indx):
         """
         Computes the coronagraph electric field for a classical Lyot coronagraph
         with four planes (A: entrance pupil, B: intermediate focal plane, 
@@ -1646,7 +1626,9 @@ class APLC2d(Coronagraph):
             at all the wavelengths
             
         """        
+        i = wavelength_indx
 
+        # TODO: reuse memory rather
         if self.OPDmap2d is not None:
             phasor_t = 2.*np.pi*self.OPDmap2d[None, :, :]/(self.wv*self.lam_t[:, None,None])
             field_A  = np.asarray(Apod2d, dtype=self.dtype)
@@ -1657,33 +1639,31 @@ class APLC2d(Coronagraph):
         if self.Ampmap2d is not None:
             field_A *= self.Ampmap2d
 
-        field_Dtmp = []
-        for i in range(self.nlam):
-            if self.OPDmap2d is None:
-                field = field_A
-            else:
-                field = field_A[i]
+        #field_Dtmp = []
+        #for i in range(self.nlam):
+        if self.OPDmap2d is None:
+            field = field_A
+        else:
+            field = field_A[i]
 
-            if self.Pupil2dSym == False:
-                field_B       = self.mask2d*sft(field, self.nFPM, self.mB_t[i],
-                                                CtrBtwnPix=self.CtrBtwnPix)
-                field_C  = field - isft(field_B, self.nPup, self.mB_t[i],
-                                        CtrBtwnPix=self.CtrBtwnPix)
-                del field_B
-                field_L       = field_C*self.LyotStop2d
-                field_Dtmp.append(sft(field_L, self.nImg2d, self.mD_t[i],
-                                      CtrBtwnPix=self.CtrBtwnPix2))
-            else:
-                field_B       = self.mask2d*sft_even(field, self.nFPM, self.mB_t[i],
-                                                     CtrBtwnPix=self.CtrBtwnPix)
-                field_C       = field - isft_even(field_B, self.nPup, self.mB_t[i],
-                                                  CtrBtwnPix=self.CtrBtwnPix)
-                del field_B
-                field_L       = field_C*self.LyotStop2d
-                field_Dtmp.append(sft_even(field_L, self.nImg2d, self.mD_t[i],
-                                           CtrBtwnPix=self.CtrBtwnPix2))
-            del field_C
-            del field_L
+        if self.Pupil2dSym == False:
+            field_B       = self.mask2d*sft(field, self.nFPM, self.mB_t[i],
+                                            CtrBtwnPix=self.CtrBtwnPix)
+            field_C  = field - isft(field_B, self.nPup, self.mB_t[i],
+                                    CtrBtwnPix=self.CtrBtwnPix)
+            del field_B
+            field_L       = field_C*self.LyotStop2d
+            field_Dtmp = sft(field_L, self.nImg2d, self.mD_t[i],
+                                  CtrBtwnPix=self.CtrBtwnPix2)
+        else:
+            field_B       = self.mask2d*sft_even(field, self.nFPM, self.mB_t[i],
+                                                 CtrBtwnPix=self.CtrBtwnPix)
+            field_C       = field - isft_even(field_B, self.nPup, self.mB_t[i],
+                                              CtrBtwnPix=self.CtrBtwnPix)
+            del field_B
+            field_L       = field_C*self.LyotStop2d
+            field_Dtmp = sft_even(field_L, self.nImg2d, self.mD_t[i],
+                                       CtrBtwnPix=self.CtrBtwnPix2)
 
         return field_Dtmp
 
