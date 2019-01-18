@@ -410,6 +410,9 @@ class ProblemMatrix(object):
                 self.m.Params.LogToConsole = self.slvLogToConsole
                 self.m.Params.Crossover    = self.slvCrossover
 
+                #self.m.Params.Presolve = 0
+                #self.m.Params.Threads = 1
+
                 self.optimize()
 
                 for i, val in enumerate(self.idx_pup):
@@ -449,7 +452,7 @@ class ProblemMatrix(object):
         self.print_log('computing time (Abc matrices): {0:.2f}s\n'.format(t11-t00))
 
 #%%    Step 4    
-    def compute_response_matrices(self, corono=None):
+    def compute_response_matrices(self, corono=None, wavelength_indx=1):
         r"""
         Computes the response matrix for the coronagraph with and without 
         the focal plane mask.
@@ -475,18 +478,17 @@ class ProblemMatrix(object):
         if corono is None:
             pass
         else:
-            Apod2d = np.zeros((self.corono.nPup, self.corono.nPup))
-
+            Apod2d = self.Apod2dTmp
+            
             for i, val in enumerate(self.idx_pup):
                 (i0,j0) = np.unravel_index(val, (self.corono.nPup, self.corono.nPup))
                 Apod2d[i0,j0] = 1
-                fields = corono.compute_corono_field_2d_vec(Apod2d)
+                field = corono.compute_corono_field_2d(Apod2d, wavelength_indx)
                 Apod2d[i0,j0] = 0
 
                 # rethink mem order
-                for j, field in enumerate(fields):
-                    # does this need to be zeroed?
-                    self.A[i, self.ndz*j:self.ndz*(j+1)] = field.ravel()[self.idx_dz]
+                # does this need to be zeroed? I don't think so.
+                self.A[i, :] = field.ravel()[self.idx_dz]
 
             return #corono_fields
 
@@ -615,24 +617,30 @@ class MaxTau(ProblemMatrix):
         # Note, if anything else is done to/with this array, order='F', may actaully slow things down.
 
         # Rethink order
-        self.A = np.empty((self.npp, self.corono.nlam*self.ndz), dtype=self.dtype, order='F')
+        self.A = np.empty((self.npp, self.ndz), dtype=self.dtype, order='F')
+        self.Apod2dTmp = np.zeros((self.corono.nPup, self.corono.nPup))
         for k, coronagraph in enumerate(self.corono_t):
 
             # Compute coronagraph response matrix
             t00 = time.time()
-            self.print_log('computing corono response matrix for 2D problem')
-            self.compute_response_matrices(coronagraph)
-
-            t11 = time.time()
-            self.print_log('computing time (response matrices): {0:.2f}s\n'.format(t11-t00))
-
-            #LyotStop_vec = self.LyotStop_vec_t[k]
-            self.Aconst = -cst*self.Pupil_vec[self.idx_pup]*self.LyotStop_vec_t[k][self.idx_pup]
-
-            self.add_field_constraints()
+                
+            
+            for wavelength_indx in range(self.nlam):
+            
+                self.print_log('computing corono response matrix for 2D problem')
+                self.compute_response_matrices(coronagraph, wavelength_indx)
+    
+                t11 = time.time()
+                self.print_log('computing time (response matrices): {0:.2f}s\n'.format(t11-t00))
+    
+                #LyotStop_vec = self.LyotStop_vec_t[k]
+                self.Aconst = -cst*self.Pupil_vec[self.idx_pup]*self.LyotStop_vec_t[k][self.idx_pup]
+    
+                self.add_field_constraints()
 
         del self.A
         del self.Aconst
+        del self.Apod2dTmp
         gc.collect()
         self.add_identity_constrainst()
 

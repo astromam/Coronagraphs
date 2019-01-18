@@ -65,8 +65,8 @@ nFPM = 50
 rMask = 8.543/2
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
-rho0 =  5.00
-rho1 = 10.00
+rho0 = 5.00 #3.75
+rho1 = 10.00 #15.00
 
 # contrast in the dark region
 cDarkHole = 8.0
