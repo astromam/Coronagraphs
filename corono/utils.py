@@ -11,6 +11,8 @@ License: MIT license
 
 import numpy as np
 import scipy.special
+import scipy.fftpack
+import poppy.matrixDFT
 import copy
 
 #%% check python version
@@ -95,6 +97,18 @@ def radius_disk(n, radius, CtrBtwnPix=False):
     mydist = np.hypot(yy,xx)/n
     return mydist
 
+def matrix_dft(A2, m, NB, inverse=False, CtrBtwnPix=False):
+    if len(A2.shape) != 2:
+        raise NotImplementedError
+
+    centering = 'SYMMETRIC' if CtrBtwnPix else 'ADJUSTABLE'
+    return poppy.matrixDFT.matrix_dft(A2, m, NB, inverse=inverse, centering=centering)
+
+def fft(A2, NB, m, CtrBtwnPix=False):
+    return matrix_dft(A2, m, NB, inverse=False, CtrBtwnPix=CtrBtwnPix)
+
+def ifft(A2, NB, m, CtrBtwnPix=False):
+    return matrix_dft(A2, m, NB, inverse=True, CtrBtwnPix=CtrBtwnPix)
 
 #%%
 def sft(A2, NB, m, inv=False, CtrBtwnPix=False):

@@ -18,7 +18,7 @@ Initialization
 import numpy as np
 #import pylab as pl
 #from astropy.io import fits
-from .utils import besselJ0, sft, isft, uniform_disk, radius_disk, sft_even, isft_even
+from .utils import besselJ0, sft, isft, uniform_disk, radius_disk, sft_even, isft_even, fft, ifft
 from . import default
 import json
 
@@ -182,8 +182,19 @@ class Coronagraph(object):
             val = 1/2        
         self.xi2d     = (np.arange(self.nImg2d//2+1))* self.Fmax2d/self.nImg2d
         self.xi2d_ctr = (np.arange(self.nImg2d//2)+val)* self.Fmax2d/self.nImg2d
-        
-        
+
+    def ft(self, *args, **kwargs):
+        return fft(*args, **kwargs) if self.fast_ft else sft(*args, **kwargs)
+
+    def ift(self, *args, **kwargs):
+        return ifft(*args, **kwargs) if self.fast_ft else isft(*args, **kwargs)
+
+    def ft_even(self, *args, **kwargs):
+        return fft(*args, **kwargs) if self.fast_ft else sft_even(*args, **kwargs)
+
+    def ift_even(self, *args, **kwargs):
+        return ifft(*args, **kwargs) if self.fast_ft else isft_even(*args, **kwargs)
+
 #%%        
     def save_params(self, fname):
         """
@@ -1647,22 +1658,22 @@ class APLC2d(Coronagraph):
             field = field_A[i]
 
         if self.Pupil2dSym == False:
-            field_B       = self.mask2d*sft(field, self.nFPM, self.mB_t[i],
+            field_B       = self.mask2d*self.ft(field, self.nFPM, self.mB_t[i],
                                             CtrBtwnPix=self.CtrBtwnPix)
-            field_C  = field - isft(field_B, self.nPup, self.mB_t[i],
+            field_C  = field - self.ift(field_B, self.nPup, self.mB_t[i],
                                     CtrBtwnPix=self.CtrBtwnPix)
             del field_B
             field_L       = field_C*self.LyotStop2d
-            field_Dtmp = sft(field_L, self.nImg2d, self.mD_t[i],
+            field_Dtmp = self.ft(field_L, self.nImg2d, self.mD_t[i],
                                   CtrBtwnPix=self.CtrBtwnPix2)
         else:
-            field_B       = self.mask2d*sft_even(field, self.nFPM, self.mB_t[i],
+            field_B       = self.mask2d*self.ft_even(field, self.nFPM, self.mB_t[i],
                                                  CtrBtwnPix=self.CtrBtwnPix)
-            field_C       = field - isft_even(field_B, self.nPup, self.mB_t[i],
+            field_C       = field - self.ift_even(field_B, self.nPup, self.mB_t[i],
                                               CtrBtwnPix=self.CtrBtwnPix)
             del field_B
             field_L       = field_C*self.LyotStop2d
-            field_Dtmp = sft_even(field_L, self.nImg2d, self.mD_t[i],
+            field_Dtmp = self.ft_even(field_L, self.nImg2d, self.mD_t[i],
                                        CtrBtwnPix=self.CtrBtwnPix2)
 
         return field_Dtmp
