@@ -18,7 +18,7 @@ from astropy.io import fits
 t0_total = time.time()
 
 
-working_path = '/Users/jnoss/dev/makidon-labs/48-test/'
+working_path = '/Users/jnoss/dev/makidon-labs/486-test/'
 
 dumpFName = 'model'
 pickle_jar = dumpFName # = None to not write out file
@@ -58,7 +58,7 @@ CtrBtwnPix2 = True
 
 # Telescope aperture type and size and sampling
 pup  = 'HiCAT' # 'vlt' or 'sbr' or 'lvr'
-nPup = 48
+nPup = 486
 Fmax2d = 32.5 
 nImg2d = 65
 
@@ -91,7 +91,7 @@ lsid = int(LS_ID*10)
 lsod = int(LS_OD*10)
 
 #lyot stop robustness
-LSRobustness = False
+LSRobustness = True
 # maximum pixel shift along a given axis for Lyot stop; total robostness is x2 pix_max
 pix_max   = 1
 
@@ -145,22 +145,29 @@ print('Input files imported and loaded')
 LyotStop2d_t = [LyotStop2d]
 
 # List construction for Lyot stop position shifts and List construstion for the Lyot stops
-pix_t = []
-if pix_max >= 1 and LSRobustness == True:
-    pix_pos_t = 1 + np.arange(pix_max)
-    pix_neg_t = - pix_pos_t
-    pix_t = list(-pix_pos_t) + list(pix_pos_t)
-    pix_t.sort()
+#pix_t = []
+#if pix_max >= 1 and LSRobustness == True:
+#    pix_pos_t = 1 + np.arange(pix_max)
+#    pix_neg_t = - pix_pos_t
+#    pix_t = list(-pix_pos_t) + list(pix_pos_t)
+#    pix_t.sort()
 
 
 #for j in range(2):
 #    LyotStop2d_t.append(np.roll(LyotStop2d, pix_max, axis=j))
+if LSRobustness:
+    shiftX = os.path.join(fdir, 'lyot_stops', 'HiCAT-Lyot_F-N0486_LS-Ann-gy-ID0345-OD0740-SpX0036_shiftX+050.dat')
+    shiftY = os.path.join(fdir, 'lyot_stops', 'HiCAT-Lyot_F-N0486_LS-Ann-gy-ID0345-OD0740-SpX0036_shiftY+050.dat')
+    LyotStopFnames = [shiftX, shiftY]
+    for fname in LyotStopFnames:
+        input_data_raw = np.loadtxt(fname)
+        input_data = np.reshape(input_data_raw, (nPup, nPup))
+        LyotStop2d_t.append(input_data)
 
-
-for j in range(2):
-    for i in range(len(pix_t)):
-        roll_LS = np.roll(LyotStop2d, pix_t[i], axis=j)
-        LyotStop2d_t.append(roll_LS)
+#for j in range(2):
+#    for i in range(len(pix_t)):
+#        roll_LS = np.roll(LyotStop2d, pix_t[i], axis=j)
+#        LyotStop2d_t.append(roll_LS)
 
 # number of coronagraph configuration
 ncorono      = len(LyotStop2d_t)
