@@ -64,6 +64,7 @@ nFPM = 50
 # mask radius in lam0/D (which D??) units
 rMask = 8.543/2
 
+fast_ft = False
 # dark zone bounds (inner and outer edges) in lam0/D unit
 rho0 = 5.00 #3.75
 rho1 = 10.00 #15.00
@@ -176,7 +177,7 @@ params = coro.to_dict(corono_name = corono_name, problem_name = problem_name, so
                  slvLogToConsole = slvLogToConsole,
                  allLogToConsole = allLogToConsole,
                  MinIsland = MinIsland, FirstDerGlobalLim = FirstDerGlobalLim,
-                 Pupil2d = Pupil2d, LyotStop2d = LyotStop2d
+                 Pupil2d = Pupil2d, LyotStop2d = LyotStop2d, fast_ft=fast_ft
                  )
 
 # list of parameters for each coronagraph configuration
