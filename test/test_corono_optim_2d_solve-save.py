@@ -66,8 +66,8 @@ rMask = 8.543/2
 
 fast_ft = False
 # dark zone bounds (inner and outer edges) in lam0/D unit
-rho0 = 5.00 #3.75
-rho1 = 10.00 #15.00
+rho0 = 3.75#5.00 #3.75
+rho1 = 15.00#10.00 #15.00
 
 # contrast in the dark region
 cDarkHole = 8.0
