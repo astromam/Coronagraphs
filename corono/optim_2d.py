@@ -367,6 +367,13 @@ class ProblemMatrix(object):
 #%%  Step 1                 
 
     def optimize(self):
+        print('presolve: ', time.time())
+        self.m = self.m.presolve()
+        # Turn off the presolve otherwise optimize() will call it again
+        self.m.Params.Presolve = 0
+        # collect the old Model
+        gc.collect()
+
         print('optimize: ', time.time())
         self.m.optimize()
 
