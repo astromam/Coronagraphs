@@ -407,9 +407,7 @@ print('Apodizer transmision: {0:.1f}%'.format(Apodizer_transmission*100.))
 #print('Strehl: {0:.1f}%'.format(Strehl*100.))
 
 radius_EE = 0.7*nImg2dbis/Fmax2dbis
-
-disk_EE = coro.utils.uniform_disk(nImg2dbis, radius_EE, CtrBtwnPix= False)
-
+disk_EE   = coro.utils.uniform_disk(nImg2dbis, radius_EE, CtrBtwnPix= False)
 planet_throughput = np.sum(direct_poly_img_f[disk_EE == 1.0])/np.sum(direct_poly_img_f00[disk_EE == 1.0])
 
 print('Planet throughput: {0:.1f}%'.format(planet_throughput*100.))
