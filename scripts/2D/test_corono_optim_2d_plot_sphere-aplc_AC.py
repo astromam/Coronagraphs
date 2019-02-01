@@ -250,6 +250,13 @@ else:
 corono_poly_img_f = corono0.compute_corono_intensity_2d(Apod_pyth)
 corono_mono_img_t = corono0.compute_corono_intensity_2d(Apod_pyth, poly=False)
 
+
+params00 = coro.update_params(params2, LyotStop2d = corono0.ClearPupil2d)
+corono00 = coro.design.APLC2d(**params00)
+direct_poly_img_f00 = corono00.compute_direct_intensity_2d(corono0.Pupil2d)
+direct_mono_img_t00 = corono00.compute_direct_intensity_2d(corono0.Pupil2d, poly=False)
+
+
 direct_poly_prf_avg_f, rad_direct = imutils.profile(direct_poly_img_f, type='mean')
 corono_poly_prf_avg_f, rad_corono = imutils.profile(corono_poly_img_f, type='mean')
 direct_poly_prf_std_f, rad_direct = imutils.profile(direct_poly_img_f, type='std')
@@ -386,4 +393,37 @@ pl.savefig(str(fpath_image_plane_plot), transparent=True)
 
 
 #%%
+pl.show()
+
+#%%
+"""
+Planet transmission
+"""
+Apodizer_transmission = np.sum(np.abs(Apod_pyth*corono0.Pupil2d)**2)/np.sum(np.abs(corono0.Pupil2d)**2)
+
+print('Apodizer transmision: {0:.1f}%'.format(Apodizer_transmission*100.))
+
+#Strehl = direct_poly_img_f[nImg2dbis//2, nImg2dbis//2]/direct_poly_img_f00[nImg2dbis//2, nImg2dbis//2]
+#print('Strehl: {0:.1f}%'.format(Strehl*100.))
+
+radius_EE = 0.7*nImg2dbis/Fmax2dbis
+
+disk_EE = coro.utils.uniform_disk(nImg2dbis, radius_EE, CtrBtwnPix= False)
+
+planet_throughput = np.sum(direct_poly_img_f[disk_EE == 1.0])/np.sum(direct_poly_img_f00[disk_EE == 1.0])
+
+print('Planet throughput: {0:.1f}%'.format(planet_throughput*100.))
+
+#%%
+
+pl.figure(0)
+pl.clf()
+pl.imshow(direct_poly_img_f00**0.25, cmap='inferno')
+
+pl.figure(1)
+pl.clf()
+pl.imshow(direct_poly_img_f**0.25, cmap='inferno')
+pl.show()
+
+
 pl.show()
