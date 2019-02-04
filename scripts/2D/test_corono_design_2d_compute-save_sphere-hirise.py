@@ -30,7 +30,7 @@ import corono as coro
 ### Parameters
 """
 # Coronagraph type
-corono_name   = 'APLC' # 'SP' or 'APLC' or DZPM
+corono_name   = 'DummyLC' # APLC or DummyLC
 CtrBtwnPix  = True
 CtrBtwnPix2 = False
 Pupil2dSym  = False
@@ -71,11 +71,11 @@ kw_skyobs    = True       # telescope pupil or internal pupil
 kw_aftercorr = False      # before or after NCPA correction
 kw_caos      = True       # CAOS screens
 caosmap_i    = 0          # caos first screen
-caosmap_f    = 30         # caos last screen
+caosmap_f    = 99         # caos last screen
 
 # test on the order of the min and max number of caos phase screen
 if caosmap_i <= caosmap_f:
-    ncaosmap     = caosmap_f - caosmap_i + 1
+    ncaosmap = caosmap_f - caosmap_i + 1
 else:
     raise NameError('initial caos map (caosmap_i={0}) must be smaller than final caos map (caosmap_f={1})!'.format(caosmap_i, caosmap_f))
 
@@ -183,7 +183,12 @@ else:
     Pupil2d = aperture.disc(nPup, nPup/2)
     
 #%% Apodization
-Apod2d = fits.getdata(fpath_Apod2d)
+if corono_name == 'APLC':
+    Apod2d = fits.getdata(fpath_Apod2d)
+elif corono_name == 'DummyLC':
+    Apod2d = np.ones_like(Pupil2d)
+else:
+    raise NameError('Unknown coronagraph {}'.format(corono_name))
 
 #%% APodization OPD map
 Apod2d_OPDmapnm = fits.getdata(fpath_Apod2d_OPDmapnm)
@@ -224,7 +229,7 @@ direct_poly_prf_std_f = np.zeros((nImg2d//2))
 corono_poly_prf_std_f = np.zeros((nImg2d//2))
 
 #%% definition of the coronagraph class parameters
-if corono_name != 'APLC':
+if corono_name != 'APLC' and corono_name != 'DummyLC':
     raise NameError('Check the name of the coronagraph!')
 
 params = coro.to_dict(nPup=nPup, nImg2d=nImg2d, Fmax2d = Fmax2d, nFPM = nFPM,
