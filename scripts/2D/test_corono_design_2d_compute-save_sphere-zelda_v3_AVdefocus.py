@@ -47,10 +47,20 @@ rMask_mas = 1000.*rMask * (wv/dAper)/mas2rad
 print('Mask radius: {0:.2f} mas at {1:.3f}um'.format(rMask_mas, wv*1e6))
 
 # sampling
+# nPup   = 384   # pupil
+# nFPM   = 200   # focal plane mask
+# nImg2d = 1200  # final image plane 
+# Fmax2d = 120   # spatial frequencies in the final image plane
+
+# sampling
+pixel  = 12.25 # IRDIS pixel sampling [mas/pix]
 nPup   = 384   # pupil
 nFPM   = 200   # focal plane mask
-nImg2d = 600   # final image plane 
-Fmax2d = 60    # spatial frequencies in the final image plane
+nImg2d = 400   # final image plane 
+
+# compute spatial frequencies in the final image plane
+loD    = wv/dAper*180/np.pi*3600*1000/pixel
+Fmax2d = nImg2d/loD    # spatial frequencies in the final image plane
 
 # wavelength sampling
 nlam   = 5
@@ -58,10 +68,10 @@ bw     = width/wv
 
 # simulation configuration   
 kw_aberr     = True
-kw_2nddate   = True    
-kw_skyobs    = True
+kw_2nddate   = False    
+kw_skyobs    = False
 kw_aftercorr = False
-kw_saxo      = True
+kw_saxo      = False
 saxomap_i    = 0    # saxo first screen
 saxomap_f    = 10    # saxo last screen
 
@@ -116,7 +126,7 @@ else:
         beta_wfs = 1./0.6
 
 #%%
-fdir = Path('../../').resolve()
+fdir = Path('/Users/avigan/Work/GitHub/Coronagraphs/')
 fdir_pupils  = fdir / 'data' / '2D' / 'pupils' / 'SPHERE' 
 fdir_zelda   = fdir / 'data' / '2D' / 'ZELDA' / str_date / str_obs  
 fdir_saxo    = fdir / 'data' / '2D' / 'ZELDA' / '2018-04-03'
@@ -240,9 +250,9 @@ params = coro.to_dict(nPup=nPup, nImg2d=nImg2d, Fmax2d = Fmax2d, nFPM = nFPM,
                  nlam=nlam, bw = bw, wv =wv,
                  OPDmap2d = None, Ampmap2d = None,
                  OPDmap2d_post = None)
-    
+
 #%%
-if kw_aberr is True:               
+if kw_aberr is True:
     params   = coro.update_params(params, OPDmap2d = None,
                                   Ampmap2d = Ampmap2d, LyotStop2d = LyotStop2d)
     corono0  = coro.design.APLC2d(**params)
@@ -282,11 +292,14 @@ for i, defo_ampl in enumerate(defo_ampl_arr):
 
     for imap in range(nmap):
         t0 = time.time()
-        if kw_aberr is True:           
+        if kw_aberr is True:
             if kw_saxo is True and kw_2nddate is True:
                 OPDmap2d = OPDmap2d0 + SAXOmapnm3d[saxomap_i+imap]*1e-9
                 direct_poly_img_f += corono0.compute_direct_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d)
-                corono_poly_img_f += corono0.compute_corono_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d)                
+                corono_poly_img_f += corono0.compute_corono_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d)
+            else:
+                direct_poly_img_f += corono0.compute_direct_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d0)
+                corono_poly_img_f += corono0.compute_corono_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d0)                
         else:                    
             direct_poly_img_f += corono0.compute_direct_intensity_2d(Apod2d)
             corono_poly_img_f += corono0.compute_corono_intensity_2d(Apod2d)    
