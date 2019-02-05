@@ -367,6 +367,14 @@ class ProblemMatrix(object):
 #%%  Step 1                 
 
     def optimize(self):
+
+        self.m.Params.Method       = self.slvMethod
+        self.m.Params.LogToConsole = self.slvLogToConsole
+        self.m.Params.Crossover    = self.slvCrossover
+
+        #self.m.Params.Presolve = 0
+        #self.m.Params.Threads = 1
+
         print('presolve: ', time.time())
         self.m = self.m.presolve()
         # Turn off the presolve otherwise optimize() will call it again
@@ -412,14 +420,7 @@ class ProblemMatrix(object):
             
             
             self.print_log('solving problem with gurobipy package')
-            try:                
-                self.m.Params.Method       = self.slvMethod
-                self.m.Params.LogToConsole = self.slvLogToConsole
-                self.m.Params.Crossover    = self.slvCrossover
-
-                #self.m.Params.Presolve = 0
-                #self.m.Params.Threads = 1
-
+            try:
                 self.optimize()
 
                 for i, val in enumerate(self.idx_pup):
