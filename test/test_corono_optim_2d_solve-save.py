@@ -20,6 +20,9 @@ t0_total = time.time()
 
 working_path = '/Users/jnoss/dev/makidon-labs/48-test/'
 
+pickle_jar = 'model'
+use_pickled = None
+
 """
 Apodizers for comparison
 
@@ -177,7 +180,8 @@ params = coro.to_dict(corono_name = corono_name, problem_name = problem_name, so
                  slvLogToConsole = slvLogToConsole,
                  allLogToConsole = allLogToConsole,
                  MinIsland = MinIsland, FirstDerGlobalLim = FirstDerGlobalLim,
-                 Pupil2d = Pupil2d, LyotStop2d = LyotStop2d, fast_ft=fast_ft
+                 Pupil2d = Pupil2d, LyotStop2d = LyotStop2d, fast_ft=fast_ft,
+                 pickle_jar=pickle_jar, use_pickled=use_pickled
                  )
 
 # list of parameters for each coronagraph configuration

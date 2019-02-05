@@ -19,6 +19,7 @@ import psutil
 import os 
 from scipy import sparse
 import pdb
+import pickle
 
 try:
     import stdgrb
@@ -375,8 +376,13 @@ class ProblemMatrix(object):
         #self.m.Params.Presolve = 0
         #self.m.Params.Threads = 1
 
+        if self.pickle_jar:
+            pass
+            #self.m.write(self.pickle_jar+'.lp')
+
         print('presolve: ', time.time())
         self.m = self.m.presolve()
+        #self.m.printStats()
         # Turn off the presolve otherwise optimize() will call it again
         self.m.Params.Presolve = 0
         # collect the old Model
@@ -398,7 +404,12 @@ class ProblemMatrix(object):
         """
         print('compute_matrices: ', time.time())
 
-        self.compute_matrices()
+        if self.use_pickled:
+            with open(self.use_pickled, 'r') as f:
+                self.m = pickle.load(f)
+        else:
+            self.compute_matrices()
+            
         # These have been copied to gurobipy.Model and are no longer needed
 
         t0 = time.time()
@@ -790,7 +801,7 @@ class MaxTau(ProblemMatrix):
         self.m = gb.Model("LP max tau new")
 
         print('Create variables')
-        ApodTmp = self.m.addVars(self.npp + self.nvv, lb=0.0, ub=1.0, 
+        ApodTmp = self.m.addVars(self.npp + self.nvv, lb=0.0, ub=1.0,
                                  name="ApodTmp")
 
         print('Set objective')
