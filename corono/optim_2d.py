@@ -381,10 +381,10 @@ class ProblemMatrix(object):
             #self.m.write(self.pickle_jar+'.lp')
 
         print('presolve: ', time.time())
-        self.m = self.m.presolve()
+        #self.m = self.m.presolve()
         #self.m.printStats()
         # Turn off the presolve otherwise optimize() will call it again
-        self.m.Params.Presolve = 0
+        #self.m.Params.Presolve = 0
         # collect the old Model
         gc.collect()
 
