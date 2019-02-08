@@ -376,12 +376,12 @@ class ProblemMatrix(object):
         #self.m.Params.Presolve = 0
         #self.m.Params.Threads = 1
 
-        if self.pickle_jar:
-            t_write = time.time()
-            print("Saving Model to .mps * .prm files: ", t_write)
-            self.m.write(self.pickle_jar+'.mps')
-            self.m.write(self.pickle_jar+'.prm')
-            print("time taken to write model: {}s".format(time.time()-t_write))
+        #if self.pickle_jar:
+        #    t_write = time.time()
+        #    print("Saving Model to .mps * .prm files: ", t_write)
+        #    self.m.write(self.pickle_jar+'.mps')
+        #    self.m.write(self.pickle_jar+'.prm')
+        #    print("time taken to write model: {}s".format(time.time()-t_write))
 
         print('presolve: ', time.time())
         #self.m = self.m.presolve()
@@ -407,11 +407,15 @@ class ProblemMatrix(object):
         """
         print('compute_matrices: ', time.time())
 
+        
+
         if self.use_pickled:
+            self.pickle_counter = 0
             print("Reading in model")
             self.m = gb.read(self.use_pickled+'.mps')
             self.m.read(self.use_pickled+'.prm')
         else:
+            self.pickle_counter = 0
             self.compute_matrices()
             
         # These have been copied to gurobipy.Model and are no longer needed
@@ -650,8 +654,14 @@ class MaxTau(ProblemMatrix):
             
             for wavelength_indx in range(self.nlam):
             
-                self.print_log('computing corono response matrix for 2D problem')
-                self.compute_response_matrices(coronagraph, wavelength_indx)
+                if self.use_pickled:
+                    with open("{}_{}.pkl".format(self.pickle_jar, wavelength_indx+1), 'rb') as f:
+                        pkl = pickle.load(f)
+                        self.A = pkl['A']
+                        self.Aconst = pkl['Aconst']
+                else:
+                    self.print_log('computing corono response matrix for 2D problem')
+                    self.compute_response_matrices(coronagraph, wavelength_indx)
     
                 t11 = time.time()
                 self.print_log('computing time (response matrices): {0:.2f}s\n'.format(t11-t00))
@@ -823,6 +833,11 @@ class MaxTau(ProblemMatrix):
         Aconst = self.Aconst
         ApodVars = self.m.getVars()
         A = self.A
+
+        self.pickle_counter += 1
+        if self.pickle_jar:
+            with open("{}_{}.pkl".format(self.pickle_jar, self.pickle_counter), 'wb') as f:
+                pickle.dump({'aconst':self.Aconst, 'A':self.A}, f)
 
         # Aconst + field.real
         for j in range(nA):
