@@ -377,8 +377,11 @@ class ProblemMatrix(object):
         #self.m.Params.Threads = 1
 
         if self.pickle_jar:
-            pass
-            #self.m.write(self.pickle_jar+'.lp')
+            t_write = time.time()
+            print("Saving Model to .mps * .prm files: ", t_write)
+            self.m.write(self.pickle_jar+'.mps')
+            self.m.write(self.pickle_jar+'.prm')
+            print("time taken to write model: {}s".format(time.time()-t_write))
 
         print('presolve: ', time.time())
         #self.m = self.m.presolve()
@@ -405,8 +408,9 @@ class ProblemMatrix(object):
         print('compute_matrices: ', time.time())
 
         if self.use_pickled:
-            with open(self.use_pickled, 'r') as f:
-                self.m = pickle.load(f)
+            print("Reading in model")
+            self.m = gb.read(self.use_pickled+'.mps')
+            self.m.read(self.use_pickled+'.prm')
         else:
             self.compute_matrices()
             

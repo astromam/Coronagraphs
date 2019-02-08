@@ -20,8 +20,9 @@ t0_total = time.time()
 
 working_path = '/Users/jnoss/dev/makidon-labs/48-test/'
 
-pickle_jar = 'model'
-use_pickled = None
+dumpFName = 'model'
+pickle_jar = None#dumpFName # = None to not write out file
+use_pickled = None#dumpFName
 
 """
 Apodizers for comparison
