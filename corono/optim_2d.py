@@ -836,7 +836,7 @@ class MaxTau(ProblemMatrix):
         self.pickle_counter += 1
         if self.pickle_jar:
             with open("{}_{}.pkl".format(self.pickle_jar, self.pickle_counter), 'wb') as f:
-                pickle.dump({'aconst':self.Aconst, 'A':self.A}, f)
+                pickle.dump({'aconst':self.Aconst, 'A':self.A}, f, protocol=4)
 
         # Aconst + field.real
         for j in range(nA):
