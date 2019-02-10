@@ -408,14 +408,11 @@ class ProblemMatrix(object):
         print('compute_matrices: ', time.time())
 
         
-
         if self.use_pickled:
-            self.pickle_counter = 0
             print("Reading in model")
             self.m = gb.read(self.use_pickled+'.mps')
             self.m.read(self.use_pickled+'.prm')
         else:
-            self.pickle_counter = 0
             self.compute_matrices()
             
         # These have been copied to gurobipy.Model and are no longer needed
@@ -646,6 +643,7 @@ class MaxTau(ProblemMatrix):
         # Rethink order
         self.A = np.empty((self.npp, self.ndz), dtype=self.dtype, order='F')
         self.Apod2dTmp = np.zeros((self.corono.nPup, self.corono.nPup))
+        self.pickle_counter = 0
         for k, coronagraph in enumerate(self.corono_t):
 
             # Compute coronagraph response matrix
@@ -655,7 +653,8 @@ class MaxTau(ProblemMatrix):
             for wavelength_indx in range(self.nlam):
             
                 if self.use_pickled:
-                    with open("{}_{}.pkl".format(self.pickle_jar, wavelength_indx+1), 'rb') as f:
+                    self.pickle_counter += 1
+                    with open("{}_{}.pkl".format(self.pickle_jar, self.pickle_counter), 'rb') as f:
                         pkl = pickle.load(f)
                         self.A = pkl['A']
                         self.Aconst = pkl['Aconst']

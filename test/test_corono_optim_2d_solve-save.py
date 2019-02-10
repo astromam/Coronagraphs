@@ -20,7 +20,7 @@ t0_total = time.time()
 
 working_path = '/Users/jnoss/dev/makidon-labs/486-test/'
 
-dumpFName = 'model'
+dumpFName = '/tmp/jnoss/model'
 pickle_jar = dumpFName # = None to not write out file
 use_pickled = None#dumpFName
 
