@@ -252,6 +252,9 @@ class ProblemMatrix(object):
             if not key in self.params:
                 self.params[key] = self.default_params[key]
 
+        if self.pickle_jar and self.use_pickled:
+            raise ValueError("pickle_jar & use_pickled can't both be set, either dump/pickle OR load, but not both.")
+
 #%%        
     def save_params(self, fname):
         """
@@ -641,7 +644,8 @@ class MaxTau(ProblemMatrix):
         # Note, if anything else is done to/with this array, order='F', may actaully slow things down.
 
         # Rethink order
-        self.A = np.empty((self.npp, self.ndz), dtype=self.dtype, order='F')
+        if not self.use_pickled:
+            self.A = np.empty((self.npp, self.ndz), dtype=self.dtype, order='F')
         self.Apod2dTmp = np.zeros((self.corono.nPup, self.corono.nPup))
         self.pickle_counter = 0
         for k, coronagraph in enumerate(self.corono_t):
@@ -666,7 +670,8 @@ class MaxTau(ProblemMatrix):
                 self.print_log('computing time (response matrices): {0:.2f}s\n'.format(t11-t00))
     
                 #LyotStop_vec = self.LyotStop_vec_t[k]
-                self.Aconst = -cst*self.Pupil_vec[self.idx_pup]*self.LyotStop_vec_t[k][self.idx_pup]
+                if not self.use_pickled:
+                    self.Aconst = -cst*self.Pupil_vec[self.idx_pup]*self.LyotStop_vec_t[k][self.idx_pup]
     
                 self.add_field_constraints()
 
@@ -833,8 +838,8 @@ class MaxTau(ProblemMatrix):
         ApodVars = self.m.getVars()
         A = self.A
 
-        self.pickle_counter += 1
         if self.pickle_jar:
+            self.pickle_counter += 1
             with open("{}_{}.pkl".format(self.pickle_jar, self.pickle_counter), 'wb') as f:
                 pickle.dump({'Aconst':self.Aconst, 'A':self.A}, f, protocol=4)
 
