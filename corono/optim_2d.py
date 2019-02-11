@@ -408,12 +408,12 @@ class ProblemMatrix(object):
         print('compute_matrices: ', time.time())
 
         
-        if self.use_pickled:
-            print("Reading in model")
-            self.m = gb.read(self.use_pickled+'.mps')
-            self.m.read(self.use_pickled+'.prm')
-        else:
-            self.compute_matrices()
+        #if self.use_pickled:
+        #    print("Reading in model")
+        #    self.m = gb.read(self.use_pickled+'.mps')
+        #    self.m.read(self.use_pickled+'.prm')
+        #else:
+        self.compute_matrices()
             
         # These have been copied to gurobipy.Model and are no longer needed
 
