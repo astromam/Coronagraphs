@@ -830,7 +830,8 @@ class MaxTau(ProblemMatrix):
     def add_field_constraints(self):
         nA = np.shape(self.A)[1]
         #pdb.set_trace()
-        print('Add constraint: ', time.time())
+        t1 = time.time()
+        print('Add constraint: ', t1)
         #pdb.set_trace()
 
         # Add field constraints
@@ -865,6 +866,7 @@ class MaxTau(ProblemMatrix):
             self.m.addLConstr(lhs=lhs, sense=gb.GRB.LESS_EQUAL, rhs=0)
 
         self.m.update()
+        print('time taken to add constrs to gurobipy.Model {}s'.format(time.time()-t1))
 
     def add_identity_constrainst(self):
         print("adding identity constraints: ", time.time())
