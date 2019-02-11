@@ -654,7 +654,7 @@ class MaxTau(ProblemMatrix):
             
                 if self.use_pickled:
                     self.pickle_counter += 1
-                    with open("{}_{}.pkl".format(self.pickle_jar, self.pickle_counter), 'rb') as f:
+                    with open("{}_{}.pkl".format(self.use_pickled, self.pickle_counter), 'rb') as f:
                         pkl = pickle.load(f)
                         self.A = pkl['A']
                         self.Aconst = pkl['Aconst']
