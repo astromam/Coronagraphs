@@ -651,11 +651,8 @@ class MaxTau(ProblemMatrix):
         for k, coronagraph in enumerate(self.corono_t):
 
             # Compute coronagraph response matrix
-            t00 = time.time()
-                
-            
             for wavelength_indx in range(self.nlam):
-            
+                t00 = time.time()
                 if self.use_pickled:
                     self.pickle_counter += 1
                     with open("{}_{}.pkl".format(self.use_pickled, self.pickle_counter), 'rb') as f:
