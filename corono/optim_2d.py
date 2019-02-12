@@ -252,6 +252,9 @@ class ProblemMatrix(object):
             if not key in self.params:
                 self.params[key] = self.default_params[key]
 
+        if self.pickle_jar and self.use_pickled:
+            raise ValueError("pickle_jar & use_pickled can't both be set, either dump/pickle OR load, but not both.")
+
 #%%        
     def save_params(self, fname):
         """
@@ -376,12 +379,12 @@ class ProblemMatrix(object):
         #self.m.Params.Presolve = 0
         #self.m.Params.Threads = 1
 
-        if self.pickle_jar:
-            t_write = time.time()
-            print("Saving Model to .mps * .prm files: ", t_write)
-            self.m.write(self.pickle_jar+'.mps')
-            self.m.write(self.pickle_jar+'.prm')
-            print("time taken to write model: {}s".format(time.time()-t_write))
+        #if self.pickle_jar:
+        #    t_write = time.time()
+        #    print("Saving Model to .mps * .prm files: ", t_write)
+        #    self.m.write(self.pickle_jar+'.mps')
+        #    self.m.write(self.pickle_jar+'.prm')
+        #    print("time taken to write model: {}s".format(time.time()-t_write))
 
         print('presolve: ', time.time())
         #self.m = self.m.presolve()
@@ -407,12 +410,13 @@ class ProblemMatrix(object):
         """
         print('compute_matrices: ', time.time())
 
-        if self.use_pickled:
-            print("Reading in model")
-            self.m = gb.read(self.use_pickled+'.mps')
-            self.m.read(self.use_pickled+'.prm')
-        else:
-            self.compute_matrices()
+        
+        #if self.use_pickled:
+        #    print("Reading in model")
+        #    self.m = gb.read(self.use_pickled+'.mps')
+        #    self.m.read(self.use_pickled+'.prm')
+        #else:
+        self.compute_matrices()
             
         # These have been copied to gurobipy.Model and are no longer needed
 
@@ -640,24 +644,31 @@ class MaxTau(ProblemMatrix):
         # Note, if anything else is done to/with this array, order='F', may actaully slow things down.
 
         # Rethink order
-        self.A = np.empty((self.npp, self.ndz), dtype=self.dtype, order='F')
+        if not self.use_pickled:
+            self.A = np.empty((self.npp, self.ndz), dtype=self.dtype, order='F')
         self.Apod2dTmp = np.zeros((self.corono.nPup, self.corono.nPup))
+        self.pickle_counter = 0
         for k, coronagraph in enumerate(self.corono_t):
 
             # Compute coronagraph response matrix
-            t00 = time.time()
-                
-            
             for wavelength_indx in range(self.nlam):
-            
-                self.print_log('computing corono response matrix for 2D problem')
-                self.compute_response_matrices(coronagraph, wavelength_indx)
+                t00 = time.time()
+                if self.use_pickled:
+                    self.pickle_counter += 1
+                    with open("{}_{}.pkl".format(self.use_pickled, self.pickle_counter), 'rb') as f:
+                        pkl = pickle.load(f)
+                        self.A = pkl['A']
+                        self.Aconst = pkl['Aconst']
+                else:
+                    self.print_log('computing corono response matrix for 2D problem')
+                    self.compute_response_matrices(coronagraph, wavelength_indx)
     
                 t11 = time.time()
                 self.print_log('computing time (response matrices): {0:.2f}s\n'.format(t11-t00))
     
                 #LyotStop_vec = self.LyotStop_vec_t[k]
-                self.Aconst = -cst*self.Pupil_vec[self.idx_pup]*self.LyotStop_vec_t[k][self.idx_pup]
+                if not self.use_pickled:
+                    self.Aconst = -cst*self.Pupil_vec[self.idx_pup]*self.LyotStop_vec_t[k][self.idx_pup]
     
                 self.add_field_constraints()
 
@@ -816,13 +827,19 @@ class MaxTau(ProblemMatrix):
     def add_field_constraints(self):
         nA = np.shape(self.A)[1]
         #pdb.set_trace()
-        print('Add constraint: ', time.time())
+        t1 = time.time()
+        print('Add constraint: ', t1)
         #pdb.set_trace()
 
         # Add field constraints
         Aconst = self.Aconst
         ApodVars = self.m.getVars()
         A = self.A
+
+        if self.pickle_jar:
+            self.pickle_counter += 1
+            with open("{}_{}.pkl".format(self.pickle_jar, self.pickle_counter), 'wb') as f:
+                pickle.dump({'Aconst':self.Aconst, 'A':self.A}, f, protocol=4)
 
         # Aconst + field.real
         for j in range(nA):
@@ -846,6 +863,7 @@ class MaxTau(ProblemMatrix):
             self.m.addLConstr(lhs=lhs, sense=gb.GRB.LESS_EQUAL, rhs=0)
 
         self.m.update()
+        print('time taken to add constrs to gurobipy.Model {}s'.format(time.time()-t1))
 
     def add_identity_constrainst(self):
         print("adding identity constraints: ", time.time())
