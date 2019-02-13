@@ -37,7 +37,7 @@ def MemUse():
 	pid = os.getpid()
 	py = psutil.Process(pid)
 	memoryUse = py.memory_info()[0]*10**-9  #RSS (resident set size) in GB
-	print('memory use:{0:.5f} GB'.format(memoryUse))
+	print('memory use: {0:.3f} GB'.format(memoryUse))
 
 def describe_array(array):
     print(type(array))
@@ -353,8 +353,12 @@ class ProblemMatrix(object):
             Apodizer solution :math:`\Phi` for the optimization problem.
         
         """
+        print('start - compute matrices')
+        MemUse()
         self.compute_matrices()
 
+        print('start - solve model')
+        MemUse()
         t0 = time.time()
 
         if stdgrb and self.solver == 'stdgrb':
@@ -408,6 +412,9 @@ class ProblemMatrix(object):
 
         t1 = time.time()
         self.print_log('solving time: {0:.2f}s\n'.format(t1-t0))
+        print('end')
+        MemUse()
+        
         return self.Apod                
 
 #%%
@@ -604,14 +611,14 @@ class MaxTau(ProblemMatrix):
         # Compute constant term that includes contrast and normalization
         cst = (10.**(-self.cDarkHole/2.)/np.sqrt(2.))*self.corono.Fmax2d/(self.corono.nImg2d*self.corono.nPup)
 
-        MemUse()
-
         # Compute contrast constraints on the coronagraphic electric field
         for k in range(self.ncorono):
             
             # Compute coronagraph response matrix
             t00 = time.time()
-            self.print_log('computing corono response matrix for 2D problem')             
+            self.print_log('computing corono response matrix for 2D problem')
+            print('start - compute response matrices')
+            MemUse()             
             corono_field_t = self.compute_response_matrices(self.corono_t[k])
             t11 = time.time()
             self.print_log('computing time (response matrices): {0:.2f}s\n'.format(t11-t00))
@@ -638,7 +645,8 @@ class MaxTau(ProblemMatrix):
             del A1
             gc.collect()
 
-        MemUse()
+            print('end - compute response matrices')
+            MemUse() 
         
         # Yield the A and b matrices for the optimization problem                               
         self.b = np.zeros((len(self.A.T)))
@@ -655,8 +663,6 @@ class MaxTau(ProblemMatrix):
         # Compute the cost function
         self.c = np.concatenate((-self.Pupil_vec[self.idx_pup]/self.TR, 
                                  np.zeros(self.nvv)), axis=0)
-
-        MemUse()
         
         # Return the A, b, and c matrices
         return self.A, self.b, self.c
