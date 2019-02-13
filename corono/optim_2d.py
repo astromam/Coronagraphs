@@ -15,6 +15,8 @@ import numpy as np
 import json
 import time
 import gc
+import psutil
+import os
 
 try:
     import stdgrb
@@ -30,6 +32,17 @@ import scipy
 import scipy.optimize
 from .utils import update_params        
 from . import design, default
+
+def MemUse():
+	pid = os.getpid()
+	py = psutil.Process(pid)
+	memoryUse = py.memory_info()[0]*10**-9  #RSS (resident set size) in GB
+	print('memory use:{0:.5f} GB'.format(memoryUse))
+
+def describe_array(array):
+    print(type(array))
+    print(array.dtype)
+    print(array.shape)
 
 #%%
 """
@@ -591,6 +604,8 @@ class MaxTau(ProblemMatrix):
         # Compute constant term that includes contrast and normalization
         cst = (10.**(-self.cDarkHole/2.)/np.sqrt(2.))*self.corono.Fmax2d/(self.corono.nImg2d*self.corono.nPup)
 
+        MemUse()
+
         # Compute contrast constraints on the coronagraphic electric field
         for k in range(self.ncorono):
             
@@ -622,6 +637,8 @@ class MaxTau(ProblemMatrix):
             del A0
             del A1
             gc.collect()
+
+        MemUse()
         
         # Yield the A and b matrices for the optimization problem                               
         self.b = np.zeros((len(self.A.T)))
@@ -638,6 +655,8 @@ class MaxTau(ProblemMatrix):
         # Compute the cost function
         self.c = np.concatenate((-self.Pupil_vec[self.idx_pup]/self.TR, 
                                  np.zeros(self.nvv)), axis=0)
+
+        MemUse()
         
         # Return the A, b, and c matrices
         return self.A, self.b, self.c
