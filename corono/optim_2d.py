@@ -612,7 +612,9 @@ class MaxTau(ProblemMatrix):
             
             # Compute coronagraph response matrix
             t00 = time.time()
-            self.print_log('computing corono response matrix for 2D problem')             
+            self.print_log('computing corono response matrix for 2D problem')
+            print('start - compute response matrices')
+            MemUse()             
             corono_field_t = self.compute_response_matrices(self.corono_t[k])
             t11 = time.time()
             self.print_log('computing time (response matrices): {0:.2f}s\n'.format(t11-t00))
@@ -634,6 +636,8 @@ class MaxTau(ProblemMatrix):
                 self.A = np.concatenate((A0,A1), axis=1)
             else:
                 self.A = np.concatenate((self.A, A0, A1), axis=1)
+        print('end - compute response matrices')
+        MemUse()
         
         # Yield the A and b matrices for the optimization problem                               
         self.b = np.zeros((len(self.A.T)))
