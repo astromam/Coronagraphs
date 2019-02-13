@@ -686,6 +686,8 @@ class MaxTau(ProblemMatrix):
             :math:`\Phi(r) \leq 1`.        
         
         """
+        print('start - compute gurobi matrices')
+        MemUse()
         # Compute constraints on the apodizer transmission
         A2tmp  = -np.identity(self.npp)
         
