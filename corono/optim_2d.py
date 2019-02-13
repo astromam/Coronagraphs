@@ -14,6 +14,9 @@ License: MIT license
 import numpy as np
 import json
 import time
+import gc
+import psutil
+import os
 
 try:
     import stdgrb
@@ -29,6 +32,17 @@ import scipy
 import scipy.optimize
 from .utils import update_params        
 from . import design, default
+
+def MemUse():
+	pid = os.getpid()
+	py = psutil.Process(pid)
+	memoryUse = py.memory_info()[0]*10**-9  #RSS (resident set size) in GB
+	print('memory use: {0:.3f} GB'.format(memoryUse))
+
+def describe_array(array):
+    print(type(array))
+    print(array.dtype)
+    print(array.shape)
 
 #%%
 """
@@ -332,7 +346,13 @@ class ProblemMatrix(object):
             Apodizer solution :math:`\Phi` for the optimization problem.
         
         """
+
+        print('start - compute matrices')
+        MemUse()
         self.compute_matrices()
+
+        print('start - solve model')
+        MemUse()
 
         t0 = time.time()
 
@@ -387,6 +407,10 @@ class ProblemMatrix(object):
 
         t1 = time.time()
         self.print_log('solving time: {0:.2f}s\n'.format(t1-t0))
+
+        print('end')
+        MemUse()
+        
         return self.Apod                
 
 #%%
