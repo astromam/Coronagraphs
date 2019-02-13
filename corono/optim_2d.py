@@ -14,6 +14,7 @@ License: MIT license
 import numpy as np
 import json
 import time
+import gc
 
 try:
     import stdgrb
@@ -310,15 +311,22 @@ class ProblemMatrix(object):
             corono_field_re_t = np.reshape(
                     corono_field_re_t_tmp[:,:, self.idx_dz], 
                     (self.npp, self.corono.nlam*self.ndz))
-                    
+            del corono_field_re_t_tmp
+            
             if self.ImPart is True:
                 corono_field_im_t = np.reshape(
                     corono_field_im_t_tmp[:,:, self.idx_dz], 
                     (self.npp, self.corono.nlam*self.ndz))
-                return np.concatenate((corono_field_re_t, corono_field_im_t), 
-                                                         axis=1)
-            else:
-                return corono_field_re_t
+                corono_field_re_t = np.concatenate((corono_field_re_t, 
+                                                    corono_field_im_t), axis=1)
+                
+                corono_field_im_t = None
+                del corono_field_im_t
+            
+            corono_field_im_t_tmp = None
+            del corono_field_im_t_tmp                
+                
+            return corono_field_re_t
 
 #%%        
     def solve_model(self):
@@ -610,6 +618,10 @@ class MaxTau(ProblemMatrix):
                 self.A = np.concatenate((A0,A1), axis=1)
             else:
                 self.A = np.concatenate((self.A, A0, A1), axis=1)
+                
+            del A0
+            del A1
+            gc.collect()
         
         # Yield the A and b matrices for the optimization problem                               
         self.b = np.zeros((len(self.A.T)))
