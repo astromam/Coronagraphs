@@ -23,7 +23,7 @@ from astropy.io import fits
 Parameters
 """
 # Telescope name
-corono_name  = 'SP' # 'SP' or 'APLC'
+corono_name  = 'APLC' # 'SP' or 'APLC'
 pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
 problem_name = 'MaxTau' # 'MaxTau' # ,'MaxContrastLinf' # 'MaxContrastL1' #
 solver       = 'gurobipy' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
