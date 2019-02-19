@@ -38,7 +38,7 @@ FirstDerGlobalLim = 100.
 BinarityReg       = 0.1
 
 #nPup = corono0.params['nPup']
-nPup = 200
+nPup = 50
 nFPM = 50
 Fmax2d = 22.5
 nImg2d = 45
@@ -60,6 +60,8 @@ tau   = 0.4
 CtrBtwnPix  = True
 CtrBtwnPix2 = True
 Pupil2dSym  = True
+
+Einsum = True
 
 #nlam
 bw   = 0.1
@@ -101,7 +103,8 @@ params = coro.to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
                  slvCrossover = slvCrossover, slvMethod = slvMethod,
                  allLogToConsole = allLogToConsole,
                  MinIsland = MinIsland, FirstDerGlobalLim = FirstDerGlobalLim,
-                 Binarity = Binarity, BinarityReg = BinarityReg)
+                 Binarity = Binarity, BinarityReg = BinarityReg,
+                 Einsum = Einsum)
 
 #%%  
 """ 
