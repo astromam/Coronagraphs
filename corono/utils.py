@@ -201,6 +201,26 @@ def besselJ0(z):
     temp[np.isnan(temp)]=0
     return temp
 
+#%% import Bessel function
+def besselJ1(z):
+    """
+    Computes the Bessel function of zero order for a given array
+    
+    Parameters
+    ---------
+    z : array_like
+        variable for which the bessel function is computed
+    
+    Returns
+    ---------
+    temp : array_like
+        Bessel function of zero order for the z array
+    
+    """
+    temp=scipy.special.jv(1,z)
+    temp[np.isnan(temp)]=0
+    return temp
+
 #%%
 def write_apod1d(fpath, test):
     """
