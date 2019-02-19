@@ -583,10 +583,14 @@ class Coronagraph(object):
             Real and imag parts of the direct electric field :math:`\Psi_0`
             
         """        
-        test = self.compute_direct_field_2d(Apod2d)
+        if self.Einsum is True and self.corono_name == 'APLC':
+            test = self.compute_direct_field_2d_ein(Apod2d)
+        else:
+            test = self.compute_direct_field_2d(Apod2d)
         test_re = np.reshape(test.real, (self.nlam, self.nImg2d**2))
         test_im = np.reshape(test.imag, (self.nlam, self.nImg2d**2))
         return test_re, test_im
+
 
 #%%
     def compute_corono_field_2d_vec(self,Apod2d):
@@ -606,10 +610,60 @@ class Coronagraph(object):
             
         """ 
 #        test = self.compute_corono_field_2d(Apod2d, Pupil2d, LyotStop2d)
-        test = self.compute_corono_field_2d(Apod2d)
+        if self.Einsum is True and self.corono_name == 'APLC':
+            test = self.compute_corono_field_2d_ein(Apod2d)
+        else:
+            test = self.compute_corono_field_2d(Apod2d)
         test_re = np.reshape(test.real, (self.nlam, self.nImg2d**2))
         test_im = np.reshape(test.imag, (self.nlam, self.nImg2d**2))
         return test_re, test_im
+
+#%%
+    def compute_direct_field_2d_real_vec(self,Apod2d):
+        """
+        Computes the electric field of the direct image 
+        for the vectorized 2D problem.
+        
+        Parameters
+        ---------- 
+        Apod2d : array_like
+            Entrance pupil apodization :math:`\Phi`
+                
+        Returns    
+        ----------
+        res : array_like, array_like
+            Real and imag parts of the direct electric field :math:`\Psi_0`
+            
+        """        
+        if self.Einsum is True and self.corono_name == 'APLC':
+            test = self.compute_direct_field_2d_ein(Apod2d)
+        else:
+            test = self.compute_direct_field_2d(Apod2d)
+        return np.reshape(test, (self.nlam, self.nImg2d**2))
+
+#%%
+    def compute_corono_field_2d_real_vec(self,Apod2d):
+        """
+        Computes the electric field of the coronagraphic image 
+        for the vectorized 2D problem.
+        
+        Parameters
+        ---------- 
+        Apod2d : array_like
+            Entrance pupil apodization :math:`\Phi`
+                
+        Returns    
+        ----------
+        res : array_like, array_like
+            Real and imag parts of the coronagraphic electric field  :math:`\Psi_D`
+            
+        """ 
+#        test = self.compute_corono_field_2d(Apod2d, Pupil2d, LyotStop2d)
+        if self.Einsum is True and self.corono_name == 'APLC':
+            test = self.compute_corono_field_2d_ein(Apod2d)
+        else:
+            test = self.compute_corono_field_2d(Apod2d)
+        return np.reshape(test, (self.nlam, self.nImg2d**2))
 
 #%%
     def generate_area(self,):
@@ -1673,8 +1727,11 @@ class APLC2d(Coronagraph):
         if self.Ampmap2d is not None:
             field_A   *= self.Ampmap2d
 
+        dtype0 = 'complex128'
+        if self.Pupil2dSym == True:
+            dtype0 = 'float64'
         field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
-                                  dtype='complex128')
+                                  dtype=dtype0)
  
         field_L    = field_A*self.LyotStop2d
         for i in range(self.nlam):
@@ -1721,18 +1778,20 @@ class APLC2d(Coronagraph):
 
         if self.Ampmap2d is not None:
             field_A *= self.Ampmap2d
-            
+                    
+        dtype0 = 'complex128'
+        if self.Pupil2dSym == True:
+            dtype0 = 'float64'
         field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
-                                  dtype='complex128')
-        
+                                  dtype=dtype0)
+
 
         for i in range(self.nlam):
             if self.OPDmap2d is None:
                 field = field_A
             else:
                 field = field_A[i]                
-            if self.Pupil2dSym == False:
-
+            if self.Pupil2dSym == False:                
                 field_B       = self.mask2d*sft(field, self.nFPM, self.mB_t[i], 
                                                 CtrBtwnPix=self.CtrBtwnPix)
                 field_C       = field - isft(field_B, self.nPup, self.mB_t[i], 
@@ -1749,7 +1808,7 @@ class APLC2d(Coronagraph):
                 field_L       = field_C*self.LyotStop2d
                 field_Dtmp[i] = sft_even(field_L, self.nImg2d, self.mD_t[i], 
                           CtrBtwnPix=self.CtrBtwnPix2)
-                                   
+                                  
         return field_Dtmp   
 
 #%% direct propagation (no focal plane mask)
@@ -1789,8 +1848,11 @@ class APLC2d(Coronagraph):
 #            field_A   *= self.Ampmap2d
             field_A   = np.einsum('ij, ij -> ij', field_A, self.Ampmap2d)
 
+        dtype0 = 'complex128'
+        if self.Pupil2dSym == True:
+            dtype0 = 'float64'
         field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
-                                  dtype='complex128')
+                                  dtype=dtype0)
  
         field_L    = np.einsum('ij,ij -> ij', field_A, self.LyotStop2d)
         
@@ -1846,8 +1908,11 @@ class APLC2d(Coronagraph):
 #            field_A   *= self.Ampmap2d
             field_A   = np.einsum('ij, ij -> ij', field_A, self.Ampmap2d)
             
+        dtype0 = 'complex128'
+        if self.Pupil2dSym == True:
+            dtype0 = 'float64'
         field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
-                                  dtype='complex128')
+                                  dtype=dtype0)
         
 
         for i in range(self.nlam):
@@ -1913,8 +1978,11 @@ class APLC2d(Coronagraph):
         if self.Ampmap2d is not None:
             field_A   *= self.Ampmap2d
 
+        dtype0 = 'complex128'
+        if self.Pupil2dSym == True:
+            dtype0 = 'float64'
         field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
-                                  dtype='complex128')
+                                  dtype=dtype0)
  
         field_L    = field_A*self.LyotStop2d
         for i in range(self.nlam):
@@ -1961,8 +2029,11 @@ class APLC2d(Coronagraph):
         if self.Ampmap2d is not None:
             field_A *= self.Ampmap2d
             
+        dtype0 = 'complex128'
+        if self.Pupil2dSym == True:
+            dtype0 = 'float64'
         field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
-                                  dtype='complex128')
+                                  dtype=dtype0)
         
 
         for i in range(self.nlam):
