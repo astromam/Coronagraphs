@@ -11,6 +11,7 @@ License: MIT license
 """
 
 #%% Initialization problem
+from memory_profiler import profile
 import numpy as np
 import json
 import time
@@ -280,7 +281,8 @@ class ProblemMatrix(object):
         self.__init__(**params)
         f.close()              
             
-#%%        
+#%%       
+    @profile
     def compute_response_matrices(self, corono=None):
         r"""
         Computes the response matrix for the coronagraph with and without 
@@ -306,27 +308,30 @@ class ProblemMatrix(object):
         """        
         if corono is None:
             pass
-        else:        
+        else:
             corono_field_re_t_tmp = np.empty((self.npp, self.corono.nlam, 
-                                               self.corono.nImg2d**2))
-            corono_field_im_t_tmp = np.empty((self.npp, self.corono.nlam, 
-                                               self.corono.nImg2d**2))
-    
+                                                   self.corono.nImg2d**2))
+
             Apod2d = np.zeros((self.corono.nPup, self.corono.nPup))
+
+
+            if self.ImPart is True:             
+                corono_field_im_t_tmp = np.empty((self.npp, self.corono.nlam, 
+                                                   self.corono.nImg2d**2))
     
-            for i, val in enumerate(self.idx_pup):
-                (i0,j0) = np.unravel_index(val, (self.corono.nPup, self.corono.nPup))
-                Apod2d[i0,j0] = 1            
-                corono_field_re_t_tmp[i], corono_field_im_t_tmp[i] = \
-                corono.compute_corono_field_2d_vec(Apod2d)
-                Apod2d[i0,j0] = 0 
+                for i, val in enumerate(self.idx_pup):
+                    (i0,j0) = np.unravel_index(val, (self.corono.nPup, self.corono.nPup))
+                    Apod2d[i0,j0] = 1            
+                    corono_field_re_t_tmp[i], corono_field_im_t_tmp[i] = \
+                    corono.compute_corono_field_2d_vec(Apod2d)
+                    Apod2d[i0,j0] = 0 
                     
-            corono_field_re_t = np.reshape(
-                    corono_field_re_t_tmp[:,:, self.idx_dz], 
-                    (self.npp, self.corono.nlam*self.ndz))
-            del corono_field_re_t_tmp
+                corono_field_re_t = np.reshape(
+                        corono_field_re_t_tmp[:,:, self.idx_dz], 
+                        (self.npp, self.corono.nlam*self.ndz))
+                corono_field_re_t_tmp = None
+                del corono_field_re_t_tmp
             
-            if self.ImPart is True:
                 corono_field_im_t = np.reshape(
                     corono_field_im_t_tmp[:,:, self.idx_dz], 
                     (self.npp, self.corono.nlam*self.ndz))
@@ -336,12 +341,28 @@ class ProblemMatrix(object):
                 corono_field_im_t = None
                 del corono_field_im_t
             
-            corono_field_im_t_tmp = None
-            del corono_field_im_t_tmp                
-                
+                corono_field_im_t_tmp = None
+                del corono_field_im_t_tmp
+
+            else:    
+                for i, val in enumerate(self.idx_pup):
+                    (i0,j0) = np.unravel_index(val, (self.corono.nPup, self.corono.nPup))
+                    Apod2d[i0,j0] = 1            
+                    corono_field_re_t_tmp[i] = \
+                    corono.compute_corono_field_2d_real_vec(Apod2d)
+                    Apod2d[i0,j0] = 0 
+                    
+                corono_field_re_t = np.reshape(
+                        corono_field_re_t_tmp[:,:, self.idx_dz], 
+                        (self.npp, self.corono.nlam*self.ndz))
+                corono_field_re_t_tmp = None
+                del corono_field_re_t_tmp
+
             return corono_field_re_t
 
+
 #%%        
+#    @profile
     def solve_model(self):
         """
         Solves the optimization problem model for the model with the selected 
@@ -353,12 +374,12 @@ class ProblemMatrix(object):
             Apodizer solution :math:`\Phi` for the optimization problem.
         
         """
-        print('start - compute matrices')
-        MemUse()
+        #print('start - compute matrices')
+        #MemUse()
         self.compute_matrices()
 
-        print('start - solve model')
-        MemUse()
+        #print('start - solve model')
+        #MemUse()
         t0 = time.time()
 
         if stdgrb and self.solver == 'stdgrb':
@@ -385,7 +406,7 @@ class ProblemMatrix(object):
             self.compute_gurobi_model()
             
             self.print_log('solving problem with gurobipy package')
-            try:                
+            try:               
                 self.m.Params.Method       = self.slvMethod
                 self.m.Params.LogToConsole = self.slvLogToConsole
                 self.m.Params.Crossover    = self.slvCrossover
@@ -412,8 +433,8 @@ class ProblemMatrix(object):
 
         t1 = time.time()
         self.print_log('solving time: {0:.2f}s\n'.format(t1-t0))
-        print('end')
-        MemUse()
+        #print('end')
+        #MemUse()
         
         return self.Apod                
 
@@ -544,6 +565,7 @@ class MaxTau(ProblemMatrix):
 
         
 #%%        
+#    @profile
     def compute_problem_matrices(self):
         r"""
         Computes the matrices for the optimization problem that consists in 
@@ -617,8 +639,8 @@ class MaxTau(ProblemMatrix):
             # Compute coronagraph response matrix
             t00 = time.time()
             self.print_log('computing corono response matrix for 2D problem')
-            print('start - compute response matrices')
-            MemUse()             
+            #print('start - compute response matrices')
+            #MemUse()             
             corono_field_t = self.compute_response_matrices(self.corono_t[k])
             t11 = time.time()
             self.print_log('computing time (response matrices): {0:.2f}s\n'.format(t11-t00))
@@ -640,13 +662,15 @@ class MaxTau(ProblemMatrix):
                 self.A = np.concatenate((A0,A1), axis=1)
             else:
                 self.A = np.concatenate((self.A, A0, A1), axis=1)
-                
+            
+            A0 = None
+            A1 = None
             del A0
             del A1
             gc.collect()
 
-            print('end - compute response matrices')
-            MemUse() 
+            #print('end - compute response matrices')
+            #MemUse() 
         
         # Yield the A and b matrices for the optimization problem                               
         self.b = np.zeros((len(self.A.T)))
@@ -695,13 +719,20 @@ class MaxTau(ProblemMatrix):
             :math:`\Phi(r) \leq 1`.        
         
         """
+        #print('start - compute gurobi matrices')
+        #MemUse()
         # Compute constraints on the apodizer transmission
         A2tmp  = -np.identity(self.npp)
+        #A2tmp = -scipy.sparse.identity(self.npp)
+        
         
         # Add terms corresponding to the MinIsland auxiliary variables        
         AZ0vv = np.zeros((self.nvv, self.npp))
+        #AZ0vv = scipy.sparse.csr_matrix((self.nvv, self.npp))
         
         A2 = np.concatenate((A2tmp, AZ0vv))
+        #A2 = scipy.sparse.vstack((A2tmp,AZ0vv))
+        #A2 = scipy.sparse.csr_matrix(A2)
         
         # Add constraints on the apodizer first derivative with 
         # auxiliary variables                        
@@ -711,13 +742,28 @@ class MaxTau(ProblemMatrix):
         # Update the A, b, and c matrices
         if self.A is None:
             self.A = np.concatenate((A2, -A2), axis=1)
+            #self.A = scipy.sparse.hstack((self.A,A2,-A2))
+            #self.A = scipy.sparse.csr_matrix(self.A)            
         else:
-            self.A = np.concatenate((self.A, A2, -A2), axis=1)
+            	self.A = np.concatenate((self.A,A2,-A2), axis = 1)
+            #self.A = scipy.sparse.bsr_matrix(self.A)
+            	#self.A = scipy.sparse.hstack((self.A,A2,-A2))
+            	#self.A = scipy.sparse.csr_matrix(self.A)
+        
+        A2 = None
+        del A2
+        gc.collect()
         
         if self.b is None:
             self.b = np.concatenate((b2,  b3))
         else:
-            self.b = np.concatenate((self.b, b2,  b3))        
+            self.b = np.concatenate((self.b, b2,  b3)) 
+        
+        b2 = None
+        b3 = None
+        del b2
+        del b3
+        gc.collect()
         
 #%%
     def compute_problem_matrices_MinIsland(self):
@@ -879,6 +925,11 @@ class MaxTau(ProblemMatrix):
             
             # Update model        
             self.m.update()
+
+            # Solve model
+            print('save model')
+            self.m.write('/Users/mndiaye/Desktop/model.rlp')
+            #MemUse()
 
         else:
             print('Warning: Set solver keyword to "gurobipy" to make model!')    
@@ -1161,7 +1212,8 @@ class MaxContrast(ProblemMatrix):
         if self.b is None:
             self.b = np.concatenate((b2,  b3))
         else:
-            self.b = np.concatenate((self.b, b2,  b3)) 
+            self.b = np.concatenate((self.b, b2,  b3))
+            
             
 #%%
     def compute_problem_matrices_MinIsland(self):
@@ -1325,7 +1377,7 @@ class MaxContrast(ProblemMatrix):
             
             # Update model
             self.m.update()
-
+            
         else:
             print('Warning: Set solver keyword to "gurobipy" to make model!')             
 
