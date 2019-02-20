@@ -178,7 +178,7 @@ def optim_code():
     if do_fits is True:
         fits.writeto(fpath, Apod1_2d, overwrite=True)
 
-    np.savez(fpath_pup2, Pupil2d, LyotStop2d, Apod1_2d)
+    np.savez(fpath_pup2, Pupil2d=Pupil2d, LyotStop2d=LyotStop2d, Apod1_2d=Apod1_2d)
 
         
 #%%
