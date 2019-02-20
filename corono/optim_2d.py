@@ -282,7 +282,7 @@ class ProblemMatrix(object):
         f.close()              
             
 #%%       
-    @profile
+#    @profile
     def compute_response_matrices(self, corono=None):
         r"""
         Computes the response matrix for the coronagraph with and without 
@@ -566,6 +566,137 @@ class MaxTau(ProblemMatrix):
         
 #%%        
 #    @profile
+#    def compute_problem_matrices(self):
+#        r"""
+#        Computes the matrices for the optimization problem that consists in 
+#        maximizing the amplitude transmission of the apodizer :math:`\Phi` 
+#        for a set contrast :math:`C` in a given search area in the 
+#        coronagraphic image. In terms of matrices, the optimization problem 
+#        writes as
+#            
+#        .. math:: \max_{C} c^{T}.x,
+#            
+#        under the constraint :math:`A.x \leq b`.
+#                
+#        The variable :math:`x` represents the apodizer transmission 
+#        function :math:`\Phi`. The variables follow the notations of [1]_ and 
+#        [2]_.       
+#        
+#        Notes
+#        -----------        
+#        A0 : array_like
+#            Contrast constraint on the coronagraphic electric field 
+#            :math:`\Psi_D` that is represented the following equation:
+#                
+#            :math:`\Psi_D(\xi,\lambda)-10^{-C/2}\Psi_0(\xi,\lambda) \leq 0`. 
+#            
+#            :math:`\xi` and :math:`\lambda` denote the image plane coordinate 
+#            and wavelength. The term :math:`\Psi_0` represents the 
+#            coronagraphic electric field in the absence of focal plane mask 
+#            (FPM).
+#            
+#        A1 : array_like
+#            Contrast constraints on the coronagraphic electric field Psi_D
+#            that is represented the following equations:
+#                
+#            :math:`-\Psi_D(\xi,\lambda)-10^{-C/2}\Psi_0(\xi,\lambda) \leq 0`.
+#        
+#        Returns 
+#        ----------
+#        A, b, c: array_like, array_like, array_like
+#            The matrices for the optimization problem.
+#            A and b are concatenations of the matrices for the constraints that 
+#            are described above.
+#            
+#            The cost function c to maximize is the transmission of the apodizer 
+#            inside the pupil :math:`P_0`.
+#            
+#            .. math:: \max_{C}[\int_{P_0} \Phi(r)dr].
+#            
+#        References
+#        ----------
+#        .. [1] M. N'Diaye, L. Pueyo, and R. Soummer, "Apodized Pupil Lyot 
+#            Coronagraphs for Arbitrary Apertures. IV. Reduced Inner Working 
+#            Angle and Increased Robustness to Low-order Aberrations", ApJ 799, 
+#            2, 225 (2015).
+#            
+#            http://iopscience.iop.org/article/10.1088/0004-637X/799/2/225/meta.
+#            
+#        .. [2] M. N'Diaye, R. Soummer, L. Pueyo, A. Carlotti, C. Stark, 
+#            M. Perrin, "Apodized Pupil Lyot Coronagraphs for Arbitrary 
+#            Apertures. V. Hybrid Shaped Pupil Designs for Imaging Earth-like 
+#            planets with Future Space Observatories", ApJ 818, 2, 163 (2016). 
+#            
+#            http://iopscience.iop.org/article/10.3847/0004-637X/818/2/163/meta
+#            
+#        """                    
+#        # Compute constant term that includes contrast and normalization
+#        cst = (10.**(-self.cDarkHole/2.)/np.sqrt(2.))*self.corono.Fmax2d/(self.corono.nImg2d*self.corono.nPup)
+#
+#        # Compute contrast constraints on the coronagraphic electric field
+#        for k in range(self.ncorono):
+#            
+#            # Compute coronagraph response matrix
+#            t00 = time.time()
+#            self.print_log('computing corono response matrix for 2D problem')             
+#            corono_field_t = self.compute_response_matrices(self.corono_t[k])
+#            t11 = time.time()
+#            self.print_log('computing time (response matrices): {0:.2f}s\n'.format(t11-t00))
+#            
+#            LyotStop_vec   = self.LyotStop_vec_t[k]
+#            
+#            A0tmp  =  corono_field_t \
+#            - cst*self.Pupil_vec[self.idx_pup, None]*LyotStop_vec[self.idx_pup, None]           
+#            A1tmp  = -corono_field_t \
+#            - cst*self.Pupil_vec[self.idx_pup, None]*LyotStop_vec[self.idx_pup, None]
+#            
+#            # Add terms corresponding to the MinIsland auxiliary variables        
+#            AZ0vv = np.zeros((self.nvv, np.shape(A0tmp)[1]))
+#
+#            print(A0tmp.shape)
+#            print(A1tmp.shape)
+#            print(AZ0vv.shape)
+#            
+#            A0 = np.concatenate((A0tmp, AZ0vv))
+#            A1 = np.concatenate((A1tmp, AZ0vv))            
+#            
+#            if k == 0:
+#                self.A = np.concatenate((A0,A1), axis=1)
+#            else:
+#                self.A = np.concatenate((self.A, A0, A1), axis=1)
+#            
+#            print(A0.shape)
+#            print(A1.shape)
+#            print(self.A.shape)
+#            
+#            A0 = None
+#            A1 = None
+#            del A0
+#            del A1
+#            gc.collect()
+#         
+#        # Yield the A and b matrices for the optimization problem                               
+#        self.b = np.zeros((len(self.A.T)))
+#
+#        # Add apodizer normalization contraints for gurobi solvers
+#        if (stdgrb and self.solver == 'stdgrb') \
+#        or (gb and self.solver == 'gurobipy'):
+#            self.compute_problem_matrices_gurobi()
+#
+#        # Add apodizer minimal islands constraints    
+#        if self.MinIsland is True:
+#            self.compute_problem_matrices_MinIsland()
+#            
+#        # Compute the cost function
+#        self.c = np.concatenate((-self.Pupil_vec[self.idx_pup]/self.TR, 
+#                                 np.zeros(self.nvv)), axis=0)
+#        
+#        print(self.A.shape)
+#        
+#        # Return the A, b, and c matrices
+#        return self.A, self.b, self.c
+#%%
+    @profile
     def compute_problem_matrices(self):
         r"""
         Computes the matrices for the optimization problem that consists in 
@@ -633,45 +764,21 @@ class MaxTau(ProblemMatrix):
         # Compute constant term that includes contrast and normalization
         cst = (10.**(-self.cDarkHole/2.)/np.sqrt(2.))*self.corono.Fmax2d/(self.corono.nImg2d*self.corono.nPup)
 
+        self.A = np.zeros((self.npp+self.nvv, self.ncorono*2*self.nlam*self.ndz))
+
         # Compute contrast constraints on the coronagraphic electric field
         for k in range(self.ncorono):
-            
-            # Compute coronagraph response matrix
-            t00 = time.time()
-            self.print_log('computing corono response matrix for 2D problem')
-            #print('start - compute response matrices')
-            #MemUse()             
-            corono_field_t = self.compute_response_matrices(self.corono_t[k])
-            t11 = time.time()
-            self.print_log('computing time (response matrices): {0:.2f}s\n'.format(t11-t00))
-            
             LyotStop_vec   = self.LyotStop_vec_t[k]
+                                                
+            self.A[:self.npp, 2*k*self.nlam*self.ndz:(2*k+1)*self.nlam*self.ndz] = \
+            self.compute_response_matrices(self.corono_t[k]) 
             
-            A0tmp  =  corono_field_t \
-            - cst*self.Pupil_vec[self.idx_pup, None]*LyotStop_vec[self.idx_pup, None]           
-            A1tmp  = -corono_field_t \
-            - cst*self.Pupil_vec[self.idx_pup, None]*LyotStop_vec[self.idx_pup, None]
-            
-            # Add terms corresponding to the MinIsland auxiliary variables        
-            AZ0vv = np.zeros((self.nvv, np.shape(A0tmp)[1]))
-            
-            A0 = np.concatenate((A0tmp, AZ0vv))
-            A1 = np.concatenate((A1tmp, AZ0vv))            
-            
-            if k == 0:
-                self.A = np.concatenate((A0,A1), axis=1)
-            else:
-                self.A = np.concatenate((self.A, A0, A1), axis=1)
-            
-            A0 = None
-            A1 = None
-            del A0
-            del A1
-            gc.collect()
-
-            #print('end - compute response matrices')
-            #MemUse() 
-        
+            self.A[:self.npp, (2*k+1)*self.nlam*self.ndz:(2*k+2)*self.nlam*self.ndz] = \
+            -self.A[:self.npp, 2*k*self.nlam*self.ndz:(2*k+1)*self.nlam*self.ndz] 
+ 
+            self.A[:self.npp, 2*k*self.nlam*self.ndz:2*(k+1)*self.nlam*self.ndz] -= \
+            cst*self.Pupil_vec[self.idx_pup, None]*LyotStop_vec[self.idx_pup, None]
+                           
         # Yield the A and b matrices for the optimization problem                               
         self.b = np.zeros((len(self.A.T)))
 
@@ -687,6 +794,8 @@ class MaxTau(ProblemMatrix):
         # Compute the cost function
         self.c = np.concatenate((-self.Pupil_vec[self.idx_pup]/self.TR, 
                                  np.zeros(self.nvv)), axis=0)
+        
+        print(self.A.shape)
         
         # Return the A, b, and c matrices
         return self.A, self.b, self.c

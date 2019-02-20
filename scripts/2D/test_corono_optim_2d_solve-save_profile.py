@@ -43,8 +43,8 @@ def optim_code():
     BinarityReg       = 0.1
     
     #nPup = corono0.params['nPup']
-    nPup = 50
-    nFPM = 50
+    nPup = 10
+    nFPM = 10
     Fmax2d = 22.5
     nImg2d = 45
     
@@ -71,7 +71,7 @@ def optim_code():
     
     #nlam
     bw   = 0.1
-    nlam = 1
+    nlam = 5
     
     do_fits = True
     
@@ -92,6 +92,11 @@ def optim_code():
     Pupil2d    = fits.getdata(fpath_pup)
     LyotStop2d = fits.getdata(fpath_lys)
     
+    fname_pup2 = 'pupils_for_remif_nPup={0}.npz'.format(nPup)
+    
+    fdir2 = Path('/Users/mndiaye/Desktop/').resolve()
+    fpath_pup2 = fdir2 / fname_pup2
+
     
     if solver != 'gurobipy' and solver != 'stdgrb':
         solver = 'scipy'
@@ -172,6 +177,9 @@ def optim_code():
     
     if do_fits is True:
         fits.writeto(fpath, Apod1_2d, overwrite=True)
+
+    np.savez(fpath_pup2, Pupil2d, LyotStop2d, Apod1_2d)
+
         
 #%%
 if __name__ == '__main__':

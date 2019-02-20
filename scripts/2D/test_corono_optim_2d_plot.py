@@ -61,7 +61,7 @@ if True:
     
     #nlam
     bw   = 0.1
-    nlam = 1
+    nlam = 5
 
     
     do_fits = True
