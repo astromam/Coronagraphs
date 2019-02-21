@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Feb 20 14:46:39 2019
+Created on Thu Feb 21 09:28:09 2019
 
 Author: Mamadou N'Diaye <mamadou.ndiaye@oca.eu> 
 
@@ -13,6 +13,7 @@ License: MIT license
 """
 Initialisation
 """
+from memory_profiler import profile
 import numpy as np
 import pylab as pl
 import time
@@ -20,7 +21,6 @@ from pathlib import Path
 
 from astropy.io import fits
 
-import corono as coro
 from corono import utils
 
 #%%
@@ -29,8 +29,8 @@ Parameters
 """
 pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
 
-nPup  = 200
-nFPM  = 50
+nPup  = 20
+nFPM  = 20
 Fmax2d = 22.5
 nImg2d = 45
 
@@ -39,6 +39,10 @@ dMask = 2*rMask
 
 rho0 = 5.0
 rho1 = 10.0
+
+bw   = 0.1
+lam0 = 1
+nlam = 5
 
 CtrBtwnPix = True
 
@@ -82,6 +86,11 @@ L = LyotStop1d[idx_pup]*1
 """
 Pre-Computation
 """
+dlam       = bw*lam0
+lam_t      = np.linspace(lam0-dlam/2*(nlam>1), lam0+dlam/2,nlam)
+
+
+#%%
 if CtrBtwnPix is True:
     val = 1/2 
 x2d,y2d = np.meshgrid(np.arange(nPup)-nPup/2+val, np.arange(nPup)-nPup/2+val)
@@ -135,42 +144,65 @@ u1d = u1d_tmp[idx_dz]
 v1d = v1d_tmp[idx_dz]
 #%%
 """
+Matrix computation function
+"""
+
+#%%
+
+def Q_direct(lam):   
+    if ImPart is True:
+        LFCD = np.exp(-2j*np.pi*(lam0/lam)*(x1d[:, None]*u1d[None, :] + y1d[:, None]*v1d[None, :]))
+    else:
+        LFCD = np.cos(-2*np.pi*(lam0/lam)*(x1d[:, None]*u1d[None, :] + y1d[:, None]*v1d[None, :]))
+    
+    LFCD *= (lam0/lam)*Fmax2d/(nPup*nImg2d)
+    LFCD *= L[:,None]
+    return LFCD
+
+#%%
+#@profile
+def Q_corono(lam):
+    if ImPart is True:
+        FAB = np.exp(-2j*np.pi*(lam0/lam)*(x1d[:, None]*p1d[None, :] + y1d[:, None]*q1d[None, :]))
+    else:
+        FAB = np.cos(-2*np.pi*(lam0/lam)*(x1d[:, None]*p1d[None, :] + y1d[:, None]*q1d[None, :]))
+    
+    FAB *= (lam0/lam)*dMask/(nPup*nFPM)
+    
+    if ImPart is True:
+        MFBC = FAB.conjugate().T    
+    else:
+        MFBC = FAB.T
+    MFBC *= M[idx_msk,None]
+    
+    LFCD = Q_direct(lam)
+    
+    Q  = - (FAB.dot(MFBC)).dot(LFCD)
+    Q += LFCD
+    
+    return Q
+#%%
+"""
 Matrix computation
 """
 t00 = time.time()
-#%%
-if ImPart is True:
-    FAB = np.exp(-2j*np.pi*(x1d[:, None]*p1d[None, :] + y1d[:, None]*q1d[None, :]))
-else:
-    FAB = np.cos(-2*np.pi*(x1d[:, None]*p1d[None, :] + y1d[:, None]*q1d[None, :]))
+Q0 = np.empty((npp, nlam, ndz))
+for i, lam in enumerate(lam_t):
+    Q0[:, i] = Q_direct(lam)
+    
+print('Q0: {0}'.format(Q0.shape))
+t11 = time.time()
+print('direct computation time: {0:.5f}s'.format(t11-t00))
 
-FAB *= dMask/(nPup*nFPM)
-print('FAB: {0}'.format(FAB.shape))
 
-#%%
-if ImPart is True:
-    MFBC = FAB.conjugate().T    
-else:
-    MFBC = FAB.T
-MFBC *= M[idx_msk,None]
-print('MFBC: {0}'.format(MFBC.shape))
-
-#%%
-if ImPart is True:
-    LFCD = np.exp(-2j*np.pi*(x1d[:, None]*u1d[None, :] + y1d[:, None]*v1d[None, :]))
-else:
-    LFCD = np.cos(-2*np.pi*(x1d[:, None]*u1d[None, :] + y1d[:, None]*v1d[None, :]))
-
-LFCD *= Fmax2d/(nPup*nImg2d)
-LFCD *= L[:,None]
-print('LFCD: {0}'.format(LFCD.shape))
-
-#%%
-Q  = - (FAB.dot(MFBC)).dot(LFCD)
-Q += LFCD
+t00 = time.time()
+Q = np.empty((npp, nlam, ndz))
+for i, lam in enumerate(lam_t):
+    Q[:, i] = Q_corono(lam)
+    
 print('Q: {0}'.format(Q.shape))
 t11 = time.time()
-print('computation time: {0:.5f}s'.format(t11-t00))
+print('corono computation time: {0:.5f}s'.format(t11-t00))
 
 
 #%%
@@ -178,27 +210,32 @@ print('computation time: {0:.5f}s'.format(t11-t00))
 Direct image - test 
 """
 t0 = time.time()
-Field1d_tmp = Pupil1d[idx_pup].dot(LFCD)
+Field1d_tmp = np.tensordot(Pupil1d[idx_pup], Q0, (0, 0))
 
 if ImPart is True:
-    Field1d = np.zeros((nImg2d**2), dtype='complex128')
+    Field1d = np.zeros((nlam, nImg2d**2), dtype='complex128')
 else:
-    Field1d = np.zeros((nImg2d**2))
+    Field1d = np.zeros((nlam, nImg2d**2))
 
-Field1d[idx_dz] = Field1d_tmp
-Field2d = np.reshape(Field1d, (nImg2d, nImg2d))
+Field1d[:, idx_dz] = Field1d_tmp
+Field2d = np.reshape(Field1d, (nlam, nImg2d, nImg2d))
 Image2d = np.abs(Field2d)**2
+Image2d = np.sum(Image2d, axis=0)
+
 t1 = time.time() 
 print('direct, new    : {0:.6f}s'.format(t1-t0))
 
 #%%
 t0 = time.time()
-if ImPart is True:
-    Field2d0 = utils.sft(Pupil2d*LyotStop2d, nImg2d, Fmax2d, CtrBtwnPix=CtrBtwnPix)
-else:
-    Field2d0 = utils.sft_even(Pupil2d*LyotStop2d, nImg2d, Fmax2d, CtrBtwnPix=CtrBtwnPix)
-    
-Image2d0 = np.abs(Field2d0)**2*Annulus2d
+
+Image2d0 = np.zeros((nImg2d, nImg2d))
+for i, lam in enumerate(lam_t):
+    if ImPart is True:
+        Field2d0 = utils.sft(Pupil2d*LyotStop2d, nImg2d, (lam0/lam)*Fmax2d, CtrBtwnPix=CtrBtwnPix)
+    else:
+        Field2d0 = utils.sft_even(Pupil2d*LyotStop2d, nImg2d, (lam0/lam)*Fmax2d, CtrBtwnPix=CtrBtwnPix)    
+    Image2d0 += np.abs(Field2d0)**2*Annulus2d
+
 t1 = time.time() 
 print('direct, classic: {0:.6f}s'.format(t1-t0))
 
@@ -208,40 +245,45 @@ print('direct, classic: {0:.6f}s'.format(t1-t0))
 Coronagraphic image - test
 """
 t0 = time.time()
-Field1dbis_tmp = Pupil1d[idx_pup].dot(Q)
+Field1dbis_tmp = np.tensordot(Pupil1d[idx_pup], Q, (0, 0))
 
 if ImPart is True:
-    Field1dbis = np.zeros((nImg2d**2), dtype='complex128')
+    Field1dbis = np.zeros((nlam, nImg2d**2), dtype='complex128')
 else:
-    Field1dbis = np.zeros((nImg2d**2))
+    Field1dbis = np.zeros((nlam, nImg2d**2))
     
-Field1dbis[idx_dz] = Field1dbis_tmp
-Field2dbis = np.reshape(Field1dbis, (nImg2d, nImg2d))
+Field1dbis[:, idx_dz] = Field1dbis_tmp
+Field2dbis = np.reshape(Field1dbis, (nlam, nImg2d, nImg2d))
 Image2dbis = np.abs(Field2dbis)**2
+Image2dbis = np.sum(Image2dbis, axis=0)
 
 t1 = time.time() 
 print('corono, new    : {0:.6f}s'.format(t1-t0))
 
 #%%
 t0 = time.time()
-if ImPart is True: 
-    field_B       = Mask2d*utils.sft(Pupil2d, nFPM, dMask, 
-                                    CtrBtwnPix=CtrBtwnPix)
-    field_C       = Pupil2d - utils.isft(field_B, nPup, dMask, 
-                                   CtrBtwnPix=CtrBtwnPix)
-    field_L       = field_C*LyotStop2d
-    field_D       = utils.sft(field_L, nImg2d, Fmax2d, 
-              CtrBtwnPix=CtrBtwnPix)
-else:
-    field_B       = Mask2d*utils.sft_even(Pupil2d, nFPM, dMask, 
-                                    CtrBtwnPix=CtrBtwnPix)
-    field_C       = Pupil2d - utils.isft_even(field_B, nPup, dMask, 
-                                   CtrBtwnPix=CtrBtwnPix)
-    field_L       = field_C*LyotStop2d
-    field_D       = utils.sft_even(field_L, nImg2d, Fmax2d, 
-              CtrBtwnPix=CtrBtwnPix)    
 
-Image2dbis0 = np.abs(field_D)**2*Annulus2d
+Image2dbis0 = np.zeros((nImg2d, nImg2d))
+for i, lam in enumerate(lam_t):
+    if ImPart is True: 
+        field_B       = Mask2d*utils.sft(Pupil2d, nFPM, (lam0/lam)*dMask, 
+                                        CtrBtwnPix=CtrBtwnPix)
+        field_C       = Pupil2d - utils.isft(field_B, nPup, (lam0/lam)*dMask, 
+                                       CtrBtwnPix=CtrBtwnPix)
+        field_L       = field_C*LyotStop2d
+        field_D       = utils.sft(field_L, nImg2d, Fmax2d, 
+                  CtrBtwnPix=CtrBtwnPix)
+    else:
+        field_B       = Mask2d*utils.sft_even(Pupil2d, nFPM, (lam0/lam)*dMask, 
+                                        CtrBtwnPix=CtrBtwnPix)
+        field_C       = Pupil2d - utils.isft_even(field_B, nPup, (lam0/lam)*dMask, 
+                                       CtrBtwnPix=CtrBtwnPix)
+        field_L       = field_C*LyotStop2d
+        field_D       = utils.sft_even(field_L, nImg2d, (lam0/lam)*Fmax2d, 
+                  CtrBtwnPix=CtrBtwnPix)    
+
+    Image2dbis0 += np.abs(field_D)**2*Annulus2d
+    
 t1 = time.time() 
 print('corono, classic: {0:.6f}s'.format(t1-t0))
 
