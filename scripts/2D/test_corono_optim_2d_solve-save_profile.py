@@ -43,8 +43,8 @@ def optim_code():
     BinarityReg       = 0.1
     
     #nPup = corono0.params['nPup']
-    nPup = 10
-    nFPM = 10
+    nPup = 50
+    nFPM = 50
     Fmax2d = 22.5
     nImg2d = 45
     
@@ -64,11 +64,9 @@ def optim_code():
     # CtrBtwnPix2
     CtrBtwnPix  = True
     CtrBtwnPix2 = True
-    Pupil2dSym  = True
+    Pupil2dSym  = False
     ImPart = False
-    
-    Einsum = True
-    
+        
     #nlam
     bw   = 0.1
     nlam = 5
@@ -115,7 +113,7 @@ def optim_code():
                      allLogToConsole = allLogToConsole,
                      MinIsland = MinIsland, FirstDerGlobalLim = FirstDerGlobalLim,
                      Binarity = Binarity, BinarityReg = BinarityReg,
-                     Einsum = Einsum, ImPart = ImPart)
+                     ImPart = ImPart)
     
     #%%  
     """ 
@@ -178,7 +176,7 @@ def optim_code():
     if do_fits is True:
         fits.writeto(fpath, Apod1_2d, overwrite=True)
 
-    np.savez(fpath_pup2, Pupil2d=Pupil2d, LyotStop2d=LyotStop2d, Apod1_2d=Apod1_2d)
+#    np.savez(fpath_pup2, Pupil2d=Pupil2d, LyotStop2d=LyotStop2d, Apod1_2d=Apod1_2d)
 
         
 #%%

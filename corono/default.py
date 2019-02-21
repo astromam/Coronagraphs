@@ -108,8 +108,7 @@ def get_default_params_Coronagraph():
            'CtrBtwnPix':True, 'CtrBtwnPix2':False, 
            'Pupil2dSym':True, 
            'Pupil1d':None, 'LyotStop1d':None,
-           'Pupil2d':None, 'LyotStop2d':None,
-           'Einsum':False
+           'Pupil2d':None, 'LyotStop2d':None
            }
             
     return tmp

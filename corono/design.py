@@ -467,10 +467,7 @@ class Coronagraph(object):
             Intensity of the direct broadband image or monochromatic images. 
             
         """        
-        if self.Einsum is True and self.corono_name == 'APLC':
-            direct_field_2d = self.compute_direct_field_2d_ein(Apod2d)
-        else:
-            direct_field_2d = self.compute_direct_field_2d(Apod2d)
+        direct_field_2d = self.compute_direct_field_2d(Apod2d)
         
         if poly:
             return np.sum(np.abs(direct_field_2d)**2,0)
@@ -498,10 +495,7 @@ class Coronagraph(object):
             images.
         
         """
-        if self.Einsum is True and self.corono_name == 'APLC':
-            corono_field_2d = self.compute_corono_field_2d_ein(Apod2d)
-        else:
-            corono_field_2d = self.compute_corono_field_2d(Apod2d)
+        corono_field_2d = self.compute_corono_field_2d(Apod2d)
             
         if poly:
             return np.sum(np.abs(corono_field_2d)**2,0)
@@ -583,10 +577,7 @@ class Coronagraph(object):
             Real and imag parts of the direct electric field :math:`\Psi_0`
             
         """        
-        if self.Einsum is True and self.corono_name == 'APLC':
-            test = self.compute_direct_field_2d_ein(Apod2d)
-        else:
-            test = self.compute_direct_field_2d(Apod2d)
+        test = self.compute_direct_field_2d(Apod2d)
         test_re = np.reshape(test.real, (self.nlam, self.nImg2d**2))
         test_im = np.reshape(test.imag, (self.nlam, self.nImg2d**2))
         return test_re, test_im
@@ -610,10 +601,7 @@ class Coronagraph(object):
             
         """ 
 #        test = self.compute_corono_field_2d(Apod2d, Pupil2d, LyotStop2d)
-        if self.Einsum is True and self.corono_name == 'APLC':
-            test = self.compute_corono_field_2d_ein(Apod2d)
-        else:
-            test = self.compute_corono_field_2d(Apod2d)
+        test = self.compute_corono_field_2d(Apod2d)
         test_re = np.reshape(test.real, (self.nlam, self.nImg2d**2))
         test_im = np.reshape(test.imag, (self.nlam, self.nImg2d**2))
         return test_re, test_im
@@ -635,10 +623,7 @@ class Coronagraph(object):
             Real and imag parts of the direct electric field :math:`\Psi_0`
             
         """        
-        if self.Einsum is True and self.corono_name == 'APLC':
-            test = self.compute_direct_field_2d_ein(Apod2d)
-        else:
-            test = self.compute_direct_field_2d(Apod2d)
+        test = self.compute_direct_field_2d(Apod2d)
         return np.reshape(test, (self.nlam, self.nImg2d**2))
 
 #%%
@@ -659,10 +644,7 @@ class Coronagraph(object):
             
         """ 
 #        test = self.compute_corono_field_2d(Apod2d, Pupil2d, LyotStop2d)
-        if self.Einsum is True and self.corono_name == 'APLC':
-            test = self.compute_corono_field_2d_ein(Apod2d)
-        else:
-            test = self.compute_corono_field_2d(Apod2d)
+        test = self.compute_corono_field_2d(Apod2d)
         return np.reshape(test, (self.nlam, self.nImg2d**2))
 
 #%%
@@ -1810,141 +1792,6 @@ class APLC2d(Coronagraph):
                           CtrBtwnPix=self.CtrBtwnPix2)
                                   
         return field_Dtmp   
-
-#%% direct propagation (no focal plane mask)
-    def compute_direct_field_2d_ein(self,Apod2d):
-        r""" 
-        Computes the coronagraph electric field for a classical Lyot coronagraph
-        with four planes (A: entrance pupil, B: intermediate focal plane, 
-        C: relayed pupil before stop, L: relayed pupil after stop, 
-        D: final image plane).
-        Resolution element are given in :math:`\lambda_0/D` where 
-        :math:`\lambda_0` and :math:`D` denote the central and the telescope 
-        diameter.
-    
-        Parameters
-        ----------     
-        Apod2d : array_like 
-            Entrance pupil apodization :math:`\Phi`
-                        
-        Returns    
-        ----------    
-        field_Dtmp : array_like
-            Direct electric field :math:`\Psi_0` in the final image plane at 
-            all the wavelengths
-    
-        """
-
-        field_A    = np.einsum('ij, ij-> ij', Apod2d, self.Pupil2d)
-        if self.OPDmap2d is not None:
-#            phasor_t  = 2.*np.pi*self.OPDmap2d[None, :, :]/(self.wv*self.lam_t[:, None,None])             
-#            field_A   = Apod2d*self.Pupil2d*(1j*np.sin(phasor_t)+np.cos(phasor_t))
-            phasor_t  = (2.*np.pi/self.wv)*np.einsum('jk,i -> ijk', self.OPDmap2d, 1./self.lam_t)             
-            field_A   = np.einsum('ij,ij -> ij', Apod2d, self.Pupil2d)
-            field_A   = np.einsum('ij, ij -> ij', field_A, 1j*np.sin(phasor_t)+np.cos(phasor_t))
-                        
-            
-        if self.Ampmap2d is not None:
-#            field_A   *= self.Ampmap2d
-            field_A   = np.einsum('ij, ij -> ij', field_A, self.Ampmap2d)
-
-        dtype0 = 'complex128'
-        if self.Pupil2dSym == True:
-            dtype0 = 'float64'
-        field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
-                                  dtype=dtype0)
- 
-        field_L    = np.einsum('ij,ij -> ij', field_A, self.LyotStop2d)
-        
-        
-        
-        for i in range(self.nlam):
-            if self.OPDmap2d is not None:
-                field_L   = np.einsum('ij,ij -> ij', field_A[i], self.LyotStop2d)
-                
-            if self.Pupil2dSym == False:
-                print('einsum - direct')
-                field_Dtmp[i] = sft_ein(field_L, self.nImg2d, self.mD_t[i], 
-                          CtrBtwnPix=self.CtrBtwnPix2)
-            else:
-                field_Dtmp[i] = sft_even(field_L, self.nImg2d, self.mD_t[i], 
-                          CtrBtwnPix=self.CtrBtwnPix2)
-                                                
-        return field_Dtmp
- 
-#%%
-    def compute_corono_field_2d_ein(self,Apod2d):
-        """
-        Computes the coronagraph electric field for a classical Lyot coronagraph
-        with four planes (A: entrance pupil, B: intermediate focal plane, 
-        C: relayed pupil before stop, L: relayed pupil after stop, 
-        D: final image plane).
-        Resolution element are given in :math:`\lambda_0/D` where 
-        :math:`\lambda_0` and :math:`D` denote the central and the telescope 
-        diameter.
-    
-        Parameters
-        ---------- 
-        Apod2d : array_like 
-            Entrance pupil apodization :math:`\Phi`
-            
-        Returns    
-        ----------    
-        field_Dtmp : array_like
-            Coronagraphic electric field :math:`\Psi_D` in the final image plane
-            at all the wavelengths
-            
-        """        
-
-        field_A    = np.einsum('ij, ij-> ij', Apod2d, self.Pupil2d)
-        if self.OPDmap2d is not None:
-#            phasor_t  = 2.*np.pi*self.OPDmap2d[None, :, :]/(self.wv*self.lam_t[:, None,None])             
-#            field_A   = Apod2d*self.Pupil2d*(1j*np.sin(phasor_t)+np.cos(phasor_t))
-            phasor_t  = (2.*np.pi/self.wv)*np.einsum('jk,i -> ijk', self.OPDmap2d, 1./self.lam_t)             
-            field_A   = np.einsum('ij,ij -> ij', Apod2d, self.Pupil2d)
-            field_A   = np.einsum('ij, ij -> ij', field_A, 1j*np.sin(phasor_t)+np.cos(phasor_t))
-
-        if self.Ampmap2d is not None:
-#            field_A   *= self.Ampmap2d
-            field_A   = np.einsum('ij, ij -> ij', field_A, self.Ampmap2d)
-            
-        dtype0 = 'complex128'
-        if self.Pupil2dSym == True:
-            dtype0 = 'float64'
-        field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
-                                  dtype=dtype0)
-        
-
-        for i in range(self.nlam):
-            if self.OPDmap2d is None:
-                field = field_A
-            else:
-                field = field_A[i]                
-            if self.Pupil2dSym == False:
-
-                print('einsum - corono')
-                field_B       = sft_ein(field, self.nFPM, self.mB_t[i], 
-                                                CtrBtwnPix=self.CtrBtwnPix)
-                field_B       = np.einsum('ij,ij-> ij', self.mask2d, field_B)
-                
-                field_C       = field - isft_ein(field_B, self.nPup, self.mB_t[i], 
-                                               CtrBtwnPix=self.CtrBtwnPix)
-                field_L       = np.einsum('ij,ij->ij', field_C, self.LyotStop2d)
-                field_Dtmp[i] = sft_ein(field_L, self.nImg2d, self.mD_t[i], 
-                          CtrBtwnPix=self.CtrBtwnPix2)
-                
-            else:
-                field_B       = self.mask2d*sft_even(field, self.nFPM, self.mB_t[i], 
-                                                CtrBtwnPix=self.CtrBtwnPix)
-                field_C       = field - isft_even(field_B, self.nPup, self.mB_t[i], 
-                                               CtrBtwnPix=self.CtrBtwnPix)
-                field_L       = field_C*self.LyotStop2d
-                field_Dtmp[i] = sft_even(field_L, self.nImg2d, self.mD_t[i], 
-                          CtrBtwnPix=self.CtrBtwnPix2)
-                                   
-        return field_Dtmp   
-
-
 
 #%% direct propagation (no focal plane mask)
     def compute_direct_field_2d_bis(self,Apod2d,OPDmap2d=None):

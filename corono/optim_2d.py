@@ -696,7 +696,7 @@ class MaxTau(ProblemMatrix):
 #        # Return the A, b, and c matrices
 #        return self.A, self.b, self.c
 #%%
-    @profile
+#    @profile
     def compute_problem_matrices(self):
         r"""
         Computes the matrices for the optimization problem that consists in 
@@ -769,9 +769,13 @@ class MaxTau(ProblemMatrix):
         # Compute contrast constraints on the coronagraphic electric field
         for k in range(self.ncorono):
             LyotStop_vec   = self.LyotStop_vec_t[k]
-                                                
+            
+            t0 = time.time()                                    
             self.A[:self.npp, 2*k*self.nlam*self.ndz:(2*k+1)*self.nlam*self.ndz] = \
-            self.compute_response_matrices(self.corono_t[k]) 
+            self.compute_response_matrices(self.corono_t[k])
+            t1 = time.time()
+#            print('response matrices: {0}'.format(self.A[:self.npp, 2*k*self.nlam*self.ndz:(2*k+1)*self.nlam*self.ndz].shape))
+            print('compute response matrices: {0:.5f}s'.format(t1-t0))
             
             self.A[:self.npp, (2*k+1)*self.nlam*self.ndz:(2*k+2)*self.nlam*self.ndz] = \
             -self.A[:self.npp, 2*k*self.nlam*self.ndz:(2*k+1)*self.nlam*self.ndz] 
@@ -795,7 +799,7 @@ class MaxTau(ProblemMatrix):
         self.c = np.concatenate((-self.Pupil_vec[self.idx_pup]/self.TR, 
                                  np.zeros(self.nvv)), axis=0)
         
-        print(self.A.shape)
+#        print(self.A.shape)
         
         # Return the A, b, and c matrices
         return self.A, self.b, self.c
@@ -1036,8 +1040,8 @@ class MaxTau(ProblemMatrix):
             self.m.update()
 
             # Solve model
-            print('save model')
-            self.m.write('/Users/mndiaye/Desktop/model.rlp')
+#            print('save model')
+#            self.m.write('/Users/mndiaye/Desktop/model.rlp')
             #MemUse()
 
         else:
