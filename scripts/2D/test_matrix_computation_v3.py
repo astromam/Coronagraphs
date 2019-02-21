@@ -68,18 +68,19 @@ npp     = len(idx_pup)
 #%%
 Mask2d = utils.uniform_disk(nFPM, nFPM/2., CtrBtwnPix=CtrBtwnPix)
 Mask1d = Mask2d.ravel()
-M = Mask1d*1
 
 msk     = (Mask1d > 0.)
 ccc     = np.arange(nFPM**2)
 idx_msk = list(ccc[msk])
 nmm     = len(idx_msk)
 
+M       = Mask1d[idx_msk]
+
 #%%
 #LyotStop2d = utils.uniform_disk(nPup, nPup/4., CtrBtwnPix=CtrBtwnPix)
 LyotStop2d = fits.getdata(fpath_lys)
 LyotStop1d = LyotStop2d.ravel()
-L = LyotStop1d[idx_pup]*1
+L          = LyotStop1d[idx_pup]
 
 #%%
 """
@@ -172,7 +173,7 @@ def Q_corono(lam):
         MFBC = FAB.conjugate().T    
     else:
         MFBC = FAB.T
-    MFBC *= M[idx_msk,None]
+    MFBC *= M[:,None]
     
     LFCD = Q_direct(lam)
     
