@@ -29,8 +29,8 @@ Parameters
 """
 pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
 
-nPup  = 20
-nFPM  = 20
+nPup  = 50
+nFPM  = 50
 Fmax2d = 22.5
 nImg2d = 45
 
@@ -45,8 +45,7 @@ lam0 = 1
 nlam = 5
 
 CtrBtwnPix = True
-
-ImPart = False
+ImPart     = False
 
 #%%
 fdir = Path('../../data/2D/pupils/').resolve()

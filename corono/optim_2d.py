@@ -329,6 +329,7 @@ class ProblemMatrix(object):
                 corono_field_re_t = np.reshape(
                         corono_field_re_t_tmp[:,:, self.idx_dz], 
                         (self.npp, self.corono.nlam*self.ndz))
+                
                 corono_field_re_t_tmp = None
                 del corono_field_re_t_tmp
             
@@ -355,6 +356,7 @@ class ProblemMatrix(object):
                 corono_field_re_t = np.reshape(
                         corono_field_re_t_tmp[:,:, self.idx_dz], 
                         (self.npp, self.corono.nlam*self.ndz))
+                
                 corono_field_re_t_tmp = None
                 del corono_field_re_t_tmp
 
@@ -779,7 +781,7 @@ class MaxTau(ProblemMatrix):
             self.A[:self.npp, 2*k*nI1*self.nlam*self.ndz:(2*k+1)*nI1*self.nlam*self.ndz] = \
             self.compute_response_matrices(self.corono_t[k])
             t1 = time.time()
-#            print('response matrices: {0}'.format(self.A[:self.npp, 2*k*self.nlam*self.ndz:(2*k+1)*self.nlam*self.ndz].shape))
+            print('response matrices: {0}'.format(self.A[:self.npp, 2*k*self.nlam*self.ndz:(2*k+1)*self.nlam*self.ndz].shape))
             print('compute response matrices: {0:.5f}s'.format(t1-t0))
             
             self.A[:self.npp, (2*k+1)*nI1*self.nlam*self.ndz:(2*k+2)*nI1*self.nlam*self.ndz] = \

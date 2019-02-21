@@ -61,8 +61,8 @@ def optim_code():
     # CtrBtwnPix2
     CtrBtwnPix  = True
     CtrBtwnPix2 = True
-    Pupil2dSym  = True # If Pupil2dSym is True, set ImPart to False
-    ImPart = False
+    Pupil2dSym  = False # If Pupil2dSym is True, set ImPart to False
+    ImPart      = False
         
     #nlam
     bw   = 0.1

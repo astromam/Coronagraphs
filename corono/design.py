@@ -183,6 +183,9 @@ class Coronagraph(object):
         self.xi2d     = (np.arange(self.nImg2d//2+1))* self.Fmax2d/self.nImg2d
         self.xi2d_ctr = (np.arange(self.nImg2d//2)+val)* self.Fmax2d/self.nImg2d
         
+        self.dtype0 = 'float64'
+        if self.ImPart is True:
+            self.dtype0 = 'complex128'
         
 #%%        
     def save_params(self, fname):
@@ -1709,11 +1712,9 @@ class APLC2d(Coronagraph):
         if self.Ampmap2d is not None:
             field_A   *= self.Ampmap2d
 
-        dtype0 = 'complex128'
-        if self.ImPart is False:
-            dtype0 = 'float64'
+
         field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
-                                  dtype=dtype0)
+                                  dtype=self.dtype0)
  
         field_L    = field_A*self.LyotStop2d
         for i in range(self.nlam):
@@ -1761,11 +1762,8 @@ class APLC2d(Coronagraph):
         if self.Ampmap2d is not None:
             field_A *= self.Ampmap2d
                     
-        dtype0 = 'complex128'
-        if self.ImPart is False:
-            dtype0 = 'float64'
         field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
-                                  dtype=dtype0)
+                                  dtype=self.dtype0)
 
 
         for i in range(self.nlam):
@@ -1824,11 +1822,8 @@ class APLC2d(Coronagraph):
         if self.Ampmap2d is not None:
             field_A   *= self.Ampmap2d
 
-        dtype0 = 'complex128'
-        if self.ImPart is False:
-            dtype0 = 'float64'
         field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
-                                  dtype=dtype0)
+                                  dtype=self.dtype0)
  
         field_L    = field_A*self.LyotStop2d
         for i in range(self.nlam):
@@ -1875,11 +1870,8 @@ class APLC2d(Coronagraph):
         if self.Ampmap2d is not None:
             field_A *= self.Ampmap2d
             
-        dtype0 = 'complex128'
-        if self.ImPart is False:
-            dtype0 = 'float64'
         field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
-                                  dtype=dtype0)
+                                  dtype=self.dtype0)
         
 
         for i in range(self.nlam):
@@ -1887,7 +1879,7 @@ class APLC2d(Coronagraph):
                 field = field_A
             else:
                 field = field_A[i]                
-            if self.ImPart == True:
+            if self.ImPart is True:
 
                 field_B       = self.mask2d*sft(field, self.nFPM, self.mB_t[i], 
                                                 CtrBtwnPix=self.CtrBtwnPix)
@@ -1977,13 +1969,14 @@ class APLC2d(Coronagraph):
             field_A *= self.Ampmap2d            
 
         field_C    = np.zeros((self.nlam,self.nPup,self.nPup), 
-                                  dtype='complex128')
+                                  dtype=self.dtype0)
+        
         for i in range(self.nlam):
             if self.OPDmap2d is None:
                 field = field_A
             else:
                 field = field_A[i]                
-            if self.ImPart == False:
+            if self.ImPart is True:
                 field_B       = self.mask2d*sft(field, self.nFPM, self.mB_t[i], 
                                                 CtrBtwnPix=self.CtrBtwnPix)
                 field_C[i]       = field - isft(field_B, self.nPup, self.mB_t[i], 
@@ -2059,7 +2052,7 @@ class SP2d(Coronagraph):
         """    
         field_A    = Apod2d*self.Pupil2d
         field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
-                              dtype='complex128')
+                              dtype=self.dtype0)
 
         if self.ImPart is True:
             for i in range(self.nlam):
@@ -2095,7 +2088,7 @@ class SP2d(Coronagraph):
         """        
         field_A    = Apod2d*self.Pupil2d
         field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
-                              dtype='complex128')
+                              dtype=self.dtype0)
 
         if self.ImPart is True:
             for i in range(self.nlam):
@@ -2193,7 +2186,7 @@ class DZPM2d(Coronagraph):
         """    
  
         field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
-                              dtype='complex128')
+                              dtype=self.dtype0)
         
         if self.ImPart is True:
             for i in range(self.nlam):
@@ -2235,7 +2228,7 @@ class DZPM2d(Coronagraph):
         """        
    
         field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
-                              dtype='complex128')
+                              dtype=self.dtype0)
         
         if self.ImPart is True: 
             for i in range(self.nlam):
