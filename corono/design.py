@@ -1710,7 +1710,7 @@ class APLC2d(Coronagraph):
             field_A   *= self.Ampmap2d
 
         dtype0 = 'complex128'
-        if self.Pupil2dSym == True:
+        if self.ImPart is False:
             dtype0 = 'float64'
         field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
                                   dtype=dtype0)
@@ -1720,7 +1720,7 @@ class APLC2d(Coronagraph):
             if self.OPDmap2d is not None:
                 field_L   = field_A[i]*self.LyotStop2d
                 
-            if self.Pupil2dSym == False:
+            if self.ImPart is True:
                 field_Dtmp[i] = sft(field_L, self.nImg2d, self.mD_t[i], 
                           CtrBtwnPix=self.CtrBtwnPix2)
             else:
@@ -1762,7 +1762,7 @@ class APLC2d(Coronagraph):
             field_A *= self.Ampmap2d
                     
         dtype0 = 'complex128'
-        if self.Pupil2dSym == True:
+        if self.ImPart is False:
             dtype0 = 'float64'
         field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
                                   dtype=dtype0)
@@ -1773,7 +1773,7 @@ class APLC2d(Coronagraph):
                 field = field_A
             else:
                 field = field_A[i]                
-            if self.Pupil2dSym == False:                
+            if self.ImPart is True:                
                 field_B       = self.mask2d*sft(field, self.nFPM, self.mB_t[i], 
                                                 CtrBtwnPix=self.CtrBtwnPix)
                 field_C       = field - isft(field_B, self.nPup, self.mB_t[i], 
@@ -1789,8 +1789,7 @@ class APLC2d(Coronagraph):
                                                CtrBtwnPix=self.CtrBtwnPix)
                 field_L       = field_C*self.LyotStop2d
                 field_Dtmp[i] = sft_even(field_L, self.nImg2d, self.mD_t[i], 
-                          CtrBtwnPix=self.CtrBtwnPix2)
-                                  
+                          CtrBtwnPix=self.CtrBtwnPix2)                         
         return field_Dtmp   
 
 #%% direct propagation (no focal plane mask)
@@ -1826,7 +1825,7 @@ class APLC2d(Coronagraph):
             field_A   *= self.Ampmap2d
 
         dtype0 = 'complex128'
-        if self.Pupil2dSym == True:
+        if self.ImPart is False:
             dtype0 = 'float64'
         field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
                                   dtype=dtype0)
@@ -1835,7 +1834,7 @@ class APLC2d(Coronagraph):
         for i in range(self.nlam):
             if OPDmap2d is not None:
                 field_L   = field_A[i]*self.LyotStop2d                
-            if self.Pupil2dSym == False:
+            if self.ImPart is True:
                 field_Dtmp[i] = sft(field_L, self.nImg2d, self.mD_t[i], 
                           CtrBtwnPix=self.CtrBtwnPix2)
             else:
@@ -1877,7 +1876,7 @@ class APLC2d(Coronagraph):
             field_A *= self.Ampmap2d
             
         dtype0 = 'complex128'
-        if self.Pupil2dSym == True:
+        if self.ImPart is False:
             dtype0 = 'float64'
         field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
                                   dtype=dtype0)
@@ -1888,7 +1887,7 @@ class APLC2d(Coronagraph):
                 field = field_A
             else:
                 field = field_A[i]                
-            if self.Pupil2dSym == False:
+            if self.ImPart == True:
 
                 field_B       = self.mask2d*sft(field, self.nFPM, self.mB_t[i], 
                                                 CtrBtwnPix=self.CtrBtwnPix)
@@ -1984,7 +1983,7 @@ class APLC2d(Coronagraph):
                 field = field_A
             else:
                 field = field_A[i]                
-            if self.Pupil2dSym == False:
+            if self.ImPart == False:
                 field_B       = self.mask2d*sft(field, self.nFPM, self.mB_t[i], 
                                                 CtrBtwnPix=self.CtrBtwnPix)
                 field_C[i]       = field - isft(field_B, self.nPup, self.mB_t[i], 
@@ -2062,7 +2061,7 @@ class SP2d(Coronagraph):
         field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
                               dtype='complex128')
 
-        if self.Pupil2dSym == False:
+        if self.ImPart is True:
             for i in range(self.nlam):
                 field_Dtmp[i] = sft(field_A, self.nImg2d, self.mD_t[i], 
                       CtrBtwnPix=self.CtrBtwnPix2)
@@ -2098,7 +2097,7 @@ class SP2d(Coronagraph):
         field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
                               dtype='complex128')
 
-        if self.Pupil2dSym == False:
+        if self.ImPart is True:
             for i in range(self.nlam):
                 field_Dtmp[i] = sft(field_A, self.nImg2d, self.mD_t[i], 
                       CtrBtwnPix=self.CtrBtwnPix2)
@@ -2196,7 +2195,7 @@ class DZPM2d(Coronagraph):
         field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
                               dtype='complex128')
         
-        if self.Pupil2dSym == False:
+        if self.ImPart is True:
             for i in range(self.nlam):
                 field_A    = Apod2d*self.Pupil2d*self.Apod2d_w[i]
                 field_L    = field_A*self.LyotStop2d
@@ -2238,7 +2237,7 @@ class DZPM2d(Coronagraph):
         field_Dtmp = np.zeros((self.nlam,self.nImg2d,self.nImg2d), 
                               dtype='complex128')
         
-        if self.Pupil2dSym == False: 
+        if self.ImPart is True: 
             for i in range(self.nlam):
                 field_A       = Apod2d*self.Pupil2d*self.Apod2d_w[i] 
                 field_B1      = self.mask2d*sft(field_A, self.nFPM, self.mB1_t[i], 

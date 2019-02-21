@@ -15,12 +15,9 @@ import os
 from pathlib import Path
 
 import corono as coro
-from corono import utils
 
 from astropy.io import fits
 
-import pylab as pl
-import scipy.special
 
 #%% parameters
 def optim_code():
@@ -64,7 +61,7 @@ def optim_code():
     # CtrBtwnPix2
     CtrBtwnPix  = True
     CtrBtwnPix2 = True
-    Pupil2dSym  = False
+    Pupil2dSym  = True # If Pupil2dSym is True, set ImPart to False
     ImPart = False
         
     #nlam

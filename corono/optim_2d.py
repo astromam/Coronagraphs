@@ -761,26 +761,31 @@ class MaxTau(ProblemMatrix):
             http://iopscience.iop.org/article/10.3847/0004-637X/818/2/163/meta
             
         """                    
+        # Compute intermediate variables for electric field constraints 
+        nI1 = 1 
+        if self.ImPart is True:
+            nI1 = 2
+
         # Compute constant term that includes contrast and normalization
         cst = (10.**(-self.cDarkHole/2.)/np.sqrt(2.))*self.corono.Fmax2d/(self.corono.nImg2d*self.corono.nPup)
 
-        self.A = np.zeros((self.npp+self.nvv, self.ncorono*2*self.nlam*self.ndz))
+        self.A = np.zeros((self.npp+self.nvv, self.ncorono*2*nI1*self.nlam*self.ndz))
 
         # Compute contrast constraints on the coronagraphic electric field
         for k in range(self.ncorono):
             LyotStop_vec   = self.LyotStop_vec_t[k]
             
             t0 = time.time()                                    
-            self.A[:self.npp, 2*k*self.nlam*self.ndz:(2*k+1)*self.nlam*self.ndz] = \
+            self.A[:self.npp, 2*k*nI1*self.nlam*self.ndz:(2*k+1)*nI1*self.nlam*self.ndz] = \
             self.compute_response_matrices(self.corono_t[k])
             t1 = time.time()
 #            print('response matrices: {0}'.format(self.A[:self.npp, 2*k*self.nlam*self.ndz:(2*k+1)*self.nlam*self.ndz].shape))
             print('compute response matrices: {0:.5f}s'.format(t1-t0))
             
-            self.A[:self.npp, (2*k+1)*self.nlam*self.ndz:(2*k+2)*self.nlam*self.ndz] = \
-            -self.A[:self.npp, 2*k*self.nlam*self.ndz:(2*k+1)*self.nlam*self.ndz] 
+            self.A[:self.npp, (2*k+1)*nI1*self.nlam*self.ndz:(2*k+2)*nI1*self.nlam*self.ndz] = \
+            -self.A[:self.npp, 2*k*nI1*self.nlam*self.ndz:(2*k+1)*nI1*self.nlam*self.ndz] 
  
-            self.A[:self.npp, 2*k*self.nlam*self.ndz:2*(k+1)*self.nlam*self.ndz] -= \
+            self.A[:self.npp, 2*k*nI1*self.nlam*self.ndz:2*(k+1)*nI1*self.nlam*self.ndz] -= \
             cst*self.Pupil_vec[self.idx_pup, None]*LyotStop_vec[self.idx_pup, None]
                            
         # Yield the A and b matrices for the optimization problem                               
