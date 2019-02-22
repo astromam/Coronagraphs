@@ -150,8 +150,8 @@ def sft(A2, NB, m, inv=False, CtrBtwnPix=False):
     X[0,:] = (1./NA)*(np.arange(NA)-NA/2.+val)
     U[0,:] =  (m/NB)*(np.arange(NB)-NB/2.+val)
        
-#     A1 = np.exp(sign * 2.j*np.pi* U.T.dot(X))
-#     A3 = np.exp(sign * 2.j*np.pi* X.T.dot(U))
+#    A1 = np.exp(sign * 2.j*np.pi* U.T.dot(X))
+#    A3 = np.exp(sign * 2.j*np.pi* X.T.dot(U))
     A1 = sign*1j*np.sin(2.*np.pi* U.T.dot(X))
     A1 += np.cos(2.*np.pi* U.T.dot(X))
     
