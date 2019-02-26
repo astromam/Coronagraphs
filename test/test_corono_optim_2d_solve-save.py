@@ -18,10 +18,10 @@ from astropy.io import fits
 t0_total = time.time()
 
 
-working_path = '/Users/jnoss/dev/makidon-labs/486-test/'
+working_path = '/Users/jnoss/dev/makidon-labs/48-test/'
 
 dumpFName = '/tmp/jnoss/model'
-pickle_jar = dumpFName # = None to not write out file
+pickle_jar = None#dumpFName # = None to not write out file
 use_pickled = None#dumpFName
 
 """
@@ -58,7 +58,7 @@ CtrBtwnPix2 = True
 
 # Telescope aperture type and size and sampling
 pup  = 'HiCAT' # 'vlt' or 'sbr' or 'lvr'
-nPup = 486
+nPup = 48
 Fmax2d = 32.5 
 nImg2d = 65
 
@@ -91,7 +91,7 @@ lsid = int(LS_ID*10)
 lsod = int(LS_OD*10)
 
 #lyot stop robustness
-LSRobustness = True
+LSRobustness = False
 # maximum pixel shift along a given axis for Lyot stop; total robostness is x2 pix_max
 pix_max   = 1
 
