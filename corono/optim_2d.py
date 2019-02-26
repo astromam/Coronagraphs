@@ -676,7 +676,7 @@ class MaxTau(ProblemMatrix):
         del self.Aconst
         del self.Apod2dTmp
         gc.collect()
-        self.add_identity_constrainst()
+        #self.add_identity_constrainst()
 
         # Add apodizer minimal islands constraints    
         if self.MinIsland is True:
