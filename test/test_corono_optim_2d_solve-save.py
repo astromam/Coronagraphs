@@ -243,9 +243,9 @@ Generation of full apodizer for quarter pupil optimization
 Apod1_2d = np.reshape(Apod1, (corono_t[0].nPup, corono_t[0].nPup))
 
 if Pupil2dSym == True:
-        Apod1_2dtmp =  Apod1_2d[corono0.nPup//2:, corono0.nPup//2:]
-        Apod1_2d[:corono0.nPup//2, corono0.nPup//2:] = np.flip(Apod1_2dtmp, axis=0)
-        Apod1_2d[:, :corono0.nPup//2]          = np.flip(Apod1_2d[:, corono0.nPup//2:], axis=1)
+        Apod1_2dtmp =  Apod1_2d[corono_t[0].nPup//2:, corono_t[0].nPup//2:]
+        Apod1_2d[:corono_t[0].nPup//2, corono_t[0].nPup//2:] = np.flip(Apod1_2dtmp, axis=0)
+        Apod1_2d[:, :corono_t[0].nPup//2]          = np.flip(Apod1_2d[:, corono_t[0].nPup//2:], axis=1)
         
 #%%
 """
