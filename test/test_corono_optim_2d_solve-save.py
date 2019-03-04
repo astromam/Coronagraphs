@@ -99,7 +99,7 @@ if LSRobustness == False:
 	pix_max = 0
 
 #symmetry keyword; if True quarter plane symmetry is used, if false full plane
-Pupil2dSym  = True
+Pupil2dSym  = False
 
 # Computes matrices to add constraints that minimizes the islands in the apodizer transmission.
 MinIsland   = False

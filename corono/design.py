@@ -1657,24 +1657,14 @@ class APLC2d(Coronagraph):
         else:
             field = field_A[i]
 
-        if self.Pupil2dSym == False:
-            field_B       = self.mask2d*self.ft(field, self.nFPM, self.mB_t[i],
-                                            CtrBtwnPix=self.CtrBtwnPix)
-            field_C  = field - self.ift(field_B, self.nPup, self.mB_t[i],
-                                    CtrBtwnPix=self.CtrBtwnPix)
-            del field_B
-            field_L       = field_C*self.LyotStop2d
-            field_Dtmp = self.ft(field_L, self.nImg2d, self.mD_t[i],
-                                  CtrBtwnPix=self.CtrBtwnPix2)
-        else:
-            field_B       = self.mask2d*self.ft_even(field, self.nFPM, self.mB_t[i],
-                                                 CtrBtwnPix=self.CtrBtwnPix)
-            field_C       = field - self.ift_even(field_B, self.nPup, self.mB_t[i],
-                                              CtrBtwnPix=self.CtrBtwnPix)
-            del field_B
-            field_L       = field_C*self.LyotStop2d
-            field_Dtmp = self.ft_even(field_L, self.nImg2d, self.mD_t[i],
-                                       CtrBtwnPix=self.CtrBtwnPix2)
+        ft  = self.ft_even if self.Pupil2dSym else self.ft
+        ift = self.ift_even if self.Pupil2dSym else self.ift
+
+        field_B       = self.mask2d*ft(field, self.nFPM, self.mB_t[i], CtrBtwnPix=self.CtrBtwnPix)
+        field_C       = field - ift(field_B, self.nPup, self.mB_t[i], CtrBtwnPix=self.CtrBtwnPix)
+        del field_B
+        field_L       = field_C*self.LyotStop2d
+        field_Dtmp    = ft(field_L, self.nImg2d, self.mD_t[i], CtrBtwnPix=self.CtrBtwnPix2)
 
         return field_Dtmp
 
