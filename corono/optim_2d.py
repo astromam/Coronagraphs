@@ -853,14 +853,15 @@ class MaxTau(ProblemMatrix):
             lhs = gb.LinExpr(terms, ApodVars)
             self.m.addLConstr(lhs=lhs, sense=gb.GRB.LESS_EQUAL, rhs=0)
 
-            imag = vals.imag
-            terms =  Aconst + imag
-            lhs = gb.LinExpr(terms, ApodVars)
-            self.m.addLConstr(lhs=lhs, sense=gb.GRB.LESS_EQUAL, rhs=0)
-
-            terms =  Aconst - imag
-            lhs = gb.LinExpr(terms, ApodVars)
-            self.m.addLConstr(lhs=lhs, sense=gb.GRB.LESS_EQUAL, rhs=0)
+            if not self.Pupil2dSym:
+                imag = vals.imag
+                terms =  Aconst + imag
+                lhs = gb.LinExpr(terms, ApodVars)
+                self.m.addLConstr(lhs=lhs, sense=gb.GRB.LESS_EQUAL, rhs=0)
+    
+                terms =  Aconst - imag
+                lhs = gb.LinExpr(terms, ApodVars)
+                self.m.addLConstr(lhs=lhs, sense=gb.GRB.LESS_EQUAL, rhs=0)
 
         self.m.update()
         print('time taken to add constrs to gurobipy.Model {}s'.format(time.time()-t1))

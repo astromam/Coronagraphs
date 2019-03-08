@@ -99,7 +99,7 @@ if LSRobustness == False:
 	pix_max = 0
 
 #symmetry keyword; if True quarter plane symmetry is used, if false full plane
-Pupil2dSym  = False
+Pupil2dSym  = True
 
 # Computes matrices to add constraints that minimizes the islands in the apodizer transmission.
 MinIsland   = False
@@ -127,7 +127,7 @@ if pup == 'lvr':
     fname_pup = 'ATLAST_Aperture_nPup={0}.fits'.format(nPup)
     fname_lys = 'ATLAST_LyotStop_nPup={0}.fits'.format(nPup)
 elif pup == 'HiCAT':
-	fname_pup = 'apertures/HiCAT-Aper_F-N{0:04d}_Hex3-Ctr0972-Obs0195-SpX0017-Gap0004'.format(nPup)
+	fname_pup = 'apertures/SYM-HiCAT-Aper_F-N{0:04d}_Hex3-Ctr0972-Obs0195-SpX0017-Gap0004'.format(nPup)
 	fname_lys = 'lyot_stops/HiCAT-Lyot_F-N{0:04d}_LS-Ann-bw-ID{1:04d}-OD{2:04d}-SpX0036'.format(nPup,lsid,lsod)
 else:
     fname_pup = 'pupil={0}_nPup={1}.fits'.format(pup, nPup)
