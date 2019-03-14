@@ -120,7 +120,7 @@ if __name__ == '__main__':
     pixel  = 12.25 # IRDIS pixel sampling [mas/pix]
     nPup   = 384   # pupil
     nFPM   = 200   # focal plane mask
-    nImg2d = 200   # final image plane 
+    nImg2d = 350   # final image plane 
 
     # compute spatial frequencies in the final image plane
     loD    = wv/dAper*180/np.pi*3600*1000/pixel
@@ -137,8 +137,8 @@ if __name__ == '__main__':
     kw_aftercorr = bool(eval(sys.argv[1]))
     kw_saxo      = True
     saxofudge    = 1 #60/120              # saxo amplitude errors fudge factor
-    saxomap_i    = 0               # saxo first screen
-    saxomap_f    = int(2*1380)    # saxo last screen
+    saxomap_i    = 0              # saxo first screen
+    saxomap_f    = int(1*1380)    # saxo last screen
 
     # multi-processing
     nproc = multiprocessing.cpu_count()//2 - 1
@@ -191,7 +191,7 @@ if __name__ == '__main__':
             beta_wfs = 1/0.6
 
     #%%
-    fdir = Path('~/data/ZELDA/CoroSimulations/').expanduser()
+    fdir = Path('~/Work/GitHub/Coronagraphs/').expanduser()
     fdir_pupils  = fdir / 'data' / '2D' / 'pupils' / 'SPHERE' 
     fdir_zelda   = fdir / 'data' / '2D' / 'ZELDA' / str_date / str_obs  
     fdir_saxo    = fdir / 'data' / '2D' / 'ZELDA' / '2018-04-03'
@@ -224,7 +224,8 @@ if __name__ == '__main__':
                 fname_ZELDAmapnm3d = '2018-04-03_ncpa_loop_700modes_ncpa_loop_opd.fits'
 
         if kw_saxo is True and kw_2nddate is True:
-            fname_SAXOmapnm3d = '2018-04-04T03_06_15-saxo_residual_turbulence.fits'
+            fname_SAXOmapnm3d = '2018-04-04T00:41:34-saxo_residual_turbulence_time=01.0sec_seeing=0.9as_tiptilt=1_gains=0_fitting=1_alias=1.fits'
+            
 
     #%% Filepaths for the file sources
     fpath_Apod2d          = fdir_pupils / fname_Apod2d
@@ -357,7 +358,7 @@ if __name__ == '__main__':
         #%%
         # definition of the coronagraph class
         if kw_aberr is True:
-            OPDmap2d0 = (beta_wfs*ZELDAmapnm3d[imap0]+Apod2d_OPDmapnm\
+            OPDmap2d0 = (beta_wfs*ZELDAmapnm3d[imap0]+Apod2d_OPDmapnm \
                         +defo_ampl*Defo_mapnm2d\
                         +tipp_ampl*Tipp_mapnm2d\
                         +tilt_ampl*Tilt_mapnm2d)*1e-9
@@ -439,3 +440,46 @@ if __name__ == '__main__':
         fits.writeto(fpath_direct_poly_prf_std_f, direct_poly_prf_std_f, overwrite=True)
         fits.writeto(fpath_corono_poly_prf_std_f, corono_poly_prf_std_f, overwrite=True)
 
+
+
+# import matplotlib.pyplot as plt
+# import matplotlib.colors as colors
+
+# data_psf = fits.getdata('/Users/avigan/data/ZELDA/2018-04-03_night/analysis/2018-04-03_night_aplc_test2_psf_zel_image.fits')
+# data_p_avg = fits.getdata('/Users/avigan/data/ZELDA/2018-04-03_night/analysis/2018-04-03_night_aplc_test2_coro_zel_profile_mean.fits')
+# data_p_avg = data_p_avg.mean(axis=0) / data_psf.max()
+
+# data_p_std = fits.getdata('/Users/avigan/data/ZELDA/2018-04-03_night/analysis/2018-04-03_night_aplc_test2_coro_zel_profile_std.fits')
+# data_p_std = data_p_std.mean(axis=0) / data_psf.max()
+
+# data_sep = np.arange(data_p_avg.size)*12.25
+
+# plt.figure(0, figsize=(21, 7))
+# plt.clf()
+
+# plt.subplot(131)
+# plt.imshow(direct_poly_img_f, norm=colors.LogNorm(), vmin=1e-6, vmax=1)
+
+# plt.subplot(132)
+# plt.imshow(corono_poly_img_f, norm=colors.LogNorm(), vmin=1e-6, vmax=1e-2)
+
+# plt.subplot(133)
+# sep = np.arange(corono_poly_prf_avg_f.size)*12.25
+# plt.plot(sep, direct_poly_prf_avg_f, label='simu psf', color='C0')
+# plt.plot(sep, corono_poly_prf_avg_f, label='simu coro avg', color='C1')
+# plt.plot(sep, corono_poly_prf_std_f, label='simu coro std', color='C2')
+# plt.plot(data_sep, data_p_avg, label='data coro avg', color='C1', linestyle='--')
+# plt.plot(data_sep, data_p_std, label='data coro std', color='C2', linestyle='--')
+# plt.xlabel('Separation [mas]')
+# plt.xlim(0, 2000)
+# plt.ylabel('Contrast')
+# plt.ylim(1e-6, 1)
+# plt.yscale('log')
+
+# plt.tight_layout()
+
+# plt.legend(loc='upper right')
+
+# plt.show()
+
+# plt.savefig(fdir_results / 'results.pdf')
