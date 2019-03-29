@@ -31,7 +31,7 @@ except ImportError:
 
 import scipy
 import scipy.optimize
-from .utils import update_params        
+from .utils import update_params, uniform_disk        
 from . import design, default
 
 def MemUse():
@@ -177,7 +177,67 @@ class ProblemMatrix(object):
 
         self.TR      = np.sum(self.Pupil_vec)
                 
-        self.Apod    = np.zeros((self.corono.nPup**2))        
+        self.Apod    = np.zeros((self.corono.nPup**2))
+
+#%%
+        Mask2d = uniform_disk(self.corono.nFPM, self.corono.nFPM/2., CtrBtwnPix=self.CtrBtwnPix)
+
+        if self.corono.Pupil2dSym == False:
+            self.Mask1d = np.reshape(Mask2d, (self.corono.nFPM**2))
+        else:
+            Mask2dquarter = np.zeros_like(Mask2d)
+            Mask2dquarter[self.corono.nFPM//2:, self.corono.nFPM//2:] = 1.
+            self.Mask1d = np.reshape(Mask2d*Mask2dquarter, (self.corono.nFPM**2))
+        
+        self.msk     = (self.Mask1d > 0.)
+        self.ccc     = np.arange(self.corono.nFPM**2)
+        self.idx_msk = list(self.ccc[self.msk])
+        self.nmm     = len(self.idx_msk)
+
+        self.MM       = self.Mask1d[self.idx_msk]
+
+        if self.CtrBtwnPix is True:
+            val = 1/2 
+        x2d,y2d = np.meshgrid(np.arange(self.corono.nPup)-self.corono.nPup//2+val, 
+                              np.arange(self.corono.nPup)-self.corono.nPup//2+val)
+        x2d /= self.corono.nPup
+        y2d /= self.corono.nPup 
+        
+        if self.CtrBtwnPix is True:
+            val = 1/2   
+        p2d,q2d  = np.meshgrid(np.arange(self.corono.nFPM)-self.corono.nFPM//2+val, 
+                               np.arange(self.corono.nFPM)-self.corono.nFPM//2+val)
+        p2d *= 2*self.rMask/self.corono.nFPM
+        q2d *= 2*self.rMask/self.corono.nFPM 
+        
+        if self.CtrBtwnPix is True:
+            val = 1/2   
+        u2d,v2d  = np.meshgrid(np.arange(self.corono.nImg2d)-self.corono.nImg2d//2+val, 
+                               np.arange(self.corono.nImg2d)-self.corono.nImg2d//2+val)
+        u2d *= self.corono.Fmax2d/self.corono.nImg2d
+        v2d *= self.corono.Fmax2d/self.corono.nImg2d 
+
+        x1d_tmp = x2d.ravel()
+        y1d_tmp = y2d.ravel()
+        
+        p1d_tmp = p2d.ravel()
+        q1d_tmp = q2d.ravel()
+        
+        u1d_tmp = u2d.ravel()
+        v1d_tmp = v2d.ravel()
+        
+        self.x1d = x1d_tmp[self.idx_pup]
+        self.y1d = y1d_tmp[self.idx_pup]
+        
+        self.p1d = p1d_tmp[self.idx_msk]
+        self.q1d = q1d_tmp[self.idx_msk]
+        
+        self.u1d = u1d_tmp[self.idx_dz]
+        self.v1d = v1d_tmp[self.idx_dz]
+ 
+        LyotStop1d = self.corono.LyotStop2d.ravel()
+        self.LL = LyotStop1d[self.idx_pup]
+       
 
 #%%
     def __contains__(self, item):
@@ -362,6 +422,76 @@ class ProblemMatrix(object):
 
             return corono_field_re_t
 
+    #%%
+    
+    def Q_direct(self,lam):   
+        if self.ImPart is True:
+            LFCD = np.exp(-2j*np.pi*(self.corono.lam0/lam)*(self.x1d[:, None]*self.u1d[None, :] + self.y1d[:, None]*self.v1d[None, :]))
+        else:
+            LFCD = np.cos(-2*np.pi*(self.corono.lam0/lam)*(self.x1d[:, None]*self.u1d[None, :] + self.y1d[:, None]*self.v1d[None, :]))
+        
+        LFCD *= (self.corono.lam0/lam)*self.corono.Fmax2d/(self.corono.nPup*self.corono.nImg2d)
+        LFCD *= self.LL[:,None]
+        return LFCD
+    
+    #%%
+    #@profile
+    def Q_corono(self, lam):
+        if self.ImPart is True:
+            FAB = np.exp(-2j*np.pi*(self.corono.lam0/lam)*(self.x1d[:, None]*self.p1d[None, :] + self.y1d[:, None]*self.q1d[None, :]))
+        else:
+            FAB = np.cos(-2*np.pi*(self.corono.lam0/lam)*(self.x1d[:, None]*self.p1d[None, :] + self.y1d[:, None]*self.q1d[None, :]))
+        
+        FAB *= (self.corono.lam0/lam)*2*self.corono.rMask/(self.corono.nPup*self.corono.nFPM)
+        
+        if self.ImPart is True:
+            MFBC = FAB.conjugate().T    
+        else:
+            MFBC = FAB.T
+        MFBC *= self.MM[:,None]
+        
+        LFCD = self.Q_direct(lam)
+        
+        Q  = - (FAB.dot(MFBC)).dot(LFCD)
+        Q += LFCD
+        
+        return Q
+
+
+#%%
+    def compute_response_matrices_new(self, corono=None):
+        r"""
+        Computes the response matrix for the coronagraph with and without 
+        the focal plane mask.
+        
+        Notes
+        -----        
+        corono_field_re_t_tmp, corono_field_im_t_tmp : array_like, array_like
+            Real and imaginary parts of the coronagraphic response matrix
+            for all the points in the pupil :math:`P_0` and at all the wavelengths
+
+        corono_field_re_t, corono_field_im_t : array_like, array_like
+            Real and imaginary parts of the coronagraphic response matrix
+            for all the points in the pupil :math:`P_0` and at all the wavelengths.
+            These arrays are sliced from corono_field_re_t_tmp, corono_field_im_t_tmp 
+            for the points inside the region of interest in the final image plane.
+
+        corono_field_t : array_like
+            Concatenation of the real and imaginary parts of the coronagraphic 
+            response matrix for all the points in the pupil :math:`P_0` and 
+            at all the wavelengths
+                
+        """        
+        if corono is None:
+            pass
+        else:
+            corono_field_re_t = np.empty((self.npp, self.nlam, self.ndz))
+            for i, lam in enumerate(self.corono.lam_t):
+                corono_field_re_t[:, i] = self.Q_corono(lam)
+                
+            return np.reshape(corono_field_re_t, (self.npp, self.nlam*self.ndz))
+
+
 
 #%%        
 #    @profile
@@ -412,6 +542,11 @@ class ProblemMatrix(object):
                 self.m.Params.Method       = self.slvMethod
                 self.m.Params.LogToConsole = self.slvLogToConsole
                 self.m.Params.Crossover    = self.slvCrossover
+                
+                
+                
+                print('preparing to save optimization problem')
+                print('ok')
                 
                 self.m.optimize()
     
@@ -780,6 +915,8 @@ class MaxTau(ProblemMatrix):
             t0 = time.time()                                    
             self.A[:self.npp, 2*k*nI1*self.nlam*self.ndz:(2*k+1)*nI1*self.nlam*self.ndz] = \
             self.compute_response_matrices(self.corono_t[k])
+#            self.A[:self.npp, 2*k*nI1*self.nlam*self.ndz:(2*k+1)*nI1*self.nlam*self.ndz] = \
+#            self.compute_response_matrices_new(self.corono_t[k])
             t1 = time.time()
             print('response matrices: {0}'.format(self.A[:self.npp, 2*k*self.nlam*self.ndz:(2*k+1)*self.nlam*self.ndz].shape))
             print('compute response matrices: {0:.5f}s'.format(t1-t0))

@@ -31,17 +31,17 @@ if True:
     corono_name  = 'APLC' # 'SP' or 'APLC'
     pupil_name   = 'vlt' # 'vlt' or 'sbr' or 'lvr'
     problem_name = 'MaxContrastL1' # 'MaxContrastL1' #'MaxTau' # , 'MaxContrastLinf' # #  
-    solver       = 'gurobipy' # 'stdgrb' #  'gurobipy', 'scipy.linprog'
+    solver       = 'stdgrb' # 'stdgrb' #  'gurobipy', 'scipy.linprog'
     
     MinIsland   = False
     Binarity    = False
     FirstDerGlobalLim = 1.
     BinarityReg       = 0.1
-    LSRobustness = True
+    LSRobustness = False
     
     #nPup = corono0.params['nPup']
-    nPup = 200
-    nFPM = 20
+    nPup = 384
+    nFPM = 50
     Fmax2d = 22.5
     nImg2d = 45
     
@@ -50,7 +50,7 @@ if True:
     
     # dark zone bounds (inner and outer edges) in lam0/D unit
     rho0 =  2.0
-    rho1 = 10.0
+    rho1 = 20.0
     
     # contrast in the dark region
     cDarkHole = 6.0
@@ -384,7 +384,7 @@ Robustness to spectral bandwidth
 
 #%%
    
-nlam_ter = 51
+nlam_ter = 101
 bw_ter   = 1.0
    
 fname_gen  = problem1.get_filename(nlam=nlambis)
@@ -434,7 +434,7 @@ for i in range(nlam_ter):
 colors_shifts = pl.cm.rainbow(np.linspace(0,1,2))
 ls_shifts = ["-", "--"]
 
-fname_bw_plot = 'corono_poly_bw_sensitivity_plot.pdf'
+fname_bw_plot = 'corono_poly_bw_sensitivity_plot_nPup={0}_disp.pdf'.format(nPup)
 fpath_bw_plot = fdir_pdf / fname_bw_plot
 
 plot_lines = []
@@ -469,4 +469,100 @@ pl.legend([l1,l2], [r'{0:.1f} $\lambda_0/D$'.format(sepbis), r'{0:.1f} $\lambda_
 pl.tight_layout()
 if do_plot is True:
     pl.savefig(str(fpath_bw_plot), transparent=True)
+
+#%%
+"""
+Contour plot for spectral bandwidth robustness
+""" 
+    
+direct_mono_prf_avg_t3 = np.zeros((nlam_ter, nImg2dbis//2))
+corono_mono_prf_avg_t3 = np.zeros((nlam_ter, nImg2dbis//2))
+
+direct_mono_prf_std_t3 = np.zeros((nlam_ter, nImg2dbis//2))
+corono_mono_prf_std_t3 = np.zeros((nlam_ter, nImg2dbis//2))
+
+#%%
+for i in range(corono3.nlam):
+    direct_mono_prf_avg_t3[i], rad_direct = imutils.profile(direct_mono_img_t3[i], type='mean')
+    corono_mono_prf_avg_t3[i], rad_corono = imutils.profile(corono_mono_img_t3[i], type='mean')
+    direct_mono_prf_std_t3[i], rad_direct = imutils.profile(direct_mono_img_t3[i], type='std')
+    corono_mono_prf_std_t3[i], rad_corono = imutils.profile(corono_mono_img_t3[i], type='std')    
+
+#%%
+# normalization term    
+direct_mono_img_f3_peak = direct_mono_img_t3[nlam_ter//2].max()
+
+# bounds for the separations
+lam0D_min = rad_corono.min()*Fmax2dbis/nImg2dbis
+lam0D_max = rad_corono.max()*Fmax2dbis/nImg2dbis
+
+# bounds for the wavelengths
+lam_min = corono3.lam_t.min()
+lam_max = corono3.lam_t.max()
+
+# bounds for the optimization wavelength 
+lam_opt_min = corono0.lam_t.min()
+lam_opt_max = corono0.lam_t.max()
+
+Dtel = 8
+lam0D2mas = (wv/Dtel)*(180.*3600*1000/np.pi)
+
+lam02um = wv*1e6 
+
+#%%
+fname_image_plane_f_disp = 'corono_poly_bw_sensitivity_contour_nPup={0}_disp.pdf'.format(nPup)
+fpath_image_plane_f_disp = fdir_pdf / fname_image_plane_f_disp
+
+
+f2 = pl.figure(32, figsize=(8,4.5))
+pl.clf()
+ax0 = f2.add_subplot(111)
+im = ax0.imshow(np.log10(corono_mono_prf_std_t3/direct_mono_img_f3_peak), 
+                cmap = "inferno", 
+                vmin=-7.5, vmax=-3.5,
+                extent = [lam0D_min, lam0D_max, lam_min, lam_max],
+                origin = 'lower',
+                )
+ax0.set_xlabel(r'Angular separation in $\lambda_0$/D')
+ax0.set_ylabel(r'Wavelength in $\lambda_0$ unit')
+ax0.set_aspect('auto')
+#ax0.set_title(r'New APLC design')
+ax0.text(15, 1.45, "New APLC design", fontsize=14, horizontalalignment="center", color = "white")
+#exec('ax{0}.tick_params(axis="x", which="both", bottom="off", top="off", labelbottom="off")'.format(1,))
+#exec('ax{0}.tick_params(axis="y", which="both", left="off", right="off", labelleft="off")'.format(1,))
+
+ax0.axvline(x=rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
+ax0.axvline(x=rho0, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
+ax0.axvline(x=rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
+
+ax0.axhline(y=1.0, xmin=lam0D_min, xmax =lam0D_max, 
+            linewidth=1, color='w', linestyle=':')
+ax0.axhline(y=lam_opt_min, xmin=lam0D_min, xmax =lam0D_max, 
+            linewidth=1, color='g', linestyle=':')
+ax0.axhline(y=lam_opt_max, xmin=lam0D_min, xmax =lam0D_max, 
+            linewidth=1, color='g', linestyle=':')
+
+ax2 = ax0.twinx()
+ax2.set_ylim(lam_min*lam02um, lam_max*lam02um)
+ax2.set_ylabel(r'Wavelength in $\mu$m ($\lambda_0={0}\mu$m)'.format(wv*1e6), 
+               rotation=270, labelpad = 12)
+#
+ax3 = ax0.twiny()
+ax3.set_xlim(lam0D_min*lam0D2mas, lam0D_max*lam0D2mas)
+##ax3.set_yticks()
+ax3.set_xlabel(r'Angular separation in mas')
+
+
+f2.subplots_adjust(bottom=0.1, top=0.9, left=0.1, right=0.77,
+                    wspace=0.02, hspace=0.02)
+#
+#f2.subplots_adjust(right=0.8)
+cbar_ax = f2.add_axes([0.85, 0.15, 0.05, 0.7])
+cbar    = f2.colorbar(im, cax=cbar_ax)
+cbar.ax.set_ylabel('1$\sigma$ intensity in log scale', rotation=270, labelpad = 12)
+if do_plot is True:
+    pl.savefig(str(fpath_image_plane_f_disp), transparent=True)
+pl.tight_layout()
+pl.show()
+
 
