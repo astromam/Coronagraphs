@@ -45,7 +45,7 @@ lam0 = 1
 nlam = 1
 
 Pupil2dSym = True # If Pupil2dSym is True, set ImPart to False
-ImPart     = True
+ImPart     = False
 
 CtrBtwnPix = True
 
@@ -77,35 +77,31 @@ def build_from_quarter(array_quarter):
 
 NA    = nPup*1
 NAbis = nPup/2 
-#if Pupil2dSym is True:
-#   NA    = nPup//2
-#   NAbis = 0
+if Pupil2dSym is True:
+   NA    = nPup//2
+   NAbis = 0
 
 NB    = nFPM*1
 NBbis = nFPM/2
-#if Pupil2dSym is True:
-#    NB    = nFPM//2
-#    NBbis = 0
+if Pupil2dSym is True:
+    NB    = nFPM//2
+    NBbis = 0
 
 ND    = nImg2d*1
 NDbis = nImg2d/2
-#if Pupil2dSym is True:
-#    ND    = nImg2d//2
-#    NDbis = 0    
-
+if Pupil2dSym is True:
+    ND    = nImg2d//2
+    NDbis = 0    
 
 #%%
 # Pupil
-#Pupil2d = utils.uniform_disk(nPup, nPup/2., CtrBtwnPix=CtrBtwnPix)
 Pupil2d = fits.getdata(fpath_pup)
 
-#if Pupil2dSym is True:
-#    Pupil2dquarter = Pupil2d[nPup//2:, nPup//2:]
-#    Pupil1d = Pupil2dquarter.ravel()
-#else:
-#    Pupil1d = Pupil2d.ravel()
-
-Pupil1d = Pupil2d.ravel()    
+if Pupil2dSym is True:
+    Pupil2dquarter = Pupil2d[nPup//2:, nPup//2:]
+    Pupil1d = Pupil2dquarter.ravel()
+else:
+    Pupil1d = Pupil2d.ravel()
 
 pup     = (Pupil1d > 0.)
 bbb     = np.arange(NA**2)
@@ -115,12 +111,11 @@ npp     = len(idx_pup)
 #%%
 Mask2d = utils.uniform_disk(nFPM, nFPM/2., CtrBtwnPix=CtrBtwnPix)
 
-#if Pupil2dSym is True:
-#    Mask2dquarter = Mask2d[nFPM//2:, nFPM//2:]
-#    Mask1d = Mask2dquarter.ravel()    
-#else:    
-#    Mask1d = Mask2d.ravel()
-Mask1d = Mask2d.ravel()
+if Pupil2dSym is True:
+    Mask2dquarter = Mask2d[nFPM//2:, nFPM//2:]
+    Mask1d = Mask2dquarter.ravel()    
+else:    
+    Mask1d = Mask2d.ravel()
 
 msk     = (Mask1d > 0.)
 ccc     = np.arange(NB**2)
@@ -134,13 +129,12 @@ M       = Mask1d[idx_msk]
 #LyotStop2d = utils.uniform_disk(nPup, nPup/4., CtrBtwnPix=CtrBtwnPix)
 LyotStop2d = fits.getdata(fpath_lys)
 
-#if Pupil2dSym is True:
-#    LyotStop2dquarter = LyotStop2d[nPup//2:, nPup//2:]
-#    LyotStop1d = LyotStop2dquarter.ravel()
-#else:
-#    LyotStop1d = LyotStop2d.ravel()
+if Pupil2dSym is True:
+    LyotStop2dquarter = LyotStop2d[nPup//2:, nPup//2:]
+    LyotStop1d = LyotStop2dquarter.ravel()
+else:
+    LyotStop1d = LyotStop2d.ravel()
 
-LyotStop1d = LyotStop2d.ravel()
 L       = LyotStop1d[idx_pup]
 
 
@@ -180,13 +174,13 @@ ndz    = len(idx_dz)
 Annulus1d = np.zeros((ND**2))
 Annulus1d[dz] = 1.
 
-#if Pupil2dSym is True: 
-#    Annulus2dtmp = np.reshape(Annulus1d, (ND, ND))
-#    Annulus2d = build_from_quarter(Annulus2dtmp)
-#else:
-#    Annulus2d = np.reshape(Annulus1d, (ND, ND))
+if Pupil2dSym is True: 
+    Annulus2dtmp = np.reshape(Annulus1d, (ND, ND))
+    Annulus2d = build_from_quarter(Annulus2dtmp)
+else:
+    Annulus2d = np.reshape(Annulus1d, (ND, ND))
 
-Annulus2d = np.reshape(Annulus1d, (ND, ND))
+#Annulus2d = np.reshape(Annulus1d, (ND, ND))
 
 #%%
 x1d_tmp = x2d.ravel()
@@ -262,14 +256,14 @@ t11 = time.time()
 print('direct computation time: {0:.5f}s'.format(t11-t00))
 
 
-t00 = time.time()
-Q = np.empty((npp, nlam, ndz), dtype=dtype0)
-for i, lam in enumerate(lam_t):
-    Q[:, i] = Q_corono(lam)
-    
-print('Q: {0}'.format(Q.shape))
-t11 = time.time()
-print('corono computation time: {0:.5f}s'.format(t11-t00))
+#t00 = time.time()
+#Q = np.empty((npp, nlam, ndz), dtype=dtype0)
+#for i, lam in enumerate(lam_t):
+#    Q[:, i] = Q_corono(lam)
+#    
+#print('Q: {0}'.format(Q.shape))
+#t11 = time.time()
+#print('corono computation time: {0:.5f}s'.format(t11-t00))
 
 
 #%%
@@ -286,12 +280,10 @@ Field2d0 = np.reshape(Field1d0, (nlam, ND, ND))
 Image2d0tmp = np.abs(Field2d0)**2
 Image2d0tmp = np.sum(Image2d0tmp, axis=0)
 
-#if Pupil2dSym is True:
-#    Image2d0 = build_from_quarter(Image2d0tmp)
-#else:
-#    Image2d0 = Image2d0tmp
-
-Image2d0 = Image2d0tmp
+if Pupil2dSym is True:
+    Image2d0 = build_from_quarter(Image2d0tmp)
+else:
+    Image2d0 = Image2d0tmp
 
 t1 = time.time() 
 print('direct, new    : {0:.6f}s'.format(t1-t0))
@@ -314,51 +306,50 @@ print('direct, classic: {0:.6f}s'.format(t1-t0))
 #"""
 #Coronagraphic image - test
 #"""
-t0 = time.time()
-Field1d_tmp = np.tensordot(Pupil1d[idx_pup], Q, (0, 0))
-
-Field1d = np.zeros((nlam, ND**2), dtype=dtype0)
-    
-Field1d[:, idx_dz] = Field1d_tmp
-Field2d = np.reshape(Field1d, (nlam, ND, ND))
-Image2dtmp = np.abs(Field2d)**2
-Image2dtmp = np.sum(Image2dtmp, axis=0)
-
+#t0 = time.time()
+#Field1d_tmp = np.tensordot(Pupil1d[idx_pup], Q, (0, 0))
+#
+#Field1d = np.zeros((nlam, ND**2), dtype=dtype0)
+#    
+#Field1d[:, idx_dz] = Field1d_tmp
+#Field2d = np.reshape(Field1d, (nlam, ND, ND))
+#Image2dtmp = np.abs(Field2d)**2
+#Image2dtmp = np.sum(Image2dtmp, axis=0)
+#
 #if Pupil2dSym is True:
 #    Image2d = build_from_quarter(Image2dtmp)
 #else:
 #    Image2d = Image2dtmp
-
-Image2d = Image2dtmp
-t1 = time.time() 
-print('corono, new    : {0:.6f}s'.format(t1-t0))
-
-#%%
-t0 = time.time()
-
-Image2d_bis = np.zeros((nImg2d, nImg2d))
-for i, lam in enumerate(lam_t):
-    if ImPart is True: 
-        field_B       = Mask2d*utils.sft(Pupil2d, nFPM, (lam0/lam)*dMask, 
-                                        CtrBtwnPix=CtrBtwnPix)
-        field_C       = Pupil2d - utils.isft(field_B, nPup, (lam0/lam)*dMask, 
-                                       CtrBtwnPix=CtrBtwnPix)
-        field_L       = field_C*LyotStop2d
-        field_D       = utils.sft(field_L, nImg2d, (lam0/lam)*Fmax2d, 
-                  CtrBtwnPix=CtrBtwnPix)
-    else:
-        field_B       = Mask2d*utils.sft_even(Pupil2d, nFPM, (lam0/lam)*dMask, 
-                                        CtrBtwnPix=CtrBtwnPix)
-        field_C       = Pupil2d - utils.isft_even(field_B, nPup, (lam0/lam)*dMask, 
-                                       CtrBtwnPix=CtrBtwnPix)
-        field_L       = field_C*LyotStop2d
-        field_D       = utils.sft_even(field_L, nImg2d, (lam0/lam)*Fmax2d, 
-                  CtrBtwnPix=CtrBtwnPix)    
-
-    Image2d_bis += np.abs(field_D)**2*Annulus2d
-    
-t1 = time.time() 
-print('corono, classic: {0:.6f}s'.format(t1-t0))
+#
+#t1 = time.time() 
+#print('corono, new    : {0:.6f}s'.format(t1-t0))
+#
+##%%
+#t0 = time.time()
+#
+#Image2d_bis = np.zeros((nImg2d, nImg2d))
+#for i, lam in enumerate(lam_t):
+#    if ImPart is True: 
+#        field_B       = Mask2d*utils.sft(Pupil2d, nFPM, (lam0/lam)*dMask, 
+#                                        CtrBtwnPix=CtrBtwnPix)
+#        field_C       = Pupil2d - utils.isft(field_B, nPup, (lam0/lam)*dMask, 
+#                                       CtrBtwnPix=CtrBtwnPix)
+#        field_L       = field_C*LyotStop2d
+#        field_D       = utils.sft(field_L, nImg2d, (lam0/lam)*Fmax2d, 
+#                  CtrBtwnPix=CtrBtwnPix)
+#    else:
+#        field_B       = Mask2d*utils.sft_even(Pupil2d, nFPM, (lam0/lam)*dMask, 
+#                                        CtrBtwnPix=CtrBtwnPix)
+#        field_C       = Pupil2d - utils.isft_even(field_B, nPup, (lam0/lam)*dMask, 
+#                                       CtrBtwnPix=CtrBtwnPix)
+#        field_L       = field_C*LyotStop2d
+#        field_D       = utils.sft_even(field_L, nImg2d, (lam0/lam)*Fmax2d, 
+#                  CtrBtwnPix=CtrBtwnPix)    
+#
+#    Image2d_bis += np.abs(field_D)**2*Annulus2d
+#    
+#t1 = time.time() 
+#print('corono, classic: {0:.6f}s'.format(t1-t0))
 
 #%%
 """
@@ -390,25 +381,25 @@ pl.show()
 print('direct image max diff.: {0}'.format(np.max(abs(Image2d0 - Image2d0_bis))))
 
 #%%
-"""
-Plot display
-"""
-pl.figure(11)
-pl.imshow(Image2d)
-pl.title('Image corono 2d (new)')
-pl.show()
-
-#%%
-pl.figure(12)
-pl.imshow(Image2d_bis)
-pl.title('Image corono 2d (classic)')
-pl.show()
-
-#%%
-pl.figure(13)
-pl.imshow(abs(Image2d-Image2d_bis))
-pl.title('Image corono 2d diff')
-pl.show()
-
-
-print('corona image max diff.: {0}'.format(np.max(abs(Image2d - Image2d_bis))))
+#"""
+#Plot display
+#"""
+#pl.figure(11)
+#pl.imshow(Image2d)
+#pl.title('Image corono 2d (new)')
+#pl.show()
+#
+##%%
+#pl.figure(12)
+#pl.imshow(Image2d_bis)
+#pl.title('Image corono 2d (classic)')
+#pl.show()
+#
+##%%
+#pl.figure(13)
+#pl.imshow(abs(Image2d-Image2d_bis))
+#pl.title('Image corono 2d diff')
+#pl.show()
+#
+#
+#print('corona image max diff.: {0}'.format(np.max(abs(Image2d - Image2d_bis))))
