@@ -13,10 +13,8 @@ License: MIT license
 """
 ### Initialization
 """
-import sys
-sys.path.append('/home/avigan/GitHub/Coronagraphs/')
-sys.path.append('/Users/avigan/Work/GitHub/Coronagraphs/')
 
+import sys
 import numpy as np
 import os
 import time
@@ -96,7 +94,7 @@ if __name__ == '__main__':
     ### Parameters
     """
     # Coronagraph type
-    corono_name   = 'APLC' # 'SP' or 'APLC' or DZPM
+    corono_name   = 'APLC'  # 'SP' or 'APLC' or DZPM
     CtrBtwnPix  = True
     CtrBtwnPix2 = False
     Pupil2dSym  = False
@@ -110,17 +108,17 @@ if __name__ == '__main__':
     Fratio    = 40
 
     # Focal plane mask 
-    mas2rad   = np.pi/(180.*3600) # Conversion factor from mas to rads
-    rMask_m   = 287e-6/2.         # mask size in m
+    mas2rad   = np.pi/(180.*3600)    # Conversion factor from mas to rads
+    rMask_m   = 287e-6/2.            # mask size in m
     rMask     = rMask_m/(wv*Fratio)  # mask size in lam0/D
     rMask_mas = 1000.*rMask * (wv/dAper)/mas2rad
     print('Mask radius: {0:.2f} mas at {1:.3f}um'.format(rMask_mas, wv*1e6))
 
     # sampling
-    pixel  = 12.25 # IRDIS pixel sampling [mas/pix]
-    nPup   = 384   # pupil
-    nFPM   = 200   # focal plane mask
-    nImg2d = 350   # final image plane 
+    pixel  = 12.25  # IRDIS pixel sampling [mas/pix]
+    nPup   = 384    # pupil
+    nFPM   = 200    # focal plane mask
+    nImg2d = 350    # final image plane 
 
     # compute spatial frequencies in the final image plane
     loD    = wv/dAper*180/np.pi*3600*1000/pixel
@@ -136,9 +134,8 @@ if __name__ == '__main__':
     kw_skyobs    = True
     kw_aftercorr = bool(eval(sys.argv[1]))
     kw_saxo      = True
-    saxofudge    = 1 #60/120              # saxo amplitude errors fudge factor
-    saxomap_i    = 0              # saxo first screen
-    saxomap_f    = int(1*1380)    # saxo last screen
+    saxomap_i    = 0               # saxo first screen
+    saxomap_f    = int(30*1380)    # saxo last screen
 
     # multi-processing
     nproc = multiprocessing.cpu_count()//2 - 1
@@ -148,7 +145,7 @@ if __name__ == '__main__':
     nsaxomap  = nsaxomap - (nsaxomap % nproc)
 
     ndefo = 21
-    defo_ampl_arr = [np.float(sys.argv[2])]#-100 + 10.*np.arange(21)
+    defo_ampl_arr = [np.float(sys.argv[2])]  # -100 + 10.*np.arange(21)
     tipp_ampl = 0
     tilt_ampl = 0 
 
@@ -165,7 +162,7 @@ if __name__ == '__main__':
             str_obs   = 'internal'
         str_corr  = ''
         str_saxo  = ''
-        str_saxoset= ''
+        str_saxoset = ''
         nmap      = 1 
     else:
         str_aberr = 'with_aberr'    
@@ -267,7 +264,7 @@ if __name__ == '__main__':
         if kw_saxo is True and kw_2nddate is True:
             # SAXO pupils
             pupil_tmp = aperture.sphere_saxo_pupil()
-            pupil = np.round(imutils.scale(pupil_tmp, 0, new_dim=(nPup,nPup), method='interp'))
+            pupil = np.round(imutils.scale(pupil_tmp, 0, new_dim=(nPup, nPup), method='interp'))
 
             # read SAXO phase residuals
             SAXOmapnm3d_tmp = fits.getdata(fpath_SAXOmapnm3d)
@@ -275,14 +272,10 @@ if __name__ == '__main__':
             # select only phase screens that will be actually used
             SAXOmapnm3d_tmp = SAXOmapnm3d_tmp[saxomap_i:saxomap_f]
 
-            # apply SAXO performance fudge factor
-            if saxofudge != 1:
-                SAXOmapnm3d_tmp *= saxofudge
-            
             # rescale NCPA map
             SAXOmapnm3d = np.empty((nmap, nPup, nPup))
             for i in range(nmap):
-                SAXOmapnm3d[i] = imutils.scale(SAXOmapnm3d_tmp[i], 0, new_dim=(nPup,nPup), method='interp')
+                SAXOmapnm3d[i] = imutils.scale(SAXOmapnm3d_tmp[i], 0, new_dim=(nPup, nPup), method='interp')
                 print('{0:05}/{1:05}: SAXO map before scaling: {2:.2f} nm RMS, after: {3:.2f} nm RMS'.format(i+1, nmap, np.std(SAXOmapnm3d_tmp[i, pupil_tmp != 0]), np.std(np.asarray(SAXOmapnm3d)[i, pupil != 0])))
 
             del SAXOmapnm3d_tmp
@@ -314,42 +307,42 @@ if __name__ == '__main__':
     if corono_name != 'APLC':
         raise NameError('Check the name of the coronagraph!')
 
-    params = coro.to_dict(nPup=nPup, nImg2d=nImg2d, Fmax2d = Fmax2d, nFPM = nFPM,
-                     rMask = rMask,
-                     Pupil2dSym = Pupil2dSym, 
-                     Pupil2d = Pupil2d, LyotStop2d = LyotStop2d, 
-                     CtrBtwnPix=CtrBtwnPix,
-                     CtrBtwnPix2 = CtrBtwnPix2, 
-                     nlam=nlam, bw = bw, wv =wv,
-                     OPDmap2d = None, Ampmap2d = None,
-                     OPDmap2d_post = None)
+    params = coro.to_dict(nPup=nPup, nImg2d=nImg2d, Fmax2d=Fmax2d, nFPM=nFPM,
+                          rMask=rMask,
+                          Pupil2dSym=Pupil2dSym, 
+                          Pupil2d=Pupil2d, LyotStop2d=LyotStop2d, 
+                          CtrBtwnPix=CtrBtwnPix,
+                          CtrBtwnPix2=CtrBtwnPix2, 
+                          nlam=nlam, bw=bw, wv=wv,
+                          OPDmap2d=None, Ampmap2d=None,
+                          OPDmap2d_post=None)
 
     #%%
     """
     ### Filepaths for the file results
     """
     if kw_aberr is True:
-        params   = coro.update_params(params, OPDmap2d = None,
-                                      Ampmap2d = Ampmap2d, LyotStop2d = LyotStop2d)
+        params  = coro.update_params(params, OPDmap2d=None,
+                                      Ampmap2d=Ampmap2d, LyotStop2d=LyotStop2d)
         corono0  = coro.design.APLC2d(**params)
     else:
-        params  = coro.update_params(params, OPDmap2d = None, 
-                                     Ampmap2d = None, LyotStop2d = LyotStop2d)
+        params  = coro.update_params(params, OPDmap2d=None, 
+                                     Ampmap2d=None, LyotStop2d=LyotStop2d)
         corono0 = coro.design.APLC2d(**params)    
 
 
     for i, defo_ampl in enumerate(defo_ampl_arr):
         print('defo={0}nm rms'.format(defo_ampl))    
-        fname_direct_poly_img_f     = 'direct_poly_img_nmap={:05d}_saxofudge={:.2f}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_f.fits'.format(nmap, saxofudge, defo_ampl, tipp_ampl, tilt_ampl)
-        fname_corono_poly_img_f     = 'corono_poly_img_nmap={:05d}_saxofudge={:.2f}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_f.fits'.format(nmap, saxofudge, defo_ampl, tipp_ampl, tilt_ampl)
+        fname_direct_poly_img_f     = 'direct_poly_img_nmap={:05d}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_f.fits'.format(nmap, defo_ampl, tipp_ampl, tilt_ampl)
+        fname_corono_poly_img_f     = 'corono_poly_img_nmap={:05d}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_f.fits'.format(nmap, defo_ampl, tipp_ampl, tilt_ampl)
         fpath_direct_poly_img_f     = fdir_results / fname_direct_poly_img_f
         fpath_corono_poly_img_f     = fdir_results / fname_corono_poly_img_f
 
         #%%
-        fname_direct_poly_prf_avg_f = 'direct_poly_prf_nmap={:05d}_saxofudge={:.2f}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_avg_f.fits'.format(nmap, saxofudge, defo_ampl, tipp_ampl, tilt_ampl)
-        fname_corono_poly_prf_avg_f = 'corono_poly_prf_nmap={:05d}_saxofudge={:.2f}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_avg_f.fits'.format(nmap, saxofudge, defo_ampl, tipp_ampl, tilt_ampl)
-        fname_direct_poly_prf_std_f = 'direct_poly_prf_nmap={:05d}_saxofudge={:.2f}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_std_f.fits'.format(nmap, saxofudge, defo_ampl, tipp_ampl, tilt_ampl)
-        fname_corono_poly_prf_std_f = 'corono_poly_prf_nmap={:05d}_saxofudge={:.2f}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_std_f.fits'.format(nmap, saxofudge, defo_ampl, tipp_ampl, tilt_ampl)
+        fname_direct_poly_prf_avg_f = 'direct_poly_prf_nmap={:05d}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_avg_f.fits'.format(nmap, defo_ampl, tipp_ampl, tilt_ampl)
+        fname_corono_poly_prf_avg_f = 'corono_poly_prf_nmap={:05d}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_avg_f.fits'.format(nmap, defo_ampl, tipp_ampl, tilt_ampl)
+        fname_direct_poly_prf_std_f = 'direct_poly_prf_nmap={:05d}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_std_f.fits'.format(nmap, defo_ampl, tipp_ampl, tilt_ampl)
+        fname_corono_poly_prf_std_f = 'corono_poly_prf_nmap={:05d}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_std_f.fits'.format(nmap, defo_ampl, tipp_ampl, tilt_ampl)
         fpath_direct_poly_prf_avg_f = fdir_results / fname_direct_poly_prf_avg_f
         fpath_corono_poly_prf_avg_f = fdir_results / fname_corono_poly_prf_avg_f
         fpath_direct_poly_prf_std_f = fdir_results / fname_direct_poly_prf_std_f
@@ -359,14 +352,13 @@ if __name__ == '__main__':
         # definition of the coronagraph class
         if kw_aberr is True:
             OPDmap2d0 = (beta_wfs*ZELDAmapnm3d[imap0]+Apod2d_OPDmapnm \
-                        +defo_ampl*Defo_mapnm2d\
-                        +tipp_ampl*Tipp_mapnm2d\
-                        +tilt_ampl*Tilt_mapnm2d)*1e-9
+                        + defo_ampl*Defo_mapnm2d \
+                        + tipp_ampl*Tipp_mapnm2d \
+                        + tilt_ampl*Tilt_mapnm2d)*1e-9
 
         t0 = time.time()
         if kw_aberr is True:
             if kw_saxo is True and kw_2nddate is True:
-
                 # create shared arrays
                 direct_poly_img_cube_shape = (nproc, nImg2d, nImg2d)
                 direct_poly_img_cube_data  = multiprocessing.RawArray(ctypes.c_double, int(np.prod(direct_poly_img_cube_shape)))
