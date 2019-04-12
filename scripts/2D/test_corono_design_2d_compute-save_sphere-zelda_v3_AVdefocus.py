@@ -71,9 +71,10 @@ kw_aberr     = True
 kw_2nddate   = False    
 kw_skyobs    = False
 kw_aftercorr = False
-kw_saxo      = False
+kw_saxo      = True
+saxofudge    = 1. #80/120.
 saxomap_i    = 0    # saxo first screen
-saxomap_f    = 10    # saxo last screen
+saxomap_f    = 1000    # saxo last screen
 
 # test on the order of the min and max number of saxo phase screen
 if saxomap_i <= saxomap_f:
@@ -85,6 +86,7 @@ ndefo = 21
 defo_ampl_arr = [0.]#-100 + 10.*np.arange(ndefo)
 tipp_ampl = 0
 tilt_ampl = 0 
+
 
     
 #%%
@@ -160,8 +162,6 @@ if kw_aberr is True:
     
     if kw_saxo is True and kw_2nddate is True:    
         fname_SAXOmapnm3d = '2018-04-04T03_06_15-saxo_residual_turbulence.fits'
-        if kw_aftercorr is True:
-            fname_SAXOmapnm3d = '2018-04-04T03_12_50-saxo_residual_turbulence.fits'
 
 #%% Filepaths for the file sources
 fpath_Apod2d          = fdir_pupils / fname_Apod2d
@@ -203,16 +203,20 @@ if kw_aberr is True:
 
     if kw_saxo is True and kw_2nddate is True:
         SAXOmapnm3d_tmp = fits.getdata(fpath_SAXOmapnm3d)
+        if saxofudge != 1.:
+            SAXOmapnm3d_tmp *= saxofudge 
         nsaxo_all = len(SAXOmapnm3d_tmp)        
         pupil_tmp = aperture.sphere_saxo_pupil()
         pupil = np.round(imutils.scale(pupil_tmp, 0, new_dim=(nPup,nPup), method='interp'))
 
         # rescale NCPA map
-        SAXOmapnm3d = np.empty((nsaxo_all, nPup, nPup))
+        SAXOmapnm3d = np.empty((nmap, nPup, nPup))
         for i in range(nmap):
             SAXOmapnm3d[i] = imutils.scale(SAXOmapnm3d_tmp[i+saxomap_i], 0, new_dim=(nPup,nPup), method='interp')
             print('{0:05}/{1:05}: SAXO map before scaling: {2:.2f} nm RMS, after: {3:.2f} nm RMS'.format(i+1, nmap, np.std(SAXOmapnm3d_tmp[i, pupil_tmp != 0]), np.std(np.asarray(SAXOmapnm3d)[i, pupil != 0])))
 
+        del SAXOmapnm3d_tmp
+        
 
 #%% Lyot Stop
 LyotStop2d = fits.getdata(fpath_LyotStop2d)
@@ -266,16 +270,16 @@ else:
 """        
 for i, defo_ampl in enumerate(defo_ampl_arr):
     print('defo={0}nm rms'.format(defo_ampl))    
-    fname_direct_poly_img_f     = 'direct_poly_img_nmap={0:05d}_defo={1:.1f}_tip={2:.1f}_tilt={3:.1f}_f.fits'.format(nmap, defo_ampl, tipp_ampl, tilt_ampl)
-    fname_corono_poly_img_f     = 'corono_poly_img_nmap={0:05d}_defo={1:.1f}_tip={2:.1f}_tilt={3:.1f}_f.fits'.format(nmap, defo_ampl, tipp_ampl, tilt_ampl)
+    fname_direct_poly_img_f     = 'direct_poly_img_nmap={:05d}_saxofudge={:.2f}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_f.fits'.format(nmap, saxofudge, defo_ampl, tipp_ampl, tilt_ampl)
+    fname_corono_poly_img_f     = 'corono_poly_img_nmap={:05d}_saxofudge={:.2f}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_f.fits'.format(nmap, saxofudge, defo_ampl, tipp_ampl, tilt_ampl)
     fpath_direct_poly_img_f     = fdir_results / fname_direct_poly_img_f
     fpath_corono_poly_img_f     = fdir_results / fname_corono_poly_img_f
     
     #%%
-    fname_direct_poly_prf_avg_f = 'direct_poly_prf_nmap={0:05d}_defo={1:.1f}_tip={2:.1f}_tilt={3:.1f}_avg_f.fits'.format(nmap, defo_ampl, tipp_ampl, tilt_ampl)
-    fname_corono_poly_prf_avg_f = 'corono_poly_prf_nmap={0:05d}_defo={1:.1f}_tip={2:.1f}_tilt={3:.1f}_avg_f.fits'.format(nmap, defo_ampl, tipp_ampl, tilt_ampl)
-    fname_direct_poly_prf_std_f = 'direct_poly_prf_nmap={0:05d}_defo={1:.1f}_tip={2:.1f}_tilt={3:.1f}_std_f.fits'.format(nmap, defo_ampl, tipp_ampl, tilt_ampl)
-    fname_corono_poly_prf_std_f = 'corono_poly_prf_nmap={0:05d}_defo={1:.1f}_tip={2:.1f}_tilt={3:.1f}_std_f.fits'.format(nmap, defo_ampl, tipp_ampl, tilt_ampl)
+    fname_direct_poly_prf_avg_f = 'direct_poly_prf_nmap={:05d}_saxofudge={:.2f}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_avg_f.fits'.format(nmap, saxofudge, defo_ampl, tipp_ampl, tilt_ampl)
+    fname_corono_poly_prf_avg_f = 'corono_poly_prf_nmap={:05d}_saxofudge={:.2f}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_avg_f.fits'.format(nmap, saxofudge, defo_ampl, tipp_ampl, tilt_ampl)
+    fname_direct_poly_prf_std_f = 'direct_poly_prf_nmap={:05d}_saxofudge={:.2f}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_std_f.fits'.format(nmap, saxofudge, defo_ampl, tipp_ampl, tilt_ampl)
+    fname_corono_poly_prf_std_f = 'corono_poly_prf_nmap={:05d}_saxofudge={:.2f}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_std_f.fits'.format(nmap, saxofudge, defo_ampl, tipp_ampl, tilt_ampl)
     fpath_direct_poly_prf_avg_f = fdir_results / fname_direct_poly_prf_avg_f
     fpath_corono_poly_prf_avg_f = fdir_results / fname_corono_poly_prf_avg_f
     fpath_direct_poly_prf_std_f = fdir_results / fname_direct_poly_prf_std_f

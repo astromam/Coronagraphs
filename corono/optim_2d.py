@@ -14,6 +14,9 @@ License: MIT license
 import numpy as np
 import json
 import time
+import gc
+import psutil
+import os
 
 try:
     import stdgrb
@@ -29,6 +32,17 @@ import scipy
 import scipy.optimize
 from .utils import update_params        
 from . import design, default
+
+def MemUse():
+	pid = os.getpid()
+	py = psutil.Process(pid)
+	memoryUse = py.memory_info()[0]*10**-9  #RSS (resident set size) in GB
+	print('memory use: {0:.3f} GB'.format(memoryUse))
+
+def describe_array(array):
+    print(type(array))
+    print(array.dtype)
+    print(array.shape)
 
 #%%
 """
@@ -332,7 +346,13 @@ class ProblemMatrix(object):
             Apodizer solution :math:`\Phi` for the optimization problem.
         
         """
+
+        print('start - compute matrices')
+        MemUse()
         self.compute_matrices()
+
+        print('start - solve model')
+        MemUse()
 
         t0 = time.time()
 
@@ -387,6 +407,10 @@ class ProblemMatrix(object):
 
         t1 = time.time()
         self.print_log('solving time: {0:.2f}s\n'.format(t1-t0))
+
+        print('end')
+        MemUse()
+        
         return self.Apod                
 
 #%%
@@ -588,7 +612,9 @@ class MaxTau(ProblemMatrix):
             
             # Compute coronagraph response matrix
             t00 = time.time()
-            self.print_log('computing corono response matrix for 2D problem')             
+            self.print_log('computing corono response matrix for 2D problem')
+            print('start - compute response matrices')
+            MemUse()             
             corono_field_t = self.compute_response_matrices(self.corono_t[k])
             t11 = time.time()
             self.print_log('computing time (response matrices): {0:.2f}s\n'.format(t11-t00))
@@ -610,6 +636,8 @@ class MaxTau(ProblemMatrix):
                 self.A = np.concatenate((A0,A1), axis=1)
             else:
                 self.A = np.concatenate((self.A, A0, A1), axis=1)
+        print('end - compute response matrices')
+        MemUse()
         
         # Yield the A and b matrices for the optimization problem                               
         self.b = np.zeros((len(self.A.T)))
@@ -658,6 +686,8 @@ class MaxTau(ProblemMatrix):
             :math:`\Phi(r) \leq 1`.        
         
         """
+        print('start - compute gurobi matrices')
+        MemUse()
         # Compute constraints on the apodizer transmission
         A2tmp  = -np.identity(self.npp)
         
