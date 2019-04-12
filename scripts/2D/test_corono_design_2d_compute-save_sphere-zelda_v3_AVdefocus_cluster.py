@@ -25,7 +25,7 @@ import corono as coro
 import ctypes
 import multiprocessing
 
-
+#%%
 def array_to_numpy(shared_array, shape):
     '''
     Map a raw memory array to a numpy array
@@ -131,9 +131,9 @@ if __name__ == '__main__':
     # simulation configuration   
     kw_aberr     = True
     kw_2nddate   = True    
-    kw_skyobs    = True
+    kw_skyobs    = False # related to ZELDA map
     kw_aftercorr = bool(eval(sys.argv[1]))
-    kw_saxo      = True
+    kw_saxo      = False
     saxomap_i    = 0               # saxo first screen
     saxomap_f    = int(30*1380)    # saxo last screen
 
@@ -145,7 +145,8 @@ if __name__ == '__main__':
     nsaxomap  = nsaxomap - (nsaxomap % nproc)
 
     ndefo = 21
-    defo_ampl_arr = [np.float(sys.argv[2])]  # -100 + 10.*np.arange(21)
+#    defo_ampl_arr = [np.float(sys.argv[2])]
+    defo_ampl_arr = -100 + 10.*np.arange(21)
     tipp_ampl = 0
     tilt_ampl = 0 
 
@@ -188,7 +189,9 @@ if __name__ == '__main__':
             beta_wfs = 1/0.6
 
     #%%
-    fdir = Path('~/Work/GitHub/Coronagraphs/').expanduser()
+#    fdir = Path('~/Work/GitHub/Coronagraphs/').expanduser()
+    fdir = Path('/Users/mndiaye/Dropbox/python/Coronagraphs/')
+
     fdir_pupils  = fdir / 'data' / '2D' / 'pupils' / 'SPHERE' 
     fdir_zelda   = fdir / 'data' / '2D' / 'ZELDA' / str_date / str_obs  
     fdir_saxo    = fdir / 'data' / '2D' / 'ZELDA' / '2018-04-03'
@@ -431,8 +434,9 @@ if __name__ == '__main__':
         fits.writeto(fpath_corono_poly_prf_avg_f, corono_poly_prf_avg_f, overwrite=True)
         fits.writeto(fpath_direct_poly_prf_std_f, direct_poly_prf_std_f, overwrite=True)
         fits.writeto(fpath_corono_poly_prf_std_f, corono_poly_prf_std_f, overwrite=True)
-
-
+        
+    print(fpath_corono_poly_prf_std_f)
+    print('ok')
 
 # import matplotlib.pyplot as plt
 # import matplotlib.colors as colors
