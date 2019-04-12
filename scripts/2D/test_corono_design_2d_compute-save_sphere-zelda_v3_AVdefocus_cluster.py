@@ -189,8 +189,8 @@ if __name__ == '__main__':
             beta_wfs = 1/0.6
 
     #%%
-    fdir = Path('~/GitHub/Coronagraphs/').expanduser()
-    # fdir = Path('~/Work/GitHub/Coronagraphs/').expanduser()
+    # fdir = Path('~/GitHub/Coronagraphs/').expanduser()
+    fdir = Path('~/Work/GitHub/Coronagraphs/').expanduser()
     # fdir = Path('/Users/mndiaye/Dropbox/python/Coronagraphs/')
     fdir_pupils  = fdir / 'data' / '2D' / 'pupils' / 'SPHERE' 
     fdir_zelda   = fdir / 'data' / '2D' / 'ZELDA' / str_date / str_obs  
@@ -264,7 +264,7 @@ if __name__ == '__main__':
     if kw_aberr is True:
         ZELDAmapnm3d = fits.getdata(fpath_ZELDAmapnm3d)
 
-        if kw_saxo is True and kw_2nddate is True:
+        if kw_saxo is True:
             # SAXO pupils
             pupil_tmp = aperture.sphere_saxo_pupil()
             pupil = np.round(imutils.scale(pupil_tmp, 0, new_dim=(nPup, nPup), method='interp'))
@@ -361,7 +361,7 @@ if __name__ == '__main__':
 
         t0 = time.time()
         if kw_aberr is True:
-            if kw_saxo is True and kw_2nddate is True:
+            if kw_saxo is True:
                 # create shared arrays
                 direct_poly_img_cube_shape = (nproc, nImg2d, nImg2d)
                 direct_poly_img_cube_data  = multiprocessing.RawArray(ctypes.c_double, int(np.prod(direct_poly_img_cube_shape)))
