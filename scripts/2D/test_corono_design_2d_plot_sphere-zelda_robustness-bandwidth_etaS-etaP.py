@@ -13,6 +13,7 @@ License: MIT license
 import numpy as np
 import os
 import pylab as pl
+pl.rcParams.update({'font.size': 15})
 from pathlib import Path
 from astropy.io import fits
 from pyzelda.utils import aperture, imutils
@@ -60,7 +61,8 @@ kw_skyobs    = True
 kw_aftercorr = False
 kw_saxo      = True
 
-do_plot = True  
+do_plot = True 
+do_fits = True 
 
 #%%
 if kw_aberr is False:
@@ -521,26 +523,98 @@ Robustness to spectral bandwidth
    
 nlam_ter = 101
 bw_ter   = 0.92
-   
+
+# filepaths of the monochromatic direct and monochromatic images
+fname_imgs_dir = 'current_aplc_poly_bw={0}_nlam={1}_nPup={2}_mono_direct.fits'.format(bw_ter, nlam_ter, nPup)
+fname_imgs_cor = 'current_aplc_poly_bw={0}_nlam={1}_nPup={2}_mono_corono.fits'.format(bw_ter, nlam_ter, nPup)
+fpath_imgs_dir = fdir_plots / fname_imgs_dir
+fpath_imgs_cor = fdir_plots / fname_imgs_cor
+
+# PSF of the pupil without apodizer nor Lyot stop   
+paramsN = coro.update_params(params, Fmax2d = Fmax2dbis, nImg2d = nImg2dbis, 
+                                nlam = 1, bw = bw_ter, 
+                                LyotStop2d = Pupil2d)
+
+if corono_name == 'APLC':
+    coronoN = coro.design.APLC2d(**paramsN)
+    direct_mono_img_tN = coronoN.compute_direct_intensity_2d(Apod2d, poly=False)
+elif corono_name == 'SP':
+    corono4 = coro.design.SP2d(**paramsN)
+    direct_mono_img_tN = coronoN.compute_direct_intensity_2d(corono00.Pupil2d, poly=False)
+else:
+    raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))    
+
+# normalization term wrt to the PSF of the pupil without apodizer nor Lyot stop  
+direct_mono_img_fN_peak = direct_mono_img_tN[0].max()
+
+# PSF of the pupil with apodizer and Lyot stop  
 params3    = coro.update_params(params, Fmax2d = Fmax2dbis, nImg2d = nImg2dbis, 
                                 nlam = nlam_ter, bw = bw_ter)
 
-if corono_name == 'SP':
-    corono3 = coro.design.SP2d(**params3)
-elif corono_name == 'APLC':
-    corono3 = coro.design.APLC2d(**params3)
-else:
-    raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
+if do_fits:
+    if corono_name == 'APLC':
+        corono3 = coro.design.APLC2d(**params3)
+        direct_poly_img_f3 = corono3.compute_direct_intensity_2d(Apod2d)
+        direct_mono_img_t3 = corono3.compute_direct_intensity_2d(Apod2d, poly=False)
+    elif corono_name == 'SP':
+        corono3 = coro.design.SP2d(**params3)
+        direct_poly_img_f3 = corono3.compute_direct_intensity_2d(corono00.Pupil2d)
+        direct_mono_img_t3 = corono3.compute_direct_intensity_2d(corono00.Pupil2d, poly=False)
+    else:
+        raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))    
 
-if corono_name == 'APLC':
-    direct_poly_img_f3 = corono3.compute_direct_intensity_2d(Apod2d)
-    direct_mono_img_t3 = corono3.compute_direct_intensity_2d(Apod2d, poly=False)
-else:
-    direct_poly_img_f3 = corono3.compute_direct_intensity_2d(corono00.Pupil2d)
-    direct_mono_img_t3 = corono3.compute_direct_intensity_2d(corono00.Pupil2d, poly=False)
-corono_poly_img_f3 = corono3.compute_corono_intensity_2d(Apod2d)
-corono_mono_img_t3 = corono3.compute_corono_intensity_2d(Apod2d, poly=False)
+    # coronagraphic images
+    corono_poly_img_f3 = corono3.compute_corono_intensity_2d(Apod2d)
+    corono_mono_img_t3 = corono3.compute_corono_intensity_2d(Apod2d, poly=False)
+    
+    # normalized direct and coronagraphic images in monochromatic light
+    direct_mono_img_t3 /= direct_mono_img_fN_peak
+    corono_mono_img_t3 /= direct_mono_img_fN_peak
 
+    fits.writeto(fpath_imgs_dir, direct_mono_img_t3, overwrite= True)
+    fits.writeto(fpath_imgs_cor, corono_mono_img_t3, overwrite= True)
+else:
+    direct_mono_img_t3 = fits.getdata(fpath_imgs_dir)
+    corono_mono_img_t3 = fits.getdata(fpath_imgs_cor)    
+
+#%%
+# vector of angular separation for the computation of planet transmission
+sep_min  = 0.0
+sep_max  = 11.0
+sep_stp  = 5.0
+
+# array of angular separations
+nsep     = int(round(1+(sep_max-sep_min)/sep_stp))
+sep_arr  = sep_min + sep_stp*np.arange(nsep)
+print('{0:5d} sep'.format(nsep))
+
+# Zernike mode for the tip mode
+xx,yy   = np.meshgrid(np.arange(nPup)-nPup/2, np.arange(nPup)-nPup/2)
+rr      = (2./np.float(nPup))*np.hypot(yy,xx)
+theta   = np.arctan2(yy,xx)
+Z       = 2.*rr*np.cos(theta)*Pupil2d   
+
+# OPD map to generate a planet
+opd_arr = [sep*wv*(1./4.) * Z for l, sep in enumerate(sep_arr)]
+
+# computation of the coronagraphic image of the planet
+corono_mono_img_t3_P = np.zeros((nsep, nlam_ter, nImg2dbis, nImg2dbis))
+for l in range(nsep):
+    params33 = coro.update_params(params3, OPDmap2d = opd_arr[l]) 
+    corono33 = coro.design.APLC2d(**params33)
+    corono_mono_img_t3_P[l]  = corono33.compute_corono_intensity_2d(Apod2d, poly = False)
+
+# normalization of the planet coronagraphic image
+corono_mono_img_t3_P /= direct_mono_img_fN_peak
+
+#%%
+
+Z0P = np.log10(corono_mono_img_t3_P[2, nlam_ter//2])
+
+pl.figure(30)
+pl.clf()
+pl.imshow(Z0P, cmap = 'inferno', vmin = -7.5, vmax = -3.5)    
+pl.show()    
 
 #%%
 val = 0
@@ -561,8 +635,8 @@ corono_poly_avg_resbis_wv_t = []
 corono_poly_avg_rester_wv_t = []
 
 for i in range(nlam_ter):
-    corono_poly_avg_resbis_wv_t.append(np.mean(corono_mono_img_t3[i, resbis != 0])/direct_mono_img_t3[(nlam_ter-1)//2].max())
-    corono_poly_avg_rester_wv_t.append(np.mean(corono_mono_img_t3[i, rester != 0])/direct_mono_img_t3[(nlam_ter-1)//2].max())
+    corono_poly_avg_resbis_wv_t.append(np.mean(corono_mono_img_t3[i, resbis != 0]))
+    corono_poly_avg_rester_wv_t.append(np.mean(corono_mono_img_t3[i, rester != 0]))
 
 #%%
 colors_shifts = pl.cm.rainbow(np.linspace(0,1,2))
@@ -608,38 +682,28 @@ pl.savefig(str(fpath_bw_plot), transparent=True)
 Contour plot for spectral bandwidth robustness
 """ 
     
-direct_mono_prf_avg_t3 = np.zeros((nlam_ter, nImg2dbis//2))
+#direct_mono_prf_avg_t3 = np.zeros((nlam_ter, nImg2dbis//2))
 corono_mono_prf_avg_t3 = np.zeros((nlam_ter, nImg2dbis//2))
 
-direct_mono_prf_std_t3 = np.zeros((nlam_ter, nImg2dbis//2))
+#direct_mono_prf_std_t3 = np.zeros((nlam_ter, nImg2dbis//2))
 corono_mono_prf_std_t3 = np.zeros((nlam_ter, nImg2dbis//2))
 
 #%%
 for i in range(corono3.nlam):
-    direct_mono_prf_avg_t3[i], rad_direct = imutils.profile(direct_mono_img_t3[i], type='mean')
+#    direct_mono_prf_avg_t3[i], rad_direct = imutils.profile(direct_mono_img_t3[i], type='mean')
     corono_mono_prf_avg_t3[i], rad_corono = imutils.profile(corono_mono_img_t3[i], type='mean')
-    direct_mono_prf_std_t3[i], rad_direct = imutils.profile(direct_mono_img_t3[i], type='std')
+#    direct_mono_prf_std_t3[i], rad_direct = imutils.profile(direct_mono_img_t3[i], type='std')
     corono_mono_prf_std_t3[i], rad_corono = imutils.profile(corono_mono_img_t3[i], type='std')    
 
 #%%
-# normalization term    
-direct_mono_img_f3_peak = direct_mono_img_t3[nlam_ter//2].max()
-
-
-lam0D_corono = rad_corono*Fmax2dbis/nImg2dbis
-
-
+# bounds for the separations
+lam0D_min = rad_corono.min()*Fmax2dbis/nImg2dbis
+lam0D_max = rad_corono.max()*Fmax2dbis/nImg2dbis
 
 wv_ind = wv*corono3.lam_t >= 0.95e-6
-lam0D_ind = lam0D_corono >= 1.0
-
-# bounds for the separations
-lam0D_min = lam0D_corono[lam0D_ind].min()
-lam0D_max = lam0D_corono[lam0D_ind].max()
 
 
 # bounds for the wavelengths
-lam_min0 = corono3.lam_t.min()
 lam_min = corono3.lam_t[wv_ind].min()
 lam_max = corono3.lam_t[wv_ind].max()
 
@@ -660,15 +724,12 @@ fpath_image_plane_f_disp = fdir_plots / fname_image_plane_f_disp
 # line width parameter
 lw0 = 2.5
 
-tmp = corono_mono_prf_std_t3[wv_ind]
-
-Z0 = np.log10(tmp[:, lam0D_ind]/direct_mono_img_f3_peak)
+Z0 = np.log10(corono_mono_prf_std_t3[wv_ind])
 extent0 = [lam0D_min, lam0D_max, lam_min, lam_max]
 
 f2 = pl.figure(32, figsize=(8,4.5))
 pl.clf()
 ax0 = f2.add_subplot(111)
-
 im = ax0.imshow(Z0, 
                 cmap = "inferno", 
                 vmin=-7.5, vmax=-3.5,
@@ -678,7 +739,6 @@ im = ax0.imshow(Z0,
 
 cs = ax0.contour(Z0, [-7., -6., -5.], colors = 'white',
             extent = extent0,linestyles = '-')
-
 ax0.clabel(cs, inline=1, fontsize=16, fmt = '%1.1f')
 
 ax0.set_xlabel(r'Angular separation in $\lambda_0$/D')
@@ -689,49 +749,26 @@ ax0.text(15, 1.4, "Current APLC design", fontsize=16, horizontalalignment="cente
 #exec('ax{0}.tick_params(axis="x", which="both", bottom="off", top="off", labelbottom="off")'.format(1,))
 #exec('ax{0}.tick_params(axis="y", which="both", left="off", right="off", labelleft="off")'.format(1,))
 
-
-
 ax0.axvline(x=rMask, ymin=-12, ymax =2, linewidth=lw0, color='r', linestyle='--')
 ax0.axvline(x=rho0, ymin=-12, ymax =2, linewidth=lw0, color='b', linestyle='--')
 ax0.axvline(x=rho1, ymin=-12, ymax =2, linewidth=lw0, color='b', linestyle='--')
 
-ax0.axhline(y=1.0, xmin=0., xmax =lam0D_max, 
+ax0.axhline(y=1.0, xmin=lam0D_min, xmax =lam0D_max, 
             linewidth=lw0, color='g', linestyle=':')
-ax0.axhline(y=lam_opt_min, xmin=0., xmax =lam0D_max, 
+ax0.axhline(y=lam_opt_min, xmin=lam0D_min, xmax =lam0D_max, 
             linewidth=lw0, color='k', linestyle=':')
-ax0.axhline(y=lam_opt_max, xmin=0., xmax =lam0D_max, 
+ax0.axhline(y=lam_opt_max, xmin=lam0D_min, xmax =lam0D_max, 
             linewidth=lw0, color='k', linestyle=':')
-
-ax0.autoscale(False)
-#ax0.plot([rho0*lam_min0, rho0*lam_max], [lam_min0, lam_max],
-#         linewidth=lw0, color='b', linestyle='--')
-#ax0.plot([rho1*lam_min0, rho1*lam_max], [lam_min0, lam_max],
-#         linewidth=lw0, color='b', linestyle='--')
-ax0.plot([rho0*lam_min0, rho0*lam_max], [lam_min0, lam_max],
-         linewidth=lw0, color='b', linestyle='--')
-#ax0.plot([rho0*lam_min0, rho1*lam_max], [lam_min0, lam_max],
-#         linewidth=lw0, color='b', linestyle='--')
-
-ax0.plot([rho0, rho0*lam_max], [1.0, lam_max],
-         linewidth=lw0, color='b', linestyle='--')
-ax0.plot([rho0*lam_min0, rho0], [lam_min0, 1.0],
-         linewidth=lw0, color='b', linestyle='--')
-
-
-ax0.set_xscale("log")
 
 ax2 = ax0.twinx()
 ax2.set_ylim(lam_min*lam02um, lam_max*lam02um)
 ax2.set_ylabel(r'$\lambda$ in $\mu$m ($\lambda_0={0}\mu$m)'.format(wv*1e6), 
                rotation=270, labelpad = 16)
-
 #
 ax3 = ax0.twiny()
 ax3.set_xlim(lam0D_min*lam0D2mas, lam0D_max*lam0D2mas)
 ##ax3.set_yticks()
 ax3.set_xlabel(r'Angular separation in mas')
-ax3.set_xscale("log")
-
 
 
 f2.subplots_adjust(bottom=0.13, top=0.87, left=0.1, right=0.75,
