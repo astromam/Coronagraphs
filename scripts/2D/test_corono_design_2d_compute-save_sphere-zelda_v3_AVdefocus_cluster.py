@@ -173,7 +173,7 @@ if __name__ == '__main__':
         str_saxo  = ''
         imap0     = 0
         nmap      = 1
-        beta_wfs  = 1./0.90
+        beta_wfs  = 1./0.95
         str_saxo_tmp  = 'wo_saxo'
         if kw_2nddate is True:
             str_date = '2018-04-03'
@@ -183,14 +183,14 @@ if __name__ == '__main__':
             str_corr = 'after_correction'
             imap0    = 3
             beta_wfs = 1/0.95
-        if kw_saxo is True and kw_2nddate is True:
+        if kw_saxo is True:
             str_saxo = 'with_saxo'
             nmap     = nsaxomap*1
-            beta_wfs = 1/0.6
+            beta_wfs = 1.17
 
     #%%
-    # fdir = Path('~/GitHub/Coronagraphs/').expanduser()
-    fdir = Path('~/Work/GitHub/Coronagraphs/').expanduser()
+    fdir = Path('~/GitHub/Coronagraphs/').expanduser()
+    # fdir = Path('~/Work/GitHub/Coronagraphs/').expanduser()
     # fdir = Path('/Users/mndiaye/Dropbox/python/Coronagraphs/')
     fdir_pupils  = fdir / 'data' / '2D' / 'pupils' / 'SPHERE' 
     fdir_zelda   = fdir / 'data' / '2D' / 'ZELDA' / str_date / str_obs  
@@ -234,7 +234,7 @@ if __name__ == '__main__':
 
     if kw_aberr is True:
         fpath_ZELDAmapnm3d = fdir_zelda  / fname_ZELDAmapnm3d   
-        if kw_saxo is True and kw_2nddate is True:
+        if kw_saxo is True:
             fpath_SAXOmapnm3d = fdir_saxo / fname_SAXOmapnm3d
 
     fpath_LyotStop2d = fdir_pupils / fname_LyotStop2d    
