@@ -130,10 +130,10 @@ if __name__ == '__main__':
 
     # simulation configuration   
     kw_aberr     = True
-    kw_2nddate   = True    
-    kw_skyobs    = False # related to ZELDA map
-    kw_aftercorr = bool(eval(sys.argv[1]))
-    kw_saxo      = False
+    kw_2nddate   = bool(eval(sys.argv[1]))
+    kw_skyobs    = True     # related to ZELDA map
+    kw_aftercorr = bool(eval(sys.argv[2]))
+    kw_saxo      = True
     saxomap_i    = 0               # saxo first screen
     saxomap_f    = int(30*1380)    # saxo last screen
 
@@ -145,8 +145,8 @@ if __name__ == '__main__':
     nsaxomap  = nsaxomap - (nsaxomap % nproc)
 
     ndefo = 21
-#    defo_ampl_arr = [np.float(sys.argv[2])]
-    defo_ampl_arr = -100 + 10.*np.arange(21)
+    defo_ampl_arr = [np.float(sys.argv[3])]
+    # defo_ampl_arr = -100 + 10.*np.arange(21)
     tipp_ampl = 0
     tilt_ampl = 0 
 
@@ -189,9 +189,9 @@ if __name__ == '__main__':
             beta_wfs = 1/0.6
 
     #%%
-#    fdir = Path('~/Work/GitHub/Coronagraphs/').expanduser()
-    fdir = Path('/Users/mndiaye/Dropbox/python/Coronagraphs/')
-
+    fdir = Path('~/GitHub/Coronagraphs/').expanduser()
+    # fdir = Path('~/Work/GitHub/Coronagraphs/').expanduser()
+    # fdir = Path('/Users/mndiaye/Dropbox/python/Coronagraphs/')
     fdir_pupils  = fdir / 'data' / '2D' / 'pupils' / 'SPHERE' 
     fdir_zelda   = fdir / 'data' / '2D' / 'ZELDA' / str_date / str_obs  
     fdir_saxo    = fdir / 'data' / '2D' / 'ZELDA' / '2018-04-03'
@@ -223,8 +223,8 @@ if __name__ == '__main__':
             if kw_2nddate is True:        
                 fname_ZELDAmapnm3d = '2018-04-03_ncpa_loop_700modes_ncpa_loop_opd.fits'
 
-        if kw_saxo is True and kw_2nddate is True:
-            fname_SAXOmapnm3d = '2018-04-04T00:41:34-saxo_residual_turbulence_time=01.0sec_seeing=0.9as_tiptilt=1_gains=0_fitting=1_alias=1.fits'
+        if kw_saxo is True:
+            fname_SAXOmapnm3d = '2018-04-04T00:41:34-saxo_residual_turbulence_time=30.0sec_seeing=0.9as_tiptilt=1_gains=0_fitting=1_alias=1.fits'
             
 
     #%% Filepaths for the file sources
