@@ -3,7 +3,9 @@
 """
 Created on Wed Oct 17 16:20:52 2018
 
-Author: Mamadou N'Diaye <mamadou.ndiaye@oca.eu> 
+Author: 
+Mamadou N'Diaye <mamadou.ndiaye@oca.eu>
+Arthur Vigan <arthur.vigan@lam.fr>
 
 License: MIT license
 
@@ -16,7 +18,9 @@ License: MIT license
 import numpy as np
 import os
 import time
-from pyzelda.utils import aperture, imutils, zernike
+#from pyzelda.utils import aperture, imutils, zernike
+from vigan.utils import imutils
+from vigan.optics import aperture, zernike
 from pathlib import Path
 from astropy.io import fits
 import corono as coro
@@ -26,14 +30,14 @@ import corono as coro
 ### Parameters
 """
 # Coronagraph type
-corono_name   = 'APLC' # 'SP' or 'APLC' or DZPM
+corono_name   = 'DummyLC' # APLC or DummyLC
 CtrBtwnPix  = True
 CtrBtwnPix2 = False
 Pupil2dSym  = False
 
 # Spectral bandwidth
 wv        = 1.593e-6
-width     = 52e-9
+width     = 1e-9
 
 # Telescope characteristics
 dAper     = 8
@@ -45,12 +49,6 @@ rMask_m   = 287e-6/2.         # mask size in m
 rMask  = rMask_m/(wv*Fratio)  # mask size in lam0/D
 rMask_mas = 1000.*rMask * (wv/dAper)/mas2rad
 print('Mask radius: {0:.2f} mas at {1:.3f}um'.format(rMask_mas, wv*1e6))
-
-# sampling
-# nPup   = 384   # pupil
-# nFPM   = 200   # focal plane mask
-# nImg2d = 1200  # final image plane 
-# Fmax2d = 120   # spatial frequencies in the final image plane
 
 # sampling
 pixel  = 12.25 # IRDIS pixel sampling [mas/pix]
@@ -67,26 +65,24 @@ nlam   = 5
 bw     = width/wv 
 
 # simulation configuration   
-kw_aberr     = True
-kw_2nddate   = False    
-kw_skyobs    = False
-kw_aftercorr = False
-kw_saxo      = True
-saxofudge    = 1. #80/120.
-saxomap_i    = 0    # saxo first screen
-saxomap_f    = 1000    # saxo last screen
+kw_aberr     = True       # phase and amplitude aberrations
+kw_2nddate   = False      # use NCPA measurements of the 1st or second date
+kw_skyobs    = True       # telescope pupil or internal pupil
+kw_aftercorr = False      # before or after NCPA correction
+kw_caos      = True       # CAOS screens
+caosmap_i    = 0          # caos first screen
+caosmap_f    = 99         # caos last screen
 
-# test on the order of the min and max number of saxo phase screen
-if saxomap_i <= saxomap_f:
-    nsaxomap     = saxomap_f - saxomap_i + 1
+# test on the order of the min and max number of caos phase screen
+if caosmap_i <= caosmap_f:
+    ncaosmap = caosmap_f - caosmap_i + 1
 else:
-    raise NameError('initial saxo map (saxomap_i={0}) must be smaller than final saxo map (saxomap_f={1})!'.format(saxomap_i, saxomap_f))
+    raise NameError('initial caos map (caosmap_i={0}) must be smaller than final caos map (caosmap_f={1})!'.format(caosmap_i, caosmap_f))
 
 ndefo = 21
 defo_ampl_arr = [0.]#-100 + 10.*np.arange(ndefo)
-tipp_ampl = 0
+tipp_ampl = 0           
 tilt_ampl = 0 
-
 
     
 #%%
@@ -101,42 +97,42 @@ if kw_aberr is False:
     else:
         str_obs   = 'internal'
     str_corr  = ''
-    str_saxo  = ''
-    str_saxoset= ''
+    str_caos  = ''
+    str_caosset= ''
     nmap      = 1 
 else:
     str_aberr = 'with_aberr'    
     str_date  = '2018-04-01'
     str_obs   = 'internal'
     str_corr  = 'before_correction'
-    str_saxo  = ''
+    str_caos  = ''
     imap0     = 0
     nmap      = 1
-    beta_wfs  = 1./0.90
-    str_saxo_tmp  = 'wo_saxo'
+    beta_wfs  = 1/0.90
+    str_caos_tmp  = 'wo_caos'
     if kw_2nddate is True:
         str_date = '2018-04-03'
     if kw_skyobs is True:
         str_obs  = 'sky'
+        beta_wfs = 1/0.6
     if kw_aftercorr is True:
         str_corr = 'after_correction'
         imap0    = 3
         beta_wfs = 1./0.95
-    if kw_saxo is True and kw_2nddate is True:
-        str_saxo = 'with_saxo'
-        nmap     = nsaxomap*1
-        beta_wfs = 1./0.6
+    if kw_caos is True:
+        str_caos = 'with_caos'
+        nmap     = ncaosmap*1
 
 #%%
-fdir = Path('/Users/avigan/Work/GitHub/Coronagraphs/')
+fdir = Path('./').resolve()
 fdir_pupils  = fdir / 'data' / '2D' / 'pupils' / 'SPHERE' 
 fdir_zelda   = fdir / 'data' / '2D' / 'ZELDA' / str_date / str_obs  
-fdir_saxo    = fdir / 'data' / '2D' / 'ZELDA' / '2018-04-03'
+fdir_caos    = fdir / 'data' / '2D' / 'ZELDA'
 
 if kw_aberr is True:
-    fdir_results = fdir / 'results' / '2D' / 'data' / 'SPHERE' / str_aberr / str_date / str_obs / str_saxo / str_corr  
+    fdir_results = fdir / 'results' / '2D' / 'data' / 'SPHERE' / str_aberr / str_date / str_obs / str_caos / str_corr  
 else:
-    fdir_results = fdir / 'results' / '2D' / 'data' / 'SPHERE' / str_aberr / str_obs / str_saxo / str_corr  
+    fdir_results = fdir / 'results' / '2D' / 'data' / 'SPHERE' / str_aberr / str_obs / str_caos / str_corr  
 
 if not os.path.exists(fdir_results):
     os.makedirs(fdir_results)
@@ -160,8 +156,8 @@ if kw_aberr is True:
         if kw_2nddate is True:        
             fname_ZELDAmapnm3d = '2018-04-03_ncpa_loop_700modes_ncpa_loop_opd.fits'
     
-    if kw_saxo is True and kw_2nddate is True:    
-        fname_SAXOmapnm3d = '2018-04-04T03_06_15-saxo_residual_turbulence.fits'
+    if kw_caos is True:
+        fname_CAOSmapnm3d = 'SPHERE_SAXO_CAOS_phase_screens_seeing=0.9as.fits'
 
 #%% Filepaths for the file sources
 fpath_Apod2d          = fdir_pupils / fname_Apod2d
@@ -170,8 +166,8 @@ fpath_Ampmap2d        = fdir_pupils / fname_Ampmap2d
 
 if kw_aberr is True:
     fpath_ZELDAmapnm3d = fdir_zelda  / fname_ZELDAmapnm3d   
-    if kw_saxo is True and kw_2nddate is True:
-        fpath_SAXOmapnm3d = fdir_saxo / fname_SAXOmapnm3d
+    if kw_caos is True:
+        fpath_CAOSmapnm3d = fdir_caos / fname_CAOSmapnm3d
     
 fpath_LyotStop2d = fdir_pupils / fname_LyotStop2d
     
@@ -187,7 +183,12 @@ else:
     Pupil2d = aperture.disc(nPup, nPup/2)
     
 #%% Apodization
-Apod2d = fits.getdata(fpath_Apod2d)
+if corono_name == 'APLC':
+    Apod2d = fits.getdata(fpath_Apod2d)
+elif corono_name == 'DummyLC':
+    Apod2d = np.ones_like(Pupil2d)
+else:
+    raise NameError('Unknown coronagraph {}'.format(corono_name))
 
 #%% APodization OPD map
 Apod2d_OPDmapnm = fits.getdata(fpath_Apod2d_OPDmapnm)
@@ -201,22 +202,8 @@ if kw_aberr is True:
 if kw_aberr is True:
     ZELDAmapnm3d = fits.getdata(fpath_ZELDAmapnm3d)
 
-    if kw_saxo is True and kw_2nddate is True:
-        SAXOmapnm3d_tmp = fits.getdata(fpath_SAXOmapnm3d)
-        if saxofudge != 1.:
-            SAXOmapnm3d_tmp *= saxofudge 
-        nsaxo_all = len(SAXOmapnm3d_tmp)        
-        pupil_tmp = aperture.sphere_saxo_pupil()
-        pupil = np.round(imutils.scale(pupil_tmp, 0, new_dim=(nPup,nPup), method='interp'))
-
-        # rescale NCPA map
-        SAXOmapnm3d = np.empty((nmap, nPup, nPup))
-        for i in range(nmap):
-            SAXOmapnm3d[i] = imutils.scale(SAXOmapnm3d_tmp[i+saxomap_i], 0, new_dim=(nPup,nPup), method='interp')
-            print('{0:05}/{1:05}: SAXO map before scaling: {2:.2f} nm RMS, after: {3:.2f} nm RMS'.format(i+1, nmap, np.std(SAXOmapnm3d_tmp[i, pupil_tmp != 0]), np.std(np.asarray(SAXOmapnm3d)[i, pupil != 0])))
-
-        del SAXOmapnm3d_tmp
-        
+    if kw_caos is True:
+        CAOSmapnm3d = fits.getdata(fpath_CAOSmapnm3d)
 
 #%% Lyot Stop
 LyotStop2d = fits.getdata(fpath_LyotStop2d)
@@ -242,7 +229,7 @@ direct_poly_prf_std_f = np.zeros((nImg2d//2))
 corono_poly_prf_std_f = np.zeros((nImg2d//2))
 
 #%% definition of the coronagraph class parameters
-if corono_name != 'APLC':
+if corono_name != 'APLC' and corono_name != 'DummyLC':
     raise NameError('Check the name of the coronagraph!')
 
 params = coro.to_dict(nPup=nPup, nImg2d=nImg2d, Fmax2d = Fmax2d, nFPM = nFPM,
@@ -270,16 +257,16 @@ else:
 """        
 for i, defo_ampl in enumerate(defo_ampl_arr):
     print('defo={0}nm rms'.format(defo_ampl))    
-    fname_direct_poly_img_f     = 'direct_poly_img_nmap={:05d}_saxofudge={:.2f}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_f.fits'.format(nmap, saxofudge, defo_ampl, tipp_ampl, tilt_ampl)
-    fname_corono_poly_img_f     = 'corono_poly_img_nmap={:05d}_saxofudge={:.2f}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_f.fits'.format(nmap, saxofudge, defo_ampl, tipp_ampl, tilt_ampl)
+    fname_direct_poly_img_f     = 'direct_poly_img_nmap={0:05d}_defo={1:.1f}_tip={2:.1f}_tilt={3:.1f}_f.fits'.format(nmap, defo_ampl, tipp_ampl, tilt_ampl)
+    fname_corono_poly_img_f     = 'corono_poly_img_nmap={0:05d}_defo={1:.1f}_tip={2:.1f}_tilt={3:.1f}_f.fits'.format(nmap, defo_ampl, tipp_ampl, tilt_ampl)
     fpath_direct_poly_img_f     = fdir_results / fname_direct_poly_img_f
     fpath_corono_poly_img_f     = fdir_results / fname_corono_poly_img_f
     
     #%%
-    fname_direct_poly_prf_avg_f = 'direct_poly_prf_nmap={:05d}_saxofudge={:.2f}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_avg_f.fits'.format(nmap, saxofudge, defo_ampl, tipp_ampl, tilt_ampl)
-    fname_corono_poly_prf_avg_f = 'corono_poly_prf_nmap={:05d}_saxofudge={:.2f}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_avg_f.fits'.format(nmap, saxofudge, defo_ampl, tipp_ampl, tilt_ampl)
-    fname_direct_poly_prf_std_f = 'direct_poly_prf_nmap={:05d}_saxofudge={:.2f}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_std_f.fits'.format(nmap, saxofudge, defo_ampl, tipp_ampl, tilt_ampl)
-    fname_corono_poly_prf_std_f = 'corono_poly_prf_nmap={:05d}_saxofudge={:.2f}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_std_f.fits'.format(nmap, saxofudge, defo_ampl, tipp_ampl, tilt_ampl)
+    fname_direct_poly_prf_avg_f = 'direct_poly_prf_nmap={0:05d}_defo={1:.1f}_tip={2:.1f}_tilt={3:.1f}_avg_f.fits'.format(nmap, defo_ampl, tipp_ampl, tilt_ampl)
+    fname_corono_poly_prf_avg_f = 'corono_poly_prf_nmap={0:05d}_defo={1:.1f}_tip={2:.1f}_tilt={3:.1f}_avg_f.fits'.format(nmap, defo_ampl, tipp_ampl, tilt_ampl)
+    fname_direct_poly_prf_std_f = 'direct_poly_prf_nmap={0:05d}_defo={1:.1f}_tip={2:.1f}_tilt={3:.1f}_std_f.fits'.format(nmap, defo_ampl, tipp_ampl, tilt_ampl)
+    fname_corono_poly_prf_std_f = 'corono_poly_prf_nmap={0:05d}_defo={1:.1f}_tip={2:.1f}_tilt={3:.1f}_std_f.fits'.format(nmap, defo_ampl, tipp_ampl, tilt_ampl)
     fpath_direct_poly_prf_avg_f = fdir_results / fname_direct_poly_prf_avg_f
     fpath_corono_poly_prf_avg_f = fdir_results / fname_corono_poly_prf_avg_f
     fpath_direct_poly_prf_std_f = fdir_results / fname_direct_poly_prf_std_f
@@ -297,8 +284,8 @@ for i, defo_ampl in enumerate(defo_ampl_arr):
     for imap in range(nmap):
         t0 = time.time()
         if kw_aberr is True:
-            if kw_saxo is True and kw_2nddate is True:
-                OPDmap2d = OPDmap2d0 + SAXOmapnm3d[saxomap_i+imap]*1e-9
+            if kw_caos is True:
+                OPDmap2d = OPDmap2d0 + CAOSmapnm3d[caosmap_i+imap]
                 direct_poly_img_f += corono0.compute_direct_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d)
                 corono_poly_img_f += corono0.compute_corono_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d)
             else:

@@ -137,4 +137,5 @@ scripts/2D/results/2D/plots/SPHERE/corono_poly_lyot_t_OPDmap=0_disp.pdf
 scripts/2D/results/2D/plots/SPHERE/corono_poly_prf_std_t_OPDmap=0_plot.pdf
 scripts/2D/results/2D/plots/SPHERE/corono_poly_prf_std_t_OPDmap=all_plot.pdf
 scripts/2D/test_corono_design_2d_sphere-zelda_plot.py
+results/
 scripts/2D/results/2D/dat_pyth/sbr/sbr_APLC_obs=0.14_lsid=0.28_lsod=1.00_IWA=5.0_OWA=10.0_BW=0.10_nlam=05_1D_N=0050_nFPM=50.000000_rMask=2.800MaxTau_C=7.0_gurobipy.fits
