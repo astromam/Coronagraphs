@@ -194,7 +194,7 @@ if __name__ == '__main__':
     # fdir = Path('/Users/mndiaye/Dropbox/python/Coronagraphs/')
     fdir_pupils  = fdir / 'data' / '2D' / 'pupils' / 'SPHERE' 
     fdir_zelda   = fdir / 'data' / '2D' / 'ZELDA' / str_date / str_obs  
-    fdir_saxo    = fdir / 'data' / '2D' / 'ZELDA' / '2018-04-03'
+    fdir_saxo    = fdir / 'data' / '2D' / 'ZELDA' / str_date
 
     if kw_aberr is True:
         fdir_results = fdir / 'results' / '2D' / 'data' / 'SPHERE' / str_aberr / str_date / str_obs / str_saxo / str_corr  
@@ -276,10 +276,12 @@ if __name__ == '__main__':
             SAXOmapnm3d_tmp = SAXOmapnm3d_tmp[saxomap_i:saxomap_f]
 
             # rescale NCPA map
+            print('Rescaling SPARTA phase screens')
             SAXOmapnm3d = np.empty((nmap, nPup, nPup))
             for i in range(nmap):
                 SAXOmapnm3d[i] = imutils.scale(SAXOmapnm3d_tmp[i], 0, new_dim=(nPup, nPup), method='interp')
-                print('{0:05}/{1:05}: SAXO map before scaling: {2:.2f} nm RMS, after: {3:.2f} nm RMS'.format(i+1, nmap, np.std(SAXOmapnm3d_tmp[i, pupil_tmp != 0]), np.std(np.asarray(SAXOmapnm3d)[i, pupil != 0])))
+                if (i+1) % 1000 == 0:
+                    print('{0:05}/{1:05}: SAXO map before scaling: {2:.2f} nm RMS, after: {3:.2f} nm RMS'.format(i+1, nmap, np.std(SAXOmapnm3d_tmp[i, pupil_tmp != 0]), np.std(np.asarray(SAXOmapnm3d)[i, pupil != 0])))
 
             del SAXOmapnm3d_tmp
             
@@ -372,6 +374,7 @@ if __name__ == '__main__':
                 corono_poly_img_cube_np    = array_to_numpy(corono_poly_img_cube_data, corono_poly_img_cube_shape)
 
                 # create thread pool
+                print('Create thread pool')
                 tpool = multiprocessing.Pool(processes=nproc, initializer=tpool_init,
                                              initargs=(OPDmap2d0, SAXOmapnm3d, corono0, direct_poly_img_cube_data, direct_poly_img_cube_shape,
                                                        corono_poly_img_cube_data, corono_poly_img_cube_shape))
@@ -379,6 +382,7 @@ if __name__ == '__main__':
                 #            corono_poly_img_cube_data, corono_poly_img_cube_shape)
 
                 # create tasks
+                print('Create tasks')
                 tasks = []
                 for image_index in range(nproc):
                     block = nmap / nproc
