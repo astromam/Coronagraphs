@@ -210,17 +210,20 @@ if __name__ == '__main__':
     """
     fname_Apod2d     = 'SPHERE_APO1_field_transmission_map.fits'
     fname_Apod2d_OPDmapnm = 'apo_substrate_D1.fits'
-    fname_Ampmap2d   = 'sphere_pupil_clear_BH_field.fits'
+#    fname_Ampmap2d   = 'sphere_pupil_clear_BH_field.fits'
     fname_LyotStop2d = 'sphere_stop_ST_ALC2.fits'
 
     if kw_aberr is True:
         if kw_skyobs is True:
+            fname_Ampmap2d   = '2018-04-01_night_sphere_pupil_clear_sky_FeII_field.fits'
             fname_ZELDAmapnm3d = '2018-04-01_night_ncpa_loop_700modes_5_ncpa_loop_opd.fits'
             if kw_2nddate is True:
+                fname_Ampmap2d   = '2018-04-03_night_sphere_pupil_clear_sky_FeII_field.fits'
                 fname_ZELDAmapnm3d = '2018-04-03_night_ncpa_loop_sky_2_ncpa_loop_opd.fits'
         else:
+            fname_Ampmap2d   = 'sphere_pupil_clear_BH_field.fits'
             fname_ZELDAmapnm3d = '2018-04-01_ncpa_loop_700modes_2_ncpa_loop_opd.fits'        
-            if kw_2nddate is True:        
+            if kw_2nddate is True:
                 fname_ZELDAmapnm3d = '2018-04-03_ncpa_loop_700modes_ncpa_loop_opd.fits'
 
         if kw_saxo is True:
@@ -230,7 +233,7 @@ if __name__ == '__main__':
     #%% Filepaths for the file sources
     fpath_Apod2d          = fdir_pupils / fname_Apod2d
     fpath_Apod2d_OPDmapnm = fdir_pupils / fname_Apod2d_OPDmapnm
-    fpath_Ampmap2d        = fdir_pupils / fname_Ampmap2d
+    fpath_Ampmap2d        = fdir_zelda / fname_Ampmap2d
 
     if kw_aberr is True:
         fpath_ZELDAmapnm3d = fdir_zelda  / fname_ZELDAmapnm3d   
