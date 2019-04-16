@@ -186,7 +186,7 @@ if __name__ == '__main__':
         if kw_saxo is True:
             str_saxo = 'with_saxo'
             nmap     = nsaxomap*1
-            beta_wfs = 1.17
+            beta_wfs = 1.57
 
     #%%
     # fdir = Path('~/GitHub/Coronagraphs/').expanduser()
