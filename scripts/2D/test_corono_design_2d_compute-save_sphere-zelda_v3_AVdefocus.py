@@ -128,7 +128,9 @@ else:
         beta_wfs = 1./0.6
 
 #%%
-fdir = Path('/Users/avigan/Work/GitHub/Coronagraphs/')
+#fdir = Path('/Users/avigan/Work/GitHub/Coronagraphs/')
+fdir = Path('/Users/mndiaye/Dropbox/python/Coronagraphs/')
+
 fdir_pupils  = fdir / 'data' / '2D' / 'pupils' / 'SPHERE' 
 fdir_zelda   = fdir / 'data' / '2D' / 'ZELDA' / str_date / str_obs  
 fdir_saxo    = fdir / 'data' / '2D' / 'ZELDA' / '2018-04-03'
@@ -161,8 +163,8 @@ if kw_aberr is True:
             fname_ZELDAmapnm3d = '2018-04-03_ncpa_loop_700modes_ncpa_loop_opd.fits'
     
     if kw_saxo is True and kw_2nddate is True:    
-        fname_SAXOmapnm3d = '2018-04-04T03_06_15-saxo_residual_turbulence.fits'
-
+        fname_SAXOmapnm3d = '2018-04-04T00:41:34-saxo_residual_turbulence_time=01.0sec_seeing=0.9as_tiptilt=1_gains=0_fitting=1_alias=1.fits'
+        
 #%% Filepaths for the file sources
 fpath_Apod2d          = fdir_pupils / fname_Apod2d
 fpath_Apod2d_OPDmapnm = fdir_pupils / fname_Apod2d_OPDmapnm
@@ -201,18 +203,37 @@ if kw_aberr is True:
 if kw_aberr is True:
     ZELDAmapnm3d = fits.getdata(fpath_ZELDAmapnm3d)
 
+#    if kw_saxo is True and kw_2nddate is True:
+#        SAXOmapnm3d_tmp = fits.getdata(fpath_SAXOmapnm3d)
+#        if saxofudge != 1.:
+#            SAXOmapnm3d_tmp *= saxofudge 
+#        nsaxo_all = len(SAXOmapnm3d_tmp)        
+#        pupil_tmp = aperture.sphere_saxo_pupil()
+#        pupil = np.round(imutils.scale(pupil_tmp, 0, new_dim=(nPup,nPup), method='interp'))
+#
+#        # rescale NCPA map
+#        SAXOmapnm3d = np.empty((nmap, nPup, nPup))
+#        for i in range(nmap):
+#            SAXOmapnm3d[i] = imutils.scale(SAXOmapnm3d_tmp[i+saxomap_i], 0, new_dim=(nPup,nPup), method='interp')
+#            print('{0:05}/{1:05}: SAXO map before scaling: {2:.2f} nm RMS, after: {3:.2f} nm RMS'.format(i+1, nmap, np.std(SAXOmapnm3d_tmp[i, pupil_tmp != 0]), np.std(np.asarray(SAXOmapnm3d)[i, pupil != 0])))
+#
+#        del SAXOmapnm3d_tmp
+
     if kw_saxo is True and kw_2nddate is True:
-        SAXOmapnm3d_tmp = fits.getdata(fpath_SAXOmapnm3d)
-        if saxofudge != 1.:
-            SAXOmapnm3d_tmp *= saxofudge 
-        nsaxo_all = len(SAXOmapnm3d_tmp)        
+        # SAXO pupils
         pupil_tmp = aperture.sphere_saxo_pupil()
-        pupil = np.round(imutils.scale(pupil_tmp, 0, new_dim=(nPup,nPup), method='interp'))
+        pupil = np.round(imutils.scale(pupil_tmp, 0, new_dim=(nPup, nPup), method='interp'))
+
+        # read SAXO phase residuals
+        SAXOmapnm3d_tmp = fits.getdata(fpath_SAXOmapnm3d)
+
+        # select only phase screens that will be actually used
+        SAXOmapnm3d_tmp = SAXOmapnm3d_tmp[saxomap_i:saxomap_f]
 
         # rescale NCPA map
         SAXOmapnm3d = np.empty((nmap, nPup, nPup))
         for i in range(nmap):
-            SAXOmapnm3d[i] = imutils.scale(SAXOmapnm3d_tmp[i+saxomap_i], 0, new_dim=(nPup,nPup), method='interp')
+            SAXOmapnm3d[i] = imutils.scale(SAXOmapnm3d_tmp[i], 0, new_dim=(nPup, nPup), method='interp')
             print('{0:05}/{1:05}: SAXO map before scaling: {2:.2f} nm RMS, after: {3:.2f} nm RMS'.format(i+1, nmap, np.std(SAXOmapnm3d_tmp[i, pupil_tmp != 0]), np.std(np.asarray(SAXOmapnm3d)[i, pupil != 0])))
 
         del SAXOmapnm3d_tmp

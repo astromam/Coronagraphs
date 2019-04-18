@@ -129,11 +129,11 @@ if __name__ == '__main__':
     bw     = width/wv 
 
     # simulation configuration   
-    kw_aberr     = True
+    kw_aberr     = False
     kw_2nddate   = bool(eval(sys.argv[1]))
-    kw_skyobs    = True     # related to ZELDA map
+    kw_skyobs    = False     # related to ZELDA map
     kw_aftercorr = bool(eval(sys.argv[2]))
-    kw_saxo      = True
+    kw_saxo      = False
     saxomap_i    = 0               # saxo first screen
     saxomap_f    = int(30*1380)    # saxo last screen
     
@@ -156,7 +156,7 @@ if __name__ == '__main__':
     """    
     if kw_aberr is False:
         str_aberr = 'wo_aberr'
-        str_date  = ''
+        str_date  = '2018-04-01'
         if kw_skyobs is True:
             str_obs   = 'sky'
         else:
@@ -189,9 +189,9 @@ if __name__ == '__main__':
             beta_wfs = 1.57
 
     #%%
-    fdir = Path('~/GitHub/Coronagraphs/').expanduser()
+    # fdir = Path('~/GitHub/Coronagraphs/').expanduser()
     # fdir = Path('~/Work/GitHub/Coronagraphs/').expanduser()
-    # fdir = Path('/Users/mndiaye/Dropbox/python/Coronagraphs/')
+    fdir = Path('/Users/mndiaye/Dropbox/python/Coronagraphs/')
     fdir_pupils  = fdir / 'data' / '2D' / 'pupils' / 'SPHERE' 
     fdir_zelda   = fdir / 'data' / '2D' / 'ZELDA' / str_date / str_obs  
     fdir_saxo    = fdir / 'data' / '2D' / 'ZELDA' / str_date
@@ -211,7 +211,7 @@ if __name__ == '__main__':
     fname_Apod2d     = 'SPHERE_APO1_field_transmission_map.fits'
     #fname_Apod2d     = 'vlt_APLC_obs=0.14_lsid=0.28_lsod=1.00_IWA=2.0_OWA=20.0_BW=0.20_nlam=05_1D_N=0384_nFPM=50.000000_rMask=2.252MaxContrastL1_tau=0.756_stdgrb.fits'
     fname_Apod2d_OPDmapnm = 'apo_substrate_D1.fits'
-#    fname_Ampmap2d   = 'sphere_pupil_clear_BH_field.fits'
+    fname_Ampmap2d   = 'sphere_pupil_clear_BH_field.fits'
     fname_LyotStop2d = 'sphere_stop_ST_ALC2.fits'
 
     if kw_aberr is True:
@@ -260,8 +260,8 @@ if __name__ == '__main__':
     Apod2d_OPDmapnm[np.isnan(Apod2d_OPDmapnm)] = 0
 
     #%% Amplitude errors
-    if kw_aberr is True:
-        Ampmap2d = fits.getdata(fpath_Ampmap2d)
+    #if kw_aberr is True:
+    Ampmap2d = fits.getdata(fpath_Ampmap2d)
 
     #%% Phase errors
     if kw_aberr is True:
@@ -335,7 +335,7 @@ if __name__ == '__main__':
         corono0  = coro.design.APLC2d(**params)
     else:
         params  = coro.update_params(params, OPDmap2d=None, 
-                                     Ampmap2d=None, LyotStop2d=LyotStop2d)
+                                     Ampmap2d=Ampmap2d, LyotStop2d=LyotStop2d)
         corono0 = coro.design.APLC2d(**params)    
 
 
