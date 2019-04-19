@@ -22,6 +22,7 @@ from astropy.io import fits
 from pyzelda.utils import aperture, imutils
 import corono as coro
 
+import time
 
 #%% APLC2d tests
 """
@@ -629,7 +630,7 @@ else:
 # vector of angular separation for the computation of planet transmission
 sep_min  = 0.0
 sep_max  = Fmax2dbis//2
-sep_stp  = 0.5
+sep_stp  = 2*Fmax2dbis/nImg2dbis#0.5
 
 # array of angular separations
 nsep     = int(round(1+(sep_max-sep_min)/sep_stp))
@@ -645,12 +646,19 @@ Z       = 2.*rr*np.cos(theta)*Pupil2d
 # OPD map to generate a planet
 opd_arr = [sep*wv*(1./4.) * Z for l, sep in enumerate(sep_arr)]
 
+#%%
+
 # computation of the coronagraphic image of the planet
 corono_mono_img_t3_P = np.zeros((nsep, nlam_ter, nImg2dbis, nImg2dbis))
+t0 = time.time()
 for l in range(nsep):
     params33 = coro.update_params(params3, OPDmap2d = opd_arr[l]) 
     corono33 = coro.design.APLC2d(**params33)
     corono_mono_img_t3_P[l]  = corono33.compute_corono_intensity_2d(Apod2d, poly = False)
+t1 = time.time()
+
+print('computation time: {0:.2f}s'.format(t1-t0))
+
 
 # normalization of the planet coronagraphic image
 corono_mono_img_t3_P /= direct_mono_img_fN_peak
@@ -706,18 +714,18 @@ for i in range(nlam_ter-1):
 pl.show()
 
 #%%
+"""
+Contour plot for spectral bandwidth robustnesswith eta_S/eta_P
+""" 
+
+#%%
 # normalization term    
 #direct_mono_img_f3_peak = direct_mono_img_t3[nlam_ter//2].max()
 
 lam0D_corono = rad_corono*Fmax2dbis/nImg2dbis
 
 wv_ind = wv*corono3.lam_t >= 0.95e-6
-#lam0D_ind = lam0D_corono >= 1.0
 lam0D_ind = sep_arr >= 1.0
-
-# bounds for the separations
-#lam0D_min = lam0D_corono[lam0D_ind].min()
-#lam0D_max = lam0D_corono[lam0D_ind].max()
 
 lam0D_min = sep_arr[lam0D_ind].min()
 lam0D_max = sep_arr[lam0D_ind].max()
@@ -732,13 +740,6 @@ lam_max = corono3.lam_t[wv_ind].max()
 lam0 = 1.
 lam_opt_min = lam0 - 0.5*bw#corono0.lam_t.min()
 lam_opt_max = lam0 + 0.5*bw#corono0.lam_t.max()
-
-Dtel = 8
-lam0D2mas = (wv/Dtel)*(180.*3600*1000/np.pi)
-
-lam02um = wv*1e6 
-
-
 
 #%%
 fname_image_plane_f_disp = 'current_aplc_poly_bw_sensitivity_contour_nPup={0}_etaS-etaP_disp.pdf'.format(nPup)
@@ -773,7 +774,7 @@ ax0.set_ylabel(r'Wavelength $\lambda$ in $\lambda_0$')
 ax0.set_aspect('auto')
 #ax0.set_title(r'New APLC design')
 ax0.text(10**(np.log10(lam0D_max)/2), 1.4, "Current APLC design", fontsize=ftsz, 
-         horizontalalignment="center", color = "white")
+         horizontalalignment="center", color = "blue")
 #exec('ax{0}.tick_params(axis="x", which="both", bottom="off", top="off", labelbottom="off")'.format(1,))
 #exec('ax{0}.tick_params(axis="y", which="both", left="off", right="off", labelleft="off")'.format(1,))
 
