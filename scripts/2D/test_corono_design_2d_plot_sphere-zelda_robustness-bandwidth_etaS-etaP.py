@@ -73,6 +73,10 @@ lam0D2mas = (wv/Dtel)*(180.*3600*1000/np.pi)
 
 lam02um = wv*1e6
 
+val = 0
+if nImg2dbis%2 == 0:
+    val = 1/2
+
 #%%
 """
 ### File directories
@@ -570,58 +574,70 @@ Robustness to spectral bandwidth
 nlam_ter = 101
 bw_ter   = 0.92
 
+
+#%%
+"""
+### Computation of the normalization factor
+"""
+# Parameters for the monochromatic PSF for a pupil without apodizer nor Lyot stop   
+params_N = coro.update_params(params, Fmax2d = Fmax2dbis, nImg2d = nImg2dbis, 
+                                nlam = 1, bw = bw_ter, Pupil2d = Pupil2d, 
+                                LyotStop2d = Pupil2d)
+
+# Coronagraph object definition including previous parameters
+if corono_name != 'APLC':
+    raise NameError('{0}: Not an APLC!'.format(corono_name))
+corono_N = coro.design.APLC2d(**params_N)
+
+# Computation of the monochromatic psf of the telescope aperture
+direct_mono_img_N = corono_N.compute_direct_intensity_2d(Pupil2d, poly=False)
+
+# normalization term wrt to the PSF of the pupil without apodizer nor Lyot stop  
+direct_mono_img_N_peak = direct_mono_img_N[0].max()
+
+#%%
+"""
+### Computation of the monochromatic direct and coronagraphic images
+"""
 # filepaths of the monochromatic direct and monochromatic images
 fname_imgs_dir = 'current_aplc_poly_bw={0}_nlam={1}_nPup={2}_mono_direct.fits'.format(bw_ter, nlam_ter, nPup)
 fname_imgs_cor = 'current_aplc_poly_bw={0}_nlam={1}_nPup={2}_mono_corono.fits'.format(bw_ter, nlam_ter, nPup)
 fpath_imgs_dir = fdir_plots / fname_imgs_dir
 fpath_imgs_cor = fdir_plots / fname_imgs_cor
 
-# PSF of the pupil without apodizer nor Lyot stop   
-paramsN = coro.update_params(params, Fmax2d = Fmax2dbis, nImg2d = nImg2dbis, 
-                                nlam = 1, bw = bw_ter, 
-                                LyotStop2d = Pupil2d)
-
-if corono_name == 'APLC':
-    coronoN = coro.design.APLC2d(**paramsN)
-    direct_mono_img_tN = coronoN.compute_direct_intensity_2d(Apod2d, poly=False)
-elif corono_name == 'SP':
-    corono4 = coro.design.SP2d(**paramsN)
-    direct_mono_img_tN = coronoN.compute_direct_intensity_2d(corono00.Pupil2d, poly=False)
-else:
-    raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))    
-
-# normalization term wrt to the PSF of the pupil without apodizer nor Lyot stop  
-direct_mono_img_fN_peak = direct_mono_img_tN[0].max()
-
-# PSF of the pupil with apodizer and Lyot stop  
-params3    = coro.update_params(params, Fmax2d = Fmax2dbis, nImg2d = nImg2dbis, 
+# Parameters for the coronagraph object 
+params_S    = coro.update_params(params, Fmax2d = Fmax2dbis, nImg2d = nImg2dbis, 
                                 nlam = nlam_ter, bw = bw_ter)
 
+# coronagraph object
+if corono_name != 'APLC':
+    raise NameError('{0}: Not an APLC!'.format(corono_name))
+corono_S = coro.design.APLC2d(**params_S)
+
+# computation or reading of the direct and coronagraphic images
+print('computation of the star coronagraphic image')
+t0 = time.time()
 if do_fits:
-    if corono_name == 'APLC':
-        corono3 = coro.design.APLC2d(**params3)
-        direct_poly_img_f3 = corono3.compute_direct_intensity_2d(Apod2d)
-        direct_mono_img_t3 = corono3.compute_direct_intensity_2d(Apod2d, poly=False)
-    elif corono_name == 'SP':
-        corono3 = coro.design.SP2d(**params3)
-        direct_poly_img_f3 = corono3.compute_direct_intensity_2d(corono00.Pupil2d)
-        direct_mono_img_t3 = corono3.compute_direct_intensity_2d(corono00.Pupil2d, poly=False)
-    else:
-        raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))    
+    # broadband images
+    #direct_poly_img3 = corono_S.compute_direct_intensity_2d(Apod2d)
+    #corono_poly_img3 = corono_S.compute_corono_intensity_2d(Apod2d)
+      
+    # monochromatic images
+    direct_mono_img_S = corono_S.compute_direct_intensity_2d(Apod2d, poly=False)
+    corono_mono_img_S = corono_S.compute_corono_intensity_2d(Apod2d, poly=False)
 
-    # coronagraphic images
-    corono_poly_img_f3 = corono3.compute_corono_intensity_2d(Apod2d)
-    corono_mono_img_t3 = corono3.compute_corono_intensity_2d(Apod2d, poly=False)
-    
     # normalized direct and coronagraphic images in monochromatic light
-    direct_mono_img_t3 /= direct_mono_img_fN_peak
-    corono_mono_img_t3 /= direct_mono_img_fN_peak
+    direct_mono_img_S /= direct_mono_img_N_peak
+    corono_mono_img_S /= direct_mono_img_N_peak
 
-    fits.writeto(fpath_imgs_dir, direct_mono_img_t3, overwrite= True)
-    fits.writeto(fpath_imgs_cor, corono_mono_img_t3, overwrite= True)
+    fits.writeto(fpath_imgs_dir, direct_mono_img_S, overwrite= True)
+    fits.writeto(fpath_imgs_cor, corono_mono_img_S, overwrite= True)
 else:
-    direct_mono_img_t3 = fits.getdata(fpath_imgs_dir)
-    corono_mono_img_t3 = fits.getdata(fpath_imgs_cor)    
+    direct_mono_img_S = fits.getdata(fpath_imgs_dir)
+    corono_mono_img_S = fits.getdata(fpath_imgs_cor)  
+    
+t1 = time.time()
+print('computation time: {0:.2f}s'.format(t1-t0))    
 
 #%%
 """
@@ -630,7 +646,7 @@ else:
 # vector of angular separation for the computation of planet transmission
 sep_min  = 0.0
 sep_max  = Fmax2dbis//2
-sep_stp  = 2*Fmax2dbis/nImg2dbis#0.5
+sep_stp  = Fmax2dbis/nImg2dbis#0.5
 
 # array of angular separations
 nsep     = int(round(1+(sep_max-sep_min)/sep_stp))
@@ -647,25 +663,23 @@ Z       = 2.*rr*np.cos(theta)*Pupil2d
 opd_arr = [sep*wv*(1./4.) * Z for l, sep in enumerate(sep_arr)]
 
 #%%
-
 # computation of the coronagraphic image of the planet
-corono_mono_img_t3_P = np.zeros((nsep, nlam_ter, nImg2dbis, nImg2dbis))
+corono_mono_img_P = np.zeros((nsep, nlam_ter, nImg2dbis, nImg2dbis))
+print('computation of the planet coronagraphic image')
 t0 = time.time()
 for l in range(nsep):
-    params33 = coro.update_params(params3, OPDmap2d = opd_arr[l]) 
-    corono33 = coro.design.APLC2d(**params33)
-    corono_mono_img_t3_P[l]  = corono33.compute_corono_intensity_2d(Apod2d, poly = False)
+    params_P = coro.update_params(params_S, OPDmap2d = opd_arr[l]) 
+    corono_P = coro.design.APLC2d(**params_P)
+    corono_mono_img_P[l]  = corono_P.compute_corono_intensity_2d(Apod2d, poly = False)
 t1 = time.time()
-
 print('computation time: {0:.2f}s'.format(t1-t0))
 
-
 # normalization of the planet coronagraphic image
-corono_mono_img_t3_P /= direct_mono_img_fN_peak
+corono_mono_img_P /= direct_mono_img_N_peak
 
 #%% display of the planet image
 
-Z0P = np.log10(corono_mono_img_t3_P[2, nlam_ter//2])
+Z0P = np.log10(corono_mono_img_P[2, nlam_ter//2])
 
 pl.figure(30)
 pl.clf()
@@ -673,44 +687,63 @@ pl.imshow(Z0P, cmap = 'inferno', vmin = -7.5, vmax = -3.5)
 pl.show()    
 
 #%%
-val = 0
-if nImg2dbis%2 == 0:
-    val = 1/2
+"""
+### Eta_S and Eta_P computation
+"""
+# photometric aperture circular or ring radius in lam/D
+phot_rad = 0.7
 
 # array of angular distances in the final image plane
-xx,yy  = np.meshgrid(np.arange(nImg2dbis)-nImg2dbis//2+val, np.arange(nImg2dbis)-nImg2dbis//2+val)
-mydist = (Fmax2dbis/nImg2dbis)*np.hypot(yy,xx)        
+xxi,yyi  = np.meshgrid(np.arange(nImg2dbis)-nImg2dbis//2+val, np.arange(nImg2dbis)-nImg2dbis//2+val)
+mydist = (Fmax2dbis/nImg2dbis)*np.hypot(yyi,xxi)        
 
-
-eta_S_arr = np.zeros((nsep, nlam_ter))
-eta_P_arr = np.zeros((nsep, nlam_ter))
+eta_S = np.zeros((nsep, nlam_ter))
+eta_P = np.zeros((nsep, nlam_ter))
 
 ring_aper = np.zeros((nImg2dbis, nImg2dbis))
-phot_aper = np.zeros((nImg2dbis, nImg2dbis))
+circ_aper = np.zeros((nImg2dbis, nImg2dbis))
+
+sum_ring_aper = np.zeros((nsep, nlam_ter))
+sum_circ_aper = np.zeros((nsep, nlam_ter))
+
+print('eta_S and eta_P computation')
+t0 = time.time()
 for i in range(nsep):
     for j in range(nlam_ter):
     # compute averaged starlight intensity
-        resbis_S = (mydist <= sep_arr[i] + 0.7*corono3.lam_t[j])*(mydist >= sep_arr[i] -0.7*corono3.lam_t[j])
-        ring_aper[resbis_S] = 1.
-        eta_S_arr[i,j] = np.sum(ring_aper*corono_mono_img_t3[j])/np.sum(ring_aper)
-        ring_aper[resbis_S] = 0.
+        ind_S = (mydist <= sep_arr[i] + phot_rad)*(mydist >= sep_arr[i] -phot_rad)
+        ring_aper[ind_S] = 1.
+        sum_ring_aper[i,j] = np.sum(ring_aper)
+        eta_S[i,j] = np.sum(ring_aper*corono_mono_img_S[j])/np.sum(ring_aper)
+        ring_aper[ind_S] = 0.
     
         # compute averaged intensity of the planet at its location within a photmetric aperture of 0.7lam/D
-        mydist_P = (Fmax2dbis/nImg2dbis)*np.hypot(yy,xx-sep_arr[i]*nImg2dbis/Fmax2dbis)        
-        resbis_P = (mydist_P <= 0.7*corono3.lam_t[j])
-        phot_aper[resbis_P] = 1.    
-        eta_P_arr[i,j] = np.sum(phot_aper*corono_mono_img_t3_P[i, j])/np.sum(phot_aper)
-        phot_aper[resbis_P] = 0.
+        mydist_P = (Fmax2dbis/nImg2dbis)*np.hypot(yyi,xxi-sep_arr[i]*nImg2dbis/Fmax2dbis)        
+        ind_P = (mydist_P <= phot_rad)
+        circ_aper[ind_P] = 1.
+        sum_circ_aper[i,j] = np.sum(circ_aper)
+        eta_P[i,j] = np.sum(circ_aper*corono_mono_img_P[i, j])/np.sum(circ_aper)
+        circ_aper[ind_P] = 0.
+t1 = time.time()
+print('computation time: {0}s'.format(t1-t0))
     
 #%%
-values = range(nlam_ter-1)
+"""
+### Eta_S/Eta_P ratio
+"""
+etaSP_ratio = eta_S/eta_P
+
+#%%
+
 colors_wv = pl.cm.rainbow(np.linspace(0,1,nlam_ter-1))
 
-pl.figure(31)
+pl.figure(34)
 pl.clf()
 for i in range(nlam_ter-1):
-    pl.plot(sep_arr, np.log10(eta_S_arr[:, i]/eta_P_arr[:, i]),
-            color = colors_wv[i])
+    pl.plot(sep_arr, np.log10(etaSP_ratio[:, i]), color = colors_wv[i])
+pl.xlabel(r'angular separation in $\lambda$/D') 
+pl.ylabel(r'$\eta_S/\eta_P$')    
+pl.title(r'$\eta_S/\eta_P$ vs wavelength $\lambda$')
 pl.show()
 
 #%%
@@ -724,17 +757,17 @@ Contour plot for spectral bandwidth robustnesswith eta_S/eta_P
 
 lam0D_corono = rad_corono*Fmax2dbis/nImg2dbis
 
-wv_ind = wv*corono3.lam_t >= 0.95e-6
+wv_ind = wv*corono_S.lam_t >= 0.95e-6
 lam0D_ind = sep_arr >= 1.0
 
+# bounds for the separations
 lam0D_min = sep_arr[lam0D_ind].min()
 lam0D_max = sep_arr[lam0D_ind].max()
 
-
 # bounds for the wavelengths
-lam_min0 = corono3.lam_t.min()
-lam_min = corono3.lam_t[wv_ind].min()
-lam_max = corono3.lam_t[wv_ind].max()
+lam_min0 = corono_S.lam_t.min()
+lam_min = corono_S.lam_t[wv_ind].min()
+lam_max = corono_S.lam_t[wv_ind].max()
 
 # bounds for the optimization wavelength 
 lam0 = 1.
@@ -749,7 +782,7 @@ fpath_image_plane_f_disp = fdir_plots / fname_image_plane_f_disp
 # line width parameter
 lw0 = 2.5
 
-tmp = (eta_S_arr[:, wv_ind]/eta_P_arr[:, wv_ind])
+tmp = etaSP_ratio[:, wv_ind]
 
 Z0 = np.log10(tmp[lam0D_ind]).T
 extent0 = [lam0D_min, lam0D_max, lam_min, lam_max]
@@ -814,7 +847,7 @@ f2.subplots_adjust(bottom=0.13, top=0.87, left=0.1, right=0.75,
 #f2.subplots_adjust(right=0.8)
 cbar_ax = f2.add_axes([0.86, 0.15, 0.05, 0.7])
 cbar    = f2.colorbar(im, cax=cbar_ax)
-cbar.ax.set_ylabel('$\eta_S/\eta_P$ in log scale', rotation=270, labelpad = 16)
+cbar.ax.set_ylabel('Raw contrast $\eta_S/\eta_P$ in log scale', rotation=270, labelpad = 16)
 if do_plot is True:
     pl.savefig(str(fpath_image_plane_f_disp), transparent=True)
 pl.tight_layout()
