@@ -129,11 +129,11 @@ if __name__ == '__main__':
     bw     = width/wv 
 
     # simulation configuration   
-    kw_aberr     = False
+    kw_aberr     = True
     kw_2nddate   = bool(eval(sys.argv[1]))
-    kw_skyobs    = False     # related to ZELDA map
+    kw_skyobs    = True     # related to ZELDA map
     kw_aftercorr = bool(eval(sys.argv[2]))
-    kw_saxo      = False
+    kw_saxo      = True
     saxomap_i    = 0               # saxo first screen
     saxomap_f    = int(30*1380)    # saxo last screen
     
@@ -189,9 +189,9 @@ if __name__ == '__main__':
             beta_wfs = 1.57
 
     #%%
-    # fdir = Path('~/GitHub/Coronagraphs/').expanduser()
+    fdir = Path('~/GitHub/Coronagraphs/').expanduser()
     # fdir = Path('~/Work/GitHub/Coronagraphs/').expanduser()
-    fdir = Path('/Users/mndiaye/Dropbox/python/Coronagraphs/')
+    # fdir = Path('/Users/mndiaye/Dropbox/python/Coronagraphs/')
     fdir_pupils  = fdir / 'data' / '2D' / 'pupils' / 'SPHERE' 
     fdir_zelda   = fdir / 'data' / '2D' / 'ZELDA' / str_date / str_obs  
     fdir_saxo    = fdir / 'data' / '2D' / 'ZELDA' / str_date
