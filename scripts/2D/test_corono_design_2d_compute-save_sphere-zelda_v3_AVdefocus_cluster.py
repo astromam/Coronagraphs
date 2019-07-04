@@ -25,6 +25,7 @@ import corono as coro
 import ctypes
 import multiprocessing
 
+
 #%%
 def array_to_numpy(shared_array, shape):
     '''
@@ -195,9 +196,9 @@ if __name__ == '__main__':
             beta_wfs = 1/0.64*1/0.8
 
     #%%
-    fdir = Path('~/GitHub/Coronagraphs/').expanduser()
+    # fdir = Path('~/GitHub/Coronagraphs/').expanduser()
     # fdir = Path('~/Work/GitHub/Coronagraphs/').expanduser()
-    # fdir = Path('/Users/mndiaye/Dropbox/python/Coronagraphs/')
+    fdir = Path('/Users/mndiaye/Dropbox/python/Coronagraphs/')
     fdir_pupils  = fdir / 'data' / '2D' / 'pupils' / 'SPHERE' 
     fdir_zelda   = fdir / 'data' / '2D' / 'ZELDA' / str_date / str_obs  
     fdir_saxo    = fdir / 'data' / '2D' / 'ZELDA' / str_date
