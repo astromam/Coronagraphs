@@ -136,6 +136,9 @@ if __name__ == '__main__':
     kw_saxo      = True
     saxomap_i    = 0               # saxo first screen
     saxomap_f    = int(30*1380)    # saxo last screen
+
+    # seeing for on-sky observations
+    seeing = 0.8
     
     # multi-processing
     nproc = multiprocessing.cpu_count()//2 - 1
@@ -173,7 +176,8 @@ if __name__ == '__main__':
         str_saxo  = ''
         imap0     = 0
         nmap      = 1
-        beta_wfs  = 1./0.95
+        # beta_wfs  = 1/0.95
+        beta_wfs  = 1/0.80
         str_saxo_tmp  = 'wo_saxo'
         if kw_2nddate is True:
             str_date = '2018-04-03'
@@ -182,11 +186,13 @@ if __name__ == '__main__':
         if kw_aftercorr is True:
             str_corr = 'after_correction'
             imap0    = 3
-            beta_wfs = 1/0.95
+            # beta_wfs = 1/0.95
+            beta_wfs = 1/0.80
         if kw_saxo is True:
             str_saxo = 'with_saxo'
             nmap     = nsaxomap*1
-            beta_wfs = 1.57
+            # beta_wfs = 1/0.64
+            beta_wfs = 1/0.64*1/0.8
 
     #%%
     fdir = Path('~/GitHub/Coronagraphs/').expanduser()
@@ -209,7 +215,7 @@ if __name__ == '__main__':
     ### Filenames for the sources
     """
     fname_Apod2d     = 'SPHERE_APO1_field_transmission_map.fits'
-    #fname_Apod2d     = 'vlt_APLC_obs=0.14_lsid=0.28_lsod=1.00_IWA=2.0_OWA=20.0_BW=0.20_nlam=05_1D_N=0384_nFPM=50.000000_rMask=2.252MaxContrastL1_tau=0.756_stdgrb.fits'
+    # fname_Apod2d     = 'vlt_APLC_obs=0.14_lsid=0.28_lsod=1.00_IWA=2.0_OWA=20.0_BW=0.20_nlam=05_1D_N=0384_nFPM=50.000000_rMask=2.252MaxContrastL1_tau=0.756_stdgrb.fits'
     fname_Apod2d_OPDmapnm = 'apo_substrate_D1.fits'
     fname_Ampmap2d   = 'sphere_pupil_clear_BH_field.fits'
     fname_LyotStop2d = 'sphere_stop_ST_ALC2.fits'
@@ -228,7 +234,7 @@ if __name__ == '__main__':
                 fname_ZELDAmapnm3d = '2018-04-03_ncpa_loop_700modes_ncpa_loop_opd.fits'
 
         if kw_saxo is True:
-            fname_SAXOmapnm3d = '2018-04-04T00:41:34-saxo_residual_turbulence_time=30.0sec_seeing=0.9as_tiptilt=1_gains=0_fitting=1_alias=1.fits'
+            fname_SAXOmapnm3d = '2018-04-04T00:41:34-saxo_residual_turbulence_time=30.0sec_seeing={:.1f}as_tiptilt=1_gains=0_fitting=1_alias=1.fits'.format(seeing)
     
     #%% Filepaths for the file sources
     fpath_Apod2d          = fdir_pupils / fname_Apod2d
