@@ -27,10 +27,10 @@ corono_name  = 'APLC' # 'SP' or 'APLC'
 pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
 problem_name = 'MaxTau' # 'MaxTau' # ,'MaxContrastLinf' # 'MaxContrastL1' #
 solver       = 'stdgrb' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
-slvLogToConsole = 0
+slvLogToConsole = 1
 slvCrossover    = 0
 slvMethod       = 2
-allLogToConsole = 0
+allLogToConsole = 1
 
 MinIsland   = False
 Binarity    = False
@@ -64,7 +64,7 @@ ImPart = False
 
 #nlam
 bw   = 0.1
-nlam = 5
+nlam = 1
 
 do_fits = True
 
