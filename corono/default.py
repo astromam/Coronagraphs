@@ -109,7 +109,7 @@ def get_default_params_Coronagraph():
            'Pupil2dSym':True, 
            'Pupil1d':None, 'LyotStop1d':None,
            'Pupil2d':None, 'LyotStop2d':None,
-           'ImPart':True}
+           'ImPart':True, 'lam_t':None}
             
     return tmp
 
