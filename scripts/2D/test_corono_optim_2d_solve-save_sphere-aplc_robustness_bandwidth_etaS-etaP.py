@@ -30,6 +30,17 @@ import time
 """
 Parameters
 """
+
+wv_min = 1.92e-6
+wv_max = 2.35e-6
+
+asym_ratio = 0.5
+wv = 1.593e-6#wv_min*(1 - asym_ratio) + wv_max*asym_ratio
+
+
+dAper     = 8
+mas2rad   = np.pi/(180.*3600)
+
 pl.close('all')
 if True:
     # Telescope name
@@ -47,11 +58,16 @@ if True:
     #nPup = corono0.params['nPup']
     nPup = 384
     nFPM = 50
-    Fmax2d = 22.5
-    nImg2d = 45
+    Fmax2d = 22.5*2
+    nImg2d = 45*2
     
     # mask radius in lam0/D unit
-    rMask = 2.252
+    rMask_m   = 287e-6/2.#372e-6/2.
+    Fratio    = 40
+    rMask  = rMask_m/(wv*Fratio)
+    print('Mask radius: {0:.3f} lambda_0/D at {1:.3f}um'.format(rMask, wv*1e6))
+    rMask_mas = 1000.*rMask * (wv/dAper)/mas2rad
+    print('Mask radius: {0:.2f} mas at {1:.3f}um'.format(rMask_mas, wv*1e6))
     
     # dark zone bounds (inner and outer edges) in lam0/D unit
     rho0 =  2.0
@@ -71,12 +87,12 @@ if True:
     
     #nlam
     bw   = 0.2
+    #bw   = 2*(wv_max-wv_min)/(wv_max+wv_min)
     nlam = 5
    
     do_fits = True
 
 do_plot = True    
-wv = 1.593e-6
 
 nImg2dbis = 256
 Fmax2dbis = nImg2dbis/(2*(wv/950e-9))
@@ -176,7 +192,8 @@ params = coro.to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
                  corono_name = corono_name, pupil_name = pupil_name,
                  MinIsland = MinIsland, FirstDerGlobalLim = FirstDerGlobalLim,
                  Binarity = Binarity, BinarityReg = BinarityReg,
-                 ImPart = ImPart, LSRobustness = LSRobustness)
+                 ImPart = ImPart, LSRobustness = LSRobustness,
+                 lam_t = None)
 
 
 if corono_name == 'SP':
@@ -334,6 +351,7 @@ circle_rho1 = Circle((cx0, cy0), cr1, color='blue', fill = False, ls = '--',
 
 f2 = pl.figure(23, figsize=(7,5))
 pl.clf()
+pl.title('Broadband coronagraphic image')
 ax0 = f2.add_subplot(111)
 im = ax0.imshow(np.log10(corono_poly_img_f/direct_poly_img_f.max()), cmap = "inferno", vmin=-7.5, vmax=-3.5)
 #exec('ax{0}.text(nImg2d/2, 0.1*nImg2d, "nmap={1:05d}", fontsize=16, horizontalalignment="center", color = "white")'.format(1,1))
@@ -460,9 +478,9 @@ pl.axhline(10**(-cDarkHole), xmin=corono0.xi2d.min(), xmax=corono0.xi2d.max(),
 pl.xlabel(r'Angular separation in $\lambda_0$/D')
 pl.ylabel(r'5$\sigma$ normalized intensity in log scale')
 pl.ylim(3e-8, 3e-4)
-pl.legend()
+#pl.legend()
 pl.title('Intensity profile in monochromatic light')
-pl.tight_layout()
+#pl.tight_layout()
 if do_plot is True:
     pl.savefig(str(fpath_image_plane_mono_plot), transparent=True)
 
@@ -505,7 +523,7 @@ Robustness to spectral bandwidth
 """
 # Parameters   
 nlam_ter = 101
-bw_ter   = 0.92
+bw_ter   = 1.9#0.92
 
 #%%
 """
@@ -514,7 +532,7 @@ bw_ter   = 0.92
 # Parameters for the monochromatic PSF for a pupil without apodizer nor Lyot stop   
 params_N = coro.update_params(params, Fmax2d = Fmax2dbis, nImg2d = nImg2dbis, 
                                 nlam = 1, bw = bw_ter, Pupil2d = Pupil2d, 
-                                LyotStop2d = Pupil2d)
+                                LyotStop2d = Pupil2d, lam_t = None)
 
 # Coronagraph object definition including previous parameters
 if corono_name != 'APLC':
@@ -614,10 +632,11 @@ corono_mono_img_P /= direct_mono_img_N_peak
 #%% display of the planet image
 Z0P = np.log10(corono_mono_img_P[2, nlam_ter//2])
 
-pl.figure(30)
-pl.clf()
-pl.imshow(Z0P, cmap = 'inferno', vmin = -7.5, vmax = -3.5)    
-pl.show()    
+#pl.figure(30)
+#pl.clf()
+#pl.title('test for planet image')
+#pl.imshow(Z0P, cmap = 'inferno', vmin = -7.5, vmax = -3.5)    
+#pl.show()    
 
 #%%
 """
@@ -689,7 +708,7 @@ Contour plot for spectral bandwidth robustnesswith eta_S/eta_P
 
 lam0D_corono = rad_corono*Fmax2dbis/nImg2dbis
 
-wv_ind = wv*corono_S.lam_t >= 0.95e-6
+wv_ind = (wv*corono_S.lam_t >= wv_min)*(wv*corono_S.lam_t <= wv_max)
 lam0D_ind = sep_arr >= 1.0
 
 # bounds for the separations
@@ -778,65 +797,65 @@ cbar    = f2.colorbar(im, cax=cbar_ax)
 cbar.ax.set_ylabel('Raw contrast $\eta_S/\eta_P$ in log scale', rotation=270, labelpad = 16)
 if do_plot is True:
     pl.savefig(str(fpath_image_plane_f_disp), transparent=True)
-pl.tight_layout()
+#pl.tight_layout()
 pl.show()
 
 #%%
-pl.figure(35)
-pl.clf()
-for i in range(nlam_ter-1):
-    pl.plot(sep_arr, sum_circ_aper[:, i], color = colors_wv[i])
-pl.title(r'Circular photometric aperture size vs $\lambda$')
-pl.xlabel(r'angular separation in $\lambda_0$/D')
-pl.ylabel('pixels')
-pl.show()
-
-#%%
-pl.figure(36)
-pl.clf()
-for i in range(nlam_ter-1):
-    pl.plot(sep_arr, np.log10(sum_ring_aper[:, i]), color = colors_wv[i])
-pl.title(r'Annular photometric aperture size vs $\lambda$')
-pl.xlabel(r'angular separation in $\lambda_0$/D')
-pl.ylabel('pixels in log scale')
-pl.show()
-
-#%%
-pl.figure(45)
-pl.clf()
-pl.plot(sum_circ_aper[0, :], color = colors_wv[i])
-pl.title(r'Circular photometric aperture size vs $\lambda$')
-pl.xlabel(r'Wavelength index $\lambda$')
-pl.ylabel('pixels')
-pl.show()
-
-#%%
-pl.figure(46)
-pl.clf()
-pl.plot(np.log10(sum_ring_aper[0, :]), color = colors_wv[i])
-pl.title('Annular photometric aperture size')
-pl.xlabel(r'wavelength $\lambda$ index')
-pl.ylabel('pixels in log scale')
-pl.show()
-
-#%%
-pl.figure(37)
-pl.clf()
-for i in range(nlam_ter-1):
-    pl.plot(sep_arr, eta_P[:,i], color = colors_wv[i])
-pl.title(r'Planet throughput vs $\lambda$')
-pl.xlabel(r'angular separation in $\lambda_0$/D')
-pl.ylabel(r'planet throughput $\eta_P$')
-pl.show()
-
-#%%
-pl.figure(38)
-pl.clf()
-for i in range(0,20, 4):
-    pl.plot(sep_arr, np.log10(eta_S[:, i]), color = colors_wv[i])
-pl.title(r'$\eta_S/\eta_P$ vs wavelength $\lambda$')    
-pl.xlabel(r'angular separation in $\lambda$/D') 
-pl.ylabel(r'residual starlight $\eta_S$')    
-pl.show()
-
-
+#pl.figure(35)
+#pl.clf()
+#for i in range(nlam_ter-1):
+#    pl.plot(sep_arr, sum_circ_aper[:, i], color = colors_wv[i])
+#pl.title(r'Circular photometric aperture size vs $\lambda$')
+#pl.xlabel(r'angular separation in $\lambda_0$/D')
+#pl.ylabel('pixels')
+#pl.show()
+#
+##%%
+#pl.figure(36)
+#pl.clf()
+#for i in range(nlam_ter-1):
+#    pl.plot(sep_arr, np.log10(sum_ring_aper[:, i]), color = colors_wv[i])
+#pl.title(r'Annular photometric aperture size vs $\lambda$')
+#pl.xlabel(r'angular separation in $\lambda_0$/D')
+#pl.ylabel('pixels in log scale')
+#pl.show()
+#
+##%%
+#pl.figure(45)
+#pl.clf()
+#pl.plot(sum_circ_aper[0, :], color = colors_wv[i])
+#pl.title(r'Circular photometric aperture size vs $\lambda$')
+#pl.xlabel(r'Wavelength index $\lambda$')
+#pl.ylabel('pixels')
+#pl.show()
+#
+##%%
+#pl.figure(46)
+#pl.clf()
+#pl.plot(np.log10(sum_ring_aper[0, :]), color = colors_wv[i])
+#pl.title('Annular photometric aperture size')
+#pl.xlabel(r'wavelength $\lambda$ index')
+#pl.ylabel('pixels in log scale')
+#pl.show()
+#
+##%%
+#pl.figure(37)
+#pl.clf()
+#for i in range(nlam_ter-1):
+#    pl.plot(sep_arr, eta_P[:,i], color = colors_wv[i])
+#pl.title(r'Planet throughput vs $\lambda$')
+#pl.xlabel(r'angular separation in $\lambda_0$/D')
+#pl.ylabel(r'planet throughput $\eta_P$')
+#pl.show()
+#
+##%%
+#pl.figure(38)
+#pl.clf()
+#for i in range(0,20, 4):
+#    pl.plot(sep_arr, np.log10(eta_S[:, i]), color = colors_wv[i])
+#pl.title(r'$\eta_S/\eta_P$ vs wavelength $\lambda$')    
+#pl.xlabel(r'angular separation in $\lambda$/D') 
+#pl.ylabel(r'residual starlight $\eta_S$')    
+#pl.show()
+#
+#
