@@ -20,7 +20,7 @@ import corono as coro
 Parameters
 """
 corono_name  = 'APLC' # 'APLC' or 'SP'
-problem_name = 'MaxTau' # ,'MaxTau' # 'MaxContrastLinf' #'MaxContrastL1'
+problem_name = 'MaxContrastL1' # ,'MaxTau' # 'MaxContrastLinf' #'MaxContrastL1'
 solver       = 'stdgrb' # 'stdgrb', 'gurobipy', 'scipy.linprog'
 slvLogToConsole = 0
 slvCrossover    = 0
@@ -41,10 +41,10 @@ Fmax = 11
 R    = 1
 
 bw   = 0.1
-nlam = 5
+nlam = 1
 
-PupilID    = 0.20
-rMask       = 4.4
+PupilID    = 0.10
+rMask       = 4.0
 
 rMask1      = 2.0
 rMask2      = 3.0
@@ -52,7 +52,7 @@ rMask3      = 3.5
 OPDx2       = 0.5
 OPDx3       = 0.75
 
-LyotStopID = 0.40
+LyotStopID = 0.20
 LyotStopOD = 1.0
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
@@ -63,7 +63,7 @@ rho1 = 10.0
 cDarkHole = 8.0
 
 # tau (integrated Pupil transmission)
-tau   = 0.3
+tau   = 0.5
 
 r   = np.arange(nPup)*R/nPup + R/(2*nPup)
 Pupil1d      = (r>PupilID)*1.0
@@ -135,7 +135,7 @@ Problem solving
 t0 = time.time()
 Apod_pyth = problem1.solve_model()
 t1 = time.time()
-print('optimization time              : {0:.2f}s'.format(t1-t0))
+print('optimization time              : {0:.2f}s\n'.format(t1-t0))
 
 #%% Apodizer solution for the problems
 """
