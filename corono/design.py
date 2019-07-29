@@ -143,9 +143,10 @@ class Coronagraph(object):
         
         # wavelengths        
         self.dlam       = self.bw*self.lam0
-        self.lam_t      = np.linspace(
-                self.lam0-self.dlam/2*(self.nlam>1),
-                self.lam0+self.dlam/2,self.nlam)
+        if self.lam_t is None:
+            self.lam_t      = np.linspace(
+                    self.lam0-self.dlam/2*(self.nlam>1),
+                    self.lam0+self.dlam/2,self.nlam)
 
         # Pupil radial coordinate 
         self.r          = np.arange(self.nPup)*self.R/self.nPup\
@@ -685,7 +686,8 @@ class Coronagraph(object):
             val = 1/2
         
         # array of angular distances in the final image plane
-        xx,yy  = np.meshgrid(np.arange(self.nImg2d)-self.nImg2d//2+val, np.arange(self.nImg2d)-self.nImg2d//2+val)
+        xx,yy  = np.meshgrid(np.arange(self.nImg2d)-self.nImg2d//2+val, 
+                             np.arange(self.nImg2d)-self.nImg2d//2+val)
         mydist = (self.Fmax2d/self.nImg2d)*np.hypot(yy,xx)        
         res = (mydist <= self.rho1)*(mydist >= self.rho0)
         if self.Pupil2dSym == True:
@@ -710,52 +712,51 @@ class APLC1d(Coronagraph):
         
         Attributes:
         ----------  
-        rMask_t : array_like
-            Focal plane mask (FPM) radius :math:`m` scaled with wavelength
-            :math:`\lambda`
-            
-        nFPM_t : array_like
-            Mask sampling at a given wavelength :math:`\lambda`
-            
-        nFPM_max : float
-            Maximum mask sampling over all the wavelengths
-            
-        mask_lam : array_like
-            Focal plane mask in :math:`\lambda/D` unit
-            
-        xi_FPM_lam : array_like
-            Focal plane mask coordinate in :math:`\lambda/D`
-            
-        hankel_kernel_FPM_all : array_like
+
+        HK_FPM_poly : array_like
             Hankel kernel for the FPM at all the wavelengths
             
-        hankel_kernel_iFPM_all : array_like
+        HK_FPM_poly : array_like
+            Hankel kernel for the final image plane at all the wavelengths
+            
+        iHK_FPM_poly : array_like
             Inverse hankel transform for the FPM at all the 
             wavelengths
 
         """      
         super(APLC1d,self).__init__(**kwargs)      
         
-        # mask size at Apod given wavelength
-        self.rMask_t    = (self.lam0/self.lam_t)*self.rMask
-        
-        # mask sampling at Apod given wavelength and max nFPM_max 
-        self.nFPM_t     = self.rMask_t*self.nFPM
-        self.nFPM_max   = int(np.max(self.nFPM_t))
-        self.mask_lam   = (np.arange(self.nFPM_max+1)[None,:]\
-                           <self.rMask_t[:,None]*self.nFPM)
-        self.xi_FPM_lam = np.arange(self.nFPM_max+1)[None,:]\
-                *self.mask_lam/self.nFPM
-
-        # Hankel kernel for the focal plane mask (FPM) 
-        self.hankel_kernel_FPM_all  = besselJ0(
-                np.pi/self.R*self.xi_FPM_lam[:,:,None]*self.r[None,None,:])
-        self.hankel_kernel_iFPM_all = besselJ0(
-                np.pi/self.R*self.xi_FPM_lam[:,None,:]*self.r[None,:,None])
-                
         # Lyot stop 
         if self.LyotStop1d is None:
             self.LyotStop1d   = (self.r>self.LyotStopID)*(self.r<self.LyotStopOD)*1.0
+
+        # array of 1/wavelength        
+        self.ilam_t = self.lam0/self.lam_t
+        
+        # sampling for the integration to the pupil plane
+        self.dr =  self.R/self.nPup
+        # sampling for the integration to the FPM plane      
+        self.dmi = self.rMask/self.nFPM
+
+        # FPM image plane coordinate
+        self.mi = np.arange(self.nFPM +1)*self.dmi
+        
+        # variable inside the Bessel function for Hankel transform to the FPM plane
+        self.HK_B_var = np.pi*self.ilam_t[:,None, None]*self.mi[None,:,None]*\
+        self.r[None,None,:]
+        # Hankel kernel (direct transform) to the FPM plane
+        self.HK_B = np.pi*self.ilam_t[:,None, None]*\
+        besselJ0(self.HK_B_var)*self.r[None, None,:]*self.dr
+        # Hankel kernel (inverse transform) to the FPM plane
+        self.iHK_B = np.pi*self.ilam_t[:,None, None]*\
+        besselJ0(self.HK_B_var.transpose(0,2,1))*self.mi[None, None,:]*self.dmi
+
+        # term inside the Bessel function for the hankel transform to the final image plane
+        self.HK_D_var = np.pi*self.ilam_t[:,None,None]*self.xi[None,:,None]*\
+        self.r[None,None,:]
+        # Hankel transform to the final image plane        
+        self.HK_D = np.pi*self.ilam_t[:,None, None]*besselJ0(self.HK_D_var)*\
+        self.r[None, None, :]*self.dr
 
         
 #%% # direct propagation (no focal plane mask)
@@ -775,8 +776,15 @@ class APLC1d(Coronagraph):
             Direct electric field :math:`\Psi_0` at all the wavelengths
             
         """
-        return self.lam0/self.lam_t[:,None]*np.pi*self.hankel_kernel_all.dot(
-                self.Pupil1d*Apod*self.LyotStop1d*self.r/self.R)*self.R/self.nPup
+#        return self.lam0/self.lam_t[:,None]*np.pi*self.hankel_kernel_all.dot(
+#                self.Pupil1d*Apod*self.LyotStop1d*self.r/self.R)*self.R/self.nPup
+
+        lyot_field = self.Pupil1d[None,:]*Apod[None,:]*self.LyotStop1d[None,:]
+    #    corono_field = np.zeros((nlam,nImg+1))
+    #    for i in range(nlam):
+    #        corono_field[i] = HK_D[i].dot(lyot_field[i])
+
+        return np.einsum("ijk,ik-> ij", self.HK_D, lyot_field)
 
 #%% # propagation through coronagraph (with focal plane mask)
     def compute_corono_field_1d(self,Apod):
@@ -795,27 +803,27 @@ class APLC1d(Coronagraph):
             Coronagraphic electric field :math:`\Psi_D` at all the wavelengths
             
         """
-        FPM_field  = np.pi*self.hankel_kernel_FPM_all.dot(
-                Apod*self.Pupil1d*self.r/self.R)\
-                *(self.R/self.nPup)*self.xi_FPM_lam
-                
-        iFPM_field = np.zeros((self.nlam,self.nPup))
-        for i in range(self.nlam):
-            iFPM_field[i,:] = np.pi*self.hankel_kernel_iFPM_all[i,:,:].dot(
-                    FPM_field[i,:])*(1/self.nFPM)
+        E_field = Apod*self.Pupil1d
+    #    FPM_field = np.zeros((nlam,nFPM+1))
+    #    for i in range(nlam):
+    #        FPM_field[i] = HK_B[i].dot(E_field)
+        FPM_field = np.einsum("ijk,k->ij", self.HK_B, E_field)
+                   
+    #    iFPM_field = np.zeros((nlam,nPup))
+    #    for i in range(nlam):
+    #        iFPM_field[i] = iHK_B[i].dot(FPM_field[i])
+        iFPM_field = np.einsum("ijk,ik->ij", self.iHK_B, FPM_field)
+                                
+        lyot_field = (Apod[None,:]*self.Pupil1d[None,:]-iFPM_field)*\
+        self.LyotStop1d[None,:]
         
-        nolyot_field = (Apod[None,:]*self.Pupil1d[None,:]-iFPM_field)\
-                *self.r[None,:]/self.R
+    #    corono_field = np.zeros((nlam,nImg+1))
+    #    for i in range(nlam):
+    #        corono_field[i] = HK_D[i].dot(lyot_field[i])
+        corono_field = np.einsum("ijk,ik-> ij", self.HK_D, lyot_field)
         
-        lyot_field   = nolyot_field*self.LyotStop1d[None,:]
-        
-        corono_field_tmp = np.zeros((self.nlam,self.nImg+1))
-        for i in range(self.nlam):
-            corono_field_tmp[i,:] = self.hankel_kernel_all[i,:,:].dot(
-                    lyot_field[i,:])
-        
-        return self.lam0/self.lam_t[:,None]*np.pi\
-            *corono_field_tmp*self.R/self.nPup
+        return corono_field
+
             
 #%% 
 """
@@ -848,16 +856,7 @@ class SP1d(Coronagraph):
         mask_lam : array_like
             Focal plane mask in :math:`\lambda/D` unit
             
-        xi_FPM_lam : array_like
-            Focal plane mask coordinate in :math:`\lambda/D`
             
-        hankel_kernel_FPM_all : array_like
-            Hankel kernel for the FPM at all the wavelengths
-            
-        hankel_kernel_iFPM_all : array_like
-            Inverse hankel transform for the FPM at all the 
-            wavelengths
-
         """      
         super(SP1d,self).__init__(**kwargs)      
         
@@ -869,8 +868,8 @@ class SP1d(Coronagraph):
         self.nFPM_max   = int(np.max(self.nFPM_t))
         self.mask_lam   = (np.arange(self.nFPM_max+1)[None,:]\
                            <self.rMask_t[:,None]*self.nFPM)
-        self.xi_FPM_lam = np.arange(self.nFPM_max+1)[None,:]\
-                *self.mask_lam/self.nFPM
+#        self.xi_FPM_lam = np.arange(self.nFPM_max+1)[None,:]\
+#                *self.mask_lam/self.nFPM
                 
 #%% # direct propagation (no focal plane mask)
     def compute_direct_field_1d(self,Apod):
