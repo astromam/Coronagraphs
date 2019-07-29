@@ -23,11 +23,13 @@ try:
     import stdgrb
 except ImportError:
     stdgrb = False
+    print('stdgrb is False')
 
 try:
     import gurobipy as gb
 except ImportError:
     gb = False
+    print('gb is False')    
 
 import scipy
 import scipy.optimize
