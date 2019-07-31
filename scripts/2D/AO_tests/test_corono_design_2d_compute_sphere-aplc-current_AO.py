@@ -85,11 +85,11 @@ Fmax2dbis = (nImg2dbis/2)*(950e-9/wv)
 # total number of existing maps
 qmap = 1000
 # total number of used maps
-nmap = 1
+nmap = 10
 
 # plot parameters
 vmin0 = -8
-vmax0 = -4
+vmax0 = -3
 
 # PSD number
 nPSD = 10
@@ -328,21 +328,21 @@ for iPSD in range(nPSD):
     fits.writeto(fpath_direct_std_AO, direct_poly_std_AO, overwrite=True)
     fits.writeto(fpath_corono_std_AO, corono_poly_std_AO, overwrite=True)
 
-    #%%
-    """
-    ### Image display (AO residuals)
-    """
-    fname_image_plane_plot = 'aplc1_corono_nPup={0}_nImg={1}_iPSD={2:04d}_nmap={3:04d}_img.pdf'.format(nPup, nImg2dbis, iPSD, nmap)
-    fpath_image_plane_plot = fdir_pdf / fname_image_plane_plot
-
-
-    pl.figure(11, (5,5))
-    pl.clf()
-    pl.imshow(np.log10(corono_poly_img_AO), vmin=vmin0, vmax=vmax0, cmap = 'inferno')
-    pl.title('Corono image with AO residuals')
-
-    pl.tight_layout()
-    pl.savefig(str(fpath_image_plane_plot), tight=True, transparent=True)
+#    #%%
+#    """
+#    ### Image display (AO residuals)
+#    """
+#    fname_image_plane_plot = 'aplc1_corono_nPup={0}_nImg={1}_iPSD={2:04d}_nmap={3:04d}_img.pdf'.format(nPup, nImg2dbis, iPSD, nmap)
+#    fpath_image_plane_plot = fdir_pdf / fname_image_plane_plot
+#
+#
+#    pl.figure(11, (5,5))
+#    pl.clf()
+#    pl.imshow(np.log10(corono_poly_img_AO), vmin=vmin0, vmax=vmax0, cmap = 'inferno')
+#    pl.title('Corono image with AO residuals')
+#
+#    pl.tight_layout()
+#    pl.savefig(str(fpath_image_plane_plot), tight=True, transparent=True)
 
 
 #%% Display of the apodizer

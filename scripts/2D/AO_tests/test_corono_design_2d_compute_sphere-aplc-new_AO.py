@@ -85,14 +85,14 @@ Fmax2dbis = (nImg2dbis/2)*(950e-9/wv)
 # total number of existing maps
 qmap = 1000
 # total number of used maps
-nmap = 10
+nmap = 1000
 
 # plot parameters
 vmin0 = -8
-vmax0 = 0
+vmax0 = -3
 
 # PSD number
-nPSD = 10
+nPSD = 2
 
 #%%  
 """ 
@@ -329,35 +329,21 @@ for iPSD in range(nPSD):
     fits.writeto(fpath_direct_std_AO, direct_poly_std_AO, overwrite=True)
     fits.writeto(fpath_corono_std_AO, corono_poly_std_AO, overwrite=True)
 
-    #%%
-    """
-    ### Display contrast curves
-    """
-    fname_image_plane_plot = 'aplc2_corono_nPup={0}_nImg={1}_iPSD={2:04d}_nmap={3:04d}_plt.pdf'.format(nPup, nImg2dbis, iPSD, nmap)
-    fpath_image_plane_plot = fdir_pdf / fname_image_plane_plot
-    
-    rad_corono = np.arange(nImg2dbis//2)
-    colors_cor = pl.cm.rainbow(np.linspace(0,1,2))
-    
-    pl.figure(12)
-    pl.clf()
-    pl.semilogy(rad_corono*Fmax2dbis/nImg2dbis, 5*corono_poly_std/direct_poly_img.max(),
-            label='no turbulence', color = colors_cor[0])
-    
-    pl.semilogy(rad_corono*Fmax2dbis/nImg2dbis, 5*corono_poly_std_AO,
-            label='AO residuals', color = colors_cor[1])
-    
-    pl.axvspan(-1, rMask, alpha=0.25, color='b')
-    pl.xlabel(r'Angular separation in $\lambda_0$/D')
-    pl.ylabel(r'5$\sigma$ normalized intensity in log scale')
-    pl.xlim(-0.5, 30.5)
-    pl.ylim(3e-8, 3e-4)
-    pl.grid(True, which='both')
-    
-    pl.legend()
-    pl.title(r'Intensity profile in broadband light ($\Delta\lambda/\lambda_0$={0:.1f}%)'.format(bw*100))
-    pl.tight_layout()
-    pl.savefig(str(fpath_image_plane_plot), transparent=True)
+#    #%%
+#    """
+#    ### Image display (AO residuals)
+#    """
+#    fname_image_plane_plot = 'aplc2_corono_nPup={0}_nImg={1}_iPSD={2:04d}_nmap={3:04d}_img.pdf'.format(nPup, nImg2dbis, iPSD, nmap)
+#    fpath_image_plane_plot = fdir_pdf / fname_image_plane_plot
+#
+#
+#    pl.figure(11, (5,5))
+#    pl.clf()
+#    pl.imshow(np.log10(corono_poly_img_AO), vmin=vmin0, vmax=vmax0, cmap = 'inferno')
+#    pl.title('Corono image with AO residuals')
+#
+#    pl.tight_layout()
+#    pl.savefig(str(fpath_image_plane_plot), tight=True, transparent=True)
     
 
 #%% Display of the apodizer
