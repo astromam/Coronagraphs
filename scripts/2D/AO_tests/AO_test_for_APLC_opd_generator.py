@@ -27,14 +27,14 @@ import os
 ### Dimensions for csv data file
 nParams = 5
 nPSD    = 120
-kPSD    = 2
+kPSD    = 10
 iPSD    = 0
 
 ### Pupil dimension
 nPup = 384
 
 ### OPD number
-nmap = 100
+nmap = 1
 
 
 #%%
@@ -109,6 +109,7 @@ for iPSD in range(kPSD):
     """
     ### Residual turbulence PSD computation
     """
+    print('\niPSD: {0:03d}/{1:03d}'.format(iPSD+1,kPSD))
 #    t0 = time.time()
 #    residual_turbulence_psd_arr[iPSD] = ao.residual_screen_sphere(seeing, L0, z, Cn2, v, arg_v, mag, zenith, azimuth, 
 #                                                            spat_filter=spaf, img_wave=img_wave, dim_pup=nPup,
@@ -122,11 +123,11 @@ for iPSD in range(kPSD):
     residual_turbulence_opd_arr = ao.residual_screen_sphere(seeing, L0, z, Cn2, v, arg_v, mag, zenith, azimuth, 
                                                     spat_filter=spaf, img_wave=img_wave, dim_pup=nPup,
                                                     n_screen=nmap, fit=True, servo=True, alias=True, noise=True,
-                                                    diff_refr=True, psd_only=False, seed=seed)
+                                                    diff_refr=True, psd_only=False, seed=seed+iPSD)
     residual_turbulence_opd_arr  = residual_turbulence_opd_arr[..., nPup:2*nPup, nPup:2*nPup]
 #        residual_turbulence_opd_arr *= pupil_saxo
     t1 = time.time()
-    print('\niPSD: {0:03d}/{1:03d} - phase screen - exec time: {2}s\n'.format(iPSD+1, kPSD, t1-t0))
+    print('opd generation - exec time: {0:.2f}s\n'.format(t1-t0))
     
     #%%
     """

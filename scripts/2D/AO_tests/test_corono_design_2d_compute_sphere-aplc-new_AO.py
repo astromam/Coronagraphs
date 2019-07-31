@@ -85,14 +85,14 @@ Fmax2dbis = (nImg2dbis/2)*(950e-9/wv)
 # total number of existing maps
 qmap = 1000
 # total number of used maps
-nmap = 1
+nmap = 10
 
 # plot parameters
 vmin0 = -8
 vmax0 = 0
 
 # PSD number
-nPSD = 1
+nPSD = 10
 
 #%%  
 """ 
@@ -168,7 +168,7 @@ fpath_apod = fdir_apod / fname
 """
 ### File saving path for the generated data
 """
-fdir_pdf = Path('../../../results/2D/plots/').resolve()
+fdir_pdf = Path('../../../results/2D/plots/AO_tests/aplc2/').resolve()
 if not os.path.exists(fdir_pdf):
     os.makedirs(fdir_pdf)
 
@@ -233,11 +233,22 @@ corono_poly_std, rad_corono = imutils.profile(corono_poly_img, type='std')
 fits.writeto(fpath_direct, direct_poly_img, overwrite=True)
 fits.writeto(fpath_corono, corono_poly_img, overwrite=True)
 
+    #%%
+"""
+### Save profiles (no aberration)
+"""
+# with no aberrations
+fits.writeto(fpath_direct_avg, direct_poly_avg, overwrite=True)
+fits.writeto(fpath_corono_avg, corono_poly_avg, overwrite=True)
+fits.writeto(fpath_direct_std, direct_poly_std, overwrite=True)
+fits.writeto(fpath_corono_std, corono_poly_std, overwrite=True)
+
 #%%
 """
 ### Computation of the direct and coronagraphic images with AO residuals
 """
 for iPSD in range(nPSD):
+    print('\niPSD: {0:04d}/{1:04d}'.format(iPSD+1, nPSD))
     # AO residuals
     fdir_opd = Path('../../../data/2D/AO_tests/').resolve()
     fname = 'AOres_opd_nPup={0}_iPSD={1:04d}_nmap={2:04d}.fits'.format(nPup,iPSD,qmap)
@@ -312,102 +323,127 @@ for iPSD in range(nPSD):
     """
     ### Save profiles (with AO residuals)
     """
-    # with no aberrations
-    fits.writeto(fpath_direct_avg, direct_poly_avg, overwrite=True)
-    fits.writeto(fpath_corono_avg, corono_poly_avg, overwrite=True)
-    fits.writeto(fpath_direct_std, direct_poly_std, overwrite=True)
-    fits.writeto(fpath_corono_std, corono_poly_std, overwrite=True)
-    
     # with AO residuals
     fits.writeto(fpath_direct_avg_AO, direct_poly_avg_AO, overwrite=True)
     fits.writeto(fpath_corono_avg_AO, corono_poly_avg_AO, overwrite=True)
     fits.writeto(fpath_direct_std_AO, direct_poly_std_AO, overwrite=True)
     fits.writeto(fpath_corono_std_AO, corono_poly_std_AO, overwrite=True)
 
+    #%%
+    """
+    ### Display contrast curves
+    """
+    fname_image_plane_plot = 'aplc2_corono_nPup={0}_nImg={1}_iPSD={2:04d}_nmap={3:04d}_plt.pdf'.format(nPup, nImg2dbis, iPSD, nmap)
+    fpath_image_plane_plot = fdir_pdf / fname_image_plane_plot
+    
+    rad_corono = np.arange(nImg2dbis//2)
+    colors_cor = pl.cm.rainbow(np.linspace(0,1,2))
+    
+    pl.figure(12)
+    pl.clf()
+    pl.semilogy(rad_corono*Fmax2dbis/nImg2dbis, 5*corono_poly_std/direct_poly_img.max(),
+            label='no turbulence', color = colors_cor[0])
+    
+    pl.semilogy(rad_corono*Fmax2dbis/nImg2dbis, 5*corono_poly_std_AO,
+            label='AO residuals', color = colors_cor[1])
+    
+    pl.axvspan(-1, rMask, alpha=0.25, color='b')
+    pl.xlabel(r'Angular separation in $\lambda_0$/D')
+    pl.ylabel(r'5$\sigma$ normalized intensity in log scale')
+    pl.xlim(-0.5, 30.5)
+    pl.ylim(3e-8, 3e-4)
+    pl.grid(True, which='both')
+    
+    pl.legend()
+    pl.title(r'Intensity profile in broadband light ($\Delta\lambda/\lambda_0$={0:.1f}%)'.format(bw*100))
+    pl.tight_layout()
+    pl.savefig(str(fpath_image_plane_plot), transparent=True)
+    
+
 #%% Display of the apodizer
 """
 ### Display pupil and apodizer
 """
-pl.figure(0)
-pl.clf()
-pl.imshow(Pupil2d, cmap = cm.Greys_r)
-pl.title('Pupil transmission')
-
-fname = fname_gen + '_apodisation_ampl_nPup={0}.pdf'.format(nPup)
-fpath = fdir_pdf / fname
-
+#pl.figure(0)
+#pl.clf()
+#pl.imshow(Pupil2d, cmap = cm.Greys_r)
+#pl.title('Pupil transmission')
+#
+#fname = fname_gen + '_apodisation_ampl_nPup={0}.pdf'.format(nPup)
+#fpath = fdir_pdf / fname
+#
+##pl.figure(1)
+##pl.clf()
+##pl.imshow(Apod2d*corono0.Pupil2d, cmap = cm.Greys_r)
+##pl.title('Apod 1 transmission - MaxTau problem - '+ solver)
+##pl.savefig(str(fpath))
+#
 #pl.figure(1)
 #pl.clf()
-#pl.imshow(Apod2d*corono0.Pupil2d, cmap = cm.Greys_r)
-#pl.title('Apod 1 transmission - MaxTau problem - '+ solver)
-#pl.savefig(str(fpath))
-
-pl.figure(1)
-pl.clf()
-pl.imshow(Apod2d*Pupil2d, cmap = 'inferno')
-pl.title('Apodized entrance pupil')
-pl.tight_layout()
-#pl.savefig(str(fpath), transparent=True)
-
+#pl.imshow(Apod2d*Pupil2d, cmap = 'inferno')
+#pl.title('Apodized entrance pupil')
+#pl.tight_layout()
+##pl.savefig(str(fpath), transparent=True)
+#
 #%%
 """
 ### Image display (perfect)
 """
-pl.figure(2)
-pl.clf()
-pl.imshow(np.log10(direct_poly_img), 
-          vmin=vmin0, vmax=vmax0, cmap = 'inferno')
-pl.title('Direct image (no aberration)')
-
-
-pl.figure(3)
-pl.clf()
-pl.imshow(np.log10(corono_poly_img), 
-          vmin=vmin0, vmax=vmax0, cmap = 'inferno')
-pl.title('Corono image (no aberration)')
-
+#pl.figure(2)
+#pl.clf()
+#pl.imshow(np.log10(direct_poly_img), 
+#          vmin=vmin0, vmax=vmax0, cmap = 'inferno')
+#pl.title('Direct image (no aberration)')
+#
+#
+#pl.figure(3)
+#pl.clf()
+#pl.imshow(np.log10(corono_poly_img), 
+#          vmin=vmin0, vmax=vmax0, cmap = 'inferno')
+#pl.title('Corono image (no aberration)')
+#
 #%%
 """
 ### Image display (AO residuals)
 """
-pl.figure(10)
-pl.clf()
-pl.imshow(np.log10(direct_poly_img_AO), vmin=vmin0, vmax=vmax0, cmap = 'inferno')
-pl.title('Direct image with AO residuals')
-
-pl.figure(11)
-pl.clf()
-pl.imshow(np.log10(corono_poly_img_AO), vmin=vmin0, vmax=vmax0, cmap = 'inferno')
-pl.title('Corono image with AO residuals')
+#pl.figure(10)
+#pl.clf()
+#pl.imshow(np.log10(direct_poly_img_AO), vmin=vmin0, vmax=vmax0, cmap = 'inferno')
+#pl.title('Direct image with AO residuals')
+#
+#pl.figure(11)
+#pl.clf()
+#pl.imshow(np.log10(corono_poly_img_AO), vmin=vmin0, vmax=vmax0, cmap = 'inferno')
+#pl.title('Corono image with AO residuals')
 
 #%%
 """
 ### Display contrast curves
 """
-fname_image_plane_plot = 'aplc2_corono_nPup={0}_nImg={1}_iPSD={2:04d}_nmap={3:04d}_plt.pdf'.format(nPup, nImg2dbis, iPSD, nmap)
-fpath_image_plane_plot = fdir_pdf / fname_image_plane_plot
-
-rad_corono = np.arange(nImg2dbis//2)
-colors_cor = pl.cm.rainbow(np.linspace(0,1,2))
-
-pl.figure(12)
-pl.clf()
-pl.semilogy(rad_corono*Fmax2dbis/nImg2dbis, 5*corono_poly_std/direct_poly_img.max(),
-        label='no turbulence', color = colors_cor[0])
-
-pl.semilogy(rad_corono*Fmax2dbis/nImg2dbis, 5*corono_poly_std_AO,
-        label='AO residuals', color = colors_cor[1])
-
-pl.axvspan(-1, rMask, alpha=0.25, color='b')
-pl.xlabel(r'Angular separation in $\lambda_0$/D')
-pl.ylabel(r'5$\sigma$ normalized intensity in log scale')
-pl.xlim(-0.5, 30.5)
-pl.ylim(3e-8, 3e-4)
-pl.grid(True, which='both')
-
-pl.legend()
-pl.title(r'Intensity profile in broadband light ($\Delta\lambda/\lambda_0$={0:.1f}%)'.format(bw*100))
-pl.tight_layout()
-pl.savefig(str(fpath_image_plane_plot), transparent=True)
-
-pl.show()
+#fname_image_plane_plot = 'aplc2_corono_nPup={0}_nImg={1}_iPSD={2:04d}_nmap={3:04d}_plt.pdf'.format(nPup, nImg2dbis, iPSD, nmap)
+#fpath_image_plane_plot = fdir_pdf / fname_image_plane_plot
+#
+#rad_corono = np.arange(nImg2dbis//2)
+#colors_cor = pl.cm.rainbow(np.linspace(0,1,2))
+#
+#pl.figure(12, figsize=(8,4.5))
+#pl.clf()
+#pl.semilogy(rad_corono*Fmax2dbis/nImg2dbis, 5*corono_poly_std/direct_poly_img.max(),
+#        label='no turbulence', color = colors_cor[0])
+#
+#pl.semilogy(rad_corono*Fmax2dbis/nImg2dbis, 5*corono_poly_std_AO,
+#        label='AO residuals', color = colors_cor[1])
+#
+#pl.axvspan(-1, rMask, alpha=0.25, color='b')
+#pl.xlabel(r'Angular separation in $\lambda_0$/D')
+#pl.ylabel(r'5$\sigma$ normalized intensity in log scale')
+#pl.xlim(-0.5, 30.5)
+#pl.ylim(3e-8, 3e-4)
+#pl.grid(True, which='both')
+#
+#pl.legend()
+#pl.title(r'Intensity profile in broadband light ($\Delta\lambda/\lambda_0$={0:.1f}%)'.format(bw*100))
+#pl.tight_layout()
+#pl.savefig(str(fpath_image_plane_plot), transparent=True, tight=True)
+#
+#pl.show()
