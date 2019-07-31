@@ -11,7 +11,7 @@ License: MIT license
 """
 
 #%% Initialization problem
-from memory_profiler import profile
+#from memory_profiler import profile
 import numpy as np
 import json
 import time
