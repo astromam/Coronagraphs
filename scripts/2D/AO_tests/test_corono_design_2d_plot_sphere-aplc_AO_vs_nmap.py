@@ -11,9 +11,6 @@ from pathlib import Path
 
 import os
 from astropy.io import fits
-import corono as coro
-
-from scipy.misc import imresize
 
 #%% parameters
 """
@@ -98,79 +95,6 @@ temp_freq = 1000
 # PSD number
 iPSD = 0
 
-#%%  
-""" 
-### Coronagraph defintion
-"""
-params = coro.to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
-                 rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau, 
-                 CtrBtwnPix=CtrBtwnPix, CtrBtwnPix2 = CtrBtwnPix2,
-                 nlam=nlam, bw=bw,
-#                 Pupil2d = Pupil2d, LyotStop2d = LyotStop2d,
-                 Pupil2dSym = Pupil2dSym, rMask=rMask,
-                 problem_name = problem_name, 
-                 solver = solver, 
-                 corono_name = corono_name, pupil_name = pupil_name,
-                 MinIsland = MinIsland, FirstDerGlobalLim = FirstDerGlobalLim)
-
-if corono_name == 'APLC':
-    corono0 = coro.design.APLC2d(**params)
-else:
-    raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
-
-#%%
-"""
-### Problem defintion
-"""
-if problem_name == 'MaxTau':
-    # Maximization of the integrated amplitude transmission of the apodizer
-    problem1 = coro.optim_2d.MaxTau(corono=corono0, **params)
-elif problem_name == 'MaxContrastL1':
-    # Maximization of the contrast under L1-norm
-    problem1 = coro.optim_2d.MaxContrast(corono=corono0, Lnorm='L1',**params)
-elif problem_name == 'MaxContrastLinf':
-    # Maximization of the contrast under L-infinite norm
-    problem1 = coro.optim_2d.MaxContrast(corono=corono0, Lnorm='Linf',**params)
-else:
-    raise NameError('{0}: Not an existing optimization problem!'.format(problem_name))
-
-
-#%%
-"""
-### File reading path for Pupil, Apodizer, Lyot stop and AO residuals
-"""
-# Pupil
-if True:
-    fdir0 = Path('../../../data/2D/pupils/').resolve()
-    if pupil_name == 'vlt':
-        fname_pup = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
-        fname_lys = 'SPHERE/sphere_stop_ST_ALC2.fits' 
-    else:
-        raise ValueError('pupil_name should be vlt instead of {0}'.format(pupil_name))
-    
-    fpath_pup = fdir0 / fname_pup
-    fpath_lys = fdir0 / fname_lys
-    Pupil2d    = fits.getdata(fpath_pup)
-
-# Lyot stop    
-    LyotStop2dtmp = fits.getdata(fpath_lys)
-    if nPup != 384:
-        LyotStop2d = imresize(LyotStop2dtmp, (nPup, nPup))
-    else:
-        LyotStop2d = LyotStop2dtmp*1
-    
-    if solver != 'gurobipy' and solver != 'stdgrb':
-        solver = 'scipy'
-
-# Apodizer 
-fdir_apod  = Path('../../../data/2D/pupils/SPHERE/').resolve()
-fname      = 'SPHERE_APO1_field_transmission_map.fits'
-fpath_apod = fdir_apod / fname
-
-# AO residuals
-fdir_opd = Path('../../../data/2D/AO_tests/').resolve()
-fname = 'AOres_opd_nPup={0}_iPSD={1:04d}_nmap={2:04d}.fits'.format(nPup,0,qmap)
-fpath_opd = fdir_opd / fname 
 
 #%%
 """
@@ -274,7 +198,7 @@ colors_cor = pl.cm.rainbow(np.linspace(0,1,knmap+1))
 lines_noturb = []
 lines_siturb = []
 
-fig = pl.figure(13)
+fig = pl.figure(13, (8, 4.5))
 pl.clf()
 ax = fig.add_subplot(111)
 
