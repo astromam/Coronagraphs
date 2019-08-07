@@ -245,9 +245,6 @@ for iPSD in range(nPSD):
     rad_corono = np.arange(nImg2dbis//2)
     colors_cor = pl.cm.rainbow(np.linspace(0,1,2))
     
-    lines_noturb = []
-    lines_siturb = []
-    
     """
     ### Plot comparison
     """
@@ -327,4 +324,56 @@ for iPSD in range(nPSD):
     pl.savefig(str(fpath_image_plane_img_png), tight=True)
 
 #%%
+"""
+# Plot with all the image profiles
+"""    
+
+fname_image_plane_plts = 'aplcs_corono_nPup={0}_nImg={1}_iPSD={2:04d}_nmap={3:04d}_plts.pdf'.format(nPup, nImg2dbis, iPSD, nmap)
+fpath_image_plane_plts = fdir_pdf / fname_image_plane_plts               
+
+fig = pl.figure(14, (8, 4.5))
+pl.clf()
+ax = fig.add_subplot(111)
+
+for iPSD in range(nPSD):
+    if (iPSD+1) % 10 == 0:
+        print('\niPSD: {0:03d}/{1:03d}'.format(iPSD+1, nPSD))
+
+    for i, iaplc in enumerate(aplc_arr):
+        ax.semilogy(rad_corono*Fmax2dbis/nImg2dbis, 5*corono_poly_std_AO[i*nPSD+iPSD],
+                color = colors_cor[i], ls='-', lw=0.5)
+    
+        ax.semilogy(rad_corono*Fmax2dbis/nImg2dbis, 5*corono_poly_std[i],
+                color = colors_cor[i], ls='--')
+
+dummy_lines = []
+dummy_lines += ax.semilogy([], [], ls='-', color='k')
+dummy_lines += ax.semilogy([], [], ls='--', color='k')
+
+dummy_lines2 = []
+for i in range(naplc):
+    dummy_lines2 += ax.semilogy([], [], ls='', color=colors_cor[i])
+
+ax.axvspan(-1, rMask, alpha=0.25, color='b')
+ax.set_xlabel(r'Angular separation in $\lambda_0$/D')
+ax.set_ylabel(r'5$\sigma$ normalized intensity in log scale')
+ax.set_xlim(-0.5, 30.5)
+ax.set_ylim(3e-8, 3e-4)
+ax.grid(True, which='both')
+#ax.legend()
+
+leg1 = ax.legend(dummy_lines, [r'AO residuals, t={0:04d}ms'.format(int(nmap*temp_freq/1000)), 'No turbulence'], 
+             loc='lower right', frameon=False)
+ax.add_artist(leg1);
+
+leg2 = ax.legend(dummy_lines2, ['Current APLC', 'New APLC'],
+             loc='upper right', frameon=False)
+for i, text in enumerate(leg2.get_texts()):
+    pl.setp(text, color = colors_cor[i])
+ax.add_artist(leg2);
+
+ax.set_title(r'Broadband intensity profile ($\Delta\lambda/\lambda_0$={0:.1f}%), t={1:03d}s'.format(bw*100,iPSD))
+pl.tight_layout()
+pl.savefig(str(fpath_image_plane_plts), transparent=True, tight=True)
+
 pl.show()
