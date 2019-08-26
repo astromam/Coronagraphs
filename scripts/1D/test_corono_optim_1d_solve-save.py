@@ -13,15 +13,15 @@ import time
 import os
 
 from pathlib import Path
-import corono as coro
+#import corono as coro
 
 #%% parameters
 """
 Parameters
 """
 corono_name  = 'APLC' # 'APLC' or 'SP'
-problem_name = 'MaxTau' # ,'MaxTau' # 'MaxContrastLinf' #'MaxContrastL1'
-solver       = 'stdgrb' # 'stdgrb', 'gurobipy', 'scipy.linprog'
+problem_name = 'MaxSNR' # ,'MaxTau' # 'MaxContrastLinf' #'MaxContrastL1' #'MaxContrastL2', #MaxSNR
+solver       = 'stdgrb' # 'stdgrb', 'gurobipy', 'scipy.linprog' #Not for MaxContrastL2 problem
 slvLogToConsole = 0
 slvCrossover    = 0
 slvMethod       = 2
@@ -63,7 +63,7 @@ rho1 = 10.0
 cDarkHole = 8.0
 
 # tau (integrated Pupil transmission)
-tau   = 0.3
+tau   = 0.5
 
 r   = np.arange(nPup)*R/nPup + R/(2*nPup)
 Pupil1d      = (r>PupilID)*1.0
@@ -125,6 +125,13 @@ elif problem_name == 'MaxContrastL1':
 elif problem_name == 'MaxContrastLinf':
     # Maximization of the contrast under L-infinite norm
     problem1 = coro.optim_1d.MaxContrast(corono=corono0, Lnorm='Linf',**params)
+elif problem_name == 'MaxContrastL2':
+    # Maximization of the contrast under L2 norm
+    problem1 = coro.optim_1d.MaxContrast(corono=corono0, Lnorm='L2',**params)
+    
+elif problem_name == 'MaxSNR':
+    # Maximization of the contrast under L2 norm
+    problem1 = coro.optim_1d.MaxSNR(corono=corono0,nmax=10000,gradmin=1e-7, initialisation='L1' ,**params)
 else:
      raise NameError('{0}: Not an existing optimization problem!'.format(problem_name))
     
@@ -141,7 +148,7 @@ print('optimization time              : {0:.2f}s'.format(t1-t0))
 """
 Apodizer saving 
 """
-fname = problem1.get_filename() + '.dat'
+fname = 'problem1.get_filename()' + '.dat'
 fpath = fdir / fname
 
 test0 = np.zeros((nPup, 2))

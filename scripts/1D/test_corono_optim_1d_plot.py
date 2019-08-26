@@ -13,7 +13,7 @@ import pylab as pl
 import os
 
 from pathlib import Path
-import corono as coro
+#import corono as coro
 
 #%% parameters
 """
@@ -22,7 +22,7 @@ Parameters
 pl.close('all')
 if True:
     corono_name  = 'APLC' # 'APLC' or 'SP'
-    problem_name = 'MaxTau' # 'MaxContrastL1' #,'MaxContrastLinf' # 'MaxTau' #
+    problem_name = 'MaxContrastL2' # 'MaxContrastL1' #,'MaxContrastLinf' # 'MaxTau' #'MaxContrastL2'
     solver       = 'stdgrb' # 'stdgrb', 'gurobipy', 'scipy.linprog'
     
     FirstDer    = False
@@ -61,7 +61,7 @@ if True:
     cDarkHole = 8.0
     
     # tau (integrated Pupil transmission)
-    tau   = 0.3
+    tau   = 0.5
     
     r   = np.arange(nPup)*R/nPup + R/(2*nPup)
     Pupil1d      = (r>PupilID)*1.0
@@ -130,6 +130,10 @@ elif problem_name == 'MaxContrastL1':
 elif problem_name == 'MaxContrastLinf':
     # Maximization of the contrast under L-infinite norm
     problem1 = coro.optim_1d.MaxContrast(corono=corono0, Lnorm='Linf',**params)
+
+elif problem_name == 'MaxContrastL2':
+    # Maximization of the contrast under L2 norm
+    problem1 = coro.optim_1d.MaxContrast(corono=corono0, Lnorm='L2',**params)
 else:
      raise NameError('{0}: Not an existing optimization problem!'.format(problem_name))
 
