@@ -13,6 +13,8 @@ License: MIT license
 import numpy as np
 import json
 import time
+import random
+from qpsolvers import solve_qp
 
 try:
     import stdgrb
@@ -25,8 +27,9 @@ except ImportError:
     gb = False
 
 import scipy.optimize
-from .utils import update_params
-from . import design, default        
+from . import design, default  
+from utils import update_params, line_search_armijo,line_search_ratio,fmin_cond,grad,fonc,solve_closed_form   
+#import design, default,utils       
 
 #%%
 """
@@ -284,7 +287,7 @@ class ProblemMatrix(object):
             at all the wavelengths
         
         """            
-        if self.problem_name == 'MaxTau':
+        if self.problem_name == 'MaxTau' or self.problem_name == 'MaxSNR':
             direct_field_t_tmp = np.zeros((self.npp, self.corono.nlam, 
                                        self.corono.nImg+1), dtype='complex128')
             self.print_log('generating direct response matrices for 1D problem')
@@ -297,6 +300,9 @@ class ProblemMatrix(object):
             self.direct_field_re_t_tmp = direct_field_t_tmp.real
             #        self.direct_field_im_t_tmp = direct_field_t_tmp.imag    
             t1 = time.time()
+            if self.problem_name == 'MaxSNR':         
+                self.direct_field_re_t_tmp = np.reshape(self.direct_field_re_t_tmp\
+                [:,:,self.idx_dz], (self.npp, self.corono.nlam*self.ndz))
             self.print_log('direct matrix computation time: {0:.2f}s'.format(t1-t0))
 
 
@@ -340,51 +346,67 @@ class ProblemMatrix(object):
             Apodizer solution :math:`\Phi` for the optimization problem.
         
         """
-        self.compute_matrices()
-
         t0 = time.time()
 
-        if stdgrb and self.solver == 'stdgrb':
-            self.print_log('solving problem with stdgrb package')
-            Apodtmp, val = stdgrb.lp_solve(self.c, A=(self.A).T, b=self.b, 
-                                           ub = np.ones(self.npp+self.neps+self.nvv),
-                                           crossover=self.slvCrossover, 
-                                           logtoconsole=self.slvLogToConsole, 
-                                           method=self.slvMethod)
-            self.Apod[self.idx_pup] = Apodtmp[:self.npp]
-
-        elif gb and self.solver == 'gurobipy':
-            self.print_log('generating gurobi model')
-            self.compute_gurobi_model()
-            
-            self.print_log('solving problem with gurobipy package')                
-            try:
-                self.m.Params.Method       = self.slvMethod
-                self.m.Params.LogToConsole = self.slvLogToConsole
-                self.m.Params.Crossover    = self.slvCrossover
-                
-                self.m.optimize()
+        if self.problem_name=='MaxSNR':
+            self.solve_Frank_Wolfe()
+        else :
+        
+            self.compute_matrices()
     
-                for i, val in enumerate(self.idx_pup):
-                    self.Apod[val] = self.m.getVars()[i].x
+            if self.problem_name =='MaxContrastL2':
+                self.print_log('solving problem with quadprog')
+                Valp,Vecp=np.linalg.eigh(self.c)
+                #On régularise la matrice pour en faire une matrice définie-positive
+                self.c=np.diag(np.clip(Valp,10**-17,max(Valp)))
+                Inv=np.linalg.inv(Vecp.T)
+                self.c=np.dot(Inv,self.c)
+                self.c=np.dot(self.c,Vecp.T)
+                solve='quadprog'
+                x=solve_qp(self.c,np.zeros(len(self.c)),self.A,self.b,None,None,solve)
+                self.Apod[self.idx_pup]=x[:self.npp]
+            else:
+                if stdgrb and self.solver == 'stdgrb':
+                    self.print_log('solving problem with stdgrb package')
+                    Apodtmp, val = stdgrb.lp_solve(self.c, A=(self.A).T, b=self.b, 
+                                                   ub = np.ones(self.npp+self.neps+self.nvv),
+                                                   crossover=self.slvCrossover, 
+                                                   logtoconsole=self.slvLogToConsole, 
+                                                   method=self.slvMethod)
+                    self.Apod[self.idx_pup] = Apodtmp[:self.npp]
+        
+                elif gb and self.solver == 'gurobipy':
+                    self.print_log('generating gurobi model')
+                    self.compute_gurobi_model()
                     
-            except gb.GurobiError as e:
-                print('Error code ' + str(e.errno) + ": " + str(e))
-    
-            except AttributeError:
-                print('Encountered an attribute error')
+                    self.print_log('solving problem with gurobipy package')                
+                    try:
+                        self.m.Params.Method       = self.slvMethod
+                        self.m.Params.LogToConsole = self.slvLogToConsole
+                        self.m.Params.Crossover    = self.slvCrossover
                         
-        else:
-            self.print_log('solving problem with scipy.optimize')
-            bds = np.zeros((self.npp+self.neps+self.nvv, 2))
-            bds[:,1] = 1.
-            sol=scipy.optimize.linprog(self.c,(self.A).T,self.b,
-                                       method='interior-point',
-                                       bounds=bds, options={'sparse':False})
-            self.Apod[self.idx_pup]=sol.x[:self.npp]
+                        self.m.optimize()
             
-        t1 = time.time()
-        self.print_log('solving time: {0:.2f}s\n'.format(t1-t0))
+                        for i, val in enumerate(self.idx_pup):
+                            self.Apod[val] = self.m.getVars()[i].x
+                            
+                    except gb.GurobiError as e:
+                        print('Error code ' + str(e.errno) + ": " + str(e))
+            
+                    except AttributeError:
+                        print('Encountered an attribute error')
+                                
+                else:
+                    self.print_log('solving problem with scipy.optimize')
+                    bds = np.zeros((self.npp+self.neps+self.nvv, 2))
+                    bds[:,1] = 1.
+                    sol=scipy.optimize.linprog(self.c,(self.A).T,self.b,
+                                               method='interior-point',
+                                               bounds=bds, options={'sparse':False})
+                    self.Apod[self.idx_pup]=sol.x[:self.npp]
+                
+            t1 = time.time()
+            self.print_log('solving time: {0:.2f}s\n'.format(t1-t0))
         return self.Apod
 
 
@@ -411,7 +433,8 @@ class ProblemMatrix(object):
 
         if self.problem_name == 'MaxTau':
             str_opt = '_C={cDarkHole:.1f}'
-        elif self.problem_name == 'MaxContrastL1' or self.problem_name == 'MaxContrastLinf':
+        elif self.problem_name == 'MaxContrastL1' or self.problem_name == 'MaxContrastLinf'\
+        or self.problem_name == 'MaxContrastL2' or self.problem_name == 'MaxSNR' :
             str_opt = '_tau={tau:.3f}'
         else:
             raise NameError('{0}: Not an existing optimization problem!'.format(self.problem_name))
@@ -906,6 +929,8 @@ class MaxContrast(ProblemMatrix):
             self.neps = 1
         elif self.Lnorm == 'L1':
             self.neps = self.ndz
+        elif self.Lnorm == 'L2'  :
+            self.neps = 0
         else:
             raise ValueError('{0}: Not an existing L-type norm!'.format(self.problem_name))
 
@@ -922,7 +947,9 @@ class MaxContrast(ProblemMatrix):
         r"""
         Computes the matrices for the optimization problem that consists in 
         maximizing the contrast in a given search area in the coronagraphic 
-        image for a set integrated apodizer transmission :math:`\tau`. In terms
+        image for a set integrated apodizer transmission :math:`\tau`.
+        
+        For the :math:`L_1`-norm or :math:`L_\infty`-norm problems, in terms
         of matrices, the optimization problem writes as
             
         .. math:: \max_{\tau} c^{T}.x,
@@ -936,6 +963,15 @@ class MaxContrast(ProblemMatrix):
         the coronagraphic image. It can either depend on the position 
         :math:`\xi` in the coronagraphic image or not (:math:`L_1`-norm or 
         :math:`L_\infty`-norm problem). 
+        
+        For the :math:`L_2`-norm problem, in terms
+        of matrices, the optimization problem writes as
+            
+        .. math:: \max_{\tau} x^{T}.c.x,
+            
+        under the constraint :math:`A.x \leq b`.
+        Where x is the apodizer transmission function and x^{T}.c.x is the L2-norm
+        of the residual in the search area
         The variables follow the notations of [1]_ and [2]_.
 
         Notes
@@ -1024,78 +1060,94 @@ class MaxContrast(ProblemMatrix):
             http://iopscience.iop.org/article/10.3847/0004-637X/818/2/163/meta
                                                       
         """
-        # Compute intermediate variables for electric field constraints 
-        if self.Lnorm == 'Linf':
-            I0 = np.ones(self.ndz)
-            I0 = I0[None,:]
-            I1 = np.ones(self.ndz*self.corono.nlam*2)
-            I1 = I1[None,:]
-            c1 = [1]
+        
+        if self.Lnorm =='L2':
+            if self.corono_field_t is None:
+                self.compute_response_matrices()
+            self.c=np.dot(self.corono_field_t,self.corono_field_t.T)
+            A1=-np.identity(self.npp)
+            A2=np.identity(self.npp)
+            ctmp = np.zeros(self.npp)
+            ctmp[:self.npp] = np.asarray(self.idx_pup)
+            ctmp=(-1/sum(ctmp)*(ctmp))
+            self.A = np.concatenate((A1,A2,ctmp[None,:]),axis=0)
+            b0  = np.zeros(self.npp)
+            b1  = np.ones(self.npp)
+            b2  = [-self.tau]  
+            self.b = np.concatenate((b0,b1,b2))    
         else:
-            I0 = np.identity(self.ndz)
-            I1 = np.hstack([I0 for k in range(self.corono.nlam*2)])            
-            c1 = 2.*np.pi*np.asarray(self.idx_dz)*(self.corono.Fmax\
-                                  /self.corono.nImg)**2
-       
-        Z0 = np.zeros(self.neps)
-
-        # Compute contrast constraints on the coronagraphic electric field
-        if self.corono_field_t is None:
-            self.compute_response_matrices()
-        
-        # Compute constraints on the coronagraphic electric field
-        A0tmp  = np.concatenate(( self.corono_field_t, -I1), axis=0)
-        A1tmp  = np.concatenate((-self.corono_field_t, -I1), axis=0)
-
-        # Add terms corresponding to the MinIaland auxiliary variables        
-        AZ0vv = np.zeros((self.nvv,  np.shape(A0tmp)[1]))
-        
-        A0 = np.concatenate((A0tmp, AZ0vv))
-        A1 = np.concatenate((A1tmp, AZ0vv))
-        
-        # Compute constraint on the auxiliary variable epsilon
-        A20  = np.concatenate((np.zeros((self.npp, self.ndz)), 
-                               -I0,
-                               np.zeros((self.nvv, self.ndz))), axis=0)
-        
-        
-        # Compute constraint on the integral of the apodizer transmission
-        A21  = np.concatenate((-2.*np.pi*(np.asarray(self.idx_pup)+0.5)\
-            *self.corono.Pupil1d[self.idx_pup]/(2.*self.corono.nPup)**2/self.TR, 
-                                  Z0,
-                                  np.zeros((self.nvv))), axis=0)
-
-        # Compute b term corresponding to A0 and A1
-        b01  = np.zeros((2*self.corono.nlam*self.ndz*2))
-        
-        # Compute b terms corresponding to A6 and A7
-        b20  = np.zeros(self.ndz)
-        b21  = [-self.tau]
-        
-        #  Yield the A and b matrices for the optimization problem       
-        self.A = np.concatenate((A0,A1,A20,A21[:,None]), axis=1)
-        self.b = np.concatenate((b01  ,b20,b21))
-
-        # Add apodizer normalization contraints for gurobi solvers
-        if (stdgrb and self.solver == 'stdgrb') \
-        or (gb and self.solver == 'gurobipy'):
-            self.compute_problem_matrices_gurobi()
-
-        # Add apodizer first derivative constraints            
-        if self.FirstDer is True:
-            self.compute_problem_matrices_1stDer()
-
-        # Add apodizer second derivative constraints
-        if self.SecondDer is True:
-            self.compute_problem_matrices_2ndDer()     
-
-        # Add apodizer minimal islands constraints
-        if self.MinIsland is True:
-            self.compute_problem_matrices_MinIsland()
-
-        # Compute the cost function            
-        self.c = np.concatenate((np.zeros(self.npp), c1, 
-                                 np.zeros(self.nvv)), axis=0)
+        # Compute intermediate variables for electric field constraints 
+            if self.Lnorm == 'Linf':
+                I0 = np.ones(self.ndz)
+                I0 = I0[None,:]
+                I1 = np.ones(self.ndz*self.corono.nlam*2)
+                I1 = I1[None,:]
+                c1 = [1]
+            else:
+                I0 = np.identity(self.ndz)
+                I1 = np.hstack([I0 for k in range(self.corono.nlam*2)])            
+                c1 = 2.*np.pi*np.asarray(self.idx_dz)*(self.corono.Fmax\
+                                      /self.corono.nImg)**2
+           
+            Z0 = np.zeros(self.neps)
+    
+            # Compute contrast constraints on the coronagraphic electric field
+            if self.corono_field_t is None:
+                self.compute_response_matrices()
+            
+            # Compute constraints on the coronagraphic electric field
+            A0tmp  = np.concatenate(( self.corono_field_t, -I1), axis=0)
+            A1tmp  = np.concatenate((-self.corono_field_t, -I1), axis=0)
+    
+            # Add terms corresponding to the MinIaland auxiliary variables        
+            AZ0vv = np.zeros((self.nvv,  np.shape(A0tmp)[1]))
+            
+            A0 = np.concatenate((A0tmp, AZ0vv))
+            A1 = np.concatenate((A1tmp, AZ0vv))
+            
+            # Compute constraint on the auxiliary variable epsilon
+            A20  = np.concatenate((np.zeros((self.npp, self.ndz)), 
+                                   -I0,
+                                   np.zeros((self.nvv, self.ndz))), axis=0)
+            
+            
+            # Compute constraint on the integral of the apodizer transmission
+            A21  = np.concatenate((-2.*np.pi*(np.asarray(self.idx_pup)+0.5)\
+                *self.corono.Pupil1d[self.idx_pup]/(2.*self.corono.nPup)**2/self.TR, 
+                                      Z0,
+                                      np.zeros((self.nvv))), axis=0)
+    
+            # Compute b term corresponding to A0 and A1
+            b01  = np.zeros((2*self.corono.nlam*self.ndz*2))
+            
+            # Compute b terms corresponding to A6 and A7
+            b20  = np.zeros(self.ndz)
+            b21  = [-self.tau]
+            
+            #  Yield the A and b matrices for the optimization problem       
+            self.A = np.concatenate((A0,A1,A20,A21[:,None]), axis=1)
+            self.b = np.concatenate((b01  ,b20,b21))
+    
+            # Add apodizer normalization contraints for gurobi solvers
+            if (stdgrb and self.solver == 'stdgrb') \
+            or (gb and self.solver == 'gurobipy'):
+                self.compute_problem_matrices_gurobi()
+    
+            # Add apodizer first derivative constraints            
+            if self.FirstDer is True:
+                self.compute_problem_matrices_1stDer()
+    
+            # Add apodizer second derivative constraints
+            if self.SecondDer is True:
+                self.compute_problem_matrices_2ndDer()     
+    
+            # Add apodizer minimal islands constraints
+            if self.MinIsland is True:
+                self.compute_problem_matrices_MinIsland()
+    
+            # Compute the cost function            
+            self.c = np.concatenate((np.zeros(self.npp), c1, 
+                                     np.zeros(self.nvv)), axis=0)
         
         # Returns the A, b, and c matrices        
         return self.A, self.b, self.c
@@ -1338,3 +1390,144 @@ class MaxContrast(ProblemMatrix):
             print('Warning: Set solver keyword to "gurobipy" to make model!')             
 
 #%%
+"""
+MaxContrast ProblemMatrix subclass
+"""
+class MaxSNR(ProblemMatrix):
+    r"""
+    Defines the ProblemMatrix subclass for the optimization problem that 
+    maximizes the SNR in a given search area for a given integrated 
+    apodizer transmission :math:`\tau`.
+    """
+    default_params = default.get_default_params_1d_MaxSNR()
+    
+    def __init__(self, **kwargs):
+        r"""
+        Constructor for the MaxSNR problem with the coronagraph object
+        
+        Attributes
+        ----------
+        
+        problem : int (default=0)
+            define the optimization problem that has to be solved to initialize 
+            the Frank-Wolfe algorithm
+                        
+        """
+        self.Lnorm ='L2'
+
+        super(MaxSNR,self).__init__(**kwargs)
+        if self.initialisation == 'Linf':
+            params=kwargs.copy()
+            params['Lnorm'] = params.pop('initialisation')
+            del params['nmax']
+            del params['gradmin']
+            params['problem_name']='MaxContrastLinf'
+            self.pb=MaxContrast(**params)        
+        elif self.initialisation == 'L1':
+            params=kwargs.copy()
+            params['Lnorm'] = params.pop('initialisation')
+            del params['nmax']
+            del params['gradmin']
+            params['problem_name']='MaxContrastL1'
+            self.pb=MaxContrast(**params)        
+
+        elif self.initialisation == 'L2'  :
+            params=kwargs.copy()
+            params['Lnorm'] = params.pop('initialisation')
+            del params['nmax']
+            del params['gradmin']
+            params['problem_name']='MaxContrastL2'
+            self.pb=MaxContrast(**params)        
+        elif self.initialisation == 'Unif'  :
+            pass
+        elif self.initialisation == 'Random'  :
+            pass
+        else:
+            raise ValueError('{0}: Not an existing initialization!'.format(self.initialisation))
+            
+        if self.nmax == None:
+            self.nmax=10000
+        if self.gradmin == None:
+            self.gradmin=1e-7
+
+#%%
+    def Compute_initialisation_FW(self):
+     
+            Apod=self.pb.solve_model()
+            Apod=Apod[self.idx_pup]
+
+#            self.print_log('initialization problem solving time: {0:.2f}s\n'.format(t1-t0))
+            return Apod
+    
+    
+    
+    def solve_Frank_Wolfe(self):
+        r"""
+        Computes the matrices for the optimization problem that consists in 
+        maximizing the SNR in a given search area in the coronagraphic 
+        image for a set integrated apodizer transmission :math:`\tau` via a
+        condionnal gradient descent method (Frank-Wolfe algorithm). The algorithm
+        can be initialized  with the solution of the :math:`L_1`-norm or 
+        :math:`L_\infty`-norm or :math:`L_2` problems. It can also be initialized with 
+        a random apodizer or a uniform apodizer.
+        
+        Notes
+        initiaisation : string
+            Type of initialization for the optimization problem
+            
+
+        -----------
+
+        
+        """
+        t0=time.time()
+        x0=np.zeros_like(self.Apod)
+        ctmp = np.zeros(self.npp)
+        ctmp[:self.npp] = np.asarray(self.idx_pup)
+        ctmp=(1/sum(ctmp)*(ctmp)) 
+        self.compute_response_matrices()
+        if self.initialisation =='Unif':
+           x0[self.idx_pup]=(self.tau)*(np.ones(self.npp))
+           x0=x0[self.idx_pup]
+        elif self.initialisation =='Random':
+            l=[i for i in range (len(self.idx_pup))]
+            l=np.random.permutation(l)
+            x0=x0[self.idx_pup]
+            x1=np.ones_like(x0)
+            k=-1
+            while np.dot(ctmp,x1)>self.tau and k<len(x0)-1:
+                k+=1
+                x0[l[k]]=random.random()
+                x1[l[k]]=x0[l[k]]
+            if np.dot(ctmp,x1)<self.tau:
+                x0=x1
+                x0[l[k]]=0
+                x0[l[k]]=(self.tau-np.dot(ctmp,x0))/ctmp[l[k]]
+        else:
+            x0=self.Compute_initialisation_FW()
+                    
+            
+        t1=time.time()
+
+        print('initialization problem solving time: {0:.2f}s\n'.format(t1-t0))
+        
+        Ke=np.dot(self.corono_field_t,self.corono_field_t.T)
+    
+        Kp=np.dot(self.direct_field_re_t_tmp,self.direct_field_re_t_tmp.T)
+
+    
+        grad1=lambda x:(2*np.dot(Ke,x)*np.dot(np.dot(x,Kp),x)-2*np.dot(Kp,x)*np.dot(np.dot(x,Ke),x))\
+/(np.dot(np.dot(x,Kp),x))**2
+        fonc1 =lambda x:np.dot(np.dot(x,Ke),x)/np.dot(np.dot(x,Kp),x)
+        solve_C1=lambda x,g:solve_closed_form(g,ctmp,self.tau)
+        params = dict()
+        params['nbitermax'] = self.nmax
+        params['stopvarj'] = self.gradmin
+        params['verbose'] = False
+        params['log'] = True    
+        x, val, log = fmin_cond(fonc1, grad1, solve_C1, x0, Ke, Kp,linesearch=1, **params)
+        a=np.zeros_like(self.Apod)
+        a[self.idx_pup]=x[:self.npp]
+        self.Apod=a
+        
+        return 

@@ -732,6 +732,47 @@ def get_default_params_1d_MaxContrastProblemMatrix():
     return tmp
 
 #%%
+def get_default_params_1d_MaxSNR():
+    r"""
+    Gets the default parameters for the Max contrast optimization problem.
+    
+    Parameters
+    ---------- 
+    tmp : dict
+        Dictionary from the get_default_matrix_pb
+        
+    Lnorm : string (default= 'L1')
+        L-norm type for the optimization problem 
+        ('Linf' : :math:`L_{\infty}` norm, 'L1' : :math:`L_1`-norm)
+
+    problem_name : string (default='MaxTau')
+        name of the optimization problem.
+        The user can choose between:
+            
+            - 'MaxTau': maximization of the apodizer transmission for a given 
+            contrast
+            
+            - 'MaxContrastL1': maximization of the contrast for a given 
+            apodizer transmission under L1-norm constraints
+            
+            - 'MaxContrastLinf': maximization of the contrast for a given 
+            apodizer transmission under Linf-norm constraints
+            
+            - 'MaxContrastL2': maximization of the contrast for a given 
+            apodizer transmission under L2-norm constraints
+                
+    Returns    
+    ----------
+    tmp : dict
+        Updated dictionary
+        
+    """    
+    tmp = get_default_params_1d_ProblemMatrix()
+    tmp.update({ 'problem_name':'MaxSNR','nmax' :10000,'gradmin':1e-7, 'initialisation':'Unif'})
+    
+    return tmp
+
+#%%
 def get_default_params_2d_ProblemMatrix():
     r"""
     Gets the default parameters for the optimization problem matrix.
