@@ -45,8 +45,8 @@ print('Mask radius: {0:.2f} mas at {1:.3f}um'.format(rMask_mas, wv*1e6))
 rho0   = 5.
 rho1   = 20.
 nPup   = 384
-nImg2d = 600
-Fmax2d = 60
+nImg2d = 256
+Fmax2d = nImg2d/(2*(wv/950e-9))
 nlam   = 11
 bw     = 0.2#width/wv 
 nFPM   = 200
@@ -59,7 +59,7 @@ kw_saxo      = True
 
 #%% 
 if kw_aberr is False:
-    str_aberr = 'wo_aberr'
+    str_aberr = 'wo_aberr_with_irdis_plate_scale'
     str_date  = ''
     str_obs   = ''
     str_corr  = ''

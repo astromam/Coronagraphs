@@ -26,11 +26,11 @@ Parameters
 corono_name  = 'APLC' # 'SP' or 'APLC'
 pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
 problem_name = 'MaxTau' # 'MaxTau' # ,'MaxContrastLinf' # 'MaxContrastL1' #
-solver       = 'gurobipy' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
-slvLogToConsole = 0
+solver       = 'stdgrb' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
+slvLogToConsole = 1
 slvCrossover    = 0
 slvMethod       = 2
-allLogToConsole = 0
+allLogToConsole = 1
 
 MinIsland   = False
 Binarity    = False
@@ -60,10 +60,11 @@ tau   = 0.4
 CtrBtwnPix  = True
 CtrBtwnPix2 = True
 Pupil2dSym  = True
+ImPart = False 
 
 #nlam
 bw   = 0.1
-nlam = 5
+nlam = 1
 
 do_fits = True
 
@@ -101,7 +102,8 @@ params = coro.to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
                  slvCrossover = slvCrossover, slvMethod = slvMethod,
                  allLogToConsole = allLogToConsole,
                  MinIsland = MinIsland, FirstDerGlobalLim = FirstDerGlobalLim,
-                 Binarity = Binarity, BinarityReg = BinarityReg)
+                 Binarity = Binarity, BinarityReg = BinarityReg,
+                 ImPart = ImPart)
 
 #%%  
 """ 

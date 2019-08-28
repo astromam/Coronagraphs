@@ -20,9 +20,9 @@ import corono as coro
 Parameters
 """
 pl.close('all')
-if True:
+if False:
     corono_name  = 'APLC' # 'APLC' or 'SP'
-    problem_name = 'MaxTau' # 'MaxContrastL1' #,'MaxContrastLinf' # 'MaxTau' #
+    problem_name = 'MaxContrastL1' # 'MaxContrastL1' #,'MaxContrastLinf' # 'MaxTau' #
     solver       = 'stdgrb' # 'stdgrb', 'gurobipy', 'scipy.linprog'
     
     FirstDer    = False
@@ -191,7 +191,7 @@ Display of the intensity profiles of the coronagraphic images
 
 fname_pl = fname_gen + '_intensity.pdf'
 fpath    = fdir_plot / fname_pl
-pl.figure(2)
+pl.figure(4)
 pl.clf()
 #pl.title('Intensity profiles of the coronagraphic images')
 #pl.semilogy(corono0.xi,poly_direct_image1/poly_direct_image1.max(),label='Direct')
@@ -219,7 +219,7 @@ colors = pl.cm.rainbow(np.linspace(0,1,nlambis))
 
 fname_pl = fname_gen + '_intensity_mono.pdf'
 fpath    = fdir_plot / fname_pl
-pl.figure(3)
+pl.figure(5)
 pl.clf()
 #pl.title('Intensity profiles of the coronagraphic images')
 #pl.semilogy(corono0.xi,poly_direct_image1/poly_direct_image1.max(),label='Direct')

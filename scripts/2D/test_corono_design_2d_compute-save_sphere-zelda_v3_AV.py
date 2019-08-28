@@ -36,21 +36,21 @@ wv        = 1.593e-6
 width     = 52e-9
 
 # Telescope characteristics
-dAper     = 8
+dAper     = 8.
 Fratio    = 40
 
 # Focal plane mask 
 mas2rad   = np.pi/(180.*3600) # Conversion factor from mas to rads
 rMask_m   = 287e-6/2.         # mask size in m
-rMask  = rMask_m/(wv*Fratio)  # mask size in lam0/D
+rMask     = rMask_m/(wv*Fratio)  # mask size in lam0/D
 rMask_mas = 1000.*rMask * (wv/dAper)/mas2rad
 print('Mask radius: {0:.2f} mas at {1:.3f}um'.format(rMask_mas, wv*1e6))
 
 # sampling
 nPup   = 384   # pupil
 nFPM   = 200   # focal plane mask
-nImg2d = 600   # final image plane 
-Fmax2d = 60    # spatial frequencies in the final image plane
+nImg2d = 256   # final image plane 
+Fmax2d = nImg2d/(2*(wv/950e-9))    # spatial frequencies in the final image plane
 
 # wavelength sampling
 nlam   = 5
@@ -59,7 +59,7 @@ bw     = width/wv
 # simulation configuration   
 kw_aberr     = True
 kw_2nddate   = True    
-kw_skyobs    = False
+kw_skyobs    = True
 kw_aftercorr = True
 kw_saxo      = False
 saxomap_i    = 0    # saxo first screen
@@ -193,9 +193,39 @@ if kw_skyobs is True:
     Pupil2d = aperture.vlt_pupil(nPup, nPup, dead_actuator_diameter=0)
 else:
     Pupil2d = aperture.disc(nPup, nPup/2)
+
+#%%
+    
+import pylab as pl
+    
+pl.figure(0)
+pl.imshow(Pupil2d)
+pl.title('Aperture')
+pl.show()    
+
+#%%
+
+#fdir = Path('/Users/mndiaye/Desktop/').resolve()
+#fname = 'vlt_pupil_nPup=384.fits'
+#fpath = fdir / fname
+#
+#fits.writeto(str(fpath), Pupil2d, overwrite = True)
+    
     
 #%% Apodization
 Apod2d = fits.getdata(fpath_Apod2d)
+
+pl.figure(1)
+pl.imshow(Apod2d)
+pl.title('Apodizer')
+pl.show()   
+
+#fdir = Path('/Users/mndiaye/Desktop/').resolve()
+#fname = 'apodizer_nPup=384.fits'
+#fpath = fdir / fname
+
+#fits.writeto(str(fpath), Apod2d, overwrite = True)
+
 
 #%% APodization OPD map
 Apod2d_OPDmapnm = fits.getdata(fpath_Apod2d_OPDmapnm)
@@ -204,6 +234,19 @@ Apod2d_OPDmapnm[np.isnan(Apod2d_OPDmapnm)] = 0
 #%% Amplitude errors
 if kw_aberr is True:
     Ampmap2d = fits.getdata(fpath_Ampmap2d)
+
+pl.figure(2)
+pl.imshow(Ampmap2d)
+pl.title('Ampmap2d')
+pl.show()   
+
+fdir = Path('/Users/mndiaye/Desktop/').resolve()
+fname = 'ampmap2d_nPup=384.fits'
+fpath = fdir / fname
+
+fits.writeto(str(fpath), Ampmap2d, overwrite = True)
+
+
 
 #%% Phase errors
 if kw_aberr is True:
@@ -224,8 +267,23 @@ if kw_aberr is True:
         SAXOmapnm3d = np.asarray(SAXOmapnm3d)
 
 
+#%%
+pl.figure(3)
+pl.imshow(ZELDAmapnm3d[0])
+pl.title('ZELDA map')
+pl.show()           
+       
+
+
 #%% Lyot Stop
 LyotStop2d = fits.getdata(fpath_LyotStop2d)
+
+#%%
+pl.figure(4)
+pl.imshow(LyotStop2d)
+pl.title('Lyot stop')
+pl.show()           
+
 
 #%%
 """
