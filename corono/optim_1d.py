@@ -28,7 +28,8 @@ except ImportError:
 
 import scipy.optimize
 from . import design, default  
-from utils import update_params, line_search_armijo,line_search_ratio,fmin_cond,grad,fonc,solve_closed_form   
+from utils import update_params
+from Optim_func import  line_search_armijo,line_search_ratio,fmin_cond,solve_closed_form,cost_function,gradient_function  
 #import design, default,utils       
 
 #%%
@@ -355,13 +356,21 @@ class ProblemMatrix(object):
             self.compute_matrices()
     
             if self.problem_name =='MaxContrastL2':
+                
                 self.print_log('solving problem with quadprog')
+                
                 Valp,Vecp=np.linalg.eigh(self.c)
-                #On régularise la matrice pour en faire une matrice définie-positive
+                
+                #Regularization of the Matrix in order to transform it into
+                #a positive definite Matrix. It's done by diagonalizing the Matrix and
+                #then changing the eigenvalues that are too low.
+                
                 self.c=np.diag(np.clip(Valp,10**-17,max(Valp)))
                 Inv=np.linalg.inv(Vecp.T)
                 self.c=np.dot(Inv,self.c)
                 self.c=np.dot(self.c,Vecp.T)
+                
+                
                 solve='quadprog'
                 x=solve_qp(self.c,np.zeros(len(self.c)),self.A,self.b,None,None,solve)
                 self.Apod[self.idx_pup]=x[:self.npp]
@@ -451,11 +460,21 @@ class ProblemMatrix(object):
         if self.MinIsland is True:
             str_FirstDerGlobal = '_1stderglo={FirstDerGlobalLim}'
                                    
-        fname_corono = self.corono.get_filename()        
+        fname_corono = self.corono.get_filename()  
         
-        fname_gen_optim = '{problem_name}' \
-        + str_opt + str_FirstDer + str_SecondDer + str_FirstDerGlobal \
-        + '_{solver}'
+        if self.problem_name == 'MaxSNR':
+            str_initialisation = '_initialisation={initialisation}'
+            str_nmax = '_nmax={nmax}'
+            str_gradmin = '_gradmin={gradmin}'
+            
+            fname_gen_optim = '{problem_name}' \
+            + str_opt + str_FirstDer + str_SecondDer + str_FirstDerGlobal \
+            + str_initialisation + str_nmax + str_gradmin
+        
+        else :
+            fname_gen_optim = '{problem_name}' \
+            + str_opt + str_FirstDer + str_SecondDer + str_FirstDerGlobal \
+            + '_{solver}'
 
         return fname_corono + '_' + fname_gen_optim.format(**params)
 
@@ -1408,13 +1427,26 @@ class MaxSNR(ProblemMatrix):
         Attributes
         ----------
         
-        problem : int (default=0)
+        pb : ProblemMatrix  object (default=None)
             define the optimization problem that has to be solved to initialize 
-            the Frank-Wolfe algorithm
-                        
-        """
-        self.Lnorm ='L2'
+            the Frank-Wolfe algorithm for :math:`L_p' initializations 
+            (:math:`L_1`-norm, `L_2`-norm or :math:`L_\infty`-norm problem)
+        
 
+        params :  Dict 
+            Dictionnary that contains the parameters of pb, the initialization problem 
+        for :math:`L_p' initializations       
+        
+
+        nmax  : Int (default=10000)
+            Maximum number of iterations forthe Frank-Wolfe algorithm
+            
+        
+        gradmin :  Float (default = 1e-7)
+            Minimal gradient value of the cost function for which the Frank-Wolfe algorithm
+        consider it has converged
+        
+        """
         super(MaxSNR,self).__init__(**kwargs)
         if self.initialisation == 'Linf':
             params=kwargs.copy()
@@ -1422,7 +1454,8 @@ class MaxSNR(ProblemMatrix):
             del params['nmax']
             del params['gradmin']
             params['problem_name']='MaxContrastLinf'
-            self.pb=MaxContrast(**params)        
+            self.pb=MaxContrast(**params)
+            
         elif self.initialisation == 'L1':
             params=kwargs.copy()
             params['Lnorm'] = params.pop('initialisation')
@@ -1438,10 +1471,13 @@ class MaxSNR(ProblemMatrix):
             del params['gradmin']
             params['problem_name']='MaxContrastL2'
             self.pb=MaxContrast(**params)        
+        
         elif self.initialisation == 'Unif'  :
             pass
+        
         elif self.initialisation == 'Random'  :
             pass
+        
         else:
             raise ValueError('{0}: Not an existing initialization!'.format(self.initialisation))
             
@@ -1451,16 +1487,7 @@ class MaxSNR(ProblemMatrix):
             self.gradmin=1e-7
 
 #%%
-    def Compute_initialisation_FW(self):
-     
-            Apod=self.pb.solve_model()
-            Apod=Apod[self.idx_pup]
-
-#            self.print_log('initialization problem solving time: {0:.2f}s\n'.format(t1-t0))
-            return Apod
-    
-    
-    
+        
     def solve_Frank_Wolfe(self):
         r"""
         Computes the matrices for the optimization problem that consists in 
@@ -1472,8 +1499,15 @@ class MaxSNR(ProblemMatrix):
         a random apodizer or a uniform apodizer.
         
         Notes
-        initiaisation : string
+        initialisation : string
             Type of initialization for the optimization problem
+            
+        x0 : array_like
+        Contains the Apodizer solution of the optimisation problem specified
+        
+        c_transmission :array_like
+        Vector whose scalar product with an apodiser returns the transmission
+        :math: \tau of this apodizer
             
 
         -----------
@@ -1482,50 +1516,93 @@ class MaxSNR(ProblemMatrix):
         """
         t0=time.time()
         x0=np.zeros_like(self.Apod)
-        ctmp = np.zeros(self.npp)
-        ctmp[:self.npp] = np.asarray(self.idx_pup)
-        ctmp=(1/sum(ctmp)*(ctmp)) 
+        
+        # Computes the vector to estimate the transmission \tau of an apodizer
+
+        c_transmission = np.zeros(self.npp)
+        c_transmission[:self.npp] = np.asarray(self.idx_pup)
+        c_transmission=(1/sum(c_transmission)*(c_transmission)) 
+        
+        
+        # Computes the apodizer that initializes the Frank-Wolfe algorithm 
+
         self.compute_response_matrices()
+        
+        
+        #If the initializer apodizer is uniform
         if self.initialisation =='Unif':
            x0[self.idx_pup]=(self.tau)*(np.ones(self.npp))
            x0=x0[self.idx_pup]
+        
+        #If the initializer apodizer is randomly choosen among all the acceptable apodizers
+
         elif self.initialisation =='Random':
             l=[i for i in range (len(self.idx_pup))]
             l=np.random.permutation(l)
             x0=x0[self.idx_pup]
             x1=np.ones_like(x0)
             k=-1
-            while np.dot(ctmp,x1)>self.tau and k<len(x0)-1:
+            while np.dot(c_transmission,x1)>self.tau and k<len(x0)-1:
                 k+=1
                 x0[l[k]]=random.random()
                 x1[l[k]]=x0[l[k]]
-            if np.dot(ctmp,x1)<self.tau:
+            if np.dot(c_transmission,x1)<self.tau:
                 x0=x1
                 x0[l[k]]=0
-                x0[l[k]]=(self.tau-np.dot(ctmp,x0))/ctmp[l[k]]
+                x0[l[k]]=(self.tau-np.dot(c_transmission,x0))/c_transmission[l[k]]
+        
+        
+        #If the initializer apodizer is the solution of one of the math: L_p problem
+
         else:
-            x0=self.Compute_initialisation_FW()
-                    
+            x0=self.pb.solve_model()
+            x0=x0[self.idx_pup]                    
             
         t1=time.time()
 
         print('initialization problem solving time: {0:.2f}s\n'.format(t1-t0))
         
+        
+        # Compute the matrices required to calculate the cost function 
+
+#
         Ke=np.dot(self.corono_field_t,self.corono_field_t.T)
     
         Kp=np.dot(self.direct_field_re_t_tmp,self.direct_field_re_t_tmp.T)
+        
+        psi_star = self.corono_field_t
+        psi_planet = self.direct_field_re_t_tmp
 
     
-        grad1=lambda x:(2*np.dot(Ke,x)*np.dot(np.dot(x,Kp),x)-2*np.dot(Kp,x)*np.dot(np.dot(x,Ke),x))\
-/(np.dot(np.dot(x,Kp),x))**2
-        fonc1 =lambda x:np.dot(np.dot(x,Ke),x)/np.dot(np.dot(x,Kp),x)
-        solve_C1=lambda x,g:solve_closed_form(g,ctmp,self.tau)
+        # Define the cost function, the gradient of the cost function and the solver
+        #of the linear problem that has to be solved at each step of the Frank-Wolfe
+        #algorithm
+
+
+#            grad1=lambda x:(2*np.dot(Ke,x)*np.dot(np.dot(x,Kp),x)-2*np.dot(Kp,x)*np.dot(np.dot(x,Ke),x))\
+#            /(np.dot(np.dot(x,Kp),x))**2       
+#            fonc1 =lambda x:np.dot(np.dot(x,Ke),x)/np.dot(np.dot(x,Kp),x)
+
+        grad1=lambda x:gradient_function(x,psi_star,psi_planet)
+        
+        fonc1 =lambda x:cost_function(x,psi_star,psi_planet)
+        
+        solve_C1=lambda x,g:solve_closed_form(g,c_transmission,self.tau)
+        
+            
+        # gather the parameters of the fmin_cond function in a  dictionnary
+
         params = dict()
         params['nbitermax'] = self.nmax
         params['stopvarj'] = self.gradmin
         params['verbose'] = False
         params['log'] = True    
-        x, val, log = fmin_cond(fonc1, grad1, solve_C1, x0, Ke, Kp,linesearch=1, **params)
+        
+        # Apply the Frank-Wolfe algorithm
+
+        x, val, log = fmin_cond(fonc1, grad1, solve_C1, x0, psi_star, psi_planet,linesearch=1, **params)
+        
+        
         a=np.zeros_like(self.Apod)
         a[self.idx_pup]=x[:self.npp]
         self.Apod=a

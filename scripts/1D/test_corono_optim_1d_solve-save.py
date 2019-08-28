@@ -131,7 +131,7 @@ elif problem_name == 'MaxContrastL2':
     
 elif problem_name == 'MaxSNR':
     # Maximization of the contrast under L2 norm
-    problem1 = coro.optim_1d.MaxSNR(corono=corono0,nmax=10000,gradmin=1e-7, initialisation='L1' ,**params)
+    problem1 = coro.optim_1d.MaxSNR(corono=corono0,nmax=10000,gradmin=1e-7, initialisation='Linf' ,**params)
 else:
      raise NameError('{0}: Not an existing optimization problem!'.format(problem_name))
     
@@ -148,7 +148,7 @@ print('optimization time              : {0:.2f}s'.format(t1-t0))
 """
 Apodizer saving 
 """
-fname = 'problem1.get_filename()' + '.dat'
+fname = problem1.get_filename() + '.dat'
 fpath = fdir / fname
 
 test0 = np.zeros((nPup, 2))

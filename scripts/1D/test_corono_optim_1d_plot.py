@@ -22,7 +22,7 @@ Parameters
 pl.close('all')
 if True:
     corono_name  = 'APLC' # 'APLC' or 'SP'
-    problem_name = 'MaxContrastL2' # 'MaxContrastL1' #,'MaxContrastLinf' # 'MaxTau' #'MaxContrastL2'
+    problem_name = 'MaxSNR' # 'MaxContrastL1' #,'MaxContrastLinf' # 'MaxTau' #'MaxContrastL2' #MaxSNR
     solver       = 'stdgrb' # 'stdgrb', 'gurobipy', 'scipy.linprog'
     
     FirstDer    = False
@@ -134,6 +134,10 @@ elif problem_name == 'MaxContrastLinf':
 elif problem_name == 'MaxContrastL2':
     # Maximization of the contrast under L2 norm
     problem1 = coro.optim_1d.MaxContrast(corono=corono0, Lnorm='L2',**params)
+elif problem_name == 'MaxSNR':
+    # Maximization of the contrast under L2 norm
+    problem1 = coro.optim_1d.MaxSNR(corono=corono0,nmax=10000,gradmin=1e-7, initialisation='Linf' ,**params)
+
 else:
      raise NameError('{0}: Not an existing optimization problem!'.format(problem_name))
 
