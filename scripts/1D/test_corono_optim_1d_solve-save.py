@@ -20,7 +20,7 @@ from pathlib import Path
 Parameters
 """
 corono_name  = 'APLC' # 'APLC' or 'SP'
-problem_name = 'MaxSNR' # ,'MaxTau' # 'MaxContrastLinf' #'MaxContrastL1' #'MaxContrastL2', #MaxSNR
+problem_name = 'MaxContrastL2' # ,'MaxTau' # 'MaxContrastLinf' #'MaxContrastL1' #'MaxContrastL2', #MaxSNR
 solver       = 'stdgrb' # 'stdgrb', 'gurobipy', 'scipy.linprog' #Not for MaxContrastL2 problem
 slvLogToConsole = 0
 slvCrossover    = 0

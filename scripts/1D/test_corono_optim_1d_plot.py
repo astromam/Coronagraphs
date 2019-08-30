@@ -22,7 +22,7 @@ Parameters
 pl.close('all')
 if True:
     corono_name  = 'APLC' # 'APLC' or 'SP'
-    problem_name = 'MaxSNR' # 'MaxContrastL1' #,'MaxContrastLinf' # 'MaxTau' #'MaxContrastL2' #MaxSNR
+    problem_name = 'MaxContrastL2' # 'MaxContrastL1' #,'MaxContrastLinf' # 'MaxTau' #'MaxContrastL2' #MaxSNR
     solver       = 'stdgrb' # 'stdgrb', 'gurobipy', 'scipy.linprog'
     
     FirstDer    = False
