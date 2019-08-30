@@ -109,37 +109,49 @@ def line_search_ratio_matrix_k(x,deltax,Ke,Kp):
         c=np.dot(Kp,deltax)
         d=np.dot(Kp,x)
         g=lambda L,t  : (L[0]*(t**2)+L[1]*t+L[2])/(L[3]*(t**2)+L[4]*t+L[5])
-        L=[]
-        L.append(np.dot(deltax,a))
-        L.append(2*np.dot(deltax,b))
-        L.append(np.dot(x,b))
-        L.append(np.dot(deltax,c))
-        L.append(2*np.dot(deltax,d))
-        L.append(np.dot(x,d))
-        P=[]
-        P.append(L[0]*L[4]-L[3]*L[1])
-        P.append(2*(L[0]*L[5]-L[3]*L[2]))
-        P.append(L[1]*L[5]-L[4]*L[2])
+        L=[np.dot(deltax,a),
+           2*np.dot(deltax,b),
+           np.dot(x,b),
+           np.dot(deltax,c),
+           2*np.dot(deltax,d),
+           np.dot(x,d)]
+
+        P=[L[0]*L[4]-L[3]*L[1],
+           2*(L[0]*L[5]-L[3]*L[2]),
+           L[1]*L[5]-L[4]*L[2],
+           ]
+
         Disc=(P[1]**2)-4*P[0]*P[2]
-#            P=[]
-#            P.append((np.dot(deltax,a)*2*np.dot(x,c)-(np.dot(deltax,c)*2*np.dot(x,a))))
-#            P.append(2*(((np.dot(deltax,a))*np.dot(x,d))-(np.dot(x,b)*np.dot(deltax,c))))
-#            P.append(((2*np.dot(x,a))*np.dot(x,d))-(2*np.dot(x,b)*np.dot(x,c)))
-#            Disc=(P[1]**2)-4*P[0]*P[2]
+                
+        #if P has real roots, they are computed. Then, we check if they are in [0,1]. 
+        #Finally, the various possible steps are compared and the one that minimizes the 
+        #cost function is selected
+
         if Disc>0:
             alpha0=(-P[1]+np.sqrt(Disc))/(2*P[0])
             alpha1=(-P[1]-np.sqrt(Disc))/(2*P[0])
+            
+            #alp is the list of all possible optimal steps.
             alp=[0,1,alpha0,alpha1]
-            l=[g(L,0),g(L,1)]
+            
+            #l is the list of the value of the cost function after these steps.
+            l=[g(L,0),g(L,1),0,0]
+            
             if alpha0>0 and alpha0<1:
-                l.append(g(L,alpha0))
+                l[2]=(g(L,alpha0))
             else:
-                    l.append(l[1])
+                
+                #if alpha0 is not an admissible step, we just set l[2] to l[1] just to be sure it won't be choosen
+                    l[2]=l[1]
             if alpha1>0 and alpha1<1:
-                l.append(g(L,alpha1))
+                l[3]=(g(L,alpha1))
             else:
-                l.append(l[1])
+                #if alpha1 is not an admissible step, we just set l[2] to l[1] just to be sure it won't be choosen
+
+                l[3]=l[1]
         else :
+        #if P has no real roots, the optimal is either 0 or 1 so these two
+        #possibilities are compared
             if g(L,0)<g(L,1):
                 alpha=0
             else:
@@ -207,16 +219,29 @@ def line_search_ratio(x,deltax,psi_star,psi_planet):
         if Disc>0:
             alpha0=(-P[1]+np.sqrt(Disc))/(2*P[0])
             alpha1=(-P[1]-np.sqrt(Disc))/(2*P[0])
+            #alp is the list of all possible optimal steps.
             alp=[0,1,alpha0,alpha1]
-            l=[g(L,0),g(L,1)]
+            
+            #l is the list of the value of the cost function after these steps.
+            l=[g(L,0),g(L,1),0,0]
+            
             if alpha0>0 and alpha0<1:
-                l.append(g(L,alpha0))
+                
+                l[2]=(g(L,alpha0))
+                
             else:
-                    l.append(l[1])
+                
+            #if alpha0 is not an admissible step, we just set l[2] to l[1] just to be sure it won't be choosen
+                    l[2]=l[1]
+                    
             if alpha1>0 and alpha1<1:
-                l.append(g(L,alpha1))
+                
+                l[3]=(g(L,alpha1))
+                
             else:
-                l.append(l[1])
+            #if alpha1 is not an admissible step, we just set l[2] to l[1] just to be sure it won't be choosen
+
+                l[3]=l[1]
                 
         #if P has no real roots, the optimal is either 0 or 1 so these two
         #possibilities are compared
