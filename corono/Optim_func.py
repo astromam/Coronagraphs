@@ -9,10 +9,10 @@ from scipy.optimize.linesearch import scalar_search_armijo
 
 
 #%%
-def cost_function(x,psi_star,psi_planet):
+def cost_function_snr(x,psi_star,psi_planet):
     """
-    function that computes the cost function for the frank wolfe algorithm
-    
+    function that computes the cost function for the frank wolfe algorithm. 
+    It corresponds to the SNR for an apodizer x
     """
     a=np.dot(x,psi_star)
     b=np.dot(x,psi_planet)
@@ -20,9 +20,9 @@ def cost_function(x,psi_star,psi_planet):
     return (np.dot(a,a.T)/np.dot(b,b.T))
 
 #%%
-def gradient_function(x,psi_star,psi_planet):
+def gradient_function_snr(x,psi_star,psi_planet):
     """
-    function that computes the gradient of the cost function for the frank wolfe algorithm
+    function that computes the gradient of the cost function (snr) for the frank wolfe algorithm
     
     """
     a=np.dot(psi_star.T,x)
@@ -87,68 +87,69 @@ def line_search_armijo(f, xk, pk, gfk, old_fval=None,
 
     return alpha, fc[0], phi1
 #%%
-#def line_search_ratio(x,deltax,Ke,Kp): 
-#        """
-#        Closed-form line-search for the Frank-Wolfe algorithme and a cost function
-#        of the form 
-#        :math f(x) = \frac{x^{T}\Psi^{T}_{star}\Psi_{star}x}{x^{T}\Psi_{planet}^{T}\Psi_{planet}x}
-#        
-#        
-#        
-#        returns :
-#        alpha : float in [0,1]
-#            Optimal step
-#            
-#        f_val : Value of the cost function after the step \alpha
-#        """
-#
-#    
-#        a=np.dot(Ke,deltax)
-#        b=np.dot(Ke,x)
-#        c=np.dot(Kp,deltax)
-#        d=np.dot(Kp,x)
-#        g=lambda L,t  : (L[0]*(t**2)+L[1]*t+L[2])/(L[3]*(t**2)+L[4]*t+L[5])
-#        L=[]
-#        L.append(np.dot(deltax,a))
-#        L.append(2*np.dot(deltax,b))
-#        L.append(np.dot(x,b))
-#        L.append(np.dot(deltax,c))
-#        L.append(2*np.dot(deltax,d))
-#        L.append(np.dot(x,d))
-#        P=[]
-#        P.append(L[0]*L[4]-L[3]*L[1])
-#        P.append(2*(L[0]*L[5]-L[3]*L[2]))
-#        P.append(L[1]*L[5]-L[4]*L[2])
-#        Disc=(P[1]**2)-4*P[0]*P[2]
-##            P=[]
-##            P.append((np.dot(deltax,a)*2*np.dot(x,c)-(np.dot(deltax,c)*2*np.dot(x,a))))
-##            P.append(2*(((np.dot(deltax,a))*np.dot(x,d))-(np.dot(x,b)*np.dot(deltax,c))))
-##            P.append(((2*np.dot(x,a))*np.dot(x,d))-(2*np.dot(x,b)*np.dot(x,c)))
-##            Disc=(P[1]**2)-4*P[0]*P[2]
-#        if Disc>0:
-#            alpha0=(-P[1]+np.sqrt(Disc))/(2*P[0])
-#            alpha1=(-P[1]-np.sqrt(Disc))/(2*P[0])
-#            alp=[0,1,alpha0,alpha1]
-#            l=[g(L,0),g(L,1)]
-#            if alpha0>0 and alpha0<1:
-#                l.append(g(L,alpha0))
-#            else:
-#                    l.append(l[1])
-#            if alpha1>0 and alpha1<1:
-#                l.append(g(L,alpha1))
-#            else:
-#                l.append(l[1])
-#        else :
-#            if g(L,0)<g(L,1):
-#                alpha=0
-#            else:
-#                alpha=1
-#            
-#
-#            
-#        alpha=alp[l.index(min(l))]
-#        f_val=g(L,alpha)
-#        return(f_val,alpha)
+def line_search_ratio_matrix_k(x,deltax,Ke,Kp): 
+        """
+        Closed-form line-search for the Frank-Wolfe algorithme and a cost function
+        of the form 
+        :math f(x) = \frac{x^{T}\Psi^{T}_{star}\Psi_{star}x}{x^{T}\Psi_{planet}^{T}\Psi_{planet}x}
+        This algorithm uses directly Ke and Kp which corresponds to :math \Psi^{T}_{star}\Psi_{star}
+        and \Psi_{planet}^{T}\Psi_{planet}. The function "line_search_ratio" should be preferred
+        
+        
+        returns :
+        alpha : float in [0,1]
+            Optimal step
+            
+        f_val : Value of the cost function after the step \alpha
+        """
+
+    
+        a=np.dot(Ke,deltax)
+        b=np.dot(Ke,x)
+        c=np.dot(Kp,deltax)
+        d=np.dot(Kp,x)
+        g=lambda L,t  : (L[0]*(t**2)+L[1]*t+L[2])/(L[3]*(t**2)+L[4]*t+L[5])
+        L=[]
+        L.append(np.dot(deltax,a))
+        L.append(2*np.dot(deltax,b))
+        L.append(np.dot(x,b))
+        L.append(np.dot(deltax,c))
+        L.append(2*np.dot(deltax,d))
+        L.append(np.dot(x,d))
+        P=[]
+        P.append(L[0]*L[4]-L[3]*L[1])
+        P.append(2*(L[0]*L[5]-L[3]*L[2]))
+        P.append(L[1]*L[5]-L[4]*L[2])
+        Disc=(P[1]**2)-4*P[0]*P[2]
+#            P=[]
+#            P.append((np.dot(deltax,a)*2*np.dot(x,c)-(np.dot(deltax,c)*2*np.dot(x,a))))
+#            P.append(2*(((np.dot(deltax,a))*np.dot(x,d))-(np.dot(x,b)*np.dot(deltax,c))))
+#            P.append(((2*np.dot(x,a))*np.dot(x,d))-(2*np.dot(x,b)*np.dot(x,c)))
+#            Disc=(P[1]**2)-4*P[0]*P[2]
+        if Disc>0:
+            alpha0=(-P[1]+np.sqrt(Disc))/(2*P[0])
+            alpha1=(-P[1]-np.sqrt(Disc))/(2*P[0])
+            alp=[0,1,alpha0,alpha1]
+            l=[g(L,0),g(L,1)]
+            if alpha0>0 and alpha0<1:
+                l.append(g(L,alpha0))
+            else:
+                    l.append(l[1])
+            if alpha1>0 and alpha1<1:
+                l.append(g(L,alpha1))
+            else:
+                l.append(l[1])
+        else :
+            if g(L,0)<g(L,1):
+                alpha=0
+            else:
+                alpha=1
+            
+
+            
+        alpha=alp[l.index(min(l))]
+        f_val=g(L,alpha)
+        return(f_val,alpha)
 #%%
 def line_search_ratio(x,deltax,psi_star,psi_planet): 
         """
@@ -357,7 +358,16 @@ def fmin_cond(f, df, solve_c, x0, psi_star, psi_planet,linesearch, nbitermax=200
 #%%
 
 def solve_closed_form(g,w,tau):
+    """
+    Solve the linear optimization problem that has to be solved at each step
+    of the Frank-Wolfe algorithm. It computes the closed-form solution of this problem
     
+    Returns
+    -------
+    x : ndarray
+        closed-form solution
+    
+    """
     x=np.zeros_like(w)
     
     s=g/np.asarray(w)

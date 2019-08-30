@@ -29,7 +29,7 @@ except ImportError:
 import scipy.optimize
 from . import design, default  
 from utils import update_params
-from optim_func import  line_search_armijo,line_search_ratio,fmin_cond,solve_closed_form,cost_function,gradient_function  
+from optim_func import  line_search_armijo,line_search_ratio,fmin_cond,solve_closed_form,cost_function_snr,gradient_function_snr  
 #import design, default,utils       
 
 #%%
@@ -1490,7 +1490,7 @@ class MaxSNR(ProblemMatrix):
         
     def solve_Frank_Wolfe(self):
         r"""
-        Computes the matrices for the optimization problem that consists in 
+        Computes the solution for the optimization problem that consists in 
         maximizing the SNR in a given search area in the coronagraphic 
         image for a set integrated apodizer transmission :math:`\tau` via a
         condionnal gradient descent method (Frank-Wolfe algorithm). The algorithm
@@ -1583,9 +1583,9 @@ class MaxSNR(ProblemMatrix):
 #            /(np.dot(np.dot(x,Kp),x))**2       
 #            fonc1 =lambda x:np.dot(np.dot(x,Ke),x)/np.dot(np.dot(x,Kp),x)
 
-        grad1=lambda x:gradient_function(x,psi_star,psi_planet)
+        grad1=lambda x:gradient_function_snr(x,psi_star,psi_planet)
         
-        fonc1 =lambda x:cost_function(x,psi_star,psi_planet)
+        fonc1 =lambda x:cost_function_snr(x,psi_star,psi_planet)
         
         solve_C1=lambda x,g:solve_closed_form(g,c_transmission,self.tau)
         
