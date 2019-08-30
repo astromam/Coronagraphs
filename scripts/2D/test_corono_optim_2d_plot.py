@@ -22,8 +22,11 @@ import corono as coro
 Parameters
 """
 pl.close('all')
-if False:
+
+test_gurobi = False
+if True:
     # Telescope name
+    corono_name  = 'APLC' # 'SP' or 'APLC'
     pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
     problem_name = 'MaxTau' # 'MaxContrastL1' #'MaxTau' # , 'MaxContrastLinf' # #  
     solver       = 'stdgrb' # 'stdgrb' #  'gurobipy', 'scipy.linprog'
@@ -38,7 +41,7 @@ if False:
     nImg2d = 500
     
     # mask radius in lam0/D unit
-    rMask = 4.0
+    rMask = 2.8
     
     # dark zone bounds (inner and outer edges) in lam0/D unit
     rho0 =  5.0
@@ -51,10 +54,10 @@ if False:
     tau   = 0.4
     
     # CtrBtwnPix2
-    corono_name   = 'SP' # 'SP' or 'APLC'
+
     CtrBtwnPix  = True
     CtrBtwnPix2 = True
-    Pupil2dSym  = False # set it True only for optimization
+    Pupil2dSym  = True # set it True only for optimization
     
     #nlam
     bw   = 0.1
@@ -71,7 +74,7 @@ nImg2dbis = 500
 """
 File reading for Pupil and Lyot stop
 """
-if False:
+if True:
     fdir = Path('../../data/2D/pupils/').resolve()
     if pupil_name == 'lvr':
         fname_pup = 'ATLAST_Aperture_nPup={0}.fits'.format(nPup,)
@@ -144,7 +147,33 @@ fname_gen = problem1.get_filename()
 fname     = fname_gen + '.fits'
 fpath     = fdir / fname
 
-Apod_pyth = fits.getdata(fpath,)
+
+if test_gurobi is True:
+#%%
+    idx_pup = problem1.idx_pup
+    npp = problem1.npp
+    
+    sol = []
+    import csv
+    with open('/Users/mndiaye/Desktop/apod2.sol', newline='\n') as csvfile:
+        reader = csv.reader((line.replace('  ', ' ') for line in csvfile), delimiter=' ')
+        next(reader)
+        next(reader)
+        for var, value in reader:
+            sol.append(float(value))
+
+    Apod1 = np.zeros((corono0.nPup**2))
+    Apod1[idx_pup] = sol[:npp]
+    
+    Apod_pyth = np.reshape(Apod1, (corono0.nPup, corono0.nPup))
+    
+    if Pupil2dSym == True:
+        Apod1_2dtmp =  Apod_pyth[corono0.nPup//2:, corono0.nPup//2:]
+        Apod_pyth[:corono0.nPup//2, corono0.nPup//2:] = np.flip(Apod1_2dtmp, axis=0)
+        Apod_pyth[:, :corono0.nPup//2]          = np.flip(Apod_pyth[:, corono0.nPup//2:], axis=1)
+        
+else:    
+    Apod_pyth = fits.getdata(fpath,)
 
 #%% Display of the apodizer
 """
