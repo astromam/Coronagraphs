@@ -188,20 +188,14 @@ def line_search_ratio(x,deltax,psi_star,psi_planet):
         g=lambda L,t  : (L[0]*(t**2)+L[1]*t+L[2])/(L[3]*(t**2)+L[4]*t+L[5])
         
         
-        L=[]
-        L.append(a_1)
-        L.append(b_1)
-        L.append(c_1)
-        L.append(a_2)
-        L.append(b_2)
-        L.append(c_2)
+        L=[a_1,b_1,c_1,a_2,b_2,c_2]
         
         #The list P contains the coefficients of the numerator of the derivative.
         #The possible optimal step alpha is among 0, 1 or one of the roots of P
-        P=[]
-        P.append(L[0]*L[4]-L[3]*L[1])
-        P.append(2*(L[0]*L[5]-L[3]*L[2]))
-        P.append(L[1]*L[5]-L[4]*L[2])
+        P=[L[0]*L[4]-L[3]*L[1],
+           2*(L[0]*L[5]-L[3]*L[2]),
+           L[1]*L[5]-L[4]*L[2]]
+    
         
         
         Disc=(P[1]**2)-4*P[0]*P[2]

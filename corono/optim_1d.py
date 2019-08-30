@@ -29,7 +29,7 @@ except ImportError:
 import scipy.optimize
 from . import design, default  
 from utils import update_params
-from Optim_func import  line_search_armijo,line_search_ratio,fmin_cond,solve_closed_form,cost_function,gradient_function  
+from optim_func import  line_search_armijo,line_search_ratio,fmin_cond,solve_closed_form,cost_function,gradient_function  
 #import design, default,utils       
 
 #%%
