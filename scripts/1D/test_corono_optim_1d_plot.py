@@ -20,29 +20,29 @@ import corono as coro
 Parameters
 """
 pl.close('all')
-if False:
+if True:
     corono_name  = 'APLC' # 'APLC' or 'SP'
-    problem_name = 'MaxContrastL1' # 'MaxContrastL1' #,'MaxContrastLinf' # 'MaxTau' #
+    problem_name = 'MaxContrastLinf' # 'MaxContrastL1' #,'MaxContrastLinf' # 'MaxTau' #
     solver       = 'stdgrb' # 'stdgrb', 'gurobipy', 'scipy.linprog'
     
-    FirstDer    = False
-    SecondDer   = False
+    FirstDer    = True
+    SecondDer   = True
     MinIsland   = False
-    FirstDerLim = 0.01
-    SecondDerLim= 0.001 
+    FirstDerLim = 0.0010
+    SecondDerLim= 0.0001 
     FirstDerGlobalLim = 10.
     
     nPup = 500
     nFPM = 50
-    nImg = 110
-    Fmax = 11
+    nImg = 180
+    Fmax = 45
     R    = 1
     
     bw   = 0.1
     nlam = 5
     
-    PupilID    = 0.20
-    rMask       = 4.4
+    PupilID    = 0.10
+    rMask       = 3.75
     
     rMask1      = 2.0
     rMask2      = 3.0
@@ -50,18 +50,18 @@ if False:
     OPDx2       = 0.5
     OPDx3       = 0.75
     
-    LyotStopID = 0.40
+    LyotStopID = 0.20
     LyotStopOD = 1.0
     
     # dark zone bounds (inner and outer edges) in lam0/D unit
-    rho0 = 3.5
-    rho1 = 10.0
+    rho0 = 5.0
+    rho1 = 40.0
     
     # contrast in the dark region
-    cDarkHole = 8.0
+    cDarkHole = 10.0
     
     # tau (integrated Pupil transmission)
-    tau   = 0.3
+    tau   = 0.05
     
     r   = np.arange(nPup)*R/nPup + R/(2*nPup)
     Pupil1d      = (r>PupilID)*1.0
@@ -87,8 +87,8 @@ if False:
                      )
 
 nlambis = 11
-nImgbis = 110
-Fmaxbis = 11    
+nImgbis = 500
+Fmaxbis = 50    
 
 #%%
 fdir = Path('../../results/1D/').resolve()
@@ -150,15 +150,18 @@ Plot display of the apodizers
 fname_pl   = fname_gen + '_apodizers_tran.pdf'
 fpath      = fdir_plot / fname_pl
 
-pl.figure(1)
+pl.figure(1, (8, 4.5))
 pl.clf()
-pl.plot(corono0.r, Apod_pyth/Apod_pyth.max(), label=solver)
+pl.plot(corono0.r, Apod_pyth/Apod_pyth.max())
 pl.xlabel(r'Pupil radius r')
 pl.ylabel('Apodizer amplitude transmission')
-pl.legend()
+pl.axvline(x=corono0.PupilID, ymin=-0.5, ymax=2, linewidth=1, color='g', linestyle='--')
+pl.axvline(x=corono0.LyotStopID, ymin=-0.5, ymax=2, linewidth=1, color='b', linestyle='--')
+
+#pl.legend()
 pl.tight_layout()
 pl.show()
-pl.savefig(str(fpath))
+pl.savefig(str(fpath), transparent=True, bbox_inches='tight')
 
 #%% Signal in intensity
 """
@@ -191,13 +194,13 @@ Display of the intensity profiles of the coronagraphic images
 
 fname_pl = fname_gen + '_intensity.pdf'
 fpath    = fdir_plot / fname_pl
-pl.figure(4)
+pl.figure(4, (8, 4.5))
 pl.clf()
 #pl.title('Intensity profiles of the coronagraphic images')
 #pl.semilogy(corono0.xi,poly_direct_image1/poly_direct_image1.max(),label='Direct')
 #pl.semilogy(corono0.xi,poly_direct_image2/poly_direct_image2.max(),label='Direct')
 #pl.semilogy(corono0.xi,poly_direct_image3/poly_direct_image3.max(),label='Direct')
-pl.semilogy(corono0.xi,poly_corono_image1/poly_direct_image1.max(),label=solver)
+pl.semilogy(corono0.xi,poly_corono_image1/poly_direct_image1.max())
 pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
 pl.axvline(x=corono0.rho0, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
 pl.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
@@ -205,9 +208,9 @@ pl.axhline(10**(-cDarkHole), xmin=corono0.xi.min(), xmax=corono0.xi.max(), linew
 pl.xlabel(r'Angular separation in $\lambda_0$/D')
 pl.ylabel('Normalized intensity in log scale')
 pl.ylim(1e-12, 1e-3)
-pl.legend()
+#pl.legend()
 pl.tight_layout()
-pl.savefig(str(fpath))
+pl.savefig(str(fpath), transparent=True, bbox_inches='tight')
 
 #%% Intensity profiles of the direct and coronagraphic images
 """
@@ -219,7 +222,7 @@ colors = pl.cm.rainbow(np.linspace(0,1,nlambis))
 
 fname_pl = fname_gen + '_intensity_mono.pdf'
 fpath    = fdir_plot / fname_pl
-pl.figure(5)
+pl.figure(5, (8, 4.5))
 pl.clf()
 #pl.title('Intensity profiles of the coronagraphic images')
 #pl.semilogy(corono0.xi,poly_direct_image1/poly_direct_image1.max(),label='Direct')
@@ -237,7 +240,7 @@ pl.ylabel('Normalized intensity in log scale')
 pl.ylim(1e-12, 1e-3)
 pl.legend()
 pl.tight_layout()
-pl.savefig(str(fpath))
+pl.savefig(str(fpath), transparent=True, bbox_inches='tight')
 
 #%%
 pl.show()
