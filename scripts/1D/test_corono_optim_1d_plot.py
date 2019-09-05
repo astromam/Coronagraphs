@@ -15,6 +15,8 @@ import os
 from pathlib import Path
 import corono as coro
 
+pl.rcParams.update({'font.size': 12})
+
 #%% parameters
 """
 Parameters
@@ -28,7 +30,7 @@ if True:
     FirstDer    = True
     SecondDer   = True
     MinIsland   = False
-    FirstDerLim = 0.0010
+    FirstDerLim = 0.001
     SecondDerLim= 0.0001 
     FirstDerGlobalLim = 10.
     
@@ -42,7 +44,8 @@ if True:
     nlam = 5
     
     PupilID    = 0.10
-    rMask       = 3.75
+    
+    rMask       = 4.5
     
     rMask1      = 2.0
     rMask2      = 3.0
@@ -54,7 +57,7 @@ if True:
     LyotStopOD = 1.0
     
     # dark zone bounds (inner and outer edges) in lam0/D unit
-    rho0 = 5.0
+    rho0 = 4.
     rho1 = 40.0
     
     # contrast in the dark region
@@ -147,6 +150,11 @@ Apod_pyth = test0[:, 1]
 """
 Plot display of the apodizers
 """
+Apod1d = Apod_pyth/Apod_pyth.max()
+T_apod = np.sum(Pupil1d**2*Apod1d**2)/np.sum(Pupil1d**2)
+T_coro = np.sum(Pupil1d**2*LyotStop1d*Apod1d**2)/np.sum(Pupil1d**2)
+
+
 fname_pl   = fname_gen + '_apodizers_tran.pdf'
 fpath      = fdir_plot / fname_pl
 
@@ -154,10 +162,16 @@ pl.figure(1, (8, 4.5))
 pl.clf()
 pl.plot(corono0.r, Apod_pyth/Apod_pyth.max())
 pl.xlabel(r'Pupil radius r')
-pl.ylabel('Apodizer amplitude transmission')
-pl.axvline(x=corono0.PupilID, ymin=-0.5, ymax=2, linewidth=1, color='g', linestyle='--')
-pl.axvline(x=corono0.LyotStopID, ymin=-0.5, ymax=2, linewidth=1, color='b', linestyle='--')
-
+pl.ylabel('Normalized amplitude')
+pl.xlim(-0.02, 1.02)
+pl.ylim(-0.02, 1.02)
+pl.axvline(x=corono0.PupilID, ymin=-0.5, ymax=2, linewidth=1, color='C1', linestyle='--')
+pl.axvline(x=corono0.LyotStopID, ymin=-0.5, ymax=2, linewidth=1, color='C2', linestyle='--')
+pl.text(0.4, 0.3, '{0}% bandwidth'.format(int(bw*100)))
+pl.text(0.4, 0.25, 'Apodizer, T={0}%'.format(int(T_apod*100)))
+pl.text(0.4, 0.2, 'Coronagraph, T={0}%'.format(int(T_coro*100)))
+pl.text(PupilID+0.01, 0.05, r'd={0}%'.format(int(PupilID*100)), color='C1')
+pl.text(LyotStopID+0.01, 0.05, r'd$_S$={0}%'.format(int(LyotStopID*100)), color='C2')
 #pl.legend()
 pl.tight_layout()
 pl.show()
@@ -201,13 +215,19 @@ pl.clf()
 #pl.semilogy(corono0.xi,poly_direct_image2/poly_direct_image2.max(),label='Direct')
 #pl.semilogy(corono0.xi,poly_direct_image3/poly_direct_image3.max(),label='Direct')
 pl.semilogy(corono0.xi,poly_corono_image1/poly_direct_image1.max())
-pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
-pl.axvline(x=corono0.rho0, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
-pl.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
+pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='C1', linestyle='--')
+pl.axvline(x=corono0.rho0, ymin=-12, ymax =2, linewidth=1, color='C2', linestyle='--')
+pl.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='C2', linestyle='--')
 pl.axhline(10**(-cDarkHole), xmin=corono0.xi.min(), xmax=corono0.xi.max(), linewidth=1, color='k', linestyle='--')
 pl.xlabel(r'Angular separation in $\lambda_0$/D')
 pl.ylabel('Normalized intensity in log scale')
-pl.ylim(1e-12, 1e-3)
+pl.xlim(-0.5, 50.5)
+pl.ylim(10**(-12.2), 10**(-3.8))
+pl.text(15, 10**(-4.5), '{0}% central obstruction'.format(int(PupilID*100)))
+pl.text(15, 10**(-5.), '{0}% bandwidth'.format(int(bw*100)))
+pl.text(corono0.rMask+0.25, 10**(-5), r'm/2={0:.2f}$\lambda_0$/D'.format(corono0.rMask), color='C1')
+pl.text(corono0.rho0+0.25, 10**(-12), r'$\rho_0$={0:.1f}$\lambda_0$/D'.format(corono0.rho0), color='C2')
+pl.text(corono0.rho1+0.25, 10**(-12), r'$\rho_1$={0:.1f}$\lambda_0$/D'.format(corono0.rho1), color='C2')
 #pl.legend()
 pl.tight_layout()
 pl.savefig(str(fpath), transparent=True, bbox_inches='tight')
@@ -231,13 +251,14 @@ pl.clf()
 for i in range(corono0.nlam):
     pl.semilogy(corono0.xi,mono_corono_image1[i]/mono_direct_image1[(corono0.nlam+1)//2].max(), 
                 label=r'{0:.2f}$\lambda_0$'.format(corono0.lam_t[i]), color = colors[i])
-pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
-pl.axvline(x=corono0.rho0, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
-pl.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
+pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='C1', linestyle='--')
+pl.axvline(x=corono0.rho0, ymin=-12, ymax =2, linewidth=1, color='C2', linestyle='--')
+pl.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='C2', linestyle='--')
 pl.axhline(10**(-cDarkHole), xmin=corono0.xi.min(), xmax=corono0.xi.max(), linewidth=1, color='k', linestyle='--')
 pl.xlabel(r'Angular separation in $\lambda_0$/D')
 pl.ylabel('Normalized intensity in log scale')
-pl.ylim(1e-12, 1e-3)
+pl.xlim(-0.5, 50.5)
+pl.ylim(10**(-12.2), 10**(-3.8))
 pl.legend()
 pl.tight_layout()
 pl.savefig(str(fpath), transparent=True, bbox_inches='tight')
