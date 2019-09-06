@@ -13,7 +13,7 @@ import pylab as pl
 import os
 
 from pathlib import Path
-#import corono as coro
+import corono as coro
 
 #%% parameters
 """
@@ -61,7 +61,7 @@ if False:
     cDarkHole = 8.0
     
     # tau (integrated Pupil transmission)
-    tau   = 0.5
+    tau   = 0.7
     
     r   = np.arange(nPup)*R/nPup + R/(2*nPup)
     Pupil1d      = (r>PupilID)*1.0
