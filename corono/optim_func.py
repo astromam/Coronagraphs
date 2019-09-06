@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """
 Created on Wed Aug 28 14:47:55 2019
+Author: Adam Hessas <adam.hessas@ecl17.ec-lyon.fr> (https://github.com/astromam)
 
-@author: adamh
+License: MIT license
 """
 import numpy as np
 from scipy.optimize.linesearch import scalar_search_armijo
@@ -10,9 +11,12 @@ from scipy.optimize.linesearch import scalar_search_armijo
 
 #%%
 def cost_function_snr(x,psi_star,psi_planet):
-    """
+    r"""
     function that computes the cost function for the frank wolfe algorithm. 
     It corresponds to the SNR for an apodizer x
+    i.e :
+    
+    .. math:: SNR= \frac{x^{T}\Psi^{T}_{star}\Psi_{star}x}{x^{T}\Psi_{planet}^{T}\Psi_{planet}x}
     """
     a=np.dot(x,psi_star)
     b=np.dot(x,psi_planet)
@@ -21,9 +25,12 @@ def cost_function_snr(x,psi_star,psi_planet):
 
 #%%
 def gradient_function_snr(x,psi_star,psi_planet):
-    """
+    r"""
     function that computes the gradient of the cost function (snr) for the frank wolfe algorithm
     
+    
+    .. math:: \nabla SNR= 2\frac{(x^{T}\Psi_{planet}^{T}\Psi_{planet}x)\Psi^{T}_{star}\Psi_{star}x-(x^{T}\Psi^{T}_{star}\Psi_{star}x)\Psi_{planet}^{T}\Psi_{planet}x}{(x^{T}\Psi_{planet}^{T}\Psi_{planet}x)^2}
+
     """
     a=np.dot(psi_star.T,x)
     b=np.dot(psi_planet.T,x)
@@ -88,19 +95,25 @@ def line_search_armijo(f, xk, pk, gfk, old_fval=None,
     return alpha, fc[0], phi1
 #%%
 def line_search_ratio_matrix_k(x,deltax,Ke,Kp): 
-        """
+        r"""
         Closed-form line-search for the Frank-Wolfe algorithme and a cost function
         of the form 
-        :math f(x) = \frac{x^{T}\Psi^{T}_{star}\Psi_{star}x}{x^{T}\Psi_{planet}^{T}\Psi_{planet}x}
-        This algorithm uses directly Ke and Kp which corresponds to :math \Psi^{T}_{star}\Psi_{star}
-        and \Psi_{planet}^{T}\Psi_{planet}. The function "line_search_ratio" should be preferred
+        
+        .. math:: f(x)= \frac{x^{T}\Psi^{T}_{star}\Psi_{star}x}{x^{T}\Psi_{planet}^{T}\Psi_{planet}x}
+        
+        This algorithm uses directly Ke and Kp which corresponds to :math:`\Psi^{T}_{star}\Psi_{star}`
+        and :math:`\Psi_{planet}^{T}\Psi_{planet}`
+        
+        The function "line_search_ratio" should be preferred
         
         
         returns :
+        
         alpha : float in [0,1]
             Optimal step
             
-        f_val : Value of the cost function after the step \alpha
+        f_val : float
+            Value of the cost function after the step \alpha
         """
 
     
@@ -164,18 +177,27 @@ def line_search_ratio_matrix_k(x,deltax,Ke,Kp):
         return(f_val,alpha)
 #%%
 def line_search_ratio(x,deltax,psi_star,psi_planet): 
-        """
+        r"""
         Closed-form line-search for the Frank-Wolfe algorithme and a cost function
         of the form 
-        :math f(x) = \frac{x^{T}\Psi^{T}_{star}\Psi_{star}x}{x^{T}\Psi_{planet}^{T}\Psi_{planet}x}
+        
+        .. math:: f(x)= \frac{x^{T}\Psi^{T}_{star}\Psi_{star}x}{x^{T}\Psi_{planet}^{T}\Psi_{planet}x}
         
         
+        we try to find the  optimal step alpha
+        
+        .. math:: \operatorname*{argmin}_{\alpha \in [0,1]} f(x +\alpha(s-x))
+        
+        where s is the solution of the linear optimization problem. It is computed by the function
+        "solve_closed_form"
         
         returns :
+            
         alpha : float in [0,1]
             Optimal step
             
-        f_val : Value of the cost function after the step \alpha
+        f_val : 
+            Value of the cost function after the step alpha
         """
         
         #Compute some vectors that would be useful to implement the linesearch algorithm
@@ -385,7 +407,8 @@ def fmin_cond(f, df, solve_c, x0, psi_star, psi_planet,linesearch, nbitermax=200
 def solve_closed_form(g,w,tau):
     """
     Solve the linear optimization problem that has to be solved at each step
-    of the Frank-Wolfe algorithm. It computes the closed-form solution of this problem
+    of the Frank-Wolfe algorithm. It computes the closed-form solution of this problem.
+    
     
     Returns
     -------
@@ -399,8 +422,8 @@ def solve_closed_form(g,w,tau):
     s=sorted(range(len(s)), key=lambda k: s[k])
     
     
-    #While the transmission of  the apodizer x has not reached :math \tau, a maximum
-    #weight is is placed on the smallest elements of the vector s
+    #While the transmission of the apodizer x has not reached :math \tau, a maximum
+    #weight is placed on the smallest elements of the vector s
     
     i=0
     while np.dot(w.T,x)<tau:        

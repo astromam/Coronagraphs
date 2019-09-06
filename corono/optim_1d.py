@@ -27,10 +27,10 @@ except ImportError:
     gb = False
 
 import scipy.optimize
-from . import design, default  
+#from . import design, default  
 from utils import update_params
 from optim_func import  line_search_armijo,line_search_ratio,fmin_cond,solve_closed_form,cost_function_snr,gradient_function_snr  
-#import design, default,utils       
+import design, default,utils       
 
 #%%
 """
@@ -1429,22 +1429,22 @@ class MaxSNR(ProblemMatrix):
         
         pb : ProblemMatrix  object (default=None)
             define the optimization problem that has to be solved to initialize 
-            the Frank-Wolfe algorithm for :math:`L_p' initializations 
-            (:math:`L_1`-norm, `L_2`-norm or :math:`L_\infty`-norm problem)
+            the Frank-Wolfe algorithm for :math:`L_p` initializations 
+            (:math:`L_1`-norm, :math:`L_2`-norm or :math:`L_\infty`-norm problem)
         
 
         params :  Dict 
             Dictionnary that contains the parameters of pb, the initialization problem 
-        for :math:`L_p' initializations       
+        that has to be solved for :math:`L_p` initializations       
         
 
         nmax  : Int (default=10000)
-            Maximum number of iterations forthe Frank-Wolfe algorithm
+            Maximum number of iterations for the Frank-Wolfe algorithm
             
         
         gradmin :  Float (default = 1e-7)
             Minimal gradient value of the cost function for which the Frank-Wolfe algorithm
-        consider it has converged
+            consider it has converged
         
         """
         super(MaxSNR,self).__init__(**kwargs)
@@ -1498,16 +1498,19 @@ class MaxSNR(ProblemMatrix):
         :math:`L_\infty`-norm or :math:`L_2` problems. It can also be initialized with 
         a random apodizer or a uniform apodizer.
         
-        Notes
+        Notes :
+        
         initialisation : string
             Type of initialization for the optimization problem
             
+            
         x0 : array_like
-        Contains the Apodizer solution of the optimisation problem specified
+            Contains the Apodizer solution of the optimisation problem specified
         
-        c_transmission :array_like
-        Vector whose scalar product with an apodiser returns the transmission
-        :math: \tau of this apodizer
+        
+        c_transmission : array_like
+            Vector whose scalar product with an apodiser returns the transmission
+            :math:`\tau`  of this apodizer
             
 
         -----------
