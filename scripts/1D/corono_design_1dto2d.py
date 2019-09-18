@@ -48,7 +48,7 @@ if True:
     
     PupilID    = 0.10
     
-    rMask       = 4.5
+    rMask       = 3.75
     
     rMask1      = 2.0
     rMask2      = 3.0
@@ -60,7 +60,7 @@ if True:
     LyotStopOD = 1.0
     
     # dark zone bounds (inner and outer edges) in lam0/D unit
-    rho0 = 4.
+    rho0 = 5.
     rho1 = 40.0
     
     # contrast in the dark region
@@ -100,6 +100,9 @@ Fmaxbis = 50
 nPup2d = 2*nPup
 Fmax2d = 2*Fmaxbis
 nImg2d = 2*nImgbis
+
+CtrBtwnPix = True
+CtrBtwnPix2 = False
 
 #%%
 fdir = Path('../../results/1D/').resolve()
@@ -171,7 +174,7 @@ fpath      = fdir_plot / fname_pl
 
 pl.figure(1, (8, 4.5))
 pl.clf()
-pl.plot(corono0.r, Apod_pyth/Apod_pyth.max())
+pl.plot(corono0.r, Apod1d)
 pl.xlabel(r'Pupil radius r')
 pl.ylabel('Normalized amplitude')
 pl.xlim(-0.02, 1.02)
@@ -217,27 +220,27 @@ mono_corono_image1 = corono0.compute_corono_intensity_1d(Apod_pyth, poly=False)
 ### Display of the intensity profiles of the coronagraphic images
 """
 
-fname_pl = fname_gen + '_intensity.pdf'
-fpath    = fdir_plot / fname_pl
-pl.figure(4, (8, 4.5))
-pl.clf()
-pl.semilogy(corono0.xi,poly_corono_image1/poly_direct_image1.max())
-pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='C1', linestyle='--')
-pl.axvline(x=corono0.rho0, ymin=-12, ymax =2, linewidth=1, color='C2', linestyle='--')
-pl.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='C2', linestyle='--')
-pl.axhline(10**(-cDarkHole), xmin=corono0.xi.min(), xmax=corono0.xi.max(), linewidth=1, color='k', linestyle='--')
-pl.xlabel(r'Angular separation in $\lambda_0$/D')
-pl.ylabel('Normalized intensity in log scale')
-pl.xlim(-0.5, 50.5)
-pl.ylim(10**(-12.2), 10**(-3.8))
-pl.text(15, 10**(-4.5), '{0}% central obstruction'.format(int(PupilID*100)))
-pl.text(15, 10**(-5.), '{0}% bandwidth'.format(int(bw*100)))
-pl.text(corono0.rMask+0.25, 10**(-5), r'm/2={0:.2f}$\lambda_0$/D'.format(corono0.rMask), color='C1')
-pl.text(corono0.rho0+0.25, 10**(-12), r'$\rho_0$={0:.1f}$\lambda_0$/D'.format(corono0.rho0), color='C2')
-pl.text(corono0.rho1+0.25, 10**(-12), r'$\rho_1$={0:.1f}$\lambda_0$/D'.format(corono0.rho1), color='C2')
-#pl.legend()
-pl.tight_layout()
-pl.savefig(str(fpath), transparent=True, bbox_inches='tight')
+#fname_pl = fname_gen + '_intensity.pdf'
+#fpath    = fdir_plot / fname_pl
+#pl.figure(4, (8, 4.5))
+#pl.clf()
+#pl.semilogy(corono0.xi,poly_corono_image1/poly_direct_image1.max())
+#pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='C1', linestyle='--')
+#pl.axvline(x=corono0.rho0, ymin=-12, ymax =2, linewidth=1, color='C2', linestyle='--')
+#pl.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='C2', linestyle='--')
+#pl.axhline(10**(-cDarkHole), xmin=corono0.xi.min(), xmax=corono0.xi.max(), linewidth=1, color='k', linestyle='--')
+#pl.xlabel(r'Angular separation in $\lambda_0$/D')
+#pl.ylabel('Normalized intensity in log scale')
+#pl.xlim(-0.5, 50.5)
+#pl.ylim(10**(-12.2), 10**(-3.8))
+#pl.text(15, 10**(-4.5), '{0}% central obstruction'.format(int(PupilID*100)))
+#pl.text(15, 10**(-5.), '{0}% bandwidth'.format(int(bw*100)))
+#pl.text(corono0.rMask+0.25, 10**(-5), r'm/2={0:.2f}$\lambda_0$/D'.format(corono0.rMask), color='C1')
+#pl.text(corono0.rho0+0.25, 10**(-12), r'$\rho_0$={0:.1f}$\lambda_0$/D'.format(corono0.rho0), color='C2')
+#pl.text(corono0.rho1+0.25, 10**(-12), r'$\rho_1$={0:.1f}$\lambda_0$/D'.format(corono0.rho1), color='C2')
+##pl.legend()
+#pl.tight_layout()
+#pl.savefig(str(fpath), transparent=True, bbox_inches='tight')
 
 #%% Intensity profiles of the direct and coronagraphic images
 """
@@ -247,24 +250,24 @@ pl.savefig(str(fpath), transparent=True, bbox_inches='tight')
 values = range(nlambis)
 colors = pl.cm.rainbow(np.linspace(0,1,nlambis))
 
-fname_pl = fname_gen + '_intensity_mono.pdf'
-fpath    = fdir_plot / fname_pl
-pl.figure(5, (8, 4.5))
-pl.clf()
-for i in range(corono0.nlam):
-    pl.semilogy(corono0.xi,mono_corono_image1[i]/mono_direct_image1[(corono0.nlam+1)//2].max(), 
-                label=r'{0:.2f}$\lambda_0$'.format(corono0.lam_t[i]), color = colors[i])
-pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='C1', linestyle='--')
-pl.axvline(x=corono0.rho0, ymin=-12, ymax =2, linewidth=1, color='C2', linestyle='--')
-pl.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='C2', linestyle='--')
-pl.axhline(10**(-cDarkHole), xmin=corono0.xi.min(), xmax=corono0.xi.max(), linewidth=1, color='k', linestyle='--')
-pl.xlabel(r'Angular separation in $\lambda_0$/D')
-pl.ylabel('Normalized intensity in log scale')
-pl.xlim(-0.5, 50.5)
-pl.ylim(10**(-12.2), 10**(-3.8))
-pl.legend()
-pl.tight_layout()
-pl.savefig(str(fpath), transparent=True, bbox_inches='tight')
+#fname_pl = fname_gen + '_intensity_mono.pdf'
+#fpath    = fdir_plot / fname_pl
+#pl.figure(5, (8, 4.5))
+#pl.clf()
+#for i in range(corono0.nlam):
+#    pl.semilogy(corono0.xi,mono_corono_image1[i]/mono_direct_image1[(corono0.nlam+1)//2].max(), 
+#                label=r'{0:.2f}$\lambda_0$'.format(corono0.lam_t[i]), color = colors[i])
+#pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='C1', linestyle='--')
+#pl.axvline(x=corono0.rho0, ymin=-12, ymax =2, linewidth=1, color='C2', linestyle='--')
+#pl.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='C2', linestyle='--')
+#pl.axhline(10**(-cDarkHole), xmin=corono0.xi.min(), xmax=corono0.xi.max(), linewidth=1, color='k', linestyle='--')
+#pl.xlabel(r'Angular separation in $\lambda_0$/D')
+#pl.ylabel('Normalized intensity in log scale')
+#pl.xlim(-0.5, 50.5)
+#pl.ylim(10**(-12.2), 10**(-3.8))
+#pl.legend()
+#pl.tight_layout()
+#pl.savefig(str(fpath), transparent=True, bbox_inches='tight')
 
 
 #%% 1d interpolation 
@@ -273,95 +276,56 @@ pl.savefig(str(fpath), transparent=True, bbox_inches='tight')
 """
 
 x1d = corono0.r/2
-y1d = Apod_pyth/Apod_pyth.max()
-z1d = Pupil1d
-t1d = LyotStop1d
-f1d = interp1d(x1d, y1d, kind="cubic", bounds_error=False, fill_value="extrapolate")
-g1d = interp1d(x1d, z1d, kind="cubic", bounds_error=False, fill_value="extrapolate")
-h1d = interp1d(x1d, t1d, kind="cubic", bounds_error=False, fill_value="extrapolate")
+y1d = Apod1d
 
-x1dmin = x1d.min()
-x1dmax = x1d.max()
+idx = int(PupilID*nPup)
+f1d = interp1d(x1d[idx:], y1d[idx:], kind="cubic", bounds_error=False, fill_value="extrapolate")
 
-#%%
-"""
-### Comparison of the profiles
-"""
-pl.figure(10, (8, 4.5))
-pl.clf()
-pl.subplot(211)
-pl.plot(corono0.r, Apod_pyth/Apod_pyth.max(), label='initial')
-pl.plot(x1d*2, f1d(x1d), label='interp')
-pl.xlabel(r'Pupil radius r')
-pl.ylabel('Normalized amplitude')
-pl.xlim(-0.02, 1.02)
-pl.ylim(-0.02, 1.02)
-pl.axvline(x=corono0.PupilID, ymin=-0.5, ymax=2, linewidth=1, color='C1', linestyle='--')
-pl.axvline(x=corono0.LyotStopID, ymin=-0.5, ymax=2, linewidth=1, color='C2', linestyle='--')
-pl.text(0.4, 0.3, '{0}% bandwidth'.format(int(bw*100)))
-pl.text(0.4, 0.25, 'Apodizer, T={0}%'.format(int(T_apod*100)))
-pl.text(0.4, 0.2, 'Coronagraph, T={0}%'.format(int(T_coro*100)))
-pl.text(PupilID+0.01, 0.05, r'd={0}%'.format(int(PupilID*100)), color='C1')
-pl.text(LyotStopID+0.01, 0.05, r'd$_S$={0}%'.format(int(LyotStopID*100)), color='C2')
-pl.legend()
-
-pl.subplot(212)
-pl.plot(corono0.r, Apod_pyth/Apod_pyth.max()-f1d(x1d))
-pl.ylabel('Amplitude difference')
-pl.xlim(-0.02, 1.02)
-pl.ylim(-0.005, 0.005)
-pl.tight_layout()
-pl.show()
-#pl.savefig(str(fpath), transparent=True, bbox_inches='tight')
 
 #%%
 """
 ### Apod2d generation
 """
-aa = (1/nPup2d)*(np.arange(nPup2d)-nPup2d/2 +1/2)
+aa = (1/nPup2d)*(np.arange(nPup2d)-nPup2d/2+1/2)
+bb = 2*aa[nPup2d//2:]
+
 xx, yy = np.meshgrid(aa, aa)
 mydist = np.hypot(yy,xx)
 
 Apod2d = np.zeros((nPup2d, nPup2d))
 Apod2d = f1d(mydist)
 
-Pupil2d = np.zeros((nPup2d, nPup2d))
-Pupil2d = g1d(mydist)
-
-Pupil2d_init = coro.utils.uniform_disk(nPup2d, nPup2d/2)\
--coro.utils.uniform_disk(nPup2d,PupilID*nPup2d/2)
+Pupil2d = coro.utils.uniform_disk(nPup2d, nPup2d/2, CtrBtwnPix=CtrBtwnPix)\
+-coro.utils.uniform_disk(nPup2d,PupilID*nPup2d/2, CtrBtwnPix=CtrBtwnPix)
             
-LyotStop2d = np.zeros((nPup2d, nPup2d))
-LyotStop2d = h1d(mydist)
-
-LyotStop2d_init = coro.utils.uniform_disk(nPup2d, LyotStopOD*nPup2d/2)\
--coro.utils.uniform_disk(nPup2d,LyotStopID*nPup2d/2)
+LyotStop2d = coro.utils.uniform_disk(nPup2d, LyotStopOD*nPup2d/2, CtrBtwnPix=CtrBtwnPix)\
+-coro.utils.uniform_disk(nPup2d,LyotStopID*nPup2d/2, CtrBtwnPix=CtrBtwnPix)
 
 #%%            
 pl.figure(11)
 pl.clf()
-pl.imshow(Apod2d*Pupil2d_init, cmap='inferno')
+pl.imshow(Apod2d*Pupil2d, cmap='inferno')
 pl.title('2D Apodizer')
 pl.show()
 
 pl.figure(12)
 pl.clf()
-pl.imshow(Pupil2d_init, cmap='inferno')
+pl.imshow(Pupil2d, cmap='inferno')
 pl.title('2D Pupil')
 pl.show()
 
 pl.figure(13)
 pl.clf()
-pl.imshow(LyotStop2d_init, cmap='inferno')
+pl.imshow(LyotStop2d, cmap='inferno')
 pl.title('2D Lyot Stop')
 pl.show()
 
 pl.figure(14, (8, 4.5))
 pl.clf()
 pl.subplot(211)
-pl.plot(corono0.r, Apod_pyth/Apod_pyth.max(), label='1d initial')
+pl.plot(corono0.r, Apod1d, label='1d initial')
 pl.plot(x1d*2, f1d(x1d), label='1d interp')
-pl.plot(x1d*2, Apod2d[nPup2d//2, nPup2d//2:], label='2d')
+pl.plot(bb, Apod2d[nPup2d//2, nPup2d//2:]*Pupil2d[nPup2d//2, nPup2d//2:], label='2d')
 pl.xlabel(r'Pupil radius r')
 pl.ylabel('Normalized amplitude')
 pl.xlim(-0.02, 1.02)
@@ -376,8 +340,8 @@ pl.text(LyotStopID+0.01, 0.05, r'd$_S$={0}%'.format(int(LyotStopID*100)), color=
 pl.legend()
 
 pl.subplot(212)
-pl.plot(corono0.r, Apod_pyth/Apod_pyth.max()-f1d(x1d), color='C1')
-pl.plot(corono0.r, Apod_pyth/Apod_pyth.max()-Apod2d[nPup2d//2, nPup2d//2:], color='C2')
+pl.plot(corono0.r, Apod1d-f1d(x1d), color='C1')
+pl.plot(corono0.r, Apod1d-Apod2d[nPup2d//2, nPup2d//2:]*Pupil2d[nPup2d//2, nPup2d//2:], color='C2')
 pl.ylabel('Amplitude difference')
 pl.xlim(-0.02, 1.02)
 pl.ylim(-0.005, 0.005)
@@ -389,7 +353,7 @@ pl.show()
 #pl.figure(15, (8, 4.5))
 #pl.clf()
 #pl.subplot(211)
-#pl.plot(corono0.r, Apod_pyth/Apod_pyth.max(), label='1d initial')
+#pl.plot(corono0.r, Apod1d, label='1d initial')
 #pl.plot(x1d*2, g1d(x1d), label='1d interp')
 #pl.plot(x1d*2, Pupil2d[nPup2d//2, nPup2d//2:], label='2d')
 #pl.xlabel(r'Pupil radius r')
@@ -406,8 +370,8 @@ pl.show()
 #pl.legend()
 #
 #pl.subplot(212)
-#pl.plot(corono0.r, Apod_pyth/Apod_pyth.max()-f1d(x1d), color='C1')
-#pl.plot(corono0.r, Apod_pyth/Apod_pyth.max()-Apod2d[nPup2d//2, nPup2d//2:], color='C2')
+#pl.plot(corono0.r, Apod1d-f1d(x1d), color='C1')
+#pl.plot(corono0.r, Apod1d-Apod2d[nPup2d//2, nPup2d//2:], color='C2')
 #pl.ylabel('Amplitude difference')
 #pl.xlim(-0.02, 1.02)
 #pl.ylim(-0.005, 0.005)
@@ -422,9 +386,9 @@ Coronagraph defintion
 """
 params2d = coro.to_dict(nPup=nPup2d, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
                  rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau, 
-                 CtrBtwnPix=False, CtrBtwnPix2 = False,
+                 CtrBtwnPix=CtrBtwnPix, CtrBtwnPix2 = CtrBtwnPix2,
                  nlam=nlambis, bw=bw,
-                 Pupil2d = Pupil2d_init, LyotStop2d = LyotStop2d_init,
+                 Pupil2d = Pupil2d, LyotStop2d = LyotStop2d,
                  Pupil2dSym = False, rMask=rMask,
                  problem_name = problem_name, 
                  solver = solver, 
@@ -445,11 +409,11 @@ Display direct and coronagraphic images
 #fname = fname_gen + '_direct_image.pdf'
 #fpath = fdir_pdf / fname
 
-pl.figure(20)
-pl.clf()
-pl.imshow(np.log10(poly_direct_image2d), cmap = 'inferno',
-vmin=-12, vmax=0)
-pl.title('Apod1 - direct image')
+#pl.figure(20)
+#pl.clf()
+#pl.imshow(np.log10(poly_direct_image2d), cmap = 'inferno',
+#vmin=-12, vmax=0)
+#pl.title('Apod1 - direct image')
 #pl.savefig(str(fpath))
 
 #fname = fname_gen + '_apodized_image.pdf'
@@ -501,26 +465,26 @@ pl.tight_layout()
 """
 Display of the mopnochromatic intensity profiles of the coronagraphic images
 """
-pl.figure(31, (8, 4.5))
-pl.clf()
-#pl.title('Intensity profiles of the coronagraphic images')
-#pl.semilogy(corono0.xi,poly_direct_image1/poly_direct_image1.max(),label='Direct')
-#pl.semilogy(corono0.xi,poly_direct_image2/poly_direct_image2.max(),label='Direct')
-#pl.semilogy(corono0.xi,poly_direct_image3/poly_direct_image3.max(),label='Direct')
-for i in range(corono0.nlam):
-    pl.semilogy(xi2d,mono_corono_image2d[i,nImg2dbis//2,nImg2dbis//2:]/mono_direct_image2d[(corono0.nlam+1)//2].max(), 
-                label=r'{0:.2f}$\lambda_0$'.format(corono0.lam_t[i]), color = colors[i])
-pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='C1', linestyle='--')
-pl.axvline(x=corono0.rho0, ymin=-12, ymax =2, linewidth=1, color='C2', linestyle='--')
-pl.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='C2', linestyle='--')
-pl.axhline(10**(-cDarkHole), xmin=corono0.xi.min(), xmax=corono0.xi.max(), linewidth=1, color='k', linestyle='--')
-pl.xlabel(r'Angular separation in $\lambda_0$/D')
-pl.ylabel('Normalized intensity in log scale')
-pl.xlim(-0.5, 50.5)
-pl.ylim(10**(-12.2), 10**(-3.8))
-pl.legend()
-pl.tight_layout()
-pl.savefig(str(fpath), transparent=True, bbox_inches='tight')
+#pl.figure(31, (8, 4.5))
+#pl.clf()
+##pl.title('Intensity profiles of the coronagraphic images')
+##pl.semilogy(corono0.xi,poly_direct_image1/poly_direct_image1.max(),label='Direct')
+##pl.semilogy(corono0.xi,poly_direct_image2/poly_direct_image2.max(),label='Direct')
+##pl.semilogy(corono0.xi,poly_direct_image3/poly_direct_image3.max(),label='Direct')
+#for i in range(corono0.nlam):
+#    pl.semilogy(xi2d,mono_corono_image2d[i,nImg2dbis//2,nImg2dbis//2:]/mono_direct_image2d[(corono0.nlam+1)//2].max(), 
+#                label=r'{0:.2f}$\lambda_0$'.format(corono0.lam_t[i]), color = colors[i])
+#pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='C1', linestyle='--')
+#pl.axvline(x=corono0.rho0, ymin=-12, ymax =2, linewidth=1, color='C2', linestyle='--')
+#pl.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='C2', linestyle='--')
+#pl.axhline(10**(-cDarkHole), xmin=corono0.xi.min(), xmax=corono0.xi.max(), linewidth=1, color='k', linestyle='--')
+#pl.xlabel(r'Angular separation in $\lambda_0$/D')
+#pl.ylabel('Normalized intensity in log scale')
+#pl.xlim(-0.5, 50.5)
+#pl.ylim(10**(-12.2), 10**(-3.8))
+#pl.legend()
+#pl.tight_layout()
+#pl.savefig(str(fpath), transparent=True, bbox_inches='tight')
 
 #%%
 pl.show()
