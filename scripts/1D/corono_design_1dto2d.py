@@ -17,7 +17,7 @@ import corono as coro
 
 pl.rcParams.update({'font.size': 12})
 
-from scipy.interpolate import interp1d
+from scipy.interpolate import interp1d, CubicSpline
 
 
 #%% parameters
@@ -33,11 +33,11 @@ if True:
     FirstDer    = True
     SecondDer   = True
     MinIsland   = False
-    FirstDerLim = 0.001
-    SecondDerLim= 0.0001 
+    FirstDerLim = 0.001/2
+    SecondDerLim= 0.0001/2 
     FirstDerGlobalLim = 10.
     
-    nPup = 500
+    nPup = 1000
     nFPM = 50
     nImg = 180
     Fmax = 45
@@ -60,7 +60,7 @@ if True:
     LyotStopOD = 1.0
     
     # dark zone bounds (inner and outer edges) in lam0/D unit
-    rho0 = 5.
+    rho0 = 5.0
     rho1 = 40.0
     
     # contrast in the dark region
@@ -97,7 +97,7 @@ nImgbis = 500
 Fmaxbis = 50    
 
 #%% 2D parameters
-nPup2d = 2*nPup
+nPup2d = 1*nPup
 Fmax2d = 2*Fmaxbis
 nImg2d = 2*nImgbis
 
@@ -277,10 +277,15 @@ colors = pl.cm.rainbow(np.linspace(0,1,nlambis))
 
 x1d = corono0.r/2
 y1d = Apod1d
+z1d = Pupil1d
+t1d = LyotStop1d
 
 idx = int(PupilID*nPup)
-f1d = interp1d(x1d[idx:], y1d[idx:], kind="cubic", bounds_error=False, fill_value="extrapolate")
+fit_A1d = interp1d(x1d[idx:], y1d[idx:], kind="cubic", bounds_error=False, fill_value="extrapolate")
+#f1d = CubicSpline(x1d[idx:], y1d[idx:], extrapolate=True)
 
+x1dbis = (1/(2*nPup2d))*(np.arange(2*nPup2d)-2*nPup2d/2+1/2)
+Apod1dbis = fit_A1d(x1dbis)
 
 #%%
 """
@@ -293,13 +298,14 @@ xx, yy = np.meshgrid(aa, aa)
 mydist = np.hypot(yy,xx)
 
 Apod2d = np.zeros((nPup2d, nPup2d))
-Apod2d = f1d(mydist)
+Apod2d = fit_A1d(mydist)
 
 Pupil2d = coro.utils.uniform_disk(nPup2d, nPup2d/2, CtrBtwnPix=CtrBtwnPix)\
 -coro.utils.uniform_disk(nPup2d,PupilID*nPup2d/2, CtrBtwnPix=CtrBtwnPix)
-            
+#            
 LyotStop2d = coro.utils.uniform_disk(nPup2d, LyotStopOD*nPup2d/2, CtrBtwnPix=CtrBtwnPix)\
 -coro.utils.uniform_disk(nPup2d,LyotStopID*nPup2d/2, CtrBtwnPix=CtrBtwnPix)
+
 
 #%%            
 pl.figure(11)
@@ -322,10 +328,11 @@ pl.show()
 
 pl.figure(14, (8, 4.5))
 pl.clf()
-pl.subplot(211)
+#pl.subplot(211)
 pl.plot(corono0.r, Apod1d, label='1d initial')
-pl.plot(x1d*2, f1d(x1d), label='1d interp')
-pl.plot(bb, Apod2d[nPup2d//2, nPup2d//2:]*Pupil2d[nPup2d//2, nPup2d//2:], label='2d')
+pl.plot(x1d*2, fit_A1d(x1d), label='1d interp')
+pl.plot(x1dbis*2, fit_A1d(x1dbis), label='1d interp - zp', ls = '--')
+#pl.plot(bb, Apod2d[nPup2d//2, nPup2d//2:]*Pupil2d[nPup2d//2, nPup2d//2:], label='2d')
 pl.xlabel(r'Pupil radius r')
 pl.ylabel('Normalized amplitude')
 pl.xlim(-0.02, 1.02)
@@ -339,14 +346,14 @@ pl.text(PupilID+0.01, 0.05, r'd={0}%'.format(int(PupilID*100)), color='C1')
 pl.text(LyotStopID+0.01, 0.05, r'd$_S$={0}%'.format(int(LyotStopID*100)), color='C2')
 pl.legend()
 
-pl.subplot(212)
-pl.plot(corono0.r, Apod1d-f1d(x1d), color='C1')
-pl.plot(corono0.r, Apod1d-Apod2d[nPup2d//2, nPup2d//2:]*Pupil2d[nPup2d//2, nPup2d//2:], color='C2')
-pl.ylabel('Amplitude difference')
-pl.xlim(-0.02, 1.02)
-pl.ylim(-0.005, 0.005)
-pl.tight_layout()
-pl.show()
+#pl.subplot(212)
+#pl.plot(corono0.r, Apod1d-f1d(x1d), color='C1')
+#pl.plot(corono0.r, Apod1d-Apod2d[nPup2d//2, nPup2d//2:]*Pupil2d[nPup2d//2, nPup2d//2:], color='C2')
+#pl.ylabel('Amplitude difference')
+#pl.xlim(-0.02, 1.02)
+#pl.ylim(-0.005, 0.005)
+#pl.tight_layout()
+#pl.show()
 #pl.savefig(str(fpath), transparent=True, bbox_inches='tight')
 
 ##%%
@@ -421,7 +428,7 @@ Display direct and coronagraphic images
 
 pl.figure(21)
 pl.clf()
-pl.imshow(np.log10(poly_corono_image2d), cmap = 'inferno',
+pl.imshow(np.log10(poly_corono_image2d/poly_direct_image2d.max()), cmap = 'inferno',
           vmin=-12, vmax=0)
 pl.title('Apod1 - apodized image')
 #pl.savefig(str(fpath))
