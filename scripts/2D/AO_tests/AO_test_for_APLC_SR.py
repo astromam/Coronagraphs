@@ -15,9 +15,9 @@ import pylab as pl
 import csv
 from pathlib import Path
 from astropy.io import fits
-import vigan.ao as ao
+#import vigan.ao as ao
 #from pyzelda.utils import aperture
-import time
+#import time
 import os
 
 #%%
@@ -28,7 +28,6 @@ import os
 nParams = 5
 nPSD    = 120
 kPSD    = 1
-iPSD    = 0
 
 ### Pupil dimension
 nPup = 384
@@ -36,6 +35,7 @@ nPup = 384
 ### OPD number
 nmap = 1000
 
+### Pupil name
 pupil_name = 'vlt'
 
 #%%
@@ -106,36 +106,6 @@ for iPSD in range(kPSD):
     img_wave = 1.593e-6
     seed     = 12345
     
-    #%%    
-    """
-    ### Residual turbulence PSD computation
-    """
-    print('\niPSD: {0:03d}/{1:03d}'.format(iPSD+1,kPSD))
-#    t0 = time.time()
-#    residual_turbulence_psd_arr[iPSD] = ao.residual_screen_sphere(seeing, L0, z, Cn2, v, arg_v, mag, zenith, azimuth, 
-#                                                            spat_filter=spaf, img_wave=img_wave, dim_pup=nPup,
-#                                                            n_screen=nmap, fit=True, servo=True, alias=True, noise=True,
-#                                                            diff_refr=True, psd_only=True, seed=seed)
-#    t1 = time.time()
-#    print('\nPSD - exec time: {0}s\n'.format(t1-t0))
-
-#    if iPSD == 0:
-#    t0 = time.time()
-#    residual_turbulence_opd_arr = ao.residual_screen_sphere(seeing, L0, z, Cn2, v, arg_v, mag, zenith, azimuth, 
-#                                                    spat_filter=spaf, img_wave=img_wave, dim_pup=nPup,
-#                                                    n_screen=nmap, fit=True, servo=True, alias=True, noise=True,
-#                                                    diff_refr=True, psd_only=False, seed=seed+iPSD)
-#    residual_turbulence_opd_arr  = residual_turbulence_opd_arr[..., nPup:2*nPup, nPup:2*nPup]
-##        residual_turbulence_opd_arr *= pupil_saxo
-#    t1 = time.time()
-#    print('opd generation - exec time: {0:.2f}s\n'.format(t1-t0))
-    
-    #%%
-    """
-    ### Save PSD
-    """
-    #fits.writeto(fpath_psd, residual_turbulence_psd_arr, overwrite=True)
-
     #%%
     """
     ### Read OPD maps from PSDs
@@ -145,20 +115,9 @@ for iPSD in range(kPSD):
     residual_turbulence_opd_arr = fits.getdata(fpath_opd,)
     
 #%%
-#"""
-#### Display PSD for iPSD=0
-#"""
-#pl.figure(2)
-#pl.imshow(np.log10(residual_turbulence_psd_arr[0]), cmap = 'inferno')
-#pl.title('PSD')
-#pl.show()
-
-#%%
-print('\n ok')    
-
-#%%
-
-# Pupil
+"""
+### Read 2D Pupil
+"""
 if True:
     fdir0 = Path('../../../data/2D/pupils/').resolve()
     if pupil_name == 'vlt':
@@ -170,12 +129,6 @@ if True:
     fpath_pup = fdir0 / fname_pup
     fpath_lys = fdir0 / fname_lys
     Pupil2d    = fits.getdata(fpath_pup)
-
-#%%
-pl.figure(0)
-pl.imshow(Pupil2d)
-pl.show()
-
 
 #%%
 """
@@ -191,3 +144,13 @@ for imap in range(nmap):
 
 print('mean sigma_opd: {0:.1f}\pm {1:.1f}nm'.format(np.mean(sigma_opd)*1e9, np.std(sigma_opd)*1e9)) 
 print('mean SR: {0:.3f}\pm {1:.3f}'.format(np.mean(SR), np.std(SR)))
+
+#%%
+"""
+### plot figures
+"""
+pl.figure(0)
+pl.clf()
+pl.title('Pupil: {0}'.format(pupil_name))
+pl.imshow(Pupil2d)
+pl.show()
