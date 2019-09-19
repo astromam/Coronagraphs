@@ -136,22 +136,22 @@ for i, iaplc in enumerate(aplc_arr):
     """
     ### Filepaths
     """
-    fname_direct = ('{2}_direct_nPup={0}' + \
-                    '_nImg={1}_img.fits').format(nPup, nImg2dbis, iaplc)
-    fname_corono = ('{2}_corono_nPup={0}' + \
-                    '_nImg={1}_img.fits').format(nPup, nImg2dbis, iaplc)
+    fname_direct = ('{0}_direct_nPup={1}' + \
+                    '_nImg={2}_img.fits').format(iaplc, nPup, nImg2dbis)
+    fname_corono = ('{0}_corono_nPup={1}' + \
+                    '_nImg={2}_img.fits').format(iaplc, nPup, nImg2dbis)
     fpath_direct = fdir_data / fname_direct
     fpath_corono = fdir_data / fname_corono
 
     # with no aberrations
-    fname_direct_avg = ('{2}_direct_nPup={0}' + \
-                        '_nImg={1}_avg.fits').format(nPup, nImg2dbis, iaplc)
-    fname_corono_avg = ('{2}_corono_nPup={0}' + \
-                        '_nImg={1}_avg.fits').format(nPup, nImg2dbis, iaplc)
-    fname_direct_std = ('{2}_direct_nPup={0}' + \
-                        '_nImg={1}_std.fits').format(nPup, nImg2dbis, iaplc)
-    fname_corono_std = ('{2}_corono_nPup={0}' + \
-                        '_nImg={1}_std.fits').format(nPup, nImg2dbis, iaplc)
+    fname_direct_avg = ('{0}_direct_nPup={1}' + \
+                        '_nImg={2}_avg.fits').format(iaplc, nPup, nImg2dbis)
+    fname_corono_avg = ('{0}_corono_nPup={1}' + \
+                        '_nImg={2}_avg.fits').format(iaplc, nPup, nImg2dbis)
+    fname_direct_std = ('{0}_direct_nPup={1}' + \
+                        '_nImg={2}_std.fits').format(iaplc, nPup, nImg2dbis)
+    fname_corono_std = ('{0}_corono_nPup={1}' + \
+                        '_nImg={2}_std.fits').format(iaplc, nPup, nImg2dbis)
 
     fpath_direct_avg = fdir_data / fname_direct_avg
     fpath_corono_avg = fdir_data / fname_corono_avg
@@ -185,28 +185,28 @@ for i, iaplc in enumerate(aplc_arr):
         """
         ### Filepaths
         """    
-        fname_direct_AO = ('{4}_direct_nPup={0}_nImg={1}_iPSD={2:04d}' + \
-                           '_nmap={3:04d}_img.fits').format(nPup, nImg2dbis, 
-                                  iPSD, nmap, iaplc)
-        fname_corono_AO = ('{4}_corono_nPup={0}_nImg={1}_iPSD={2:04d}' + \
-                           '_nmap={3:04d}_img.fits').format(nPup, nImg2dbis, 
-                                  iPSD, nmap, iaplc)
+        fname_direct_AO = ('{0}_direct_nPup={1}_nImg={2}_iPSD={3:04d}' + \
+                           '_nmap={4:04d}_img.fits').format(iaplc, nPup, 
+                                  nImg2dbis, iPSD, nmap)
+        fname_corono_AO = ('{0}_corono_nPup={1}_nImg={2}_iPSD={3:04d}' + \
+                           '_nmap={4:04d}_img.fits').format(iaplc, nPup, 
+                                  nImg2dbis, iPSD, nmap)
         fpath_direct_AO = fdir_data / fname_direct_AO
         fpath_corono_AO = fdir_data / fname_corono_AO
         
         # with AO residuals
-        fname_direct_avg_AO = ('{4}_direct_nPup={0}_nImg={1}_iPSD={2:04d}' + \
-                               '_nmap={3:04d}_avg.fits').format(nPup, 
-                                      nImg2dbis, iPSD, nmap, iaplc)
-        fname_corono_avg_AO = ('{4}_corono_nPup={0}_nImg={1}_iPSD={2:04d}' + \
-                               '_nmap={3:04d}_avg.fits').format(nPup, 
-                                      nImg2dbis, iPSD, nmap, iaplc)
-        fname_direct_std_AO = ('{4}_direct_nPup={0}_nImg={1}_iPSD={2:04d}' + \
-                               '_nmap={3:04d}_std.fits').format(nPup, 
-                                      nImg2dbis, iPSD, nmap, iaplc)
-        fname_corono_std_AO = ('{4}_corono_nPup={0}_nImg={1}_iPSD={2:04d}' + \
-                               '_nmap={3:04d}_std.fits').format(nPup, 
-                                      nImg2dbis, iPSD, nmap, iaplc)
+        fname_direct_avg_AO = ('{0}_direct_nPup={1}_nImg={2}_iPSD={3:04d}' + \
+                               '_nmap={4:04d}_avg.fits').format(iaplc, nPup, 
+                                      nImg2dbis, iPSD, nmap)
+        fname_corono_avg_AO = ('{0}_corono_nPup={1}_nImg={2}_iPSD={3:04d}' + \
+                               '_nmap={4:04d}_avg.fits').format(iaplc, nPup, 
+                                      nImg2dbis, iPSD, nmap)
+        fname_direct_std_AO = ('{0}_direct_nPup={1}_nImg={2}_iPSD={3:04d}' + \
+                               '_nmap={4:04d}_std.fits').format(iaplc, nPup, 
+                                      nImg2dbis, iPSD, nmap)
+        fname_corono_std_AO = ('{0}_corono_nPup={1}_nImg={2}_iPSD={3:04d}' + \
+                               '_nmap={4:04d}_std.fits').format(iaplc, nPup, 
+                                      nImg2dbis, iPSD, nmap)
         
         fpath_direct_avg_AO = fdir_data / fname_direct_avg_AO
         fpath_corono_avg_AO = fdir_data / fname_corono_avg_AO
@@ -238,7 +238,8 @@ for iPSD in range(nPSD):
     if (iPSD+1) % 10 == 0:
         print('\niPSD: {0:03d}/{1:03d}'.format(iPSD+1, nPSD))
 
-    fname_image_plane_plot = 'aplcs_corono_nPup={0}_nImg={1}_iPSD={2:04d}_nmap={3:04d}_plt'.format(nPup, nImg2dbis, iPSD, nmap)
+    fname_image_plane_plot = 'aplcs_corono_nPup={0}_nImg={1}_iPSD={2:04d}' + \
+    '_nmap={3:04d}_plt'.format(nPup, nImg2dbis, iPSD, nmap)
     fpath_image_plane_plot_png = (fdir_pdf / fname_image_plane_plot).with_suffix('.png')
     fpath_image_plane_plot_pdf = (fdir_pdf / fname_image_plane_plot).with_suffix('.pdf')                  
     
@@ -295,7 +296,8 @@ for iPSD in range(nPSD):
     """
     image comparison
     """
-    fname_image_plane_img = 'aplcs_corono_nPup={0}_nImg={1}_iPSD={2:04d}_nmap={3:04d}_img'.format(nPup, nImg2dbis, iPSD, nmap)
+    fname_image_plane_img = 'aplcs_corono_nPup={0}_nImg={1}_iPSD={2:04d}'+ \ 
+    '_nmap={3:04d}_img'.format(nPup, nImg2dbis, iPSD, nmap)
     fpath_image_plane_img_png = (fdir_pdf / fname_image_plane_img).with_suffix('.png')
     
     pl.figure(13, (10,5))
@@ -328,7 +330,8 @@ for iPSD in range(nPSD):
 # Plot with all the image profiles
 """    
 
-fname_image_plane_plts = 'aplcs_corono_nPup={0}_nImg={1}_iPSD={2:04d}_nmap={3:04d}_plts.pdf'.format(nPup, nImg2dbis, iPSD, nmap)
+fname_image_plane_plts = 'aplcs_corono_nPup={0}_nImg={1}_iPSD={2:04d}' + \
+'_nmap={3:04d}_plts.pdf'.format(nPup, nImg2dbis, iPSD, nmap)
 fpath_image_plane_plts = fdir_pdf / fname_image_plane_plts               
 
 fig = pl.figure(14, (8, 4.5))
