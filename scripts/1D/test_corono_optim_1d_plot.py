@@ -30,11 +30,11 @@ if True:
     FirstDer    = True
     SecondDer   = True
     MinIsland   = False
-    FirstDerLim = 0.001
-    SecondDerLim= 0.0001 
+    FirstDerLim = 0.001/2
+    SecondDerLim= 0.0001/2 
     FirstDerGlobalLim = 10.
     
-    nPup = 500
+    nPup = 1000
     nFPM = 50
     nImg = 180
     Fmax = 45
@@ -45,7 +45,7 @@ if True:
     
     PupilID    = 0.10
     
-    rMask       = 4.5
+    rMask       = 3.75
     
     rMask1      = 2.0
     rMask2      = 3.0
@@ -57,7 +57,7 @@ if True:
     LyotStopOD = 1.0
     
     # dark zone bounds (inner and outer edges) in lam0/D unit
-    rho0 = 4.
+    rho0 = 5.
     rho1 = 40.0
     
     # contrast in the dark region
