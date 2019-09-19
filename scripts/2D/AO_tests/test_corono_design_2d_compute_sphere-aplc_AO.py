@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Tue Jul 23 09:23:08 2019
+Created on Mon Jul 29 11:12:00 2019
 
 @author: mndiaye
 """
@@ -16,7 +16,7 @@ from matplotlib import cm
 from astropy.io import fits
 import corono as coro
 
-from scipy.misc import imresize
+from PIL import Image
 
 import time
 
@@ -28,6 +28,7 @@ pl.close('all')
 if True:
     # Telescope name
     corono_name  = 'APLC' # 'SP' or 'APLC'
+    aplc_new     = False
     pupil_name   = 'vlt' # 'vlt' or 'sbr' or 'lvr'
     problem_name = 'MaxContrastL1' # 'MaxContrastL1' #'MaxTau' # , 'MaxContrastLinf' # #  
     solver       = 'stdgrb' # 'stdgrb' #  'gurobipy', 'scipy.linprog'
@@ -74,7 +75,7 @@ if True:
     nlam = 5
 
     
-    do_fits = True
+    do_fits = False
 
 
 nlambis = 11  
@@ -85,14 +86,14 @@ Fmax2dbis = (nImg2dbis/2)*(950e-9/wv)
 # total number of existing maps
 qmap = 1000
 # total number of used maps
-nmap = 1000
+nmap = 10
 
 # plot parameters
 vmin0 = -8
 vmax0 = -3
 
 # PSD number
-nPSD = 2
+nPSD = 1
 
 #%%  
 """ 
@@ -151,41 +152,48 @@ if True:
 # Lyot stop    
     LyotStop2dtmp = fits.getdata(fpath_lys)
     if nPup != 384:
-        LyotStop2d = imresize(LyotStop2dtmp, (nPup, nPup))
+        LyotStop2d = np.array(Image.fromarray(LyotStop2dtmp).resize((nPup,nPup)))
     else:
         LyotStop2d = LyotStop2dtmp*1
     
     if solver != 'gurobipy' and solver != 'stdgrb':
         solver = 'scipy'
 
-# Apodizer 
-fdir_apod  = Path('../../../results/2D/dat_pyth').resolve() / pupil_name
-fname_gen  = problem1.get_filename()
-fname      = fname_gen + '.fits'
-fpath_apod = fdir_apod / fname
+# Apodizer
+if aplc_new:
+    fdir_apod  = Path('../../../results/2D/dat_pyth').resolve() / pupil_name
+    fname_gen  = problem1.get_filename()
+    fname      = fname_gen + '.fits'
+    fpath_apod = fdir_apod / fname
+    aplc_name  = 'aplc2'
+else:
+    fdir_apod  = Path('../../../data/2D/pupils/SPHERE/').resolve()
+    fname      = 'SPHERE_APO1_field_transmission_map.fits'
+    fpath_apod = fdir_apod / fname
+    aplc_name  = 'aplc1'
 
 #%%
 """
 ### File saving path for the generated data
 """
-fdir_pdf = Path('../../../results/2D/plots/AO_tests/aplc2/').resolve()
+fdir_pdf = Path('../../../results/2D/plots/AO_tests/{0}/'.format(aplc_name)).resolve()
 if not os.path.exists(fdir_pdf):
     os.makedirs(fdir_pdf)
 
-fdir_data = Path('../../../results/2D/data/AO_tests/aplc2/').resolve()
+fdir_data = Path('../../../results/2D/data/AO_tests/{0}/'.format(aplc_name)).resolve()
 if not os.path.exists(fdir_data):
     os.makedirs(fdir_data)
 
-fname_direct = 'aplc2_direct_nPup={0}_nImg={1}_img.fits'.format(nPup, nImg2dbis)
-fname_corono = 'aplc2_corono_nPup={0}_nImg={1}_img.fits'.format(nPup, nImg2dbis)
+fname_direct = '{0}_direct_nPup={1}_nImg={2}_img.fits'.format(aplc_name, nPup, nImg2dbis)
+fname_corono = '{0}_corono_nPup={1}_nImg={2}_img.fits'.format(aplc_name, nPup, nImg2dbis)
 fpath_direct = fdir_data / fname_direct
 fpath_corono = fdir_data / fname_corono
 
 # with no aberrations
-fname_direct_avg = 'aplc2_direct_nPup={0}_nImg={1}_avg.fits'.format(nPup, nImg2dbis)
-fname_corono_avg = 'aplc2_corono_nPup={0}_nImg={1}_avg.fits'.format(nPup, nImg2dbis)
-fname_direct_std = 'aplc2_direct_nPup={0}_nImg={1}_std.fits'.format(nPup, nImg2dbis)
-fname_corono_std = 'aplc2_corono_nPup={0}_nImg={1}_std.fits'.format(nPup, nImg2dbis)
+fname_direct_avg = '{0}_direct_nPup={1}_nImg={2}_avg.fits'.format(aplc_name, nPup, nImg2dbis)
+fname_corono_avg = '{0}_corono_nPup={1}_nImg={2}_avg.fits'.format(aplc_name, nPup, nImg2dbis)
+fname_direct_std = '{0}_direct_nPup={1}_nImg={2}_std.fits'.format(aplc_name, nPup, nImg2dbis)
+fname_corono_std = '{0}_corono_nPup={1}_nImg={2}_std.fits'.format(aplc_name, nPup, nImg2dbis)
 
 fpath_direct_avg = fdir_data / fname_direct_avg
 fpath_corono_avg = fdir_data / fname_corono_avg
@@ -230,18 +238,19 @@ corono_poly_std, rad_corono = imutils.profile(corono_poly_img, type='std')
 """
 ### Save image (no aberration)
 """
-fits.writeto(fpath_direct, direct_poly_img, overwrite=True)
-fits.writeto(fpath_corono, corono_poly_img, overwrite=True)
+if do_fits:
+    fits.writeto(fpath_direct, direct_poly_img, overwrite=True)
+    fits.writeto(fpath_corono, corono_poly_img, overwrite=True)
 
-    #%%
+#%%
 """
 ### Save profiles (no aberration)
 """
-# with no aberrations
-fits.writeto(fpath_direct_avg, direct_poly_avg, overwrite=True)
-fits.writeto(fpath_corono_avg, corono_poly_avg, overwrite=True)
-fits.writeto(fpath_direct_std, direct_poly_std, overwrite=True)
-fits.writeto(fpath_corono_std, corono_poly_std, overwrite=True)
+if do_fits:
+    fits.writeto(fpath_direct_avg, direct_poly_avg, overwrite=True)
+    fits.writeto(fpath_corono_avg, corono_poly_avg, overwrite=True)
+    fits.writeto(fpath_direct_std, direct_poly_std, overwrite=True)
+    fits.writeto(fpath_corono_std, corono_poly_std, overwrite=True)
 
 #%%
 """
@@ -252,19 +261,19 @@ for iPSD in range(nPSD):
     # AO residuals
     fdir_opd = Path('../../../data/2D/AO_tests/').resolve()
     fname = 'AOres_opd_nPup={0}_iPSD={1:04d}_nmap={2:04d}.fits'.format(nPup,iPSD,qmap)
-    fpath_opd = fdir_opd / fname 
+    fpath_opd = fdir_opd / fname
     
     #%%    
-    fname_direct_AO = 'aplc2_direct_nPup={0}_nImg={1}_iPSD={2:04d}_nmap={3:04d}_img.fits'.format(nPup, nImg2dbis, iPSD, nmap)
-    fname_corono_AO = 'aplc2_corono_nPup={0}_nImg={1}_iPSD={2:04d}_nmap={3:04d}_img.fits'.format(nPup, nImg2dbis, iPSD, nmap)
+    fname_direct_AO = '{0}_direct_nPup={1}_nImg={2}_iPSD={3:04d}_nmap={4:04d}_img.fits'.format(aplc_name, nPup, nImg2dbis, iPSD, nmap)
+    fname_corono_AO = '{0}_corono_nPup={1}_nImg={2}_iPSD={3:04d}_nmap={4:04d}_img.fits'.format(aplc_name, nPup, nImg2dbis, iPSD, nmap)
     fpath_direct_AO = fdir_data / fname_direct_AO
-    fpath_corono_AO = fdir_data / fname_corono_AO    
-    
+    fpath_corono_AO = fdir_data / fname_corono_AO
+        
     # with AO residuals
-    fname_direct_avg_AO = 'aplc2_direct_nPup={0}_nImg={1}_iPSD={2:04d}_nmap={3:04d}_avg.fits'.format(nPup, nImg2dbis, iPSD, nmap)
-    fname_corono_avg_AO = 'aplc2_corono_nPup={0}_nImg={1}_iPSD={2:04d}_nmap={3:04d}_avg.fits'.format(nPup, nImg2dbis, iPSD, nmap)
-    fname_direct_std_AO = 'aplc2_direct_nPup={0}_nImg={1}_iPSD={2:04d}_nmap={3:04d}_std.fits'.format(nPup, nImg2dbis, iPSD, nmap)
-    fname_corono_std_AO = 'aplc2_corono_nPup={0}_nImg={1}_iPSD={2:04d}_nmap={3:04d}_std.fits'.format(nPup, nImg2dbis, iPSD, nmap)
+    fname_direct_avg_AO = '{0}_direct_nPup={1}_nImg={2}_iPSD={3:04d}_nmap={4:04d}_avg.fits'.format(aplc_name, nPup, nImg2dbis, iPSD, nmap)
+    fname_corono_avg_AO = '{0}_corono_nPup={1}_nImg={2}_iPSD={3:04d}_nmap={4:04d}_avg.fits'.format(aplc_name, nPup, nImg2dbis, iPSD, nmap)
+    fname_direct_std_AO = '{0}_direct_nPup={1}_nImg={2}_iPSD={3:04d}_nmap={4:04d}_std.fits'.format(aplc_name, nPup, nImg2dbis, iPSD, nmap)
+    fname_corono_std_AO = '{0}_corono_nPup={1}_nImg={2}_iPSD={3:04d}_nmap={4:04d}_std.fits'.format(aplc_name, nPup, nImg2dbis, iPSD, nmap)
     
     fpath_direct_avg_AO = fdir_data / fname_direct_avg_AO
     fpath_corono_avg_AO = fdir_data / fname_corono_avg_AO
@@ -281,6 +290,7 @@ for iPSD in range(nPSD):
     """
     ### Computation of the direct and coronagraphic images with AO screens
     """
+    # Initialization
     direct_poly_img_AO = np.zeros((nImg2dbis, nImg2dbis))
     corono_poly_img_AO = np.zeros((nImg2dbis, nImg2dbis))
     
@@ -288,12 +298,14 @@ for iPSD in range(nPSD):
                                   LyotStop2d = corono0.LyotStop2d)
     coronoAO = coro.design.APLC2d(**paramsAO)
     
+    # Image computation 
     t0 = time.time()
     for imap in range(nmap):
         if (imap+1) % 10 == 0:
             print('imap {0:04d}/{1:04d}'.format(imap+1,nmap))
-        direct_poly_img_AO += coronoAO.compute_direct_intensity_2d_bis(Apod2d, OPDmap2d = opd_arr[imap])
-        corono_poly_img_AO += coronoAO.compute_corono_intensity_2d_bis(Apod2d, OPDmap2d = opd_arr[imap])
+        OPDmap2d = opd_arr[imap]   
+        direct_poly_img_AO += coronoAO.compute_direct_intensity_2d_bis(Apod2d, OPDmap2d = OPDmap2d)
+        corono_poly_img_AO += coronoAO.compute_corono_intensity_2d_bis(Apod2d, OPDmap2d = OPDmap2d)
     t1 = time.time()
     print('time: {0:.2f}s'.format(t1-t0))
     print('iteration average time: {0:.2f}s'.format((t1-t0)/nmap))
@@ -310,30 +322,32 @@ for iPSD in range(nPSD):
     direct_poly_avg_AO, rad_direct = imutils.profile(direct_poly_img_AO, type='mean')
     corono_poly_avg_AO, rad_corono = imutils.profile(corono_poly_img_AO, type='mean')
     direct_poly_std_AO, rad_direct = imutils.profile(direct_poly_img_AO, type='std')
-    corono_poly_std_AO, rad_corono = imutils.profile(corono_poly_img_AO, type='std')
+    corono_poly_std_AO, rad_corono = imutils.profile(corono_poly_img_AO, type='std')    
     
     #%%
     """
     ### Save image (with AO residuals)
     """
-    fits.writeto(fpath_direct_AO, direct_poly_img_AO, overwrite=True)
-    fits.writeto(fpath_corono_AO, corono_poly_img_AO, overwrite=True)
+    if do_fits:
+        fits.writeto(fpath_direct_AO, direct_poly_img_AO, overwrite=True)
+        fits.writeto(fpath_corono_AO, corono_poly_img_AO, overwrite=True)
     
     #%%
     """
     ### Save profiles (with AO residuals)
-    """
+    """    
     # with AO residuals
-    fits.writeto(fpath_direct_avg_AO, direct_poly_avg_AO, overwrite=True)
-    fits.writeto(fpath_corono_avg_AO, corono_poly_avg_AO, overwrite=True)
-    fits.writeto(fpath_direct_std_AO, direct_poly_std_AO, overwrite=True)
-    fits.writeto(fpath_corono_std_AO, corono_poly_std_AO, overwrite=True)
+    if do_fits:
+        fits.writeto(fpath_direct_avg_AO, direct_poly_avg_AO, overwrite=True)
+        fits.writeto(fpath_corono_avg_AO, corono_poly_avg_AO, overwrite=True)
+        fits.writeto(fpath_direct_std_AO, direct_poly_std_AO, overwrite=True)
+        fits.writeto(fpath_corono_std_AO, corono_poly_std_AO, overwrite=True)
 
 #    #%%
 #    """
 #    ### Image display (AO residuals)
 #    """
-#    fname_image_plane_plot = 'aplc2_corono_nPup={0}_nImg={1}_iPSD={2:04d}_nmap={3:04d}_img.pdf'.format(nPup, nImg2dbis, iPSD, nmap)
+#    fname_image_plane_plot = 'aplc1_corono_nPup={0}_nImg={1}_iPSD={2:04d}_nmap={3:04d}_img.pdf'.format(nPup, nImg2dbis, iPSD, nmap)
 #    fpath_image_plane_plot = fdir_pdf / fname_image_plane_plot
 #
 #
@@ -344,7 +358,7 @@ for iPSD in range(nPSD):
 #
 #    pl.tight_layout()
 #    pl.savefig(str(fpath_image_plane_plot), tight=True, transparent=True)
-    
+
 
 #%% Display of the apodizer
 """
@@ -352,7 +366,7 @@ for iPSD in range(nPSD):
 """
 #pl.figure(0)
 #pl.clf()
-#pl.imshow(Pupil2d, cmap = cm.Greys_r)
+#pl.imshow(corono0.Pupil2d, cmap = cm.Greys_r)
 #pl.title('Pupil transmission')
 #
 #fname = fname_gen + '_apodisation_ampl_nPup={0}.pdf'.format(nPup)
@@ -366,11 +380,12 @@ for iPSD in range(nPSD):
 #
 #pl.figure(1)
 #pl.clf()
-#pl.imshow(Apod2d*Pupil2d, cmap = 'inferno')
+#pl.imshow(Apod2d*corono0.Pupil2d, cmap = 'inferno')
 #pl.title('Apodized entrance pupil')
 #pl.tight_layout()
 ##pl.savefig(str(fpath), transparent=True)
-#
+
+
 #%%
 """
 ### Image display (perfect)
@@ -381,13 +396,13 @@ for iPSD in range(nPSD):
 #          vmin=vmin0, vmax=vmax0, cmap = 'inferno')
 #pl.title('Direct image (no aberration)')
 #
-#
 #pl.figure(3)
 #pl.clf()
 #pl.imshow(np.log10(corono_poly_img), 
 #          vmin=vmin0, vmax=vmax0, cmap = 'inferno')
 #pl.title('Corono image (no aberration)')
-#
+
+
 #%%
 """
 ### Image display (AO residuals)
@@ -406,7 +421,7 @@ for iPSD in range(nPSD):
 """
 ### Display contrast curves
 """
-#fname_image_plane_plot = 'aplc2_corono_nPup={0}_nImg={1}_iPSD={2:04d}_nmap={3:04d}_plt.pdf'.format(nPup, nImg2dbis, iPSD, nmap)
+#fname_image_plane_plot = 'aplc1_corono_nPup={0}_nImg={1}_iPSD={2:04d}_nmap={3:04d}_plt.pdf'.format(nPup, nImg2dbis, iPSD, nmap)
 #fpath_image_plane_plot = fdir_pdf / fname_image_plane_plot
 #
 #rad_corono = np.arange(nImg2dbis//2)
