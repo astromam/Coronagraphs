@@ -27,24 +27,25 @@ slvCrossover    = 0
 slvMethod       = 2
 allLogToConsole = 0
 
-FirstDer    = False
-SecondDer   = False
+FirstDer    = True
+SecondDer   = True
 MinIsland   = False
-FirstDerLim = 0.01
-SecondDerLim= 0.001 
+FirstDerLim = 0.001
+SecondDerLim= 0.0001 
 FirstDerGlobalLim = 10.
 
 nPup = 500
 nFPM = 50
-nImg = 44
-Fmax = 11
+nImg = 180
+Fmax = 45
 R    = 1
 
 bw   = 0.1
-nlam = 1
+nlam = 5
 
 PupilID    = 0.10
-rMask       = 4.0
+
+rMask       = 4.5
 
 rMask1      = 2.0
 rMask2      = 3.0
@@ -56,11 +57,11 @@ LyotStopID = 0.20
 LyotStopOD = 1.0
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
-rho0 = 3.5
-rho1 = 10.0
+rho0 = 4.
+rho1 = 40.0
 
 # contrast in the dark region
-cDarkHole = 8.0
+cDarkHole = 10.0
 
 # tau (integrated Pupil transmission)
 tau   = 0.4
