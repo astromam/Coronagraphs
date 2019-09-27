@@ -23,7 +23,7 @@ pl.close('all')
 if False:
     corono_name  = 'APLC' # 'APLC' or 'SP'
     problem_name = 'MaxContrastL2' # 'MaxContrastL1' #,'MaxContrastLinf' # 'MaxTau' #'MaxContrastL2' #MaxSNR
-    solver       = 'stdgrb' # 'stdgrb', 'gurobipy', 'scipy.linprog'
+    solver       = 'scipy.linprog' # 'stdgrb', 'gurobipy', 'scipy.linprog'
     
     FirstDer    = False
     SecondDer   = False
@@ -41,7 +41,7 @@ if False:
     bw   = 0.1
     nlam = 5
     
-    PupilID    = 0.20
+    PupilID    = 0.10
     rMask       = 4.4
     
     rMask1      = 2.0
@@ -50,7 +50,7 @@ if False:
     OPDx2       = 0.5
     OPDx3       = 0.75
     
-    LyotStopID = 0.40
+    LyotStopID = 0.20
     LyotStopOD = 1.0
     
     # dark zone bounds (inner and outer edges) in lam0/D unit

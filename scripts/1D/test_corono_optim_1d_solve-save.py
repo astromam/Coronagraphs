@@ -20,8 +20,8 @@ import corono as coro
 Parameters
 """
 corono_name  = 'APLC' # 'APLC' or 'SP'
-problem_name = 'MaxContrastL1' # ,'MaxTau' # 'MaxContrastLinf' #'MaxContrastL1' #'MaxContrastL2', #MaxSNR
-solver       = 'scipy.linprog' # 'stdgrb', 'gurobipy', 'scipy.linprog' #Not for MaxContrastL2 problem
+problem_name = 'MaxContrastL2' # ,'MaxTau' # 'MaxContrastLinf' #'MaxContrastL1' #'MaxContrastL2', #MaxSNR
+solver       = 'gurobipy' # 'stdgrb', 'gurobipy', 'scipy.linprog' #Not for MaxContrastL2 problem
 slvLogToConsole = 0
 slvCrossover    = 0
 slvMethod       = 2
@@ -41,10 +41,10 @@ Fmax = 11
 R    = 1
 
 bw   = 0.1
-nlam = 1
+nlam = 5
 
-PupilID    = 0.10
-rMask       = 4.0
+PupilID    = 0.15
+rMask       = 4
 
 rMask1      = 2.0
 rMask2      = 3.0
@@ -52,7 +52,7 @@ rMask3      = 3.5
 OPDx2       = 0.5
 OPDx3       = 0.75
 
-LyotStopID = 0.20
+LyotStopID = 0.30
 LyotStopOD = 1.0
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
@@ -63,7 +63,7 @@ rho1 = 10.0
 cDarkHole = 8.0
 
 # tau (integrated Pupil transmission)
-tau   = 0.4
+tau   = 0.3
 
 r   = np.arange(nPup)*R/nPup + R/(2*nPup)
 Pupil1d      = (r>PupilID)*1.0
@@ -131,7 +131,7 @@ elif problem_name == 'MaxContrastL2':
     
 elif problem_name == 'MaxSNR':
     # Maximization of the contrast under L2 norm
-    problem1 = coro.optim_1d.MaxSNR(corono=corono0,nmax=10000,gradmin=1e-7, initialisation='L2' ,**params)
+    problem1 = coro.optim_1d.MaxSNR(corono=corono0,nmax=100000,gradmin=1e-9, initialisation='L2' ,**params)
 else:
      raise NameError('{0}: Not an existing optimization problem!'.format(problem_name))
     
