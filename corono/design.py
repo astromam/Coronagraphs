@@ -19,8 +19,8 @@ import numpy as np
 #import pylab as pl
 #from astropy.io import fits
 
-from .utils import besselJ0, sft, isft, uniform_disk, radius_disk, sft_even, isft_even, sft_ein, isft_ein
-from . import default
+from utils import besselJ0, sft, isft, uniform_disk, radius_disk, sft_even, isft_even, sft_ein, isft_ein
+import default
 import json
 
 

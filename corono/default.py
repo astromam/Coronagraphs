@@ -682,6 +682,9 @@ def get_default_params_1d_MaxTauProblemMatrix():
             - 'MaxContrastLinf': maximization of the contrast for a given 
             apodizer transmission under Linf-norm constraints
             
+            - 'MaxSNR': maximization of the SNR for a given 
+            apodizer transmission through the Frank-Wolfe algorithm
+            
     Returns    
     ----------
     tmp : dict
@@ -719,7 +722,9 @@ def get_default_params_1d_MaxContrastProblemMatrix():
             
             - 'MaxContrastLinf': maximization of the contrast for a given 
             apodizer transmission under Linf-norm constraints
-                
+                            
+            - 'MaxSNR': maximization of the SNR for a given 
+            apodizer transmission through the Frank-Wolfe algorithm
     Returns    
     ----------
     tmp : dict
@@ -734,7 +739,7 @@ def get_default_params_1d_MaxContrastProblemMatrix():
 #%%
 def get_default_params_1d_MaxSNR():
     r"""
-    Gets the default parameters for the Max contrast optimization problem.
+    Gets the default parameters for the MaxSNR optimization problem.
     
     Parameters
     ---------- 
@@ -761,6 +766,8 @@ def get_default_params_1d_MaxSNR():
             - 'MaxContrastL2': maximization of the contrast for a given 
             apodizer transmission under L2-norm constraints
                 
+            - 'MaxSNR': maximization of the SNR for a given 
+            apodizer transmission through the Frank-Wolfe algorithm
     Returns    
     ----------
     tmp : dict
