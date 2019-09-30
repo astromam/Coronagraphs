@@ -493,4 +493,4 @@ for k in range(len(x)):
     ax[2].set_yticklabels([])
     ax[2].set_xticklabels([])
     ax[2].set_xlabel(r'$L_{\infty}$ solution' )
-    pl.savefig('../../../images/Lp norms and SNR optim/comp_apod_Lp_{0:.1f}.png'.format(k+1),bbox_inches='tight')
+    pl.savefig('../../../images/Lp norms and SNR optim/comp_apod_Lp_{:2d}.png'.format(k+1),bbox_inches='tight')
