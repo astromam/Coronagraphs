@@ -9,6 +9,16 @@ License: MIT license
 """
 import numpy as np
 import pylab as pl
+import os
+
+"""
+Check if the directory to save all figures exists. If not, creates it.
+"""
+
+if not os.path.exists('../../../images/Lp norms and SNR optim'):
+        os.mkdir('../../../images/Lp norms and SNR optim')
+
+
 #%% 
 '''
 Test comparaison of the Lp norm residual achieved with each optimization methods
@@ -456,30 +466,31 @@ ax[2].set_xlabel(r'$L_{\infty}$ solution' )
 
 
 pl.savefig('../../../images/Lp norms and SNR optim/Comp_Apod_2d_tau={0:.2f}.pdf'.format(x[k]),bbox_inches='tight')
-#%%
+    #%%
 
 '''
-Save a list of 2d apodizer for all criteria to see the evolution
+Save a bunch of 2d apodizer for all criteria to see the evolution of the shape of the
+apodizer
 '''
 azm = np.linspace(0, 2 * np.pi)
 r, th = np.meshgrid(np.linspace(0,1,len(apod1[4])), azm)
 
-for k in range(9):
+for k in range(len(x)):
     fig, ax=pl.subplots(1,3,subplot_kw=dict(projection='polar'))
-    fig.suptitle(r'$\tau$={0:.2f}'.format(x[2*k+1]), fontsize=16)
-    z2 = np.tile(apod1[2*k+1], (r.shape[0], 1))
-    pl.pcolormesh(th, r, z2)
+    fig.suptitle(r'$\tau$={0:.2f}'.format(x[k]), fontsize=16)
+    z2 = np.tile(apod1[k], (r.shape[0], 1))
+    ax[0].pcolormesh(th, r, z2)
     ax[0].set_yticklabels([])
     ax[0].set_xticklabels([])
     ax[0].set_xlabel(r'$L_1$ solution' )
-    z3 = np.tile(apod2[2*k+1], (r.shape[0], 1))
-    pl.pcolormesh(th, r, z3)
+    z3 = np.tile(apod2[k], (r.shape[0], 1))
+    ax[1].pcolormesh(th, r, z3)
     ax[1].set_yticklabels([])
     ax[1].set_xticklabels([])
     ax[1].set_xlabel(r'$L_2$ solution' )
-    z4 = np.tile(apodinf[2*k+1], (r.shape[0], 1))
-    pl.pcolormesh(th, r, z4)
+    z4 = np.tile(apodinf[k], (r.shape[0], 1))
+    ax[2].pcolormesh(th, r, z4)
     ax[2].set_yticklabels([])
     ax[2].set_xticklabels([])
     ax[2].set_xlabel(r'$L_{\infty}$ solution' )
-    pl.savefig('../../../images/Lp norms and SNR optim/comp_apod_Lp_{0:.0f}.png'.format(k+1),bbox_inches='tight')
+    pl.savefig('../../../images/Lp norms and SNR optim/comp_apod_Lp_{0:.1f}.png'.format(k+1),bbox_inches='tight')

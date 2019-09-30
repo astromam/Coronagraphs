@@ -8,8 +8,16 @@ License: MIT license
 """
 import corono as coro
 import numpy as np
+import os
 
+"""
+Check if the directory to save all the data exists. If not, creates it.
+"""
 
+if not os.path.exists('../../../data/1D/Lp norms and SNR optim'):
+        os.mkdir('../../../data/1D/Lp norms and SNR optim')
+        
+#%%        
 """
 Parameters
 """
