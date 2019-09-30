@@ -28,7 +28,7 @@ def cost_function_snr(x,psi_star,psi_planet):
         Matrix such as its product with x returns 
         the electric field residual from the star
         
-    psi_star : Matrix
+    psi_planet : Matrix
         Matrix such as its product with x returns 
         the electric field residual from the planet
 
@@ -162,11 +162,13 @@ def line_search_ratio(x,deltax,psi_star,psi_planet):
             s in the Fig 3.1. Hence, deltax=s-x
             
     
-        psi_star : Matrix
+        psi_star : Matrix 
+            .. math:: \Psi_{star} 
             Matrix of the optimization problem that computes the residual from the 
             star
         
         psi_planet : Matrix
+            .. math:: \Psi_{planet} 
             Matrix of the optimization problem that computes the residual from the 
             planet
        
@@ -293,6 +295,17 @@ def fmin_cond(f, df, solve_c, x0, psi_star, psi_planet,linesearch, nbitermax=200
         Solver for linearized problem, solve_c:R^d -> R^d
     x_0 : (d,) numpy.array
         Initial point
+    psi_star : array
+            .. math:: \Psi_{star} 
+            Matrix of the optimization problem that computes the residual from the 
+            star
+        
+    psi_planet : array
+            .. math:: \Psi_{planet} 
+            Matrix of the optimization problem that computes the residual from the 
+            planet
+    linesearch : bool
+        Uses the closed-form linesearch if 1
     nbitermax : int, optional
         Max number of iterations
     stopThr : float, optional
