@@ -308,7 +308,7 @@ def fmin_cond(f, df, solve_c, x0, psi_star, psi_planet,linesearch, nbitermax=200
         Uses the closed-form linesearch if 1
     nbitermax : int, optional
         Max number of iterations
-    stopThr : float, optional
+    stopvarj : float, optional
         Stop threshol on error (>0)
     verbose : bool, optional
         Print information along iterations
