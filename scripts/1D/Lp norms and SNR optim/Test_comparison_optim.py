@@ -109,9 +109,9 @@ for k in range (nsim-1):
     apod1[k]=a
     
     #Compute the direct and coronagraphic response matrices by using the 
-    #function compute_response_matrices() for the MaxTau problem
-    params['problem_name']='MaxTau'
-    problem = coro.optim_1d.MaxTau(corono=corono0, **params)
+    #function compute_response_matrices() for the MaxSNR problem
+    params['problem_name']='MaxSNR'
+    problem = coro.optim_1d.MaxSNR(corono=corono0,nmax=200000,gradmin=1e-9, initialisation='L1' ,**params)
     problem.compute_response_matrices()
     
     #Compute the electric field and the direct electric field residual in the 
@@ -170,9 +170,9 @@ for k in range (nsim-1):
     apod2[k]=a
     
     #Compute the direct and coronagraphic response matrices by using the 
-    #function compute_response_matrices() for the MaxTau problem
-    params['problem_name']='MaxTau'
-    problem = coro.optim_1d.MaxTau(corono=corono0, **params)
+    #function compute_response_matrices() for the MaxSNR problem
+    params['problem_name']='MaxSNR'
+    problem = coro.optim_1d.MaxSNR(corono=corono0,nmax=200000,gradmin=1e-9, initialisation='L1' ,**params)
     problem.compute_response_matrices()
    
     #Compute the electric field and the direct electric field residual in the 
@@ -187,7 +187,7 @@ for k in range (nsim-1):
     L22.append(np.linalg.norm(h, 2))
     L2r.append(np.linalg.norm(g, 2)/np.linalg.norm(h, 2))
     
-    
+#%%
     
 """
 Compute the L_inf optimization solutions and the norms of the associated residual
@@ -230,9 +230,9 @@ for k in range (nsim-1):
     apodinf[k]=a
 
     #Compute the direct and coronagraphic response matrices by using the 
-    #function compute_response_matrices() for the MaxTau problem
-    params['problem_name']='MaxTau'
-    problem = coro.optim_1d.MaxTau(corono=corono0, **params)
+    #function compute_response_matrices() for the MaxSNR problem
+    params['problem_name']='MaxSNR'
+    problem = coro.optim_1d.MaxSNR(corono=corono0,nmax=200000,gradmin=1e-9, initialisation='L1' ,**params)
     problem.compute_response_matrices()
     
     #Compute the electric field and the direct electric field residual in the 
