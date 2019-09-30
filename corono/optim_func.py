@@ -17,6 +17,27 @@ def cost_function_snr(x,psi_star,psi_planet):
     i.e :
     
     .. math:: SNR= \frac{x^{T}\Psi^{T}_{star}\Psi_{star}x}{x^{T}\Psi_{planet}^{T}\Psi_{planet}x}
+    
+    
+    Parameters
+    ----------
+    x : array
+        apodizer that is studied
+    
+    psi_star : Matrix
+        Matrix such as its product with x returns 
+        the electric field residual from the star
+        
+    psi_star : Matrix
+        Matrix such as its product with x returns 
+        the electric field residual from the planet
+
+
+    Returns
+    -------
+      : float
+        SNR for the apodizer x
+    
     """
     a=np.dot(x,psi_star)
     b=np.dot(x,psi_planet)
@@ -30,7 +51,27 @@ def gradient_function_snr(x,psi_star,psi_planet):
     
     
     .. math:: \nabla SNR= 2\frac{(x^{T}\Psi_{planet}^{T}\Psi_{planet}x)\Psi^{T}_{star}\Psi_{star}x-(x^{T}\Psi^{T}_{star}\Psi_{star}x)\Psi_{planet}^{T}\Psi_{planet}x}{(x^{T}\Psi_{planet}^{T}\Psi_{planet}x)^2}
+ 
+    
+    Parameters
+    ----------
+    x : array
+        apodizer that is studied
+    
+    psi_star : Matrix
+        Matrix such as its product with x returns 
+        the electric field residual from the star
+        
+    psi_star : Matrix
+        Matrix such as its product with x returns 
+        the electric field residual from the planet
 
+
+    Returns
+    -------
+      : float
+        gradient of the SNR for the apodizer x
+    
     """
     a=np.dot(psi_star.T,x)
     b=np.dot(psi_planet.T,x)
@@ -93,88 +134,7 @@ def line_search_armijo(f, xk, pk, gfk, old_fval=None,
         phi, phi0, derphi0, c1=c1, alpha0=alpha0)
 
     return alpha, fc[0], phi1
-#%%
-def line_search_ratio_matrix_k(x,deltax,Ke,Kp): 
-        r"""
-        Closed-form line-search for the Frank-Wolfe algorithme and a cost function
-        of the form 
-        
-        .. math:: f(x)= \frac{x^{T}\Psi^{T}_{star}\Psi_{star}x}{x^{T}\Psi_{planet}^{T}\Psi_{planet}x}
-        
-        This algorithm uses directly Ke and Kp which corresponds to :math:`\Psi^{T}_{star}\Psi_{star}`
-        and :math:`\Psi_{planet}^{T}\Psi_{planet}`
-        
-        The function "line_search_ratio" should be preferred
-        
-        
-        returns :
-        
-        alpha : float in [0,1]
-            Optimal step
-            
-        f_val : float
-            Value of the cost function after the step \alpha
-        """
 
-    
-        a=np.dot(Ke,deltax)
-        b=np.dot(Ke,x)
-        c=np.dot(Kp,deltax)
-        d=np.dot(Kp,x)
-        g=lambda L,t  : (L[0]*(t**2)+L[1]*t+L[2])/(L[3]*(t**2)+L[4]*t+L[5])
-        L=[np.dot(deltax,a),
-           2*np.dot(deltax,b),
-           np.dot(x,b),
-           np.dot(deltax,c),
-           2*np.dot(deltax,d),
-           np.dot(x,d)]
-
-        P=[L[0]*L[4]-L[3]*L[1],
-           2*(L[0]*L[5]-L[3]*L[2]),
-           L[1]*L[5]-L[4]*L[2],
-           ]
-
-        Disc=(P[1]**2)-4*P[0]*P[2]
-                
-        #if P has real roots, they are computed. Then, we check if they are in [0,1]. 
-        #Finally, the various possible steps are compared and the one that minimizes the 
-        #cost function is selected
-
-        if Disc>0:
-            alpha0=(-P[1]+np.sqrt(Disc))/(2*P[0])
-            alpha1=(-P[1]-np.sqrt(Disc))/(2*P[0])
-            
-            #alp is the list of all possible optimal steps.
-            alp=[0,1,alpha0,alpha1]
-            
-            #l is the list of the value of the cost function after these steps.
-            l=[g(L,0),g(L,1),0,0]
-            
-            if alpha0>0 and alpha0<1:
-                l[2]=(g(L,alpha0))
-            else:
-                
-                #if alpha0 is not an admissible step, we just set l[2] to l[1] just to be sure it won't be choosen
-                    l[2]=l[1]
-            if alpha1>0 and alpha1<1:
-                l[3]=(g(L,alpha1))
-            else:
-                #if alpha1 is not an admissible step, we just set l[2] to l[1] just to be sure it won't be choosen
-
-                l[3]=l[1]
-        else :
-        #if P has no real roots, the optimal is either 0 or 1 so these two
-        #possibilities are compared
-            if g(L,0)<g(L,1):
-                alpha=0
-            else:
-                alpha=1
-            
-
-            
-        alpha=alp[l.index(min(l))]
-        f_val=g(L,alpha)
-        return(f_val,alpha)
 #%%
 def line_search_ratio(x,deltax,psi_star,psi_planet): 
         r"""
@@ -191,8 +151,28 @@ def line_search_ratio(x,deltax,psi_star,psi_planet):
         where s is the solution of the linear optimization problem. It is computed by the function
         "solve_closed_form"
         
-        returns :
+        Parameters
+         ----------
+         x : vector
+            apodizer that is studied
             
+        deltax : vector
+            corresponds to the difference between x and the solution of the linear that 
+            has to be solved at each step of the Frank-Wolfe algorithm which is denoted
+            s in the Fig 3.1. Hence, deltax=s-x
+            
+    
+        psi_star : Matrix
+            Matrix of the optimization problem that computes the residual from the 
+            star
+        
+        psi_planet : Matrix
+            Matrix of the optimization problem that computes the residual from the 
+            planet
+       
+        
+        Returns :
+        ---------- 
         alpha : float in [0,1]
             Optimal step
             
@@ -408,8 +388,17 @@ def solve_closed_form(g,w,tau):
     """
     Solve the linear optimization problem that has to be solved at each step
     of the Frank-Wolfe algorithm. It computes the closed-form solution of this problem.
+    In the report, it corresponds to the problem 3.4
     
-    
+    Parameters
+    ----------
+    g : vector
+         Gradient of the cost function.
+    w : vector
+         Vector whose scalar product with an apodiser returns the transmission
+         :math:`\tau`  of this apodizer  
+    tau : float
+        Total integrated transmission set
     Returns
     -------
     x : ndarray

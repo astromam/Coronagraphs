@@ -227,7 +227,7 @@ colors = pl.cm.rainbow(np.linspace(0,1,nlambis))
 
 fname_pl = fname_gen + '_intensity_mono.pdf'
 fpath    = fdir_plot / fname_pl
-pl.figure(5)
+pl.figure(5,(8, 4.5))
 pl.clf()
 #pl.title('Intensity profiles of the coronagraphic images')
 #pl.semilogy(corono0.xi,poly_direct_image1/poly_direct_image1.max(),label='Direct')
@@ -236,16 +236,15 @@ pl.clf()
 for i in range(corono0.nlam):
     pl.semilogy(corono0.xi,mono_corono_image1[i]/mono_direct_image1[(corono0.nlam+1)//2].max(), 
                 label=r'{0:.2f}$\lambda_0$'.format(corono0.lam_t[i]), color = colors[i])
-pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
-pl.axvline(x=corono0.rho0, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
-pl.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
+pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='C1', linestyle='--')
+pl.axvline(x=corono0.rho0, ymin=-12, ymax =2, linewidth=1, color='C2', linestyle='--')
+pl.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='C2', linestyle='--')
 pl.axhline(10**(-cDarkHole), xmin=corono0.xi.min(), xmax=corono0.xi.max(), linewidth=1, color='k', linestyle='--')
 pl.xlabel(r'Angular separation in $\lambda_0$/D')
 pl.ylabel('Normalized intensity in log scale')
+pl.xlim(-0.5, 50.5)
 pl.ylim(1e-12, 1e-3)
 pl.legend()
 pl.tight_layout()
-pl.savefig(str(fpath))
-
-#%%
+pl.savefig(str(fpath), transparent=True, bbox_inches='tight')
 pl.show()

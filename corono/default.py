@@ -681,10 +681,7 @@ def get_default_params_1d_MaxTauProblemMatrix():
             
             - 'MaxContrastLinf': maximization of the contrast for a given 
             apodizer transmission under Linf-norm constraints
-            
-            - 'MaxSNR': maximization of the SNR for a given 
-            apodizer transmission through the Frank-Wolfe algorithm
-            
+                        
     Returns    
     ----------
     tmp : dict
@@ -723,8 +720,6 @@ def get_default_params_1d_MaxContrastProblemMatrix():
             - 'MaxContrastLinf': maximization of the contrast for a given 
             apodizer transmission under Linf-norm constraints
                             
-            - 'MaxSNR': maximization of the SNR for a given 
-            apodizer transmission through the Frank-Wolfe algorithm
     Returns    
     ----------
     tmp : dict
@@ -746,28 +741,30 @@ def get_default_params_1d_MaxSNR():
     tmp : dict
         Dictionary from the get_default_matrix_pb
         
-    Lnorm : string (default= 'L1')
-        L-norm type for the optimization problem 
+    initialisation : string (default= 'L2')
+        Type of initialization for the Frank-Wolfe algorithme.
+        The user can choose between :
+            
+            - 'Unif' which initializes the algorithm with a uniform apodizer
+            
+            - 'Random' which initializes the algorithm with a random apodizer
+            
+            - L-norm type for the optimization problem that initialize the Frank-Wolfe
+        algorithm
         ('Linf' : :math:`L_{\infty}` norm, 'L1' : :math:`L_1`-norm)
 
-    problem_name : string (default='MaxTau')
-        name of the optimization problem.
-        The user can choose between:
-            
-            - 'MaxTau': maximization of the apodizer transmission for a given 
-            contrast
-            
-            - 'MaxContrastL1': maximization of the contrast for a given 
-            apodizer transmission under L1-norm constraints
-            
-            - 'MaxContrastLinf': maximization of the contrast for a given 
-            apodizer transmission under Linf-norm constraints
-            
-            - 'MaxContrastL2': maximization of the contrast for a given 
-            apodizer transmission under L2-norm constraints
-                
+    problem_name : string (default='MaxSNR')
+        name of the optimization problem.                
             - 'MaxSNR': maximization of the SNR for a given 
             apodizer transmission through the Frank-Wolfe algorithm
+            
+    nmax  : Int (default=10000)
+        Maximum number of iterations for the Frank-Wolfe algorithm
+        
+    gradmin :  Float (default = 1e-7)
+        Minimal gradient value of the cost function for which the Frank-Wolfe algorithm
+        consider it has converged
+    
     Returns    
     ----------
     tmp : dict

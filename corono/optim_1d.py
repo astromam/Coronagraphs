@@ -14,7 +14,10 @@ import numpy as np
 import json
 import time
 import random
-from qpsolvers import solve_qp
+try:
+    from qpsolvers import solve_qp
+except ImportError:
+    solve_qp=False
 
 try:
     import stdgrb
@@ -301,7 +304,9 @@ class ProblemMatrix(object):
             self.direct_field_re_t_tmp = direct_field_t_tmp.real
             #        self.direct_field_im_t_tmp = direct_field_t_tmp.imag    
             t1 = time.time()
-            if self.problem_name == 'MaxSNR':         
+            if self.problem_name == 'MaxSNR':    
+                #if self.problem_name == 'MaxTau', the matrix is reshaped in the
+                #compute_problem_matrices() function
                 self.direct_field_re_t_tmp = np.reshape(self.direct_field_re_t_tmp\
                 [:,:,self.idx_dz], (self.npp, self.corono.nlam*self.ndz))
             self.print_log('direct matrix computation time: {0:.2f}s'.format(t1-t0))
@@ -348,32 +353,36 @@ class ProblemMatrix(object):
         
         """
         t0 = time.time()
-
+        #For MaxSNR problems, the Frank-Wolfe optimization is computed by the function solve_Frank_Wolfe()
         if self.problem_name=='MaxSNR':
             self.solve_Frank_Wolfe()
         else :
-        
+            
             self.compute_matrices()
-    
+
             if self.problem_name =='MaxContrastL2':
+                #The L2 problem needs the solve_qp solver to be solved
+                if solve_qp==False :
+                    raise NameError('Quadratic solver is not available!')
+                else:
                 
-                self.print_log('solving problem with quadprog')
+                    self.print_log('solving problem with quadprog')
                 
-                Valp,Vecp=np.linalg.eigh(self.c)
+                    Valp,Vecp=np.linalg.eigh(self.c)
                 
-                #Regularization of the Matrix in order to transform it into
-                #a positive definite Matrix. It's done by diagonalizing the Matrix and
-                #then changing the eigenvalues that are too low.
+                    #Regularization of the Matrix in order to transform it into
+                    #a positive definite Matrix. It's done by diagonalizing the Matrix and
+                    #then changing the eigenvalues that are too low.
+                    
+                    self.c=np.diag(np.clip(Valp,10**-17,max(Valp)))
+                    Inv=np.linalg.inv(Vecp.T)
+                    self.c=np.dot(Inv,self.c)
+                    self.c=np.dot(self.c,Vecp.T)
                 
-                self.c=np.diag(np.clip(Valp,10**-17,max(Valp)))
-                Inv=np.linalg.inv(Vecp.T)
-                self.c=np.dot(Inv,self.c)
-                self.c=np.dot(self.c,Vecp.T)
-                
-                
-                solve='quadprog'
-                x=solve_qp(self.c,np.zeros(len(self.c)),self.A,self.b,None,None,solve)
-                self.Apod[self.idx_pup]=x[:self.npp]
+                    
+                    solve='quadprog'
+                    x=solve_qp(self.c,np.zeros(len(self.c)),self.A,self.b,None,None,solve)
+                    self.Apod[self.idx_pup]=x[:self.npp]
             else:
                 if stdgrb and self.solver == 'stdgrb':
                     self.print_log('solving problem with stdgrb package')
@@ -463,13 +472,13 @@ class ProblemMatrix(object):
         fname_corono = self.corono.get_filename()  
         
         if self.problem_name == 'MaxSNR':
-            str_initialisation = '_initialisation={initialisation}'
+            str_init = '_init={initialisation}'
             str_nmax = '_nmax={nmax}'
             str_gradmin = '_gradmin={gradmin}'
             
             fname_gen_optim = '{problem_name}' \
             + str_opt + str_FirstDer + str_SecondDer + str_FirstDerGlobal \
-            + str_initialisation + str_nmax + str_gradmin
+            + str_init + str_nmax + str_gradmin
         
         else :
             fname_gen_optim = '{problem_name}' \
@@ -1083,13 +1092,14 @@ class MaxContrast(ProblemMatrix):
         if self.Lnorm =='L2':
             if self.corono_field_t is None:
                 self.compute_response_matrices()
+            #Compute the matrices for the quadratic optimization problem
             self.c=np.dot(self.corono_field_t,self.corono_field_t.T)
             A1=-np.identity(self.npp)
             A2=np.identity(self.npp)
-            ctmp = np.zeros(self.npp)
-            ctmp[:self.npp] = np.asarray(self.idx_pup)
-            ctmp=(-1/sum(ctmp)*(ctmp))
-            self.A = np.concatenate((A1,A2,ctmp[None,:]),axis=0)
+            w = np.zeros(self.npp)
+            w[:self.npp] = np.asarray(self.idx_pup)
+            w=(-1/sum(w)*(w))
+            self.A = np.concatenate((A1,A2,w[None,:]),axis=0)
             b0  = np.zeros(self.npp)
             b1  = np.ones(self.npp)
             b2  = [-self.tau]  
@@ -1448,6 +1458,8 @@ class MaxSNR(ProblemMatrix):
         
         """
         super(MaxSNR,self).__init__(**kwargs)
+        #self.initialisation is the apodizer that will initialize the frank wolfe algorithm
+        #It can be either an Lp norm or a uniform apodizer or a random apodizer
         if self.initialisation == 'Linf':
             params=kwargs.copy()
             params['Lnorm'] = params.pop('initialisation')
@@ -1481,11 +1493,6 @@ class MaxSNR(ProblemMatrix):
         else:
             raise ValueError('{0}: Not an existing initialization!'.format(self.initialisation))
             
-        if self.nmax == None:
-            self.nmax=10000
-        if self.gradmin == None:
-            self.gradmin=1e-7
-
 #%%
         
     def solve_Frank_Wolfe(self):
@@ -1505,10 +1512,10 @@ class MaxSNR(ProblemMatrix):
             
             
         x0 : array_like
-            Contains the Apodizer solution of the optimisation problem specified
+            Contains the Apodizer solution of the specified optimisation problem
         
         
-        c_transmission : array_like
+        w : array_like
             Vector whose scalar product with an apodiser returns the transmission
             :math:`\tau`  of this apodizer
             
@@ -1522,9 +1529,9 @@ class MaxSNR(ProblemMatrix):
         
         # Computes the vector to estimate the transmission \tau of an apodizer
 
-        c_transmission = np.zeros(self.npp)
-        c_transmission[:self.npp] = np.asarray(self.idx_pup)
-        c_transmission=(1/sum(c_transmission)*(c_transmission)) 
+        w = np.zeros(self.npp)
+        w[:self.npp] = np.asarray(self.idx_pup)
+        w=(1/sum(w)*(w)) 
         
         
         # Computes the apodizer that initializes the Frank-Wolfe algorithm 
@@ -1541,18 +1548,22 @@ class MaxSNR(ProblemMatrix):
 
         elif self.initialisation =='Random':
             l=[i for i in range (len(self.idx_pup))]
+            #A permutation is randomly selected
             l=np.random.permutation(l)
             x0=x0[self.idx_pup]
             x1=np.ones_like(x0)
             k=-1
-            while np.dot(c_transmission,x1)>self.tau and k<len(x0)-1:
+            
+            #While the transmission of the apodizer is lower than tau, The apodizer
+            #vector is filled in the order indicated by the permutation l
+            while np.dot(w,x1)>self.tau and k<len(x0)-1:
                 k+=1
                 x0[l[k]]=random.random()
                 x1[l[k]]=x0[l[k]]
-            if np.dot(c_transmission,x1)<self.tau:
+            if np.dot(w,x1)<self.tau:
                 x0=x1
                 x0[l[k]]=0
-                x0[l[k]]=(self.tau-np.dot(c_transmission,x0))/c_transmission[l[k]]
+                x0[l[k]]=(self.tau-np.dot(w,x0))/w[l[k]]
         
         
         #If the initializer apodizer is the solution of one of the math: L_p problem
@@ -1567,30 +1578,19 @@ class MaxSNR(ProblemMatrix):
         
         
         # Compute the matrices required to calculate the cost function 
-
-#
-        Ke=np.dot(self.corono_field_t,self.corono_field_t.T)
-    
-        Kp=np.dot(self.direct_field_re_t_tmp,self.direct_field_re_t_tmp.T)
         
         psi_star = self.corono_field_t
         psi_planet = self.direct_field_re_t_tmp
 
-    
         # Define the cost function, the gradient of the cost function and the solver
         #of the linear problem that has to be solved at each step of the Frank-Wolfe
         #algorithm
-
-
-#            grad1=lambda x:(2*np.dot(Ke,x)*np.dot(np.dot(x,Kp),x)-2*np.dot(Kp,x)*np.dot(np.dot(x,Ke),x))\
-#            /(np.dot(np.dot(x,Kp),x))**2       
-#            fonc1 =lambda x:np.dot(np.dot(x,Ke),x)/np.dot(np.dot(x,Kp),x)
+        
+        fonc1 =lambda x:cost_function_snr(x,psi_star,psi_planet)
 
         grad1=lambda x:gradient_function_snr(x,psi_star,psi_planet)
         
-        fonc1 =lambda x:cost_function_snr(x,psi_star,psi_planet)
-        
-        solve_C1=lambda x,g:solve_closed_form(g,c_transmission,self.tau)
+        solve_C1=lambda x,g:solve_closed_form(g,w,self.tau)
         
             
         # gather the parameters of the fmin_cond function in a  dictionnary
@@ -1602,7 +1602,7 @@ class MaxSNR(ProblemMatrix):
         params['log'] = True    
         
         # Apply the Frank-Wolfe algorithm
-
+        #If linesearch is set to 1, the closed form of the linesearch is implemented 
         x, val, log = fmin_cond(fonc1, grad1, solve_C1, x0, psi_star, psi_planet,linesearch=1, **params)
         
         
