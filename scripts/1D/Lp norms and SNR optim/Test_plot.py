@@ -393,9 +393,12 @@ pl.savefig('../../../images/Lp norms and SNR optim/evol_residual_inf.pdf',bbox_i
 
 #%%
 """
-Plot an overviw of the shape of all the intensity residuals in the dark zone 
+Plot an overview of the shape of all the intensity residuals in the dark zone 
 depending on the minimization criteria
 """
+
+vmin0=-12
+vmax0=-4
 
 #Load the intensity residual in the dark zone for the
 #L1,L2 and Linf solutions for all transmissions Tau
@@ -404,21 +407,24 @@ residual_2=np.loadtxt("../../../data/1D/Lp norms and SNR optim/residual_dz_l2.tx
 residual_inf=np.loadtxt("../../../data/1D/Lp norms and SNR optim/residual_dz_linf.txt").T
 
 #Create a figure with 3 columns
-fig, axes = pl.subplots(nrows=1, ncols=3)
+fig, axes = pl.subplots(nrows=1, ncols=3, figsize=(8, 4.5))
 
 #Plot the shape of the intensity residual for the Linf solution
-im = axes.flat[0].imshow(residual_inf,aspect="auto",extent=[0,len(residual_1[1]),1,0])
+im = axes.flat[0].imshow(np.log10(residual_inf),aspect="auto", 
+              extent=[0,len(residual_1[1]),1,0], vmin=vmin0, vmax=vmax0)
 axes.flat[0].title.set_text(r'$L_{\infty}$ solutions residual') 
 axes.flat[0].set_xlabel('Dark zone index') 
 axes.flat[0].set_ylabel(r'Transmission $\tau$') 
 
 #Plot the shape of the intensity residual for the L1 solution
-im = axes.flat[1].imshow(residual_1,aspect="auto",extent=[0,len(residual_1[1]),1,0])
+im = axes.flat[1].imshow(np.log10(residual_1),aspect="auto",
+              extent=[0,len(residual_1[1]),1,0], vmin=vmin0, vmax=vmax0)
 axes.flat[1].title.set_text(r'$L_{1}$ solutions residual') 
 axes.flat[1].set_xlabel('Dark zone index') 
 
 #Plot the shape of the intensity residual for the L2 solution
-im = axes.flat[2].imshow(residual_2,aspect="auto",extent=[0,len(residual_1[1]),1,0])
+im = axes.flat[2].imshow(np.log10(residual_2),aspect="auto",
+              extent=[0,len(residual_1[1]),1,0], vmin=vmin0, vmax=vmax0)
 axes.flat[2].title.set_text(r'$L_{2}$ solutions residual')
 axes.flat[2].set_xlabel('Dark zone index') 
 
