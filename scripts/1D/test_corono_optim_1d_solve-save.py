@@ -20,32 +20,31 @@ import corono as coro
 Parameters
 """
 corono_name  = 'APLC' # 'APLC' or 'SP'
-problem_name = 'MaxContrastLinf' # ,'MaxTau' # 'MaxContrastLinf' #'MaxContrastL1'
-solver       = 'stdgrb' # 'stdgrb', 'gurobipy', 'scipy.linprog'
+problem_name = 'MaxContrastL2' # ,'MaxTau' # 'MaxContrastLinf' #'MaxContrastL1' #'MaxContrastL2', #MaxSNR
+solver       = 'gurobipy' # 'stdgrb', 'gurobipy', 'scipy.linprog' #Not for MaxContrastL2 problem
 slvLogToConsole = 0
 slvCrossover    = 0
 slvMethod       = 2
 allLogToConsole = 0
 
-FirstDer    = True
-SecondDer   = True
+FirstDer    = False
+SecondDer   = False
 MinIsland   = False
-FirstDerLim = 0.001
-SecondDerLim= 0.0001 
+FirstDerLim = 0.01
+SecondDerLim= 0.001 
 FirstDerGlobalLim = 10.
 
 nPup = 500
 nFPM = 50
-nImg = 180
-Fmax = 45
+nImg = 44
+Fmax = 11
 R    = 1
 
 bw   = 0.1
 nlam = 5
 
-PupilID    = 0.10
-
-rMask       = 4.5
+PupilID    = 0.15
+rMask       = 4
 
 rMask1      = 2.0
 rMask2      = 3.0
@@ -53,18 +52,18 @@ rMask3      = 3.5
 OPDx2       = 0.5
 OPDx3       = 0.75
 
-LyotStopID = 0.20
+LyotStopID = 0.30
 LyotStopOD = 1.0
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
-rho0 = 4.
-rho1 = 40.0
+rho0 = 3.5
+rho1 = 10.0
 
 # contrast in the dark region
-cDarkHole = 10.0
+cDarkHole = 8.0
 
 # tau (integrated Pupil transmission)
-tau   = 0.05
+tau   = 0.3
 
 r   = np.arange(nPup)*R/nPup + R/(2*nPup)
 Pupil1d      = (r>PupilID)*1.0
@@ -126,6 +125,13 @@ elif problem_name == 'MaxContrastL1':
 elif problem_name == 'MaxContrastLinf':
     # Maximization of the contrast under L-infinite norm
     problem1 = coro.optim_1d.MaxContrast(corono=corono0, Lnorm='Linf',**params)
+elif problem_name == 'MaxContrastL2':
+    # Maximization of the contrast under L2 norm
+    problem1 = coro.optim_1d.MaxContrast(corono=corono0, Lnorm='L2',**params)
+    
+elif problem_name == 'MaxSNR':
+    # Maximization of the contrast under L2 norm
+    problem1 = coro.optim_1d.MaxSNR(corono=corono0,nmax=100000,gradmin=1e-9, initialisation='L2' ,**params)
 else:
      raise NameError('{0}: Not an existing optimization problem!'.format(problem_name))
     

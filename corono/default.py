@@ -681,7 +681,7 @@ def get_default_params_1d_MaxTauProblemMatrix():
             
             - 'MaxContrastLinf': maximization of the contrast for a given 
             apodizer transmission under Linf-norm constraints
-            
+                        
     Returns    
     ----------
     tmp : dict
@@ -719,7 +719,7 @@ def get_default_params_1d_MaxContrastProblemMatrix():
             
             - 'MaxContrastLinf': maximization of the contrast for a given 
             apodizer transmission under Linf-norm constraints
-                
+                            
     Returns    
     ----------
     tmp : dict
@@ -728,6 +728,51 @@ def get_default_params_1d_MaxContrastProblemMatrix():
     """    
     tmp = get_default_params_1d_ProblemMatrix()
     tmp.update({'Lnorm':'L1', 'problem_name':'MaxContrastL1'})
+    
+    return tmp
+
+#%%
+def get_default_params_1d_MaxSNR():
+    r"""
+    Gets the default parameters for the MaxSNR optimization problem.
+    
+    Parameters
+    ---------- 
+    tmp : dict
+        Dictionary from the get_default_matrix_pb
+        
+    initialisation : string (default= 'L2')
+        Type of initialization for the Frank-Wolfe algorithme.
+        The user can choose between :
+            
+            - 'Unif' which initializes the algorithm with a uniform apodizer
+            
+            - 'Random' which initializes the algorithm with a random apodizer
+            
+            - L-norm type for the optimization problem that initialize the Frank-Wolfe
+        algorithm
+        ('Linf' : :math:`L_{\infty}` norm, 'L1' : :math:`L_1`-norm)
+
+    problem_name : string (default='MaxSNR')
+        name of the optimization problem.                
+            - 'MaxSNR': maximization of the SNR for a given 
+            apodizer transmission through the Frank-Wolfe algorithm
+            
+    nmax  : Int (default=10000)
+        Maximum number of iterations for the Frank-Wolfe algorithm
+        
+    gradmin :  Float (default = 1e-7)
+        Minimal gradient value of the cost function for which the Frank-Wolfe algorithm
+        consider it has converged
+    
+    Returns    
+    ----------
+    tmp : dict
+        Updated dictionary
+        
+    """    
+    tmp = get_default_params_1d_ProblemMatrix()
+    tmp.update({ 'problem_name':'MaxSNR','nmax' :10000,'gradmin':1e-7, 'initialisation':'Unif'})
     
     return tmp
 

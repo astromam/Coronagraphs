@@ -367,6 +367,7 @@ def update_params(params, **kwargs):
             params2[key] = value
     return params2
 
+
 #%%
 def sft_ein(A2, NB, m, inv=False, CtrBtwnPix=False):
     """

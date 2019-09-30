@@ -1229,7 +1229,7 @@ class MaxContrast(ProblemMatrix):
             self.neps = self.ndz
 
         self.npp_bis = 0
-        self.idx_pup_bis = [0]
+        self.idx_pup_bis = [0]  
         self.nvv   = 0
         if self.MinIsland is True:
             self.idx_pup_bis = list(set().union(list(np.asarray(self.idx_pup)-1),

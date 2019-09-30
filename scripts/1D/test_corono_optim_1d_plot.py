@@ -15,37 +15,34 @@ import os
 from pathlib import Path
 import corono as coro
 
-pl.rcParams.update({'font.size': 12})
-
 #%% parameters
 """
 Parameters
 """
 pl.close('all')
-if True:
+if False:
     corono_name  = 'APLC' # 'APLC' or 'SP'
-    problem_name = 'MaxContrastLinf' # 'MaxContrastL1' #,'MaxContrastLinf' # 'MaxTau' #
-    solver       = 'stdgrb' # 'stdgrb', 'gurobipy', 'scipy.linprog'
+    problem_name = 'MaxContrastL2' # 'MaxContrastL1' #,'MaxContrastLinf' # 'MaxTau' #'MaxContrastL2' #MaxSNR
+    solver       = 'scipy.linprog' # 'stdgrb', 'gurobipy', 'scipy.linprog'
     
-    FirstDer    = True
-    SecondDer   = True
+    FirstDer    = False
+    SecondDer   = False
     MinIsland   = False
-    FirstDerLim = 0.001
-    SecondDerLim= 0.0001 
+    FirstDerLim = 0.01
+    SecondDerLim= 0.001 
     FirstDerGlobalLim = 10.
     
     nPup = 500
     nFPM = 50
-    nImg = 180
-    Fmax = 45
+    nImg = 110
+    Fmax = 11
     R    = 1
     
     bw   = 0.1
     nlam = 5
     
     PupilID    = 0.10
-    
-    rMask       = 4.5
+    rMask       = 4.4
     
     rMask1      = 2.0
     rMask2      = 3.0
@@ -57,14 +54,14 @@ if True:
     LyotStopOD = 1.0
     
     # dark zone bounds (inner and outer edges) in lam0/D unit
-    rho0 = 4.
-    rho1 = 40.0
+    rho0 = 3.5
+    rho1 = 10.0
     
     # contrast in the dark region
-    cDarkHole = 10.0
+    cDarkHole = 8.0
     
     # tau (integrated Pupil transmission)
-    tau   = 0.05
+    tau   = 0.7
     
     r   = np.arange(nPup)*R/nPup + R/(2*nPup)
     Pupil1d      = (r>PupilID)*1.0
@@ -90,8 +87,8 @@ if True:
                      )
 
 nlambis = 11
-nImgbis = 500
-Fmaxbis = 50    
+nImgbis = 110
+Fmaxbis = 11    
 
 #%%
 fdir = Path('../../results/1D/').resolve()
@@ -133,6 +130,14 @@ elif problem_name == 'MaxContrastL1':
 elif problem_name == 'MaxContrastLinf':
     # Maximization of the contrast under L-infinite norm
     problem1 = coro.optim_1d.MaxContrast(corono=corono0, Lnorm='Linf',**params)
+
+elif problem_name == 'MaxContrastL2':
+    # Maximization of the contrast under L2 norm
+    problem1 = coro.optim_1d.MaxContrast(corono=corono0, Lnorm='L2',**params)
+elif problem_name == 'MaxSNR':
+    # Maximization of the contrast under L2 norm
+    problem1 = coro.optim_1d.MaxSNR(corono=corono0,nmax=10000,gradmin=1e-7, initialisation='Linf' ,**params)
+
 else:
      raise NameError('{0}: Not an existing optimization problem!'.format(problem_name))
 
@@ -153,14 +158,12 @@ Plot display of the apodizers
 Apod1d = Apod_pyth/Apod_pyth.max()
 T_apod = np.sum(Pupil1d**2*Apod1d**2)/np.sum(Pupil1d**2)
 T_coro = np.sum(Pupil1d**2*LyotStop1d*Apod1d**2)/np.sum(Pupil1d**2)
-
-
 fname_pl   = fname_gen + '_apodizers_tran.pdf'
 fpath      = fdir_plot / fname_pl
 
 pl.figure(1, (8, 4.5))
 pl.clf()
-pl.plot(corono0.r, Apod_pyth/Apod_pyth.max())
+pl.plot(corono0.r, Apod_pyth/Apod_pyth.max(), label=solver)
 pl.xlabel(r'Pupil radius r')
 pl.ylabel('Normalized amplitude')
 pl.xlim(-0.02, 1.02)
@@ -214,14 +217,13 @@ pl.clf()
 #pl.semilogy(corono0.xi,poly_direct_image1/poly_direct_image1.max(),label='Direct')
 #pl.semilogy(corono0.xi,poly_direct_image2/poly_direct_image2.max(),label='Direct')
 #pl.semilogy(corono0.xi,poly_direct_image3/poly_direct_image3.max(),label='Direct')
-pl.semilogy(corono0.xi,poly_corono_image1/poly_direct_image1.max())
+pl.semilogy(corono0.xi,poly_corono_image1/poly_direct_image1.max(),label=solver)
 pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='C1', linestyle='--')
 pl.axvline(x=corono0.rho0, ymin=-12, ymax =2, linewidth=1, color='C2', linestyle='--')
 pl.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='C2', linestyle='--')
 pl.axhline(10**(-cDarkHole), xmin=corono0.xi.min(), xmax=corono0.xi.max(), linewidth=1, color='k', linestyle='--')
 pl.xlabel(r'Angular separation in $\lambda_0$/D')
 pl.ylabel('Normalized intensity in log scale')
-pl.xlim(-0.5, 50.5)
 pl.ylim(10**(-12.2), 10**(-3.8))
 pl.text(15, 10**(-4.5), '{0}% central obstruction'.format(int(PupilID*100)))
 pl.text(15, 10**(-5.), '{0}% bandwidth'.format(int(bw*100)))
@@ -242,7 +244,7 @@ colors = pl.cm.rainbow(np.linspace(0,1,nlambis))
 
 fname_pl = fname_gen + '_intensity_mono.pdf'
 fpath    = fdir_plot / fname_pl
-pl.figure(5, (8, 4.5))
+pl.figure(5,(8, 4.5))
 pl.clf()
 #pl.title('Intensity profiles of the coronagraphic images')
 #pl.semilogy(corono0.xi,poly_direct_image1/poly_direct_image1.max(),label='Direct')
@@ -262,6 +264,4 @@ pl.ylim(10**(-12.2), 10**(-3.8))
 pl.legend()
 pl.tight_layout()
 pl.savefig(str(fpath), transparent=True, bbox_inches='tight')
-
-#%%
 pl.show()
