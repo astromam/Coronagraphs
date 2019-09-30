@@ -147,7 +147,7 @@ pl.savefig('../../../images/Lp norms and SNR optim/rsb_selon_init_sans_rand.pdf'
 #%%
 """
 Plot the evolution of the SNR after a Frank-Wolfe optimization. It corresponds to
-the Fig. 3.3
+the Fig. 3.3.
 """
 ylim=[1,1e8]
 

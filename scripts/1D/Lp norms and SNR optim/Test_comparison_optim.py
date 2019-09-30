@@ -132,7 +132,10 @@ for k in range (nsim-1):
     L11.append(sum([abs(x) for x in h]))
     L12.append(np.linalg.norm(h, 2))
     L1inf.append(max(h))
-    L1r.append(np.linalg.norm(g, 2)/np.linalg.norm(h, 2))
+    
+    #It is squared because of the fact that the SNR is the squared ratio of the L2 norm
+    # of the direct residual divided by the coronographic residual 
+    L1r.append((np.linalg.norm(g, 2)/np.linalg.norm(h, 2))**2)
 #%%
 
 """
@@ -193,7 +196,10 @@ for k in range (nsim-1):
     L21.append(sum([abs(x) for x in h]))
     L2inf.append(max(h))
     L22.append(np.linalg.norm(h, 2))
-    L2r.append(np.linalg.norm(g, 2)/np.linalg.norm(h, 2))
+    #It is squared because of the fact that the SNR is the squared ratio of the L2 norm
+    # of the direct residual divided by the coronographic residual 
+
+    L2r.append((np.linalg.norm(g, 2)/np.linalg.norm(h, 2))**2)
     
 #%%
     
@@ -253,7 +259,10 @@ for k in range (nsim-1):
     Linf1.append(sum([abs(x) for x in h]))
     Linf2.append(np.linalg.norm(h, 2))
     Linfinf.append(max(h))
-    Linfr.append(np.linalg.norm(g, 2)/np.linalg.norm(h, 2))
+    
+    #It is squared because of the fact that the SNR is the squared ratio of the L2 norm
+    # of the direct residual divided by the coronographic residual 
+    Linfr.append((np.linalg.norm(g, 2)/np.linalg.norm(h, 2))**2)
 
     
 #%%
@@ -310,7 +319,10 @@ for k in range (nsim-1):
     Lr11.append(sum([abs(x) for x in h])) 
     Lr12.append(np.linalg.norm(h, 2))
     Lr1inf.append(max(h))
-    Lr1r.append(np.linalg.norm(g, 2)/np.linalg.norm(h, 2))
+    
+    #It is squared because of the fact that the SNR is the squared ratio of the L2 norm
+    # of the direct residual divided by the coronographic residual 
+    Lr1r.append((np.linalg.norm(g, 2)/np.linalg.norm(h, 2))**2)
 
 #%%
 """
@@ -366,7 +378,10 @@ for k in range (nsim-1):
     Lr1.append(sum([abs(x) for x in h]))
     Lr2.append(np.linalg.norm(h, 2))
     Lrinf.append(max(h))
-    Lrr.append(np.linalg.norm(g, 2)/np.linalg.norm(h, 2))
+    
+    #It is squared because of the fact that the SNR is the squared ratio of the L2 norm
+    # of the direct residual divided by the coronographic residual 
+    Lrr.append((np.linalg.norm(g, 2)/np.linalg.norm(h, 2))**2)
 #%%
 """
 Compute the Frank-Wolfe optimizations initialized by the L_inf solutions and the norms of the associated residual&
@@ -421,7 +436,10 @@ for k in range (nsim-1):
     Lrinf1.append(sum([abs(x) for x in h]))
     Lrinf2.append(np.linalg.norm(h, 2))
     Lrinfinf.append(max(h))
-    Lrinfr.append(np.linalg.norm(g, 2)/np.linalg.norm(h, 2))
+    
+    #It is squared because of the fact that the SNR is the squared ratio of the L2 norm
+    # of the direct residual divided by the coronographic residual 
+    Lrinfr.append((np.linalg.norm(g, 2)/np.linalg.norm(h, 2))**2)
 
 
 
