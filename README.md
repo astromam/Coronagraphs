@@ -12,6 +12,10 @@ solution. The tool currently works with the following solvers:
 - [gurobi](http://www.gurobi.com)
 - [stdgrb](https://github.com/rflamary/stdgrb) (recommended)
 
+In the case of a quadratic problem, it is necessary to install the following solver:
+- [quadprog](https://pypi.org/project/quadprog/)
+
+
 ![](./images/images_aplc_systeme_solaire_eng.png)* **Figure 1**: **Left**: 
 Binary pupil apodisation for the Apodized Pupil Lyot Coronagraph (APLC) for a 
 LUVOIR-like mission ([N’Diaye et al., 2016](http://iopscience.iop.org/article/10.3847/0004-637X/818/2/163/meta)). 
