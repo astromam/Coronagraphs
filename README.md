@@ -63,6 +63,7 @@ see the [tags on this repository](https://github.com/astromam/Coronagraphs/tags)
 
 * **Mamadou N'Diaye** - *Initial work* - [astromam](https://github.com/astromam)
 * **[Rémi Flamary](https://remi.flamary.com/)** - *Initial work* - [rflamary](https://github.com/rflamary)
+* **[Adam Hessas]** - *Contributor* - [ahessas](https://github.com/ahessas)
 
 
 See also the list of [contributors](https://github.com/astromam/Coronagraphs/graphs/contributors) 
