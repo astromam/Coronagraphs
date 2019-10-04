@@ -27,7 +27,7 @@ import os
 ### Dimensions for csv data file
 nParams = 5
 nPSD    = 120
-kPSD    = 10
+kPSD    = 120
 iPSD    = 0
 
 ### Pupil dimension
@@ -36,6 +36,7 @@ nPup = 384
 ### OPD number
 nmap = 1
 
+do_fits = True
 
 #%%
 """
@@ -54,7 +55,7 @@ fdir_opd = Path('../../../data/2D/AO_tests/').resolve()
 if not os.path.exists(fdir_opd):
     os.makedirs(fdir_opd)
 
-fname_psd = 'residual_turbulence_psd_arr_nPup={0}.fits'.format(nPup)
+fname_psd = 'AOres_psd_nPup={0}_nPSD={1:04d}.fits'.format(nPup,kPSD)
 fpath_psd = fdir_opd / fname_psd 
 
 fname_opd = 'AOres_opd_nPup={0}_iPSD={1:04d}_nmap={2:04d}.fits'.format(nPup,iPSD,nmap)
@@ -110,21 +111,21 @@ for iPSD in range(kPSD):
     ### Residual turbulence PSD computation
     """
     print('\niPSD: {0:03d}/{1:03d}'.format(iPSD+1,kPSD))
-#    t0 = time.time()
-#    residual_turbulence_psd_arr[iPSD] = ao.residual_screen_sphere(seeing, L0, z, Cn2, v, arg_v, mag, zenith, azimuth, 
-#                                                            spat_filter=spaf, img_wave=img_wave, dim_pup=nPup,
-#                                                            n_screen=nmap, fit=True, servo=True, alias=True, noise=True,
-#                                                            diff_refr=True, psd_only=True, seed=seed)
-#    t1 = time.time()
-#    print('\nPSD - exec time: {0}s\n'.format(t1-t0))
+    t0 = time.time()
+    residual_turbulence_psd_arr[iPSD] = ao.residual_screen_sphere(seeing, L0, z, Cn2, v, arg_v, mag, zenith, azimuth, 
+                                                            spat_filter=spaf, img_wave=img_wave, dim_pup=nPup,
+                                                            n_screen=nmap, fit=True, servo=True, alias=True, noise=True,
+                                                            diff_refr=True, psd_only=True, seed=seed+iPSD)
+    t1 = time.time()
+    print('\nPSD - exec time: {0}s\n'.format(t1-t0))
 
 #    if iPSD == 0:
-    t0 = time.time()
-    residual_turbulence_opd_arr = ao.residual_screen_sphere(seeing, L0, z, Cn2, v, arg_v, mag, zenith, azimuth, 
-                                                    spat_filter=spaf, img_wave=img_wave, dim_pup=nPup,
-                                                    n_screen=nmap, fit=True, servo=True, alias=True, noise=True,
-                                                    diff_refr=True, psd_only=False, seed=seed+iPSD)
-    residual_turbulence_opd_arr  = residual_turbulence_opd_arr[..., nPup:2*nPup, nPup:2*nPup]
+#    t0 = time.time()
+#    residual_turbulence_opd_arr = ao.residual_screen_sphere(seeing, L0, z, Cn2, v, arg_v, mag, zenith, azimuth, 
+#                                                    spat_filter=spaf, img_wave=img_wave, dim_pup=nPup,
+#                                                    n_screen=nmap, fit=True, servo=True, alias=True, noise=True,
+#                                                    diff_refr=True, psd_only=False, seed=seed+iPSD)
+#    residual_turbulence_opd_arr  = residual_turbulence_opd_arr[..., nPup:2*nPup, nPup:2*nPup]
 #        residual_turbulence_opd_arr *= pupil_saxo
     t1 = time.time()
     print('opd generation - exec time: {0:.2f}s\n'.format(t1-t0))
@@ -133,15 +134,17 @@ for iPSD in range(kPSD):
     """
     ### Save PSD
     """
-    #fits.writeto(fpath_psd, residual_turbulence_psd_arr, overwrite=True)
+    if do_fits:
+       fits.writeto(fpath_psd, residual_turbulence_psd_arr, overwrite=True)
 
     #%%
     """
     ### Save OPD maps from PSDs
     """
     fname_opd = 'AOres_opd_nPup={0}_iPSD={1:04d}_nmap={2:04d}.fits'.format(nPup,iPSD,nmap)
-    fpath_opd = fdir_opd / fname_opd 
-    fits.writeto(fpath_opd, residual_turbulence_opd_arr, overwrite=True)
+    fpath_opd = fdir_opd / fname_opd
+#    if do_fits:
+#        fits.writeto(fpath_opd, residual_turbulence_opd_arr, overwrite=True)
     
 #%%
 #"""

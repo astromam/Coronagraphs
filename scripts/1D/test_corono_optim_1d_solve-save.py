@@ -30,11 +30,11 @@ allLogToConsole = 0
 FirstDer    = False
 SecondDer   = False
 MinIsland   = False
-FirstDerLim = 0.01
-SecondDerLim= 0.001 
+FirstDerLim = 0.001/2
+SecondDerLim= 0.0001/2 
 FirstDerGlobalLim = 10.
 
-nPup = 500
+nPup = 1000
 nFPM = 50
 nImg = 44
 Fmax = 11
