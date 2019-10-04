@@ -140,3 +140,5 @@ scripts/2D/test_corono_design_2d_sphere-zelda_plot.py
 *.fits
 data/2D/turbulence/Obs-Sequence-Parameters.csv
 *.pdf
+*.png
+*.txt
