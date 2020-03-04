@@ -142,3 +142,5 @@ data/2D/turbulence/Obs-Sequence-Parameters.csv
 *.pdf
 *.png
 *.txt
+*.dat
+*.dat
