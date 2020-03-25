@@ -34,18 +34,30 @@ pix_sz = 8.95
 nBegC = -nImg//2*pix_sz
 nEndC = nImg//2*pix_sz
 
+nPol = 2
+pol_p = 0
+str_pol = 'pols'
+if pol_p:
+    str_pol = 'polp'
+
 #%%
 """
 ### Directories
 """
 fdir = Path('/Users/mndiaye/OneDrive - Université Nice Sophia Antipolis/Proposals/CNES/2019/WFIRST corono/phaseb_data/hlc_20190210/').resolve()
 
-fname = 'run461_occ_lam5.75e-07theta6.69polp'
-fname_re = fname + '_real.fits'
-fname_im = fname + '_imag.fits'
 
-fpath_re = fdir / fname_re
-fpath_im = fdir / fname_im
+fname = 'run461_occ_lam5.75e-07theta6.69'
+
+fpath_re_arr = np.empty(nPol, dtype=object)
+fpath_im_arr = np.empty(nPol, dtype=object)
+
+for i in range(nPol):
+    fname_re = fname + str_pol + '_real.fits'
+    fname_im = fname + str_pol + '_imag.fits'
+
+    fpath_re_arr[i] = fdir / fname_re
+    fpath_im _arr[]= fdir / fname_im
 
 #%%
 """
