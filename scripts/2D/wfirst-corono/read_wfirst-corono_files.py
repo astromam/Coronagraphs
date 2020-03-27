@@ -278,6 +278,8 @@ pl.show()
 pl.figure(6)
 pl.clf()
 pl.imshow(disk)
+pl.title('generation of a mask circle')
 pl.show()
 
+# Standard deviation of the OPD difference within the mask
 print(np.std(diff_OPD_ps_nm[disk == 1]))
