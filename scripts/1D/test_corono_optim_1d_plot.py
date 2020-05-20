@@ -34,7 +34,7 @@ if True:
     SecondDerLim= 0.0001/2 
     FirstDerGlobalLim = 10.
     
-    nPup = 1000
+    nPup = 500
     nFPM = 50
     nImg = 180
     Fmax = 45

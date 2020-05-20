@@ -470,28 +470,27 @@ pl.tight_layout()
 
 #%%
 """
-Display of the mopnochromatic intensity profiles of the coronagraphic images
+Display of the monochromatic intensity profiles of the direct images
 """
-#pl.figure(31, (8, 4.5))
-#pl.clf()
-##pl.title('Intensity profiles of the coronagraphic images')
-##pl.semilogy(corono0.xi,poly_direct_image1/poly_direct_image1.max(),label='Direct')
-##pl.semilogy(corono0.xi,poly_direct_image2/poly_direct_image2.max(),label='Direct')
-##pl.semilogy(corono0.xi,poly_direct_image3/poly_direct_image3.max(),label='Direct')
-#for i in range(corono0.nlam):
-#    pl.semilogy(xi2d,mono_corono_image2d[i,nImg2dbis//2,nImg2dbis//2:]/mono_direct_image2d[(corono0.nlam+1)//2].max(), 
-#                label=r'{0:.2f}$\lambda_0$'.format(corono0.lam_t[i]), color = colors[i])
-#pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='C1', linestyle='--')
-#pl.axvline(x=corono0.rho0, ymin=-12, ymax =2, linewidth=1, color='C2', linestyle='--')
-#pl.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='C2', linestyle='--')
-#pl.axhline(10**(-cDarkHole), xmin=corono0.xi.min(), xmax=corono0.xi.max(), linewidth=1, color='k', linestyle='--')
-#pl.xlabel(r'Angular separation in $\lambda_0$/D')
-#pl.ylabel('Normalized intensity in log scale')
-#pl.xlim(-0.5, 50.5)
-#pl.ylim(10**(-12.2), 10**(-3.8))
-#pl.legend()
-#pl.tight_layout()
-#pl.savefig(str(fpath), transparent=True, bbox_inches='tight')
+pl.figure(31, (8, 4.5))
+pl.clf()
+pl.semilogy(corono0.xi,mono_corono_image1[nlam//2]/mono_direct_image1[nlam//2].max(), label='1d')
+pl.semilogy(xi2d,mono_corono_image2d[nlam//2, nImg2dbis//2,nImg2dbis//2:]/mono_direct_image2d[nlam//2].max(),label='2d')
+pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='C1', linestyle='--')
+pl.axvline(x=corono0.rho0, ymin=-12, ymax =2, linewidth=1, color='C2', linestyle='--')
+pl.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='C2', linestyle='--')
+pl.axhline(10**(-cDarkHole), xmin=corono0.xi.min(), xmax=corono0.xi.max(), linewidth=1, color='k', linestyle='--')
+pl.xlabel(r'Angular separation in $\lambda_0$/D')
+pl.ylabel('Normalized intensity in log scale')
+pl.xlim(-0.5, 50.5)
+pl.ylim(10**(-12.2), 10**(-3.8))
+pl.text(15, 10**(-4.5), '{0}% central obstruction'.format(int(PupilID*100)))
+pl.text(15, 10**(-5.), '{0}% bandwidth'.format(int(bw*100)))
+pl.text(corono0.rMask+0.25, 10**(-5), r'm/2={0:.2f}$\lambda_0$/D'.format(corono0.rMask), color='C1')
+pl.text(corono0.rho0+0.25, 10**(-12), r'$\rho_0$={0:.1f}$\lambda_0$/D'.format(corono0.rho0), color='C2')
+pl.text(corono0.rho1+0.25, 10**(-12), r'$\rho_1$={0:.1f}$\lambda_0$/D'.format(corono0.rho1), color='C2')
+pl.legend()
+pl.tight_layout()
 
 #%%
 pl.show()
