@@ -19,7 +19,6 @@ import corono as coro
 
 import pylab as pl
 import pandas as pd
-import csv
 
 #%% parameters
 """
@@ -95,6 +94,8 @@ fname_apo = fgen + '_apoIII.csv'
 fname_stp = fgen + '_stpIII.csv'
 fname_psfmono = fgen + '_psfmonoIII.csv'
 fname_psfpoly = fgen + '_psfpolyIII.csv'
+fname_cormono = fgen + '_cormonoIII.csv'
+fname_corpoly = fgen + '_corpolyIII.csv'
 
 # filepath for the GPI parts
 fpath_pup  = fdir_gpi / fname_pup
@@ -102,6 +103,8 @@ fpath_apo  = fdir_gpi / fname_apo
 fpath_stp  = fdir_gpi / fname_stp
 fpath_psfmono  = fdir_gpi / fname_psfmono
 fpath_psfpoly  = fdir_gpi / fname_psfpoly
+fpath_cormono  = fdir_gpi / fname_cormono
+fpath_corpoly  = fdir_gpi / fname_corpoly
 
 #%%
 """
@@ -112,6 +115,8 @@ Apod1d = pd.read_csv(fpath_apo, header = None).to_numpy().flatten()
 LyotStop1d = pd.read_csv(fpath_stp, header = None).to_numpy().flatten()
 Psf1dmono = pd.read_csv(fpath_psfmono, header = None).to_numpy().flatten()
 Psf1dpoly = pd.read_csv(fpath_psfpoly, header = None).to_numpy().flatten()
+Cor1dmono = pd.read_csv(fpath_cormono, header = None).to_numpy().flatten()
+Cor1dpoly = pd.read_csv(fpath_corpoly, header = None).to_numpy().flatten()
 
 #%%  
 """ 
@@ -138,7 +143,7 @@ else:
 mono_direct_image0 = corono0.compute_direct_intensity_1d(Apod1d, poly=False)
 mono_corono_image0 = corono0.compute_corono_intensity_1d(Apod1d, poly=False)
 
-mono_peak = mono_direct_image0.max()
+mono_peak = mono_direct_image0[nlam//2].max()
 mono_direct_image0 /= mono_peak
 mono_corono_image0 /= mono_peak
 
@@ -164,9 +169,27 @@ pl.show()
 
 #%%
 # Plot monochromatic psfs
-pl.figure(1, (8, 4.5))
+# pl.figure(1, (8, 4.5))
+# pl.clf()
+# pl.semilogy(xi, Psf1dmono, label='Math')
+# pl.semilogy(xi, mono_direct_image0[nlam//2], label='Python', ls='--')
+# pl.axvline(x=rMask, ymin=-12, ymax =2, linewidth=1, color='C1', linestyle='--')
+# pl.axvline(x=rho0, ymin=-12, ymax =2, linewidth=1, color='C2', linestyle='--')
+# pl.axvline(x=rho1, ymin=-12, ymax =2, linewidth=1, color='C2', linestyle='--')
+# pl.axhline(10**(-cDarkHole), xmin=xi.min(), xmax=xi.max(), linewidth=1, color='k', linestyle='--')
+# pl.xlabel(r'Angular separation in $\lambda_0$/D')
+# pl.ylabel('Normalized intensity in log scale')
+# pl.xlim(-0.5, 50.5)
+# pl.ylim(10**(-8.2), 10**(1.8))
+# pl.legend()
+# pl.tight_layout()
+# pl.show()
+
+#%%
+# Plot monochromatic coronagraphic image
+pl.figure(2, (8, 4.5))
 pl.clf()
-pl.semilogy(xi, Psf1dmono, label='Math')
+pl.semilogy(xi, Cor1dmono, label='Math')
 pl.semilogy(xi, mono_corono_image0[nlam//2], label='Python')
 pl.axvline(x=rMask, ymin=-12, ymax =2, linewidth=1, color='C1', linestyle='--')
 pl.axvline(x=rho0, ymin=-12, ymax =2, linewidth=1, color='C2', linestyle='--')
@@ -180,12 +203,29 @@ pl.legend()
 pl.tight_layout()
 pl.show()
 
-
 #%%
 # Plot broadband psfs
-pl.figure(2, (8, 4.5))
+# pl.figure(3, (8, 4.5))
+# pl.clf()
+# pl.semilogy(xi, Psf1dpoly, label='Math')
+# pl.semilogy(xi, poly_direct_image0, label='Python', ls='--')
+# pl.axvline(x=rMask, ymin=-12, ymax =2, linewidth=1, color='C1', linestyle='--')
+# pl.axvline(x=rho0, ymin=-12, ymax =2, linewidth=1, color='C2', linestyle='--')
+# pl.axvline(x=rho1, ymin=-12, ymax =2, linewidth=1, color='C2', linestyle='--')
+# pl.axhline(10**(-cDarkHole), xmin=xi.min(), xmax=xi.max(), linewidth=1, color='k', linestyle='--')
+# pl.xlabel(r'Angular separation in $\lambda_0$/D')
+# pl.ylabel('Normalized intensity in log scale')
+# pl.xlim(-0.5, 50.5)
+# pl.ylim(10**(-8.2), 10**(1.8))
+# pl.legend()
+# pl.tight_layout()
+# pl.show()
+
+#%%
+# Plot broadband coronagraphic images
+pl.figure(4, (8, 4.5))
 pl.clf()
-pl.semilogy(xi, Psf1dpoly, label='Math')
+pl.semilogy(xi, Cor1dpoly, label='Math')
 pl.semilogy(xi, poly_corono_image0, label='Python')
 pl.axvline(x=rMask, ymin=-12, ymax =2, linewidth=1, color='C1', linestyle='--')
 pl.axvline(x=rho0, ymin=-12, ymax =2, linewidth=1, color='C2', linestyle='--')

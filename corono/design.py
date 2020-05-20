@@ -804,22 +804,22 @@ class APLC1d(Coronagraph):
             
         """
         E_field = Apod*self.Pupil1d
-    #    FPM_field = np.zeros((nlam,nFPM+1))
-    #    for i in range(nlam):
-    #        FPM_field[i] = HK_B[i].dot(E_field)
+        # FPM_field = np.zeros((self.nlam,self.nFPM+1))
+        # for i in range(self.nlam):
+        #     FPM_field[i] = self.HK_B[i].dot(E_field)
         FPM_field = np.einsum("ijk,k->ij", self.HK_B, E_field)
                    
-    #    iFPM_field = np.zeros((nlam,nPup))
-    #    for i in range(nlam):
-    #        iFPM_field[i] = iHK_B[i].dot(FPM_field[i])
+        # iFPM_field = np.zeros((self.nlam,self.nPup))
+        # for i in range(self.nlam):
+        #     iFPM_field[i] = self.iHK_B[i].dot(FPM_field[i])
         iFPM_field = np.einsum("ijk,ik->ij", self.iHK_B, FPM_field)
                                 
         lyot_field = (Apod[None,:]*self.Pupil1d[None,:]-iFPM_field)*\
         self.LyotStop1d[None,:]
         
-    #    corono_field = np.zeros((nlam,nImg+1))
-    #    for i in range(nlam):
-    #        corono_field[i] = HK_D[i].dot(lyot_field[i])
+        # corono_field = np.zeros((self.nlam,self.nImg+1))
+        # for i in range(self.nlam):
+        #     corono_field[i] = self.HK_D[i].dot(lyot_field[i])
         corono_field = np.einsum("ijk,ik-> ij", self.HK_D, lyot_field)
         
         return corono_field
