@@ -738,18 +738,37 @@ class APLC1d(Coronagraph):
         # sampling for the integration to the FPM plane      
         self.dmi = self.rMask/self.nFPM
 
-        # FPM image plane coordinate
-        self.mi = np.arange(self.nFPM +1)*self.dmi
+        # # FPM image plane coordinate
+        # self.mi = np.arange(self.nFPM +1)*self.dmi
         
+        # # variable inside the Bessel function for Hankel transform to the FPM plane
+        # self.HK_B_var = np.pi*self.ilam_t[:,None, None]*self.mi[None,:,None]*\
+        # self.r[None,None,:]
+        # # Hankel kernel (direct transform) to the FPM plane
+        # self.HK_B = np.pi*self.ilam_t[:,None, None]*\
+        # besselJ0(self.HK_B_var)*self.r[None, None,:]*self.dr
+        # # Hankel kernel (inverse transform) to the FPM plane
+        # self.iHK_B = np.pi*self.ilam_t[:,None, None]*\
+        # besselJ0(self.HK_B_var.transpose(0,2,1))*self.mi[None, None,:]*self.dmi
+
+        self.nFPMmax = int(self.nFPM*np.max(self.ilam_t))
+        self.nFPMi = np.empty(self.nlam)
+        for i in range(self.nlam):
+            self.nFPMi[i] = int(self.nFPM*self.ilam_t[i])
+        self.nFPMi = self.nFPMi.astype(int)
+        
+        self.mitmp = np.arange(self.nFPMmax+1)*self.dmi
+        self.mi = np.zeros((self.nlam,self.nFPMmax+1))
+        for i in range(self.nlam):
+            self.mi[i,:self.nFPMi[i]+1] = self.mitmp[:self.nFPMi[i]+1]
+                
         # variable inside the Bessel function for Hankel transform to the FPM plane
-        self.HK_B_var = np.pi*self.ilam_t[:,None, None]*self.mi[None,:,None]*\
-        self.r[None,None,:]
+        self.HK_B_var = np.pi*self.mi[:,:,None]*self.r[None,None,:]
         # Hankel kernel (direct transform) to the FPM plane
-        self.HK_B = np.pi*self.ilam_t[:,None, None]*\
-        besselJ0(self.HK_B_var)*self.r[None, None,:]*self.dr
+        self.HK_B = np.pi*besselJ0(self.HK_B_var)*self.r[None, None,:]*self.dr
         # Hankel kernel (inverse transform) to the FPM plane
-        self.iHK_B = np.pi*self.ilam_t[:,None, None]*\
-        besselJ0(self.HK_B_var.transpose(0,2,1))*self.mi[None, None,:]*self.dmi
+        self.iHK_B = np.pi*besselJ0(self.HK_B_var.transpose(0,2,1))*\
+            self.mi[:, None,:]*self.dmi        
 
         # term inside the Bessel function for the hankel transform to the final image plane
         self.HK_D_var = np.pi*self.ilam_t[:,None,None]*self.xi[None,:,None]*\

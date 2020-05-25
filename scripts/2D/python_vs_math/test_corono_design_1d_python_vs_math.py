@@ -29,7 +29,7 @@ corono_name  = 'APLC' # 'APLC' or 'SP'
 
 # sampling
 nPup = 300
-nFPM = 50
+nFPM = 35
 nImg = 256
 Fmax = 50
 R    = 1
