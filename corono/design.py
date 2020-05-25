@@ -750,17 +750,13 @@ class APLC1d(Coronagraph):
         # # Hankel kernel (inverse transform) to the FPM plane
         # self.iHK_B = np.pi*self.ilam_t[:,None, None]*\
         # besselJ0(self.HK_B_var.transpose(0,2,1))*self.mi[None, None,:]*self.dmi
-
-        self.nFPMmax = int(self.nFPM*np.max(self.ilam_t))
-        self.nFPMi = np.empty(self.nlam)
-        for i in range(self.nlam):
-            self.nFPMi[i] = int(self.nFPM*self.ilam_t[i])
-        self.nFPMi = self.nFPMi.astype(int)
+           
+        self.nFPMi = (self.nFPM*self.ilam_t).astype(int)
+        self.nFPMi_max = np.max(self.nFPMi)
         
-        self.mitmp = np.arange(self.nFPMmax+1)*self.dmi
-        self.mi = np.zeros((self.nlam,self.nFPMmax+1))
-        for i in range(self.nlam):
-            self.mi[i,:self.nFPMi[i]+1] = self.mitmp[:self.nFPMi[i]+1]
+        self.FPM_t = np.arange(self.nFPMi_max+1)                           
+        self.mi   = self.dmi*self.FPM_t*\
+            (self.FPM_t[None,:] <= self.nFPMi[:,None])           
                 
         # variable inside the Bessel function for Hankel transform to the FPM plane
         self.HK_B_var = np.pi*self.mi[:,:,None]*self.r[None,None,:]
