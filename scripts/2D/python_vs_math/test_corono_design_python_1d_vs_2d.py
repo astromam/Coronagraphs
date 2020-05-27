@@ -31,13 +31,13 @@ corono_name  = 'APLC' # 'APLC' or 'SP'
 
 # sampling
 nPup = 300
-nFPM = 35
+nFPM = 100
 nImg = 256
 Fmax = 50
 R    = 1
 
 nPup2d = 2*nPup
-nImg2d = 512
+nImg2d = 2*nImg
 Fmax2d = 100
 
 # spectral sampling
@@ -64,6 +64,10 @@ xi  = (Fmax/nImg)*np.arange(nImg+1)
 Pupil1d      = (r>PupilID)*1.0
 LyotStop1d   = (r>LyotStopID)*(r<LyotStopOD)*1.0
 
+# centering aspects
+CtrBtwnPix = False
+CtrBtwnPix2 = False
+
 # dictionary parameters
 params = coro.to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole,
                  nPup = nPup, nFPM=nFPM, nImg=nImg, Fmax = Fmax,
@@ -72,7 +76,9 @@ params = coro.to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole,
                  LyotStopID = LyotStopID,
                  LyotStopOD = LyotStopOD,
                  r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d,
-                 corono_name = corono_name)
+                 corono_name = corono_name,
+                 CtrBtwnPix = CtrBtwnPix, CtrBtwnPix2 = CtrBtwnPix2,
+                 nImg2d = nImg2d, Fmax2d = Fmax2d)
 
 #%%
 """
@@ -181,10 +187,8 @@ Corpoly_2d = fits.getdata(fpath_corpoly_2d)
 *** Define coronagraph
 """
 params0    = coro.update_params(params, 
-                                Pupil2d = Pupil2d, 
-                                LyotStop2d = LyotStop2d,
-                                nPup=nPup2d, nImg2d = nImg2d, Fmax2d = Fmax2d,
-                                nFPM=100) 
+                                Pupil2d = Pupil2d, LyotStop2d = LyotStop2d,
+                                nPup=nPup2d, ) 
 
 if corono_name == 'APLC':
     corono0 = coro.design.APLC2d(**params0)
