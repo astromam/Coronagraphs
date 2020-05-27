@@ -1683,7 +1683,6 @@ class APLC2d(Coronagraph):
         # mask size at a given wavelength for SFT
         self.mB_t  = 2.*self.rMask*(self.lam0/self.lam_t)
         self.mD_t  = self.Fmax2d*(self.lam0/self.lam_t)
-        print(self.mB_t)
 
         # Telescope aperture
         if self.Pupil2d is None:
@@ -1768,7 +1767,6 @@ class APLC2d(Coronagraph):
             at all the wavelengths
             
         """        
-        print('test')
         field_A    = Apod2d*self.Pupil2d
         if self.OPDmap2d is not None:
             phasor_t   = 2.*np.pi*self.OPDmap2d[None, :, :]/(self.wv*self.lam_t[:, None,None])             
@@ -1785,20 +1783,15 @@ class APLC2d(Coronagraph):
             if self.OPDmap2d is None:
                 field = field_A
             else:
-                field = field_A[i]
-                print(field.dtype)                
+                field = field_A[i]               
             if self.ImPart is True:                
                 field_B       = self.mask2d*sft(field, self.nFPM, self.mB_t[i], 
                                                 CtrBtwnPix=self.CtrBtwnPix)
-                print(field_B.dtype)
                 field_C       = field - isft(field_B, self.nPup, self.mB_t[i], 
                                                CtrBtwnPix=self.CtrBtwnPix)
-                print(field_C.dtype)
                 field_L       = field_C*self.LyotStop2d
-                print(field_L.dtype)
                 field_Dtmp[i] = sft(field_L, self.nImg2d, self.mD_t[i], 
                           CtrBtwnPix=self.CtrBtwnPix2)
-                print(field_Dtmp.dtype)
                 
             else:
                 field_B       = self.mask2d*sft_even(field, self.nFPM, self.mB_t[i], 
