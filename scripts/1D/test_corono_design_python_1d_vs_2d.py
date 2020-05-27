@@ -11,7 +11,7 @@ Created on Tue May 26 13:42:29 2020
 *** Initialization
 """
 import numpy as np
-import time
+# import time
 import os
 
 from pathlib import Path
@@ -31,14 +31,14 @@ corono_name  = 'APLC' # 'APLC' or 'SP'
 
 # sampling
 nPup = 300
-nFPM = 35
+nFPM = 100
 nImg = 256
 Fmax = 50
 R    = 1
 
 nPup2d = 2*nPup
-nImg2d = 512
-Fmax2d = 100
+nImg2d = 2*nImg
+Fmax2d = 2*Fmax
 
 # spectral sampling
 bw   = 0.2
@@ -49,6 +49,10 @@ PupilID    = 0.14
 rMask      = 2.8
 LyotStopID = 0.28
 LyotStopOD = 1.0
+
+# centering configuration in focal planes
+CtrBtwnPix = False
+CtrBtwnPix2 = False
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
 rho0 = 5.
@@ -72,7 +76,9 @@ params = coro.to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole,
                  LyotStopID = LyotStopID,
                  LyotStopOD = LyotStopOD,
                  r = r, R=R, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d,
-                 corono_name = corono_name)
+                 corono_name = corono_name,
+                 nImg2d = nImg2d, Fmax2d = Fmax2d,
+                 CtrBtwnPix= CtrBtwnPix, CtrBtwnPix2 = CtrBtwnPix2)
 
 #%%
 """
@@ -181,10 +187,8 @@ Corpoly_2d = fits.getdata(fpath_corpoly_2d)
 *** Define coronagraph
 """
 params0    = coro.update_params(params, 
-                                Pupil2d = Pupil2d, 
-                                LyotStop2d = LyotStop2d,
-                                nPup=nPup2d, nImg2d = nImg2d, Fmax2d = Fmax2d,
-                                nFPM=100) 
+                                Pupil2d = Pupil2d, LyotStop2d = LyotStop2d,
+                                nPup=nPup2d,) 
 
 if corono_name == 'APLC':
     corono0 = coro.design.APLC2d(**params0)
@@ -217,49 +221,75 @@ poly_corono_image0 /= poly_peak
 *** Display images
 """
 # GPI parts
-pl.figure(0, (8, 4.5))
-pl.clf()
-pl.subplot(131)
-pl.imshow(Pupil2d, cmap = 'inferno')
-pl.subplot(132)
-pl.imshow(Apod2d, cmap = 'inferno')
-pl.subplot(133)
-pl.imshow(LyotStop2d, cmap = 'inferno')
+# pl.figure(0, (8, 4.5))
+# pl.clf()
+# pl.subplot(131)
+# pl.imshow(Pupil2d, cmap = 'inferno')
+# pl.title('Pupil')
+# pl.subplot(132)
+# pl.imshow(Apod2d, cmap = 'inferno')
+# pl.title('Apodizer')
+# pl.subplot(133)
+# pl.imshow(LyotStop2d, cmap = 'inferno')
+# pl.title('Lyot Stop')
 
 #%%
-# GPI parts
+# Monochromatic images
+vmin0 = -25
+vmax0 = -15
+
+# pl.figure(10, (8, 4.5))
+# pl.clf()
+# pl.subplot(131)
+# pl.imshow(np.log10(Psfmono_2d), cmap = 'inferno', vmax=vmax0, vmin=vmin0)
+# pl.title('math - mono')
+# pl.subplot(132)
+# pl.imshow(np.log10(mono_direct_image0[nlam//2]), cmap = 'inferno', vmax=vmax0, vmin=vmin0)
+# pl.title('python - mono')
+# pl.subplot(133)
+# pl.imshow(np.log10(np.abs(mono_direct_image0[nlam//2]-Psfmono_2d)), cmap = 'inferno', vmax=vmax0, vmin=vmin0)
+# pl.title('difference in abs value')
+
+
+#%%
+# Monochromatic images
+vmin0 = -14
+vmax0 = -4
+
 pl.figure(1, (8, 4.5))
 pl.clf()
 pl.subplot(131)
-pl.imshow(np.log10(Cormono_2d), cmap = 'inferno')
+pl.imshow(np.log10(Cormono_2d), cmap = 'inferno', vmax=vmax0, vmin=vmin0)
 pl.title('math - mono')
 pl.subplot(132)
-pl.imshow(np.log10(mono_corono_image0[nlam//2]), cmap = 'inferno')
+pl.imshow(np.log10(mono_corono_image0[nlam//2]), cmap = 'inferno', vmax=vmax0, vmin=vmin0)
 pl.title('python - mono')
 pl.subplot(133)
-pl.imshow(np.log10(np.abs(mono_corono_image0[nlam//2]-Cormono_2d)), cmap = 'inferno')
-pl.title('difference in abs value')
+pl.imshow(np.log10(np.abs(mono_corono_image0[nlam//2]-Cormono_2d)), cmap = 'inferno', vmax=vmax0, vmin=vmin0)
+pl.title('abs value difference')
 
 #%%
-# GPI parts
-pl.figure(2, (8, 4.5))
-pl.clf()
-pl.subplot(131)
-pl.imshow(np.log10(Corpoly_2d), cmap = 'inferno')
-pl.title('math - poly')
-pl.subplot(132)
-pl.imshow(np.log10(poly_corono_image0), cmap = 'inferno')
-pl.title('python - poly')
-pl.subplot(133)
-pl.imshow(np.log10(np.abs(poly_corono_image0-Corpoly_2d)), cmap = 'inferno')
-pl.title('difference in abs value')
-pl.show()
+# Broadband images
+# pl.figure(2, (8, 4.5))
+# pl.clf()
+# pl.subplot(131)
+# pl.imshow(np.log10(Corpoly_2d), cmap = 'inferno', vmax=vmax0, vmin=vmin0)
+# pl.title('math - poly')
+# pl.subplot(132)
+# pl.imshow(np.log10(poly_corono_image0), cmap = 'inferno', vmax=vmax0, vmin=vmin0)
+# pl.title('python - poly')
+# pl.subplot(133)
+# pl.imshow(np.log10(np.abs(poly_corono_image0-Corpoly_2d)), cmap = 'inferno', vmax=vmax0, vmin=vmin0)
+# pl.title('abs value difference')
+# pl.show()
 
 #%%
 """
 *** Display plot
 """
 xi2d = corono0.xi2d[:nImg2d//2]
+
+# monochromatic image profiles
 Cormono_2d_vec = Cormono_2d[nImg2d//2,nImg2d//2:]
 mono_corono_image0_vec = mono_corono_image0[nlam//2,nImg2d//2,nImg2d//2:]
 
@@ -282,22 +312,24 @@ pl.show()
 
 #%%
 # xi2d = corono0.xi2d[:nImg2d//2]
-Corpoly_2d_vec = Corpoly_2d[nImg2d//2,nImg2d//2:]
-poly_corono_image0_vec = poly_corono_image0[nImg2d//2,nImg2d//2:]
 
-pl.figure(4, (8, 4.5))
-pl.clf()
-#pl.semilogy(xi, Corpoly_1d, label='Math 1d - poly')
-pl.semilogy(xi2d, Corpoly_2d_vec, label='Math 2d - poly')
-pl.semilogy(xi2d, poly_corono_image0_vec, label='Python 2d - poly')
-pl.axvline(x=rMask, ymin=-12, ymax =2, linewidth=1, color='C1', linestyle='--')
-pl.axvline(x=rho0, ymin=-12, ymax =2, linewidth=1, color='C2', linestyle='--')
-pl.axvline(x=rho1, ymin=-12, ymax =2, linewidth=1, color='C2', linestyle='--')
-pl.axhline(10**(-cDarkHole), xmin=xi.min(), xmax=xi.max(), linewidth=1, color='k', linestyle='--')
-pl.xlabel(r'Angular separation in $\lambda_0$/D')
-pl.ylabel('Normalized intensity in log scale')
-pl.xlim(-0.5, 50.5)
-pl.ylim(10**(-12.2), 10**(-3.8))
-pl.legend()
-pl.tight_layout()
-pl.show()
+# broadband image profiles
+# Corpoly_2d_vec = Corpoly_2d[nImg2d//2,nImg2d//2:]
+# poly_corono_image0_vec = poly_corono_image0[nImg2d//2,nImg2d//2:]
+
+# pl.figure(4, (8, 4.5))
+# pl.clf()
+# #pl.semilogy(xi, Corpoly_1d, label='Math 1d - poly')
+# pl.semilogy(xi2d, Corpoly_2d_vec, label='Math 2d - poly')
+# pl.semilogy(xi2d, poly_corono_image0_vec, label='Python 2d - poly')
+# pl.axvline(x=rMask, ymin=-12, ymax =2, linewidth=1, color='C1', linestyle='--')
+# pl.axvline(x=rho0, ymin=-12, ymax =2, linewidth=1, color='C2', linestyle='--')
+# pl.axvline(x=rho1, ymin=-12, ymax =2, linewidth=1, color='C2', linestyle='--')
+# pl.axhline(10**(-cDarkHole), xmin=xi.min(), xmax=xi.max(), linewidth=1, color='k', linestyle='--')
+# pl.xlabel(r'Angular separation in $\lambda_0$/D')
+# pl.ylabel('Normalized intensity in log scale')
+# pl.xlim(-0.5, 50.5)
+# pl.ylim(10**(-12.2), 10**(-3.8))
+# pl.legend()
+# pl.tight_layout()
+# pl.show()
