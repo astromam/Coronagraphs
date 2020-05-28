@@ -153,11 +153,9 @@ def sft(A2, NB, m, inv=False, CtrBtwnPix=False):
     # A1 = np.exp(sign * 2.j*np.pi* U.T.dot(X))
     # A3 = np.exp(sign * 2.j*np.pi* X.T.dot(U))
 
-    tUX = 2.*np.pi* U.T.dot(X)
-    tXU = 2.*np.pi* X.T.dot(U)
-
-    A1 = sign*1j*np.sin(tUX)+np.cos(tUX)  
-    A3 = sign*1j*np.sin(tXU)+np.cos(tXU)
+    UX = 2.*np.pi* U.T.dot(X)
+    A1 = sign*1j*np.sin(UX)  +np.cos(UX)  
+    A3 = sign*1j*np.sin(UX.T)+np.cos(UX.T)
     
     B  = (A1.dot(A2)).dot(A3)
 
