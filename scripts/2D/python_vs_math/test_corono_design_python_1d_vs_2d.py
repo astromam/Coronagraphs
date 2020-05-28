@@ -220,7 +220,8 @@ poly_corono_image0 /= poly_peak
 """
 *** Display images
 """
-# GPI parts
+## Pupil
+
 # pl.figure(0, (8, 4.5))
 # pl.clf()
 # pl.subplot(131)
@@ -234,21 +235,26 @@ poly_corono_image0 /= poly_peak
 # pl.title('Lyot Stop')
 
 #%%
-# GPI parts
+## Monochromatic images
+
+vmin0 = -14
+vmax0 = -4
+
 pl.figure(1, (8, 4.5))
 pl.clf()
 pl.subplot(131)
-pl.imshow(np.log10(Cormono_2d), cmap = 'inferno')
+pl.imshow(np.log10(Cormono_2d), cmap = 'inferno', vmin=vmin0,vmax=vmax0)
 pl.title('math - mono')
 pl.subplot(132)
-pl.imshow(np.log10(mono_corono_image0[nlam//2]), cmap = 'inferno')
+pl.imshow(np.log10(mono_corono_image0[nlam//2]), cmap = 'inferno', vmin=vmin0,vmax=vmax0)
 pl.title('python - mono')
 pl.subplot(133)
-pl.imshow(np.log10(np.abs(mono_corono_image0[nlam//2]-Cormono_2d)), cmap = 'inferno')
+pl.imshow(np.log10(np.abs(mono_corono_image0[nlam//2]-Cormono_2d)), cmap = 'inferno', vmin=vmin0,vmax=vmax0)
 pl.title('difference in abs value')
 
 #%%
-# GPI parts
+## Broadband images
+
 # pl.figure(2, (8, 4.5))
 # pl.clf()
 # pl.subplot(131)
@@ -266,6 +272,9 @@ pl.title('difference in abs value')
 """
 *** Display plot
 """
+
+### Monochromatic image profiles
+
 xi2d = corono0.xi2d[:nImg2d//2]
 Cormono_2d_vec = Cormono_2d[nImg2d//2,nImg2d//2:]
 mono_corono_image0_vec = mono_corono_image0[nlam//2,nImg2d//2,nImg2d//2:]
@@ -288,6 +297,8 @@ pl.tight_layout()
 pl.show()
 
 #%%
+### Broadband image profiles
+
 # xi2d = corono0.xi2d[:nImg2d//2]
 Corpoly_2d_vec = Corpoly_2d[nImg2d//2,nImg2d//2:]
 poly_corono_image0_vec = poly_corono_image0[nImg2d//2,nImg2d//2:]
