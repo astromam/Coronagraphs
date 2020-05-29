@@ -1742,7 +1742,7 @@ class APLC2d(Coronagraph):
                 field_Dtmp[i] = sft_even(field_L, self.nImg2d, self.mD_t[i], 
                           CtrBtwnPix=self.CtrBtwnPix2) 
                                 
-        return field_Dtmp
+        return (self.lam0/self.lam_t[:,None,None])*field_Dtmp
  
 #%%
     def compute_corono_field_2d(self,Apod2d):
@@ -1801,7 +1801,7 @@ class APLC2d(Coronagraph):
                 field_L       = field_C*self.LyotStop2d
                 field_Dtmp[i] = sft_even(field_L, self.nImg2d, self.mD_t[i], 
                           CtrBtwnPix=self.CtrBtwnPix2)                         
-        return field_Dtmp   
+        return (self.lam0/self.lam_t[:,None,None])*field_Dtmp   
 
 #%% direct propagation (no focal plane mask)
     def compute_direct_field_2d_bis(self,Apod2d,OPDmap2d=None):

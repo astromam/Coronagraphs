@@ -62,7 +62,8 @@ def uniform_disk(n, radius, CtrBtwnPix=False):
     xx,yy  = np.meshgrid(np.arange(n)-n/2+val, np.arange(n)-n/2+val)
     mydist = np.hypot(yy,xx)
     res    = np.zeros_like(mydist)
-    res[mydist <= radius] = 1.0
+    # res[mydist <= radius] = 1.0
+    res[mydist < radius] = 1.0
     return res
 
 #%%
@@ -150,14 +151,11 @@ def sft(A2, NB, m, inv=False, CtrBtwnPix=False):
     X[0,:] = (1./NA)*(np.arange(NA)-NA/2.+val)
     U[0,:] =  (m/NB)*(np.arange(NB)-NB/2.+val)
        
-    # A1 = np.exp(sign * 2.j*np.pi* U.T.dot(X))
-    # A3 = np.exp(sign * 2.j*np.pi* X.T.dot(U))
-
-    UX = 2.*np.pi* U.T.dot(X)
-    A1 = sign*1j*np.sin(UX)  +np.cos(UX)  
-    A3 = sign*1j*np.sin(UX.T)+np.cos(UX.T)
+    XU = 2.*np.pi* X.T.dot(U)
+    A3 = sign*1j*np.sin(XU)  +np.cos(XU)
+    A1 = A3.T
     
-    B  = (A1.dot(A2)).dot(A3)
+    B  = A1.dot(A2.dot(A3))
 
     return coeff*B
 
@@ -313,8 +311,9 @@ def sft_even(A2, NB, m, inv=False, CtrBtwnPix=False):
     X[0,:] = (1./NA)*(np.arange(NA)-NA/2+val)
     U[0,:] =  (m/NB)*(np.arange(NB)-NB/2+val)
 
-    A1 = np.cos(2.*np.pi* U.T.dot(X))    
-    A3 = np.cos(2.*np.pi* X.T.dot(U))
+    UX = 2.*np.pi*U.T.dot(X)
+    A1 = np.cos(UX)    
+    A3 = np.cos(UX.T)
     
     B  = (A1.dot(A2)).dot(A3)
 
