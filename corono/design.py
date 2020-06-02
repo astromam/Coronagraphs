@@ -740,7 +740,7 @@ class APLC1d(Coronagraph):
 
         # # FPM image plane coordinate
         # self.mi = np.arange(self.nFPM +1)*self.dmi
-        
+        # 
         # # variable inside the Bessel function for Hankel transform to the FPM plane
         # self.HK_B_var = np.pi*self.ilam_t[:,None, None]*self.mi[None,:,None]*\
         # self.r[None,None,:]
@@ -772,7 +772,7 @@ class APLC1d(Coronagraph):
         # Hankel transform to the final image plane        
         self.HK_D = np.pi*self.ilam_t[:,None, None]*besselJ0(self.HK_D_var)*\
         self.r[None, None, :]*self.dr
-
+    
         
 #%% # direct propagation (no focal plane mask)
     def compute_direct_field_1d(self,Apod):
@@ -1742,7 +1742,8 @@ class APLC2d(Coronagraph):
                 field_Dtmp[i] = sft_even(field_L, self.nImg2d, self.mD_t[i], 
                           CtrBtwnPix=self.CtrBtwnPix2) 
                                 
-        return (self.lam0/self.lam_t[:,None,None])*field_Dtmp
+        # return (self.lam0/self.lam_t[:,None,None])*field_Dtmp (in mathematica)
+        return field_Dtmp
  
 #%%
     def compute_corono_field_2d(self,Apod2d):
@@ -1800,8 +1801,10 @@ class APLC2d(Coronagraph):
                                                CtrBtwnPix=self.CtrBtwnPix)
                 field_L       = field_C*self.LyotStop2d
                 field_Dtmp[i] = sft_even(field_L, self.nImg2d, self.mD_t[i], 
-                          CtrBtwnPix=self.CtrBtwnPix2)                         
-        return (self.lam0/self.lam_t[:,None,None])*field_Dtmp   
+                          CtrBtwnPix=self.CtrBtwnPix2)
+                         
+        # return (self.lam0/self.lam_t[:,None,None])*field_Dtmp (in mathematica)
+        return field_Dtmp
 
 #%% direct propagation (no focal plane mask)
     def compute_direct_field_2d_bis(self,Apod2d,OPDmap2d=None):

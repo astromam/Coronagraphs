@@ -31,7 +31,7 @@ corono_name  = 'APLC' # 'APLC' or 'SP'
 
 # sampling
 nPup = 300
-nFPM = 100
+nFPM = 70
 nImg = 256
 Fmax = 50
 R    = 1
@@ -269,110 +269,110 @@ poly_corono_pupil0 = corono0.compute_corono_lyot_field_2d(Apod2d)
 
 
 #%%
-mask2d  = corono0.mask2d
-field_B = coro.utils.sft(Pupil2d*Apod2d, corono0.nFPM, corono0.mB_t[nlam//2], CtrBtwnPix=corono0.CtrBtwnPix)
+# mask2d  = corono0.mask2d
+# field_B = coro.utils.sft(Pupil2d*Apod2d, corono0.nFPM, corono0.mB_t[nlam//2], CtrBtwnPix=corono0.CtrBtwnPix)
 
-pythfield_B_re = field_B.real
-pythfield_B_im = field_B.imag
+# pythfield_B_re = field_B.real
+# pythfield_B_im = field_B.imag
 
-pl.figure(11, (8,6))
-pl.clf()
-pl.subplot(231)
-pl.imshow(pythfield_B_re, cmap= 'inferno')
-pl.title(r'pyth - $Re[\Psi_B]$')
-pl.subplot(232)
-pl.imshow(mathfield_B_re, cmap= 'inferno')
-pl.title(r'math - $Re[\Psi_B]$')
-pl.subplot(233)
-pl.imshow(mathfield_B_re-pythfield_B_re, cmap= 'inferno')
-pl.title(r'diff - $Re[\Psi_B]$')
-pl.subplot(234)
-pl.imshow(pythfield_B_im, cmap= 'inferno')
-pl.title(r'pyth - $Im[\Psi_B]$')
-pl.subplot(235)
-pl.imshow(mathfield_B_im, cmap= 'inferno')
-pl.title(r'math - $Im[\Psi_B]$')
-pl.subplot(236)
-pl.imshow(mathfield_B_im-pythfield_B_im, cmap= 'inferno')
-pl.title(r'diff - $Im[\Psi_B]$')
-
-
-#%%
-
-field_C = coro.utils.isft(mask2d*field_B, corono0.nPup, corono0.mB_t[nlam//2], CtrBtwnPix=corono0.CtrBtwnPix)
-
-pythfield_C_re = field_C.real
-pythfield_C_im = field_C.imag
-
-pl.figure(12, (8,6))
-pl.clf()
-pl.subplot(231)
-pl.imshow(pythfield_C_re, cmap= 'inferno')
-pl.title(r'pyth - $Re[TF\Psi_B]$')
-pl.subplot(232)
-pl.imshow(mathfield_C_re, cmap= 'inferno')
-pl.title(r'math - $Re[TF\Psi_B]$')
-pl.subplot(233)
-pl.imshow(mathfield_C_re - pythfield_C_re, cmap= 'inferno')
-pl.title(r'diff - $Re[TF\Psi_B]$')
-pl.subplot(234)
-pl.imshow(pythfield_C_im, cmap= 'inferno')
-pl.title(r'pyth - $Im[TF\Psi_B]$')
-pl.subplot(235)
-pl.imshow(mathfield_C_im, cmap= 'inferno')
-pl.title(r'math - $Im[TF\Psi_B]$')
-pl.subplot(236)
-pl.imshow(mathfield_C_im - pythfield_C_im, cmap= 'inferno')
-pl.title(r'diff - $Im[TF\Psi_B]$')
-
+# pl.figure(11, (8,6))
+# pl.clf()
+# pl.subplot(231)
+# pl.imshow(pythfield_B_re, cmap= 'inferno')
+# pl.title(r'pyth - $Re[\Psi_B]$')
+# pl.subplot(232)
+# pl.imshow(mathfield_B_re, cmap= 'inferno')
+# pl.title(r'math - $Re[\Psi_B]$')
+# pl.subplot(233)
+# pl.imshow(mathfield_B_re-pythfield_B_re, cmap= 'inferno')
+# pl.title(r'diff - $Re[\Psi_B]$')
+# pl.subplot(234)
+# pl.imshow(pythfield_B_im, cmap= 'inferno')
+# pl.title(r'pyth - $Im[\Psi_B]$')
+# pl.subplot(235)
+# pl.imshow(mathfield_B_im, cmap= 'inferno')
+# pl.title(r'math - $Im[\Psi_B]$')
+# pl.subplot(236)
+# pl.imshow(mathfield_B_im-pythfield_B_im, cmap= 'inferno')
+# pl.title(r'diff - $Im[\Psi_B]$')
 
 
 #%%
 
-pyth_pup_re = (LyotStop2d*poly_corono_pupil0[nlam//2]).real
-pyth_pup_im = (LyotStop2d*poly_corono_pupil0[nlam//2]).imag
+# field_C = coro.utils.isft(mask2d*field_B, corono0.nPup, corono0.mB_t[nlam//2], CtrBtwnPix=corono0.CtrBtwnPix)
 
-math_pup_re = Cormono_2d_PupRe[nlam//2]
-math_pup_im = Cormono_2d_PupIm[nlam//2]
+# pythfield_C_re = field_C.real
+# pythfield_C_im = field_C.imag
 
-diff_pup_re = math_pup_re - pyth_pup_re
-diff_pup_im = math_pup_im - pyth_pup_im
+# pl.figure(12, (8,6))
+# pl.clf()
+# pl.subplot(231)
+# pl.imshow(pythfield_C_re, cmap= 'inferno')
+# pl.title(r'pyth - $Re[TF\Psi_B]$')
+# pl.subplot(232)
+# pl.imshow(mathfield_C_re, cmap= 'inferno')
+# pl.title(r'math - $Re[TF\Psi_B]$')
+# pl.subplot(233)
+# pl.imshow(mathfield_C_re - pythfield_C_re, cmap= 'inferno')
+# pl.title(r'diff - $Re[TF\Psi_B]$')
+# pl.subplot(234)
+# pl.imshow(pythfield_C_im, cmap= 'inferno')
+# pl.title(r'pyth - $Im[TF\Psi_B]$')
+# pl.subplot(235)
+# pl.imshow(mathfield_C_im, cmap= 'inferno')
+# pl.title(r'math - $Im[TF\Psi_B]$')
+# pl.subplot(236)
+# pl.imshow(mathfield_C_im - pythfield_C_im, cmap= 'inferno')
+# pl.title(r'diff - $Im[TF\Psi_B]$')
 
-pl.figure(10, (8, 6))
-pl.clf()
-pl.subplot(231)
-pl.imshow(pyth_pup_re, cmap = 'inferno')
-pl.title(r'pyth - $Re[\Psi_C]$')
-pl.subplot(232)
-pl.imshow(math_pup_re, cmap = 'inferno')
-pl.title(r'math - $Re[\Psi_C]$')
-pl.subplot(233)
-pl.imshow(diff_pup_re, cmap = 'inferno')
-pl.title(r'diff - $Re[\Psi_C]$')
 
-pl.subplot(234)
-pl.imshow(pyth_pup_im, cmap = 'inferno')
-pl.title(r'pyth - $Im[\Psi_C]$')
-pl.subplot(235)
-pl.imshow(math_pup_im, cmap = 'inferno')
-pl.title(r'math - $Im[\Psi_C]$')
-pl.subplot(236)
-pl.imshow(diff_pup_im, cmap = 'inferno')
-pl.title(r'diff - $Im[\Psi_C]$')
 
 #%%
-pl.figure(14, (8,6))
-pl.clf()
-pl.subplot(131)
-pl.imshow(mask2d)
-pl.title('pyth - FPM')
-pl.subplot(132)
-pl.imshow(mathMask2d)
-pl.title('math - FPM')
-pl.subplot(133)
-pl.imshow(mask2d-mathMask2d)
-pl.title('diff - FPM')
-pl.show()
+
+# pyth_pup_re = (LyotStop2d*poly_corono_pupil0[nlam//2]).real
+# pyth_pup_im = (LyotStop2d*poly_corono_pupil0[nlam//2]).imag
+
+# math_pup_re = Cormono_2d_PupRe[nlam//2]
+# math_pup_im = Cormono_2d_PupIm[nlam//2]
+
+# diff_pup_re = math_pup_re - pyth_pup_re
+# diff_pup_im = math_pup_im - pyth_pup_im
+
+# pl.figure(10, (8, 6))
+# pl.clf()
+# pl.subplot(231)
+# pl.imshow(pyth_pup_re, cmap = 'inferno')
+# pl.title(r'pyth - $Re[\Psi_C]$')
+# pl.subplot(232)
+# pl.imshow(math_pup_re, cmap = 'inferno')
+# pl.title(r'math - $Re[\Psi_C]$')
+# pl.subplot(233)
+# pl.imshow(diff_pup_re, cmap = 'inferno')
+# pl.title(r'diff - $Re[\Psi_C]$')
+
+# pl.subplot(234)
+# pl.imshow(pyth_pup_im, cmap = 'inferno')
+# pl.title(r'pyth - $Im[\Psi_C]$')
+# pl.subplot(235)
+# pl.imshow(math_pup_im, cmap = 'inferno')
+# pl.title(r'math - $Im[\Psi_C]$')
+# pl.subplot(236)
+# pl.imshow(diff_pup_im, cmap = 'inferno')
+# pl.title(r'diff - $Im[\Psi_C]$')
+
+#%%
+# pl.figure(14, (8,6))
+# pl.clf()
+# pl.subplot(131)
+# pl.imshow(mask2d)
+# pl.title('pyth - FPM')
+# pl.subplot(132)
+# pl.imshow(mathMask2d)
+# pl.title('math - FPM')
+# pl.subplot(133)
+# pl.imshow(mask2d-mathMask2d)
+# pl.title('diff - FPM')
+# pl.show()
 
 #%%
 ## Monochromatic images
@@ -380,33 +380,33 @@ pl.show()
 vmin0 = -14
 vmax0 = -4
 
-pl.figure(1, (8, 4.5))
-pl.clf()
-pl.subplot(131)
-pl.imshow(np.log10(Cormono_2d), cmap = 'inferno', vmin=vmin0,vmax=vmax0)
-pl.title('math - mono')
-pl.subplot(132)
-pl.imshow(np.log10(mono_corono_image0[nlam//2]), cmap = 'inferno', vmin=vmin0,vmax=vmax0)
-pl.title('python - mono')
-pl.subplot(133)
-pl.imshow(np.log10(np.abs(mono_corono_image0[nlam//2]-Cormono_2d)), cmap = 'inferno', vmin=vmin0,vmax=vmax0)
-pl.title('difference in abs value')
+# pl.figure(1, (8, 4.5))
+# pl.clf()
+# pl.subplot(131)
+# pl.imshow(np.log10(Cormono_2d), cmap = 'inferno', vmin=vmin0,vmax=vmax0)
+# pl.title('math - mono')
+# pl.subplot(132)
+# pl.imshow(np.log10(mono_corono_image0[nlam//2]), cmap = 'inferno', vmin=vmin0,vmax=vmax0)
+# pl.title('python - mono')
+# pl.subplot(133)
+# pl.imshow(np.log10(np.abs(mono_corono_image0[nlam//2]-Cormono_2d)), cmap = 'inferno', vmin=vmin0,vmax=vmax0)
+# pl.title('difference in abs value')
 
 #%%
 ## Broadband images
 
-pl.figure(2, (8, 4.5))
-pl.clf()
-pl.subplot(131)
-pl.imshow(np.log10(Corpoly_2d), cmap = 'inferno')
-pl.title('math - poly')
-pl.subplot(132)
-pl.imshow(np.log10(poly_corono_image0), cmap = 'inferno')
-pl.title('python - poly')
-pl.subplot(133)
-pl.imshow(np.log10(np.abs(poly_corono_image0-Corpoly_2d)), cmap = 'inferno')
-pl.title('difference in abs value')
-pl.show()
+# pl.figure(2, (8, 4.5))
+# pl.clf()
+# pl.subplot(131)
+# pl.imshow(np.log10(Corpoly_2d), cmap = 'inferno')
+# pl.title('math - poly')
+# pl.subplot(132)
+# pl.imshow(np.log10(poly_corono_image0), cmap = 'inferno')
+# pl.title('python - poly')
+# pl.subplot(133)
+# pl.imshow(np.log10(np.abs(poly_corono_image0-Corpoly_2d)), cmap = 'inferno')
+# pl.title('difference in abs value')
+# pl.show()
 
 #%%
 """
@@ -421,9 +421,12 @@ mono_corono_image0_vec = mono_corono_image0[nlam//2,nImg2d//2,nImg2d//2:]
 
 pl.figure(3, (8, 4.5))
 pl.clf()
-pl.semilogy(xi, Cormono_1d, label='Math 1d')
-pl.semilogy(xi2d, Cormono_2d_vec, label='Math 2d - mono')
+pl.semilogy(xi, Cormono_1d, label='Math 1d - mono')
+#pl.semilogy(xi2d, Cormono_2d_vec, label='Math 2d - mono')
 pl.semilogy(xi2d, mono_corono_image0_vec, label='Python 2d - mono')
+# pl.semilogy(xi2d, Cormono_2d_vec, label='Math 2d - mono')
+# pl.loglog(xi[1:], Cormono_1d[1:], label='Math 1d - mono')
+# pl.loglog(xi2d[1:], mono_corono_image0_vec[1:], label='Python 2d - mono')
 pl.axvline(x=rMask, ymin=-12, ymax =2, linewidth=1, color='C1', linestyle='--')
 pl.axvline(x=rho0, ymin=-12, ymax =2, linewidth=1, color='C2', linestyle='--')
 pl.axvline(x=rho1, ymin=-12, ymax =2, linewidth=1, color='C2', linestyle='--')
@@ -446,8 +449,11 @@ poly_corono_image0_vec = poly_corono_image0[nImg2d//2,nImg2d//2:]
 pl.figure(4, (8, 4.5))
 pl.clf()
 pl.semilogy(xi, Corpoly_1d, label='Math 1d - poly')
-pl.semilogy(xi2d, Corpoly_2d_vec, label='Math 2d - poly')
+#pl.semilogy(xi2d, Corpoly_2d_vec, label='Math 2d - poly')
 pl.semilogy(xi2d, poly_corono_image0_vec, label='Python 2d - poly')
+# pl.semilogy(xi2d, Corpoly_2d_vec, label='Math 2d - poly')
+# pl.loglog(xi[1:], Corpoly_1d[1:], label='Math 1d - poly')
+# pl.loglog(xi2d[1:], poly_corono_image0_vec[1:], label='Python 2d - poly')
 pl.axvline(x=rMask, ymin=-12, ymax =2, linewidth=1, color='C1', linestyle='--')
 pl.axvline(x=rho0, ymin=-12, ymax =2, linewidth=1, color='C2', linestyle='--')
 pl.axvline(x=rho1, ymin=-12, ymax =2, linewidth=1, color='C2', linestyle='--')
