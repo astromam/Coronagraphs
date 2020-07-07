@@ -101,7 +101,7 @@ nPup2d = 1*nPup
 Fmax2d = 2*Fmaxbis
 nImg2d = 2*nImgbis
 
-CtrBtwnPix = True
+CtrBtwnPix  = False
 CtrBtwnPix2 = False
 
 #%%
@@ -164,7 +164,6 @@ Apod_pyth = test0[:, 1]
 Apod1d = Apod_pyth/Apod_pyth.max()
 T_apod = np.sum(Pupil1d**2*Apod1d**2)/np.sum(Pupil1d**2)
 T_coro = np.sum(Pupil1d**2*LyotStop1d*Apod1d**2)/np.sum(Pupil1d**2)
-
 
 fname_pl   = fname_gen + '_apodizers_tran.pdf'
 fpath      = fdir_plot / fname_pl
@@ -276,22 +275,56 @@ colors = pl.cm.rainbow(np.linspace(0,1,nlambis))
 """
 
 x1d = corono0.r/2
-y1d = Apod1d
-z1d = Pupil1d
-t1d = LyotStop1d
 
-idx = int(PupilID*nPup)
-fit_A1d = interp1d(x1d[idx:], y1d[idx:], kind="cubic", bounds_error=False, fill_value="extrapolate")
+x1dbis = np.zeros(2*nPup)
+x1dbis[:nPup] = x1d
+x1dbis[nPup:] = x1d[0]+np.linspace(0.5, 1.0, num=nPup, endpoint=False)
+
+
+
+Apod1dbis = np.zeros(2*nPup)
+Apod1dbis[:nPup] = Apod1d
+
+Pupil1dbis = np.zeros(2*nPup)
+Pupil1dbis[:nPup] = Pupil1d
+
+LyotStop1dbis = np.zeros(2*nPup)
+LyotStop1dbis[:nPup] = LyotStop1d
+
+
+idx = 0#int(PupilID*nPup)
+fit_A1d = interp1d(x1dbis[idx:], Apod1dbis[idx:], kind="cubic", bounds_error=False, fill_value="extrapolate")
+#fit_A1d = interp1d(x1d[:idx], y1d[:idx], kind="cubic", bounds_error=False, fill_value="extrapolate")
 #f1d = CubicSpline(x1d[idx:], y1d[idx:], extrapolate=True)
 
-x1dbis = (1/(2*nPup2d))*(np.arange(2*nPup2d)-2*nPup2d/2+1/2)
-Apod1dbis = fit_A1d(x1dbis)
+fit_P1d = interp1d(x1dbis[idx:], Pupil1dbis[idx:], kind="cubic", bounds_error=False, fill_value="extrapolate")
+fit_L1d = interp1d(x1dbis[idx:], LyotStop1dbis[idx:], kind="cubic", bounds_error=False, fill_value="extrapolate")
+
+
+x1dsym = (1/(2*nPup2d))*(np.arange(2*nPup2d)-2*nPup2d/2 +1/2)
+
+
 
 #%%
 """
 ### Apod2d generation
 """
-aa = (1/nPup2d)*(np.arange(nPup2d)-nPup2d/2+1/2)
+# aa = (1/nPup2d)*(np.arange(nPup2d)-nPup2d/2+1/2)
+# bb = 2*aa[nPup2d//2:]
+
+# xx, yy = np.meshgrid(aa, aa)
+# mydist = np.hypot(yy,xx)
+
+# Apod2d = np.zeros((nPup2d, nPup2d))
+# Apod2d = fit_A1d(mydist)
+
+# Pupil2d = coro.utils.uniform_disk(nPup2d, nPup2d/2, CtrBtwnPix=CtrBtwnPix)\
+# -coro.utils.uniform_disk(nPup2d,PupilID*nPup2d/2, CtrBtwnPix=CtrBtwnPix)
+# #            
+# LyotStop2d = coro.utils.uniform_disk(nPup2d, LyotStopOD*nPup2d/2, CtrBtwnPix=CtrBtwnPix)\
+# -coro.utils.uniform_disk(nPup2d,LyotStopID*nPup2d/2, CtrBtwnPix=CtrBtwnPix)
+
+aa = (1/nPup2d)*(np.arange(nPup2d)-nPup2d/2)
 bb = 2*aa[nPup2d//2:]
 
 xx, yy = np.meshgrid(aa, aa)
@@ -300,38 +333,42 @@ mydist = np.hypot(yy,xx)
 Apod2d = np.zeros((nPup2d, nPup2d))
 Apod2d = fit_A1d(mydist)
 
-Pupil2d = coro.utils.uniform_disk(nPup2d, nPup2d/2, CtrBtwnPix=CtrBtwnPix)\
--coro.utils.uniform_disk(nPup2d,PupilID*nPup2d/2, CtrBtwnPix=CtrBtwnPix)
-#            
-LyotStop2d = coro.utils.uniform_disk(nPup2d, LyotStopOD*nPup2d/2, CtrBtwnPix=CtrBtwnPix)\
--coro.utils.uniform_disk(nPup2d,LyotStopID*nPup2d/2, CtrBtwnPix=CtrBtwnPix)
+# Pupil2d = coro.utils.uniform_disk(nPup2d, nPup2d/2, CtrBtwnPix=CtrBtwnPix)\
+# -coro.utils.uniform_disk(nPup2d,PupilID*nPup2d/2, CtrBtwnPix=CtrBtwnPix)
+# #            
+# LyotStop2d = coro.utils.uniform_disk(nPup2d, LyotStopOD*nPup2d/2, CtrBtwnPix=CtrBtwnPix)\
+# -coro.utils.uniform_disk(nPup2d,LyotStopID*nPup2d/2, CtrBtwnPix=CtrBtwnPix)
 
+Pupil2d = np.zeros((nPup2d, nPup2d))
+Pupil2d = fit_P1d(mydist)
+
+LyotStop2d = np.zeros((nPup2d, nPup2d))
+LyotStop2d = fit_L1d(mydist)
 
 #%%            
-pl.figure(11)
-pl.clf()
-pl.imshow(Apod2d*Pupil2d, cmap='inferno')
-pl.title('2D Apodizer')
-pl.show()
+vmin0 = 0
+vmax0 = 1
 
-pl.figure(12)
+pl.figure(11, (8, 4.5))
 pl.clf()
-pl.imshow(Pupil2d, cmap='inferno')
+pl.subplot(131)
+pl.imshow(Apod2d*Pupil2d, cmap='inferno', vmin=vmin0, vmax=vmax0)
+pl.title('2D Apodizer')
+pl.subplot(132)
+pl.imshow(Pupil2d, cmap='inferno', vmin=vmin0, vmax=vmax0)
 pl.title('2D Pupil')
 pl.show()
-
-pl.figure(13)
-pl.clf()
-pl.imshow(LyotStop2d, cmap='inferno')
+pl.subplot(133)
+pl.imshow(LyotStop2d, cmap='inferno', vmin=vmin0, vmax=vmax0)
 pl.title('2D Lyot Stop')
-pl.show()
 
-pl.figure(14, (8, 4.5))
+
+pl.figure(12, (8, 4.5))
 pl.clf()
-#pl.subplot(211)
+pl.subplot(211)
 pl.plot(corono0.r, Apod1d, label='1d initial')
 pl.plot(x1d*2, fit_A1d(x1d), label='1d interp')
-pl.plot(x1dbis*2, fit_A1d(x1dbis), label='1d interp - zp', ls = '--')
+# pl.plot(x1dbis*2, fit_A1d(x1dbis), label='1d interp - zp', ls = '--')
 #pl.plot(bb, Apod2d[nPup2d//2, nPup2d//2:]*Pupil2d[nPup2d//2, nPup2d//2:], label='2d')
 pl.xlabel(r'Pupil radius r')
 pl.ylabel('Normalized amplitude')
@@ -346,15 +383,15 @@ pl.text(PupilID+0.01, 0.05, r'd={0}%'.format(int(PupilID*100)), color='C1')
 pl.text(LyotStopID+0.01, 0.05, r'd$_S$={0}%'.format(int(LyotStopID*100)), color='C2')
 pl.legend()
 
-#pl.subplot(212)
-#pl.plot(corono0.r, Apod1d-f1d(x1d), color='C1')
+pl.subplot(212)
+pl.plot(corono0.r, Apod1d-fit_A1d(x1d), color='C1')
 #pl.plot(corono0.r, Apod1d-Apod2d[nPup2d//2, nPup2d//2:]*Pupil2d[nPup2d//2, nPup2d//2:], color='C2')
-#pl.ylabel('Amplitude difference')
-#pl.xlim(-0.02, 1.02)
-#pl.ylim(-0.005, 0.005)
-#pl.tight_layout()
-#pl.show()
-#pl.savefig(str(fpath), transparent=True, bbox_inches='tight')
+pl.ylabel('Amplitude difference')
+pl.xlim(-0.02, 1.02)
+pl.ylim(-0.005, 0.005)
+pl.tight_layout()
+pl.show()
+pl.savefig(str(fpath), transparent=True, bbox_inches='tight')
 
 ##%%
 #pl.figure(15, (8, 4.5))
@@ -385,6 +422,9 @@ pl.legend()
 #pl.tight_layout()
 #pl.show()
 #pl.savefig(str(fpath), transparent=True, bbox_inches='tight')
+#%%
+diff_apod1d = Apod1d-fit_A1d(x1d)*Pupil1d
+print(np.max(np.abs(diff_apod1d)))
 
 
 #%%  
@@ -409,6 +449,8 @@ poly_corono_image2d = corono2d.compute_corono_intensity_2d(Apod2d)
 mono_direct_image2d = corono2d.compute_direct_intensity_2d(Apod2d, poly=False)
 mono_corono_image2d = corono2d.compute_corono_intensity_2d(Apod2d, poly=False)
 
+
+
 #%% image plot
 """
 Display direct and coronagraphic images
@@ -426,7 +468,7 @@ Display direct and coronagraphic images
 #fname = fname_gen + '_apodized_image.pdf'
 #fpath = fdir_pdf / fname
 
-pl.figure(21)
+pl.figure(41)
 pl.clf()
 pl.imshow(np.log10(poly_corono_image2d/poly_direct_image2d.max()), cmap = 'inferno',
           vmin=-12, vmax=0)
@@ -451,6 +493,7 @@ pl.figure(30, (8, 4.5))
 pl.clf()
 pl.semilogy(corono0.xi,poly_corono_image1/poly_direct_image1.max(), label='1d')
 pl.semilogy(xi2d,poly_corono_image2d[nImg2dbis//2,nImg2dbis//2:]/poly_direct_image2d.max(),label='2d')
+
 pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='C1', linestyle='--')
 pl.axvline(x=corono0.rho0, ymin=-12, ymax =2, linewidth=1, color='C2', linestyle='--')
 pl.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='C2', linestyle='--')

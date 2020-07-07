@@ -738,9 +738,9 @@ class APLC1d(Coronagraph):
         # sampling for the integration to the FPM plane      
         self.dmi = self.rMask/self.nFPM
 
-        # # FPM image plane coordinate
-        # self.mi = np.arange(self.nFPM +1)*self.dmi
-        # 
+        # FPM image plane coordinate
+        self.mi = np.arange(self.nFPM +1)*self.dmi
+        
         # # variable inside the Bessel function for Hankel transform to the FPM plane
         # self.HK_B_var = np.pi*self.ilam_t[:,None, None]*self.mi[None,:,None]*\
         # self.r[None,None,:]
@@ -750,7 +750,8 @@ class APLC1d(Coronagraph):
         # # Hankel kernel (inverse transform) to the FPM plane
         # self.iHK_B = np.pi*self.ilam_t[:,None, None]*\
         # besselJ0(self.HK_B_var.transpose(0,2,1))*self.mi[None, None,:]*self.dmi
-           
+
+    
         self.nFPMi = (self.nFPM*self.ilam_t).astype(int)
         self.nFPMi_max = np.max(self.nFPMi)
         
@@ -772,6 +773,7 @@ class APLC1d(Coronagraph):
         # Hankel transform to the final image plane        
         self.HK_D = np.pi*self.ilam_t[:,None, None]*besselJ0(self.HK_D_var)*\
         self.r[None, None, :]*self.dr
+
     
         
 #%% # direct propagation (no focal plane mask)

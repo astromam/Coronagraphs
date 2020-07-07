@@ -16,6 +16,7 @@ import os
 
 from pathlib import Path
 import corono as coro
+from corono.utils import sft, isft, besselJ0
 
 import pylab as pl
 import pandas as pd
@@ -215,39 +216,148 @@ mathMask2d = fits.getdata(fpath_Mask)
 
 #%%
 """
-*** Define coronagraph
+*** Define 1d coronagraph
 """
-params0    = coro.update_params(params, 
-                                Pupil2d = Pupil2d, LyotStop2d = LyotStop2d,
-                                nPup=nPup2d, ) 
+params1d    = coro.update_params(params, Pupil1d = Pupil1d, LyotStop1d = LyotStop1d) 
 
 if corono_name == 'APLC':
-    corono0 = coro.design.APLC2d(**params0)
+    corono1d = coro.design.APLC1d(**params1d)
+else:
+    raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
+
+
+#%%
+"""
+*** Define 2d coronagraph
+"""
+params2d    = coro.update_params(params, 
+                                Pupil2d = Pupil2d, LyotStop2d = LyotStop2d,
+                                nPup=nPup2d, nFPM=nFPM*2) 
+
+if corono_name == 'APLC':
+    corono2d = coro.design.APLC2d(**params2d)
 else:
     raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
 
 #%%
 """
-*** Computation of the direct and coronagraphic images
+*** Computation of the direct and coronagraphic images (1d)
 """
 # monochromatic images
-mono_direct_image0 = corono0.compute_direct_intensity_2d(Apod2d, poly=False)
-mono_corono_image0 = corono0.compute_corono_intensity_2d(Apod2d, poly=False)
+mono_direct_image0_1d = corono1d.compute_direct_intensity_1d(Apod1d, poly=False)
+mono_corono_image0_1d = corono1d.compute_corono_intensity_1d(Apod1d, poly=False)
+
+mono_peak_1d = mono_direct_image0_1d[nlam//2].max()
+mono_direct_image0_1d /= mono_peak_1d
+mono_corono_image0_1d /= mono_peak_1d
+
+# broadband images
+poly_direct_image0_1d = corono1d.compute_direct_intensity_1d(Apod1d)
+poly_corono_image0_1d = corono1d.compute_corono_intensity_1d(Apod1d)
+
+poly_peak_1d = poly_direct_image0_1d.max()
+poly_direct_image0_1d /= poly_peak_1d
+poly_corono_image0_1d /= poly_peak_1d
+
+
+#%%
+"""
+*** Computation of the direct and coronagraphic images (2d)
+"""
+# monochromatic images
+mono_direct_image0 = corono2d.compute_direct_intensity_2d(Apod2d, poly=False)
+mono_corono_image0 = corono2d.compute_corono_intensity_2d(Apod2d, poly=False)
 
 mono_peak = mono_direct_image0[nlam//2].max()
 mono_direct_image0 /= mono_peak
 mono_corono_image0 /= mono_peak
 
 # broadband images
-poly_direct_image0 = corono0.compute_direct_intensity_2d(Apod2d)
-poly_corono_image0 = corono0.compute_corono_intensity_2d(Apod2d)
+poly_direct_image0 = corono2d.compute_direct_intensity_2d(Apod2d)
+poly_corono_image0 = corono2d.compute_corono_intensity_2d(Apod2d)
 
 poly_peak = poly_direct_image0.max()
 poly_direct_image0 /= poly_peak
 poly_corono_image0 /= poly_peak
 
 # pupil images
-poly_corono_pupil0 = corono0.compute_corono_lyot_field_2d(Apod2d)
+poly_corono_pupil0 = corono2d.compute_corono_lyot_field_2d(Apod2d)
+
+#%%
+"""
+### Mask diffracted wave - 1d
+"""
+
+nFPMi = (nFPM*corono1d.ilam_t).astype(int)
+nFPMi_max = np.max(nFPMi)
+
+FPM_t = np.arange(nFPMi_max+1)                           
+mi   = corono1d.dmi*FPM_t*\
+    (FPM_t[None,:] <= nFPMi[:,None])           
+        
+# variable inside the Bessel function for Hankel transform to the FPM plane
+HK_B_var = np.pi*corono1d.mi[:,:,None]*corono1d.r[None,None,:]
+# Hankel kernel (direct transform) to the FPM plane
+HK_B = np.pi*besselJ0(HK_B_var)*corono1d.r[None, None,:]*corono1d.dr
+# Hankel kernel (inverse transform) to the FPM plane
+iHK_B = np.pi*besselJ0(HK_B_var.transpose(0,2,1))*mi[:, None,:]*corono1d.dmi 
+
+
+E_field = Apod1d*Pupil1d
+FPM_field_1d = np.einsum("ijk,k->ij", HK_B, E_field)
+
+
+#%%
+"""
+### Mask diffracted wave - 2d
+"""
+field_A    = Apod2d*Pupil2d
+FPM_field_2d = sft(field_A, corono2d.nFPM, corono2d.mB_t[nlam//2], 
+                                                CtrBtwnPix=corono2d.CtrBtwnPix)
+
+FPM_field_2d_re = FPM_field_2d.real
+FPM_field_2d_im = FPM_field_2d.imag
+
+
+#%%
+"""
+### Display mask diffracted wave
+"""
+
+pl.figure(20)
+pl.clf()
+pl.subplot(121)
+pl.imshow(FPM_field_2d_re, cmap = 'inferno')
+pl.subplot(122)
+pl.imshow(FPM_field_2d_im, cmap = 'inferno')
+pl.show()
+
+#%%
+xiFPM1d = (rMask/nFPM)*np.arange(nFPMi_max+1)
+FPM_field_1d_mono = FPM_field_1d[nlam//2]
+
+xiFPM2d = np.arange(corono2d.nFPM//2)*(2.*rMask)/corono2d.nFPM
+FPM_field_2d_re_vec = FPM_field_2d_re[corono2d.nFPM//2,corono2d.nFPM//2:]
+
+
+
+pl.figure(21)
+pl.clf()
+pl.semilogy(xiFPM1d, np.abs(FPM_field_1d_mono), label='1d')
+pl.semilogy(xiFPM2d, np.abs(FPM_field_2d_re_vec), label='2d')
+pl.axvline(x=rMask, ymin=-12, ymax =2, linewidth=1, color='k', linestyle='--')
+pl.xlabel(r'Angular separation in $\lambda_0$/D')
+pl.ylabel('Normalized intensity in log scale')
+pl.xlim(-0.5, 5.5)
+pl.ylim(10**(-8.2), 10**(1.8))
+pl.legend()
+
+#%%
+# pl.figure(22)
+# pl.clf()
+# for ilam in range(nlam):
+#     pl.semilogy(xiFPM1d, np.abs(FPM_field_1d[ilam]), label='{0}'.format(ilam))
+# pl.axvline(x=rMask, ymin=-12, ymax =2, linewidth=1, color='k', linestyle='--')    
 
 #%%
 """
@@ -269,8 +379,8 @@ poly_corono_pupil0 = corono0.compute_corono_lyot_field_2d(Apod2d)
 
 
 #%%
-# mask2d  = corono0.mask2d
-# field_B = coro.utils.sft(Pupil2d*Apod2d, corono0.nFPM, corono0.mB_t[nlam//2], CtrBtwnPix=corono0.CtrBtwnPix)
+# mask2d  = corono2d.mask2d
+# field_B = coro.utils.sft(Pupil2d*Apod2d, corono2d.nFPM, corono2d.mB_t[nlam//2], CtrBtwnPix=corono2d.CtrBtwnPix)
 
 # pythfield_B_re = field_B.real
 # pythfield_B_im = field_B.imag
@@ -299,7 +409,7 @@ poly_corono_pupil0 = corono0.compute_corono_lyot_field_2d(Apod2d)
 
 #%%
 
-# field_C = coro.utils.isft(mask2d*field_B, corono0.nPup, corono0.mB_t[nlam//2], CtrBtwnPix=corono0.CtrBtwnPix)
+# field_C = coro.utils.isft(mask2d*field_B, corono2d.nPup, corono2d.mB_t[nlam//2], CtrBtwnPix=corono2d.CtrBtwnPix)
 
 # pythfield_C_re = field_C.real
 # pythfield_C_im = field_C.imag
@@ -410,12 +520,12 @@ vmax0 = -4
 
 #%%
 """
-*** Display plot
+*** Display plot for coronagraphic images
 """
 
 ### Monochromatic image profiles
 
-xi2d = corono0.xi2d[:nImg2d//2]
+xi2d = corono2d.xi2d[:nImg2d//2]
 Cormono_2d_vec = Cormono_2d[nImg2d//2,nImg2d//2:]
 mono_corono_image0_vec = mono_corono_image0[nlam//2,nImg2d//2,nImg2d//2:]
 
@@ -437,12 +547,11 @@ pl.xlim(-0.5, 50.5)
 pl.ylim(10**(-12.2), 10**(-3.8))
 pl.legend()
 pl.tight_layout()
-pl.show()
 
 #%%
 ### Broadband image profiles
 
-# xi2d = corono0.xi2d[:nImg2d//2]
+# xi2d = corono2d.xi2d[:nImg2d//2]
 Corpoly_2d_vec = Corpoly_2d[nImg2d//2,nImg2d//2:]
 poly_corono_image0_vec = poly_corono_image0[nImg2d//2,nImg2d//2:]
 
@@ -464,4 +573,60 @@ pl.xlim(-0.5, 50.5)
 pl.ylim(10**(-12.2), 10**(-3.8))
 pl.legend()
 pl.tight_layout()
-pl.show()
+
+#%%
+"""
+*** Display plot for direct images
+"""
+
+### Monochromatic image profiles
+
+xi2d = corono2d.xi2d[:nImg2d//2]
+#Cormono_2d_vec = Cormono_2d[nImg2d//2,nImg2d//2:]
+mono_direct_image0_vec = mono_direct_image0[nlam//2,nImg2d//2,nImg2d//2:]
+
+pl.figure(5, (8, 4.5))
+pl.clf()
+pl.semilogy(xi, Psfmono_1d, label='Math 1d - mono')
+#pl.semilogy(xi2d, Cormono_2d_vec, label='Math 2d - mono')
+pl.semilogy(xi2d, mono_direct_image0_vec, label='Python 2d - mono')
+# pl.semilogy(xi2d, Cormono_2d_vec, label='Math 2d - mono')
+# pl.loglog(xi[1:], Cormono_1d[1:], label='Math 1d - mono')
+# pl.loglog(xi2d[1:], mono_corono_image0_vec[1:], label='Python 2d - mono')
+pl.axvline(x=rMask, ymin=-12, ymax =2, linewidth=1, color='C1', linestyle='--')
+pl.axvline(x=rho0, ymin=-12, ymax =2, linewidth=1, color='C2', linestyle='--')
+pl.axvline(x=rho1, ymin=-12, ymax =2, linewidth=1, color='C2', linestyle='--')
+pl.axhline(10**(-cDarkHole), xmin=xi.min(), xmax=xi.max(), linewidth=1, color='k', linestyle='--')
+pl.xlabel(r'Angular separation in $\lambda_0$/D')
+pl.ylabel('Normalized intensity in log scale')
+pl.xlim(-0.5, 50.5)
+pl.ylim(10**(-8.2), 10**(0.8))
+pl.legend()
+pl.tight_layout()
+
+#%%
+### Broadband image profiles
+
+# xi2d = corono2d.xi2d[:nImg2d//2]
+# Psfpoly_2d_vec = Psfpoly_2d[nImg2d//2,nImg2d//2:]
+poly_direct_image0_vec = poly_direct_image0[nImg2d//2,nImg2d//2:]
+
+pl.figure(6, (8, 4.5))
+pl.clf()
+pl.semilogy(xi, Psfpoly_1d, label='Math 1d - poly')
+#pl.semilogy(xi2d, Corpoly_2d_vec, label='Math 2d - poly')
+pl.semilogy(xi2d, poly_direct_image0_vec, label='Python 2d - poly')
+# pl.semilogy(xi2d, Corpoly_2d_vec, label='Math 2d - poly')
+# pl.loglog(xi[1:], Corpoly_1d[1:], label='Math 1d - poly')
+# pl.loglog(xi2d[1:], poly_corono_image0_vec[1:], label='Python 2d - poly')
+pl.axvline(x=rMask, ymin=-12, ymax =2, linewidth=1, color='C1', linestyle='--')
+pl.axvline(x=rho0, ymin=-12, ymax =2, linewidth=1, color='C2', linestyle='--')
+pl.axvline(x=rho1, ymin=-12, ymax =2, linewidth=1, color='C2', linestyle='--')
+pl.axhline(10**(-cDarkHole), xmin=xi.min(), xmax=xi.max(), linewidth=1, color='k', linestyle='--')
+pl.xlabel(r'Angular separation in $\lambda_0$/D')
+pl.ylabel('Normalized intensity in log scale')
+pl.xlim(-0.5, 50.5)
+pl.ylim(10**(-8.2), 10**(0.8))
+pl.legend()
+pl.tight_layout()
+
