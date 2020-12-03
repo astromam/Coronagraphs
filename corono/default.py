@@ -825,7 +825,7 @@ def get_default_params_2d_ProblemMatrix():
     tmp = {'cDarkHole':8, 'tau':0.8, 'solver':'stdgrb', 
            'pupil_name':'sbr', 
            'problem_name':'MaxTau',
-           'slvCrossover':0, 'slvLogToConsole':1, 'slvMethod':2,
+           'slvCrossover':0, 'slvLogToConsole':1, 'slvMethod':2, 'slvSparse':0,
            'allLogToConsole':0,
            'MinIsland':False, 'FirstDerGlobalLim':0.01,
            'ImPart':True, 'LSRobustness':False}
