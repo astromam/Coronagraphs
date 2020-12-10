@@ -139,7 +139,7 @@ if __name__ == '__main__':
     saxomap_f    = int(30*1380)    # saxo last screen
 
     # seeing for on-sky observations
-    seeing = 0.8
+    seeing = 0.7
     
     # multi-processing
     nproc = multiprocessing.cpu_count()//2 - 1
@@ -196,9 +196,9 @@ if __name__ == '__main__':
             beta_wfs = 1/0.64*1/0.8
 
     #%%
-    # fdir = Path('~/GitHub/Coronagraphs/').expanduser()
+    fdir = Path('~/GitHub/Coronagraphs/').expanduser()
     # fdir = Path('~/Work/GitHub/Coronagraphs/').expanduser()
-    fdir = Path('/Users/mndiaye/Dropbox/python/Coronagraphs/')
+    # fdir = Path('/Users/mndiaye/Dropbox/python/Coronagraphs/')
     fdir_pupils  = fdir / 'data' / '2D' / 'pupils' / 'SPHERE' 
     fdir_zelda   = fdir / 'data' / '2D' / 'ZELDA' / str_date / str_obs  
     fdir_saxo    = fdir / 'data' / '2D' / 'ZELDA' / str_date
