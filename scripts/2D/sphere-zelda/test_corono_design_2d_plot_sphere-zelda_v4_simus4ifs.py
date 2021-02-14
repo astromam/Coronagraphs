@@ -42,15 +42,19 @@ Fratio    = 40
 # Focal plane mask
 mas2rad   = np.pi/(180.*3600)
 rMask_m   = 287e-6/2.
-rMask  = rMask_m/(wv*Fratio)
+rMask     = rMask_m/(wv*Fratio)
 rMask_mas = 1000.*rMask * (wv/dAper)/mas2rad
 print('Mask radius: {0:.2f} mas at {1:.3f}um'.format(rMask_mas, wv*1e6))
 
 # sampling
 nPup   = 384   # pupil
 nFPM   = 200   # focal plane mask
-nImg2d = 600   # final image plane 
-Fmax2d = 60    # spatial frequencies in the final image plane
+nImg2d = 200   # final image plane 
+
+# compute spatial frequencies in the final image plane
+pixel  = 12.25 # IRDIS pixel sampling [mas/pix]
+loD    = wv/dAper*180/np.pi*3600*1000/pixel
+Fmax2d = nImg2d/loD    # spatial frequencies in the final image plane
 
 # wavelength sampling
 nlam   = 3
@@ -89,37 +93,35 @@ tilt_ampl = 0
 if kw_aberr is False:
     str_aberr = 'wo_aberr'
     str_date  = ''
-    if kw_skyobs is True:
+    str_obs   = 'internal'
+    if kw_skyobs:
         str_obs   = 'sky'
-    else:
-        str_obs   = 'internal'
     str_corr  = ''
     str_saxo  = ''
     str_saxoset= ''
-    imap0     = 0
-    nmap      = 1
+    nmap      = 1 
 else:
     str_aberr = 'with_aberr'    
     str_date  = '2018-04-01'
     str_obs   = 'internal'
     str_corr  = 'before_correction'
-    str_saxo   = ''
+    str_saxo  = ''
     imap0     = 0
     nmap      = 1
     beta_wfs  = 1./0.90
     str_saxo_tmp  = 'wo_saxo'
-    if kw_2nddate is True:
+    if kw_2nddate:
         str_date = '2018-04-03'
-    if kw_skyobs is True:
+    if kw_skyobs:
         str_obs  = 'sky'
-    if kw_aftercorr is True:
+    if kw_aftercorr:
         str_corr = 'after_correction'
         imap0    = 3
         beta_wfs = 1./0.95
-    if kw_saxo is True and kw_2nddate is True:
+    if kw_saxo and kw_2nddate:
         str_saxo = 'with_saxo'
         nmap     = nsaxomap*1
-        beta_wfs = 1.0
+        beta_wfs = 1./0.6
 
 #%%
 #fdir = Path('../../').resolve()
@@ -155,19 +157,19 @@ fname_Apod2d_OPDmapnm = 'apo_substrate_D1.fits'
 fname_Ampmap2d   = 'sphere_pupil_clear_BH_field.fits'
 fname_LyotStop2d = 'sphere_stop_ST_ALC2.fits'
 
-if kw_aberr is True:
-    if kw_skyobs is True:
+if kw_aberr:
+    if kw_skyobs:
         fname_ZELDAmapnm3d = '2018-04-01_night_ncpa_loop_700modes_5_ncpa_loop_opd.fits'
-        if kw_2nddate is True:
+        if kw_2nddate:
             fname_ZELDAmapnm3d = '2018-04-03_night_ncpa_loop_sky_2_ncpa_loop_opd.fits'
     else:
         fname_ZELDAmapnm3d = '2018-04-01_ncpa_loop_700modes_2_ncpa_loop_opd.fits'        
-        if kw_2nddate is True:        
+        if kw_2nddate:        
             fname_ZELDAmapnm3d = '2018-04-03_ncpa_loop_700modes_ncpa_loop_opd.fits'
-    
-    if kw_saxo is True and kw_2nddate is True:    
+     
+    if kw_saxo and kw_2nddate:    
         fname_SAXOmapnm3d = '2018-04-04T03_06_15-saxo_residual_turbulence.fits'
-        if kw_aftercorr is True:
+        if kw_aftercorr:
             fname_SAXOmapnm3d = '2018-04-04T03_12_50-saxo_residual_turbulence.fits'
 
 #%% Filepaths for the file sources
@@ -175,9 +177,9 @@ fpath_Apod2d          = fdir_pupils / fname_Apod2d
 fpath_Apod2d_OPDmapnm = fdir_pupils / fname_Apod2d_OPDmapnm
 fpath_Ampmap2d        = fdir_pupils / fname_Ampmap2d
 
-if kw_aberr is True:
+if kw_aberr:
     fpath_ZELDAmapnm3d = fdir_zelda  / fname_ZELDAmapnm3d   
-    if kw_saxo is True:
+    if kw_saxo and kw_2nddate:
         fpath_SAXOmapnm3d = fdir_saxo / fname_SAXOmapnm3d
     
 fpath_LyotStop2d = fdir_pupils / fname_LyotStop2d
@@ -191,23 +193,27 @@ ncase = len(label_lst)
 """
 ### Filepaths for the file results
 """        
-fname_direct_poly_img_f     = 'direct_poly_img_nmap={:05d}_saxofudge={:.2f}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_f.fits'.format(nmap, saxofudge, defo_ampl, tipp_ampl, tilt_ampl)
-fname_corono_poly_img_f     = 'corono_poly_img_nmap={:05d}_saxofudge={:.2f}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_f.fits'.format(nmap, saxofudge, defo_ampl, tipp_ampl, tilt_ampl)
-fpath_direct_poly_img_f     = fdir_results / fname_direct_poly_img_f
-fpath_corono_poly_img_f     = fdir_results / fname_corono_poly_img_f
+str_common = '_mono_nmap={:05d}_saxofudge={:.2f}_nlam={:04d}'.format(nmap, saxofudge, nlam)
+
+# filepaths for the images
+fname_direct_mono_img_f     = 'direct' + str_common + '_img_f.fits'
+fname_corono_mono_img_f     = 'corono' + str_common + '_img_f.fits'
+fpath_direct_mono_img_f     = fdir_results / fname_direct_mono_img_f
+fpath_corono_mono_img_f     = fdir_results / fname_corono_mono_img_f
 
 #%%
-fname_direct_poly_prf_avg_f = 'direct_poly_prf_nmap={:05d}_saxofudge={:.2f}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_avg_f.fits'.format(nmap, saxofudge, defo_ampl, tipp_ampl, tilt_ampl)
-fname_corono_poly_prf_avg_f = 'corono_poly_prf_nmap={:05d}_saxofudge={:.2f}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_avg_f.fits'.format(nmap, saxofudge, defo_ampl, tipp_ampl, tilt_ampl)
-fname_direct_poly_prf_std_f = 'direct_poly_prf_nmap={:05d}_saxofudge={:.2f}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_std_f.fits'.format(nmap, saxofudge, defo_ampl, tipp_ampl, tilt_ampl)
-fname_corono_poly_prf_std_f = 'corono_poly_prf_nmap={:05d}_saxofudge={:.2f}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_std_f.fits'.format(nmap, saxofudge, defo_ampl, tipp_ampl, tilt_ampl)
-fpath_direct_poly_prf_avg_f = fdir_results / fname_direct_poly_prf_avg_f
-fpath_corono_poly_prf_avg_f = fdir_results / fname_corono_poly_prf_avg_f
-fpath_direct_poly_prf_std_f = fdir_results / fname_direct_poly_prf_std_f
-fpath_corono_poly_prf_std_f = fdir_results / fname_corono_poly_prf_std_f
+# filepaths for the profiles
+fname_direct_mono_prf_avg_f = 'direct' + str_common + '_prf_avg_f.fits'
+fname_corono_mono_prf_avg_f = 'corono' + str_common + '_prf_avg_f.fits'
+fname_direct_mono_prf_std_f = 'direct' + str_common + '_prf_std_f.fits'
+fname_corono_mono_prf_std_f = 'corono' + str_common + '_prf_std_f.fits'
+fpath_direct_mono_prf_avg_f = fdir_results / fname_direct_mono_prf_avg_f
+fpath_corono_mono_prf_avg_f = fdir_results / fname_corono_mono_prf_avg_f
+fpath_direct_mono_prf_std_f = fdir_results / fname_direct_mono_prf_std_f
+fpath_corono_mono_prf_std_f = fdir_results / fname_corono_mono_prf_std_f
 
 #%%
-fname_image_plane_plot   = 'corono_poly_prf_std_t_nmap={0:05d}_OPDmap={0}_defo={2:.1f}_plot.pdf'.format(nmap, imap0, defo_ampl)
+fname_image_plane_plot   = 'corono_poly_prf_std_t_nmap={0:05d}_OPDmap={1}_defo={2:.1f}_plot.pdf'.format(nmap, imap0, defo_ampl)
 fname_image_plane_disp   = 'corono_poly_img_t_nmap={0:05d}_OPDmap={1}_defo={2:.1f}_disp.pdf'.format(nmap, imap0, defo_ampl)
 fname_image_plane_f_disp = 'corono_poly_img_f_nmap={0:05d}_defo={1:.1f}_disp.pdf'.format(nmap, defo_ampl)
 
@@ -319,14 +325,14 @@ Image reading
 """
 #%% array initialization
 # read the averaged image
-direct_poly_img_f = fits.getdata(fpath_direct_poly_img_f)
-corono_poly_img_f = fits.getdata(fpath_corono_poly_img_f)
+direct_mono_img_f = fits.getdata(fpath_direct_mono_img_f)
+corono_mono_img_f = fits.getdata(fpath_corono_mono_img_f)
 
 # read the averaged and standard deviation profiles of the images
-direct_poly_prf_avg_f = fits.getdata(fpath_direct_poly_prf_avg_f)
-corono_poly_prf_avg_f = fits.getdata(fpath_corono_poly_prf_avg_f)
-direct_poly_prf_std_f = fits.getdata(fpath_direct_poly_prf_std_f)
-corono_poly_prf_std_f = fits.getdata(fpath_corono_poly_prf_std_f)
+direct_mono_prf_avg_f = fits.getdata(fpath_direct_mono_prf_avg_f)
+corono_mono_prf_avg_f = fits.getdata(fpath_corono_mono_prf_avg_f)
+direct_mono_prf_std_f = fits.getdata(fpath_direct_mono_prf_std_f)
+corono_mono_prf_std_f = fits.getdata(fpath_corono_mono_prf_std_f)
 
 #%%
 if corono_name != 'APLC':
@@ -348,7 +354,7 @@ corono00 = coro.design.APLC2d(**params)
 ### Plot parameters
 """
 rad_corono = np.arange(nImg2d//2)
-colors_cor = pl.cm.rainbow(np.linspace(0,1,nmap))
+colors_cor = pl.cm.rainbow(np.linspace(0,1,nlam))
 
 lam0D2mas = (wv/8.)*(360*60*60*1000/(2.*np.pi))
 
@@ -373,8 +379,9 @@ i0 = 0
 
 pl.figure(12)
 pl.clf()
-pl.semilogy(x_abs, corono_poly_prf_std_f/direct_poly_img_f.max(),
-        label='map {0}'.format(imap0), color = colors_cor[i0])
+for ilam in range(nlam):
+    pl.semilogy(x_abs, corono_mono_prf_std_f[ilam]/direct_mono_img_f[ilam].max(),
+            label=r'$i={0}$'.format(ilam), color = colors_cor[ilam])
 
 pl.axvline(x=rMask*fac, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
 pl.axvline(x=rho0*fac, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
@@ -385,7 +392,7 @@ pl.xlabel(r'Angular separation in {0}'.format(unit))
 pl.ylabel(r'1$\sigma$ normalized intensity in log scale')
 pl.ylim(3e-7, 3e-3)
 pl.legend()
-pl.title(r'Intensity profile in broadband light ($\Delta\lambda/\lambda_0$={0:.1f}%)'.format(bw*100))
+pl.title(r'Intensity profile in monochromatic light ($\Delta\lambda/\lambda_0$={0:.1f}%)'.format(bw*100))
 pl.tight_layout()
 if kw_mas is False:
     pl.savefig(str(fpath_image_plane_plot), transparent=True)
@@ -394,7 +401,7 @@ if kw_mas is False:
 f2 = pl.figure(24, figsize=(6,4.5))
 pl.clf()
 exec('ax{0} = f2.add_subplot(1,{1},{0})'.format(1,1))
-exec('im = ax{0}.imshow(np.log10(np.fliplr(corono_poly_img_f)/direct_poly_img_f.max()), cmap = "inferno", vmin=-7., vmax=-3.)'.format(1))
+exec('im = ax{0}.imshow(np.log10(np.fliplr(corono_mono_img_f[nlam//2])/direct_mono_img_f[nlam//2].max()), cmap = "inferno", vmin=-7., vmax=-3.)'.format(1))
 exec('ax{0}.text(nImg2d/2, 0.1*nImg2d, "nmap={1:05d} (flip lr)", fontsize=16, horizontalalignment="center", color = "white")'.format(1,nmap))
 exec('ax{0}.tick_params(axis="x", which="both", bottom="off", top="off", labelbottom="off")'.format(1,))
 exec('ax{0}.tick_params(axis="y", which="both", left="off", right="off", labelleft="off")'.format(1,))
