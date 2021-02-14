@@ -32,7 +32,7 @@ CtrBtwnPix2 = False
 Pupil2dSym  = False
 
 # Spectral bandwidth
-wv        = 1.593e-6
+wv0       = 1.593e-6
 width     = 52e-9
 
 # Telescope characteristics
@@ -42,9 +42,9 @@ Fratio    = 40
 # Focal plane mask 
 mas2rad   = np.pi/(180.*3600) # Conversion factor from mas to rads
 rMask_m   = 287e-6/2.         # mask size in m
-rMask     = rMask_m/(wv*Fratio)  # mask size in lam0/D
-rMask_mas = 1000.*rMask * (wv/dAper)/mas2rad
-print('Mask radius: {0:.2f} mas at {1:.3f}um'.format(rMask_mas, wv*1e6))
+rMask     = rMask_m/(wv0*Fratio)  # mask size in lam0/D
+rMask_mas = 1000.*rMask * (wv0/dAper)/mas2rad
+print('Mask radius: {0:.2f} mas at {1:.3f}um'.format(rMask_mas, wv0*1e6))
 
 # sampling
 nPup   = 384   # pupil
@@ -53,12 +53,17 @@ nImg2d = 200   # final image plane
 
 # compute spatial frequencies in the final image plane
 pixel  = 12.25 # IRDIS pixel sampling [mas/pix]
-loD    = wv/dAper*180/np.pi*3600*1000/pixel
+loD    = wv0/dAper*180/np.pi*3600*1000/pixel
 nFre2d = nImg2d/loD    # spatial frequencies in the final image plane
 
 # wavelength sampling
 nlam   = 3
-bw     = width/wv 
+bw     = width/wv0 
+
+lam0   = 1. 
+dlam   = bw*lam0
+lam_t  = np.linspace(lam0-dlam/2*(nlam>1),lam0+dlam/2,nlam)
+wv_t   = wv0*lam_t
 
 # simulation configuration   
 kw_aberr     = True
@@ -250,7 +255,7 @@ params = coro.to_dict(nPup=nPup, nImg2d=nImg2d, Fmax2d = nFre2d, nFPM = nFPM,
                  Pupil2d = Pupil2d, LyotStop2d = LyotStop2d, 
                  CtrBtwnPix=CtrBtwnPix,
                  CtrBtwnPix2 = CtrBtwnPix2, 
-                 nlam=nlam, bw = bw, wv =wv,
+                 nlam=nlam, bw = bw, wv =wv0,
                  OPDmap2d = None, Ampmap2d = Ampmap2d,
                  OPDmap2d_post = None)
 
