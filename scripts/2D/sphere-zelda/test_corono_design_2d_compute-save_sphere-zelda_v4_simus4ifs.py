@@ -53,18 +53,18 @@ nImg2d = 600   # final image plane
 Fmax2d = 60    # spatial frequencies in the final image plane
 
 # wavelength sampling
-nlam   = 5
+nlam   = 3
 bw     = width/wv 
 
 # simulation configuration   
-kw_aberr     = True
+kw_aberr     = False
 kw_2nddate   = True    
 kw_skyobs    = True
 kw_aftercorr = False
 kw_saxo      = True
 saxofudge    = 1. #80/120.
 saxomap_i    = 0    # saxo first screen
-saxomap_f    = 1000    # saxo last screen
+saxomap_f    = 1 # saxo last screen
 
 # test on the order of the min and max number of saxo phase screen
 if saxomap_i <= saxomap_f:
@@ -73,7 +73,7 @@ else:
     raise NameError('initial saxo map (saxomap_i={0}) must be smaller than final saxo map (saxomap_f={1})!'.format(saxomap_i, saxomap_f))
 
 ndefo = 21
-defo_ampl_arr = [0.]#-100 + 10.*np.arange(ndefo)
+defo_ampl = 0.#-100 + 10.*np.arange(ndefo)
 tipp_ampl = 0
 tilt_ampl = 0 
 
@@ -154,7 +154,10 @@ if kw_aberr is True:
     if kw_saxo is True and kw_2nddate is True:    
         fname_SAXOmapnm3d = '2018-04-04T03_06_15-saxo_residual_turbulence.fits'
 
-#%% Filepaths for the file sources
+#%%
+"""
+### Filepaths for the file sources
+"""
 fpath_Apod2d          = fdir_pupils / fname_Apod2d
 fpath_Apod2d_OPDmapnm = fdir_pupils / fname_Apod2d_OPDmapnm
 fpath_Ampmap2d        = fdir_pupils / fname_Ampmap2d
@@ -164,8 +167,7 @@ if kw_aberr is True:
     if kw_saxo is True and kw_2nddate is True:
         fpath_SAXOmapnm3d = fdir_saxo / fname_SAXOmapnm3d
     
-fpath_LyotStop2d = fdir_pupils / fname_LyotStop2d
-    
+fpath_LyotStop2d = fdir_pupils / fname_LyotStop2d    
     
 #%% 
 """
@@ -219,20 +221,22 @@ Tilt_mapnm2d = zernike.zernike1(3, npix=nPup, outside=0.)
 
 #%%
 """
-### Image generation
+### Array initialization
 """
-#%% array initialization
 # define the averaged image
-direct_poly_img_f = np.zeros((nImg2d, nImg2d))
-corono_poly_img_f = np.zeros((nImg2d, nImg2d))
+direct_mono_img_f = np.zeros((nlam, nImg2d, nImg2d))
+corono_mono_img_f = np.zeros((nlam, nImg2d, nImg2d))
 
 # define the averaged and standard deviation profiles of the images
-direct_poly_prf_avg_f = np.zeros((nImg2d//2))
-corono_poly_prf_avg_f = np.zeros((nImg2d//2))
-direct_poly_prf_std_f = np.zeros((nImg2d//2))
-corono_poly_prf_std_f = np.zeros((nImg2d//2))
+direct_mono_prf_avg_f = np.zeros((nlam, nImg2d//2))
+corono_mono_prf_avg_f = np.zeros((nlam, nImg2d//2))
+direct_mono_prf_std_f = np.zeros((nlam, nImg2d//2))
+corono_mono_prf_std_f = np.zeros((nlam, nImg2d//2))
 
-#%% definition of the coronagraph class parameters
+#%% 
+"""
+### Definition of the coronagraph class parameters
+"""
 if corono_name != 'APLC':
     raise NameError('Check the name of the coronagraph!')
 
@@ -246,7 +250,6 @@ params = coro.to_dict(nPup=nPup, nImg2d=nImg2d, Fmax2d = Fmax2d, nFPM = nFPM,
                  OPDmap2d = None, Ampmap2d = None,
                  OPDmap2d_post = None)
     
-#%%
 if kw_aberr is True:               
     params   = coro.update_params(params, OPDmap2d = None,
                                   Ampmap2d = Ampmap2d, LyotStop2d = LyotStop2d)
@@ -256,76 +259,77 @@ else:
                                  Ampmap2d = None, LyotStop2d = LyotStop2d)
     corono0 = coro.design.APLC2d(**params)    
 
+#%%
 """
-### Filepaths for the file results
-"""        
-for i, defo_ampl in enumerate(defo_ampl_arr):
-    print('defo={0}nm rms'.format(defo_ampl))    
-    fname_direct_poly_img_f     = 'direct_poly_img_nmap={:05d}_saxofudge={:.2f}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_f.fits'.format(nmap, saxofudge, defo_ampl, tipp_ampl, tilt_ampl)
-    fname_corono_poly_img_f     = 'corono_poly_img_nmap={:05d}_saxofudge={:.2f}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_f.fits'.format(nmap, saxofudge, defo_ampl, tipp_ampl, tilt_ampl)
-    fpath_direct_poly_img_f     = fdir_results / fname_direct_poly_img_f
-    fpath_corono_poly_img_f     = fdir_results / fname_corono_poly_img_f
-    
-    #%%
-    fname_direct_poly_prf_avg_f = 'direct_poly_prf_nmap={:05d}_saxofudge={:.2f}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_avg_f.fits'.format(nmap, saxofudge, defo_ampl, tipp_ampl, tilt_ampl)
-    fname_corono_poly_prf_avg_f = 'corono_poly_prf_nmap={:05d}_saxofudge={:.2f}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_avg_f.fits'.format(nmap, saxofudge, defo_ampl, tipp_ampl, tilt_ampl)
-    fname_direct_poly_prf_std_f = 'direct_poly_prf_nmap={:05d}_saxofudge={:.2f}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_std_f.fits'.format(nmap, saxofudge, defo_ampl, tipp_ampl, tilt_ampl)
-    fname_corono_poly_prf_std_f = 'corono_poly_prf_nmap={:05d}_saxofudge={:.2f}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_std_f.fits'.format(nmap, saxofudge, defo_ampl, tipp_ampl, tilt_ampl)
-    fpath_direct_poly_prf_avg_f = fdir_results / fname_direct_poly_prf_avg_f
-    fpath_corono_poly_prf_avg_f = fdir_results / fname_corono_poly_prf_avg_f
-    fpath_direct_poly_prf_std_f = fdir_results / fname_direct_poly_prf_std_f
-    fpath_corono_poly_prf_std_f = fdir_results / fname_corono_poly_prf_std_f
-    
+### Filepaths for the results
+"""          
+# filepaths for the images
+fname_direct_mono_img_f     = 'direct_mono_img_nmap={:05d}_saxofudge={:.2f}_nlam={:04d}_f.fits'.format(nmap, saxofudge, nlam)
+fname_corono_mono_img_f     = 'corono_mono_img_nmap={:05d}_saxofudge={:.2f}_nlam={:04d}_f.fits'.format(nmap, saxofudge, nlam)
+fpath_direct_mono_img_f     = fdir_results / fname_direct_mono_img_f
+fpath_corono_mono_img_f     = fdir_results / fname_corono_mono_img_f
 
-    #%%
-    # definition of the coronagraph class
-    if kw_aberr is True:
-        OPDmap2d0 = (beta_wfs*ZELDAmapnm3d[imap0]+Apod2d_OPDmapnm\
-                    +defo_ampl*Defo_mapnm2d\
-                    +tipp_ampl*Tipp_mapnm2d\
-                    +tilt_ampl*Tilt_mapnm2d)*1e-9
+# filepaths for the profiles
+fname_direct_mono_prf_avg_f = 'direct_mono_prf_nmap={:05d}_saxofudge={:.2f}_nlam={:04d}_avg_f.fits'.format(nmap, saxofudge, nlam)
+fname_corono_mono_prf_avg_f = 'corono_mono_prf_nmap={:05d}_saxofudge={:.2f}_nlam={:04d}_avg_f.fits'.format(nmap, saxofudge, nlam)
+fname_direct_mono_prf_std_f = 'direct_mono_prf_nmap={:05d}_saxofudge={:.2f}_nlam={:04d}_std_f.fits'.format(nmap, saxofudge, nlam)
+fname_corono_mono_prf_std_f = 'corono_mono_prf_nmap={:05d}_saxofudge={:.2f}_nlam={:04d}_std_f.fits'.format(nmap, saxofudge, nlam)
+fpath_direct_mono_prf_avg_f = fdir_results / fname_direct_mono_prf_avg_f
+fpath_corono_mono_prf_avg_f = fdir_results / fname_corono_mono_prf_avg_f
+fpath_direct_mono_prf_std_f = fdir_results / fname_direct_mono_prf_std_f
+fpath_corono_mono_prf_std_f = fdir_results / fname_corono_mono_prf_std_f
 
-    for imap in range(nmap):
-        t0 = time.time()
-        if kw_aberr is True:           
-            if kw_saxo is True and kw_2nddate is True:
-                OPDmap2d = OPDmap2d0 + SAXOmapnm3d[saxomap_i+imap]*1e-9
-            else:
-                OPDmap2d = OPDmap2d0*1.
-            direct_poly_img_f += corono0.compute_direct_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d)
-            corono_poly_img_f += corono0.compute_corono_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d)                
-        else:                    
-            direct_poly_img_f += corono0.compute_direct_intensity_2d(Apod2d)
-            corono_poly_img_f += corono0.compute_corono_intensity_2d(Apod2d)    
-    
-        t1 = time.time()
-        if (imap+1) % 10 == 0: 
-            print('map {1}/{2}, computation time: {0:.2f}s'.format(t1-t0, imap+1, nmap))
-    
-    # computation of the averaged images
-    direct_poly_img_f /= nmap
-    corono_poly_img_f /= nmap
-    
+#%%
+"""
+### Image generation
+"""
+# definition of the coronagraph class
+if kw_aberr is True:
+    OPDmap2d0 = (beta_wfs*ZELDAmapnm3d[imap0]+Apod2d_OPDmapnm\
+                +defo_ampl*Defo_mapnm2d\
+                +tipp_ampl*Tipp_mapnm2d\
+                +tilt_ampl*Tilt_mapnm2d)*1e-9
+
+
+for imap in range(nmap):
+    t0 = time.time()
+    OPDmap2d = None
+    if kw_aberr is True:           
+        if kw_saxo is True and kw_2nddate is True:
+            OPDmap2d = OPDmap2d0 + SAXOmapnm3d[saxomap_i+imap]*1e-9
+        else:
+            OPDmap2d = OPDmap2d0*1.
+    direct_mono_img_f += corono0.compute_direct_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d, poly=False)
+    corono_mono_img_f += corono0.compute_corono_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d, poly=False)                
+
+    t1 = time.time()
+    if (imap+1) % 10 == 0: 
+        print('map {1}/{2}, computation time: {0:.2f}s'.format(t1-t0, imap+1, nmap))
+
+# computation of the averaged images
+direct_mono_img_f /= nmap
+corono_mono_img_f /= nmap
+
+for ilam in range(nlam):
     # image normalization
-    direct_peak_val = direct_poly_img_f.max()
-    direct_poly_img_f /= direct_peak_val
-    corono_poly_img_f /= direct_peak_val
-         
+    direct_peak_val = direct_mono_img_f[ilam].max()
+    direct_mono_img_f[ilam] /= direct_peak_val
+    corono_mono_img_f[ilam] /= direct_peak_val
+     
     # computation of the averaged and standard deviation profiles of the images   
-    direct_poly_prf_avg_f, rad_direct = imutils.profile(direct_poly_img_f, type='mean')
-    corono_poly_prf_avg_f, rad_corono = imutils.profile(corono_poly_img_f, type='mean')
-    direct_poly_prf_std_f, rad_direct = imutils.profile(direct_poly_img_f, type='std')
-    corono_poly_prf_std_f, rad_corono = imutils.profile(corono_poly_img_f, type='std')
-    
-    #%% saving of the images
-    """
-    ### File saving
-    """
-    fits.writeto(fpath_direct_poly_img_f, direct_poly_img_f, overwrite=True)
-    fits.writeto(fpath_corono_poly_img_f, corono_poly_img_f, overwrite=True)
-    
-    fits.writeto(fpath_direct_poly_prf_avg_f, direct_poly_prf_avg_f, overwrite=True)
-    fits.writeto(fpath_corono_poly_prf_avg_f, corono_poly_prf_avg_f, overwrite=True)
-    fits.writeto(fpath_direct_poly_prf_std_f, direct_poly_prf_std_f, overwrite=True)
-    fits.writeto(fpath_corono_poly_prf_std_f, corono_poly_prf_std_f, overwrite=True)
-   
+    direct_mono_prf_avg_f[ilam], rad_direct = imutils.profile(direct_mono_img_f[ilam], type='mean')
+    corono_mono_prf_avg_f[ilam], rad_corono = imutils.profile(corono_mono_img_f[ilam], type='mean')
+    direct_mono_prf_std_f[ilam], rad_direct = imutils.profile(direct_mono_img_f[ilam], type='std')
+    corono_mono_prf_std_f[ilam], rad_corono = imutils.profile(corono_mono_img_f[ilam], type='std')
+
+#%% saving of the images
+"""
+### File saving
+"""
+fits.writeto(fpath_direct_mono_img_f, direct_mono_img_f, overwrite=True)
+fits.writeto(fpath_corono_mono_img_f, corono_mono_img_f, overwrite=True)
+
+fits.writeto(fpath_direct_mono_prf_avg_f, direct_mono_prf_avg_f, overwrite=True)
+fits.writeto(fpath_corono_mono_prf_avg_f, corono_mono_prf_avg_f, overwrite=True)
+fits.writeto(fpath_direct_mono_prf_std_f, direct_mono_prf_std_f, overwrite=True)
+fits.writeto(fpath_corono_mono_prf_std_f, corono_mono_prf_std_f, overwrite=True) 

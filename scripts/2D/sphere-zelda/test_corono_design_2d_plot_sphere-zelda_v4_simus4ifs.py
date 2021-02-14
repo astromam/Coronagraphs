@@ -53,7 +53,7 @@ nImg2d = 600   # final image plane
 Fmax2d = 60    # spatial frequencies in the final image plane
 
 # wavelength sampling
-nlam   = 5
+nlam   = 3
 bw     = width/wv 
 
 # simulation configuration   
@@ -64,7 +64,7 @@ kw_aftercorr = False
 kw_saxo      = True
 saxofudge    = 1. #80/120.
 saxomap_i    = 0
-saxomap_f    = 1000 #int(30*1380)
+saxomap_f    = 1 #int(30*1380)
 
 # test on the order of the min and max number of saxo phase screen
 if saxomap_i <= saxomap_f:
