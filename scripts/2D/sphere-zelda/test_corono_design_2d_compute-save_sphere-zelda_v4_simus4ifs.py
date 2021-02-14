@@ -54,7 +54,7 @@ nImg2d = 200   # final image plane
 # compute spatial frequencies in the final image plane
 pixel  = 12.25 # IRDIS pixel sampling [mas/pix]
 loD    = wv/dAper*180/np.pi*3600*1000/pixel
-Fmax2d = nImg2d/loD    # spatial frequencies in the final image plane
+nFre2d = nImg2d/loD    # spatial frequencies in the final image plane
 
 # wavelength sampling
 nlam   = 3
@@ -244,7 +244,7 @@ corono_mono_prf_std_f = np.zeros((nlam, nImg2d//2))
 if corono_name != 'APLC':
     raise NameError('Check the name of the coronagraph!')
 
-params = coro.to_dict(nPup=nPup, nImg2d=nImg2d, Fmax2d = Fmax2d, nFPM = nFPM,
+params = coro.to_dict(nPup=nPup, nImg2d=nImg2d, Fmax2d = nFre2d, nFPM = nFPM,
                  rMask = rMask,
                  Pupil2dSym = Pupil2dSym, 
                  Pupil2d = Pupil2d, LyotStop2d = LyotStop2d, 
