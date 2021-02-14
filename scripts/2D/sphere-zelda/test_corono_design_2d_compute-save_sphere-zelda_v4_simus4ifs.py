@@ -42,15 +42,19 @@ Fratio    = 40
 # Focal plane mask 
 mas2rad   = np.pi/(180.*3600) # Conversion factor from mas to rads
 rMask_m   = 287e-6/2.         # mask size in m
-rMask  = rMask_m/(wv*Fratio)  # mask size in lam0/D
+rMask     = rMask_m/(wv*Fratio)  # mask size in lam0/D
 rMask_mas = 1000.*rMask * (wv/dAper)/mas2rad
 print('Mask radius: {0:.2f} mas at {1:.3f}um'.format(rMask_mas, wv*1e6))
 
 # sampling
 nPup   = 384   # pupil
 nFPM   = 200   # focal plane mask
-nImg2d = 600   # final image plane 
-Fmax2d = 60    # spatial frequencies in the final image plane
+nImg2d = 200   # final image plane 
+
+# compute spatial frequencies in the final image plane
+pixel  = 12.25 # IRDIS pixel sampling [mas/pix]
+loD    = wv/dAper*180/np.pi*3600*1000/pixel
+Fmax2d = nImg2d/loD    # spatial frequencies in the final image plane
 
 # wavelength sampling
 nlam   = 3
@@ -150,6 +154,8 @@ if kw_aberr:
     
     if kw_saxo and kw_2nddate:    
         fname_SAXOmapnm3d = '2018-04-04T03_06_15-saxo_residual_turbulence.fits'
+        if kw_aftercorr:
+            fname_SAXOmapnm3d = '2018-04-04T03_12_50-saxo_residual_turbulence.fits'
 
 #%%
 """
