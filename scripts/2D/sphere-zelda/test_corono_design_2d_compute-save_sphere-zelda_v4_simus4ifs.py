@@ -187,6 +187,7 @@ Apod2d_OPDmapnm = fits.getdata(fpath_Apod2d_OPDmapnm)
 Apod2d_OPDmapnm[np.isnan(Apod2d_OPDmapnm)] = 0
 
 #%% Amplitude errors
+Ampmap2d = None
 if kw_aberr is True:
     Ampmap2d = fits.getdata(fpath_Ampmap2d)
 
@@ -247,37 +248,33 @@ params = coro.to_dict(nPup=nPup, nImg2d=nImg2d, Fmax2d = Fmax2d, nFPM = nFPM,
                  CtrBtwnPix=CtrBtwnPix,
                  CtrBtwnPix2 = CtrBtwnPix2, 
                  nlam=nlam, bw = bw, wv =wv,
-                 OPDmap2d = None, Ampmap2d = None,
+                 OPDmap2d = None, Ampmap2d = Ampmap2d,
                  OPDmap2d_post = None)
-    
-if kw_aberr is True:               
-    params   = coro.update_params(params, OPDmap2d = None,
-                                  Ampmap2d = Ampmap2d, LyotStop2d = LyotStop2d)
-    corono0  = coro.design.APLC2d(**params)
-else:
-    params  = coro.update_params(params, OPDmap2d = None, 
-                                 Ampmap2d = None, LyotStop2d = LyotStop2d)
-    corono0 = coro.design.APLC2d(**params)    
+
+corono0  = coro.design.APLC2d(**params)
 
 #%%
 """
 ### Filepaths for the results
 """          
+str_common = '_mono_nmap={:05d}_saxofudge={:.2f}_nlam={:04d}'.format(nmap, saxofudge, nlam)
+
 # filepaths for the images
-fname_direct_mono_img_f     = 'direct_mono_img_nmap={:05d}_saxofudge={:.2f}_nlam={:04d}_f.fits'.format(nmap, saxofudge, nlam)
-fname_corono_mono_img_f     = 'corono_mono_img_nmap={:05d}_saxofudge={:.2f}_nlam={:04d}_f.fits'.format(nmap, saxofudge, nlam)
+fname_direct_mono_img_f     = 'direct' + str_common + '_img_f.fits'
+fname_corono_mono_img_f     = 'corono' + str_common + '_img_f.fits'
 fpath_direct_mono_img_f     = fdir_results / fname_direct_mono_img_f
 fpath_corono_mono_img_f     = fdir_results / fname_corono_mono_img_f
 
 # filepaths for the profiles
-fname_direct_mono_prf_avg_f = 'direct_mono_prf_nmap={:05d}_saxofudge={:.2f}_nlam={:04d}_avg_f.fits'.format(nmap, saxofudge, nlam)
-fname_corono_mono_prf_avg_f = 'corono_mono_prf_nmap={:05d}_saxofudge={:.2f}_nlam={:04d}_avg_f.fits'.format(nmap, saxofudge, nlam)
-fname_direct_mono_prf_std_f = 'direct_mono_prf_nmap={:05d}_saxofudge={:.2f}_nlam={:04d}_std_f.fits'.format(nmap, saxofudge, nlam)
-fname_corono_mono_prf_std_f = 'corono_mono_prf_nmap={:05d}_saxofudge={:.2f}_nlam={:04d}_std_f.fits'.format(nmap, saxofudge, nlam)
+fname_direct_mono_prf_avg_f = 'direct' + str_common + '_prf_avg_f.fits'
+fname_corono_mono_prf_avg_f = 'corono' + str_common + '_prf_avg_f.fits'
+fname_direct_mono_prf_std_f = 'direct' + str_common + '_prf_std_f.fits'
+fname_corono_mono_prf_std_f = 'corono' + str_common + '_prf_std_f.fits'
 fpath_direct_mono_prf_avg_f = fdir_results / fname_direct_mono_prf_avg_f
 fpath_corono_mono_prf_avg_f = fdir_results / fname_corono_mono_prf_avg_f
 fpath_direct_mono_prf_std_f = fdir_results / fname_direct_mono_prf_std_f
 fpath_corono_mono_prf_std_f = fdir_results / fname_corono_mono_prf_std_f
+
 
 #%%
 """
