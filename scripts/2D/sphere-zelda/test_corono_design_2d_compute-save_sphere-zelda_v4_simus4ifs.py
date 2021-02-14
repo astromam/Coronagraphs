@@ -57,7 +57,7 @@ nlam   = 3
 bw     = width/wv 
 
 # simulation configuration   
-kw_aberr     = False
+kw_aberr     = True
 kw_2nddate   = True    
 kw_skyobs    = True
 kw_aftercorr = False
@@ -76,8 +76,6 @@ ndefo = 21
 defo_ampl = 0.#-100 + 10.*np.arange(ndefo)
 tipp_ampl = 0
 tilt_ampl = 0 
-
-
     
 #%%
 """
@@ -86,10 +84,9 @@ tilt_ampl = 0
 if kw_aberr is False:
     str_aberr = 'wo_aberr'
     str_date  = ''
-    if kw_skyobs is True:
+    str_obs   = 'internal'
+    if kw_skyobs:
         str_obs   = 'sky'
-    else:
-        str_obs   = 'internal'
     str_corr  = ''
     str_saxo  = ''
     str_saxoset= ''
@@ -104,15 +101,15 @@ else:
     nmap      = 1
     beta_wfs  = 1./0.90
     str_saxo_tmp  = 'wo_saxo'
-    if kw_2nddate is True:
+    if kw_2nddate:
         str_date = '2018-04-03'
-    if kw_skyobs is True:
+    if kw_skyobs:
         str_obs  = 'sky'
-    if kw_aftercorr is True:
+    if kw_aftercorr:
         str_corr = 'after_correction'
         imap0    = 3
         beta_wfs = 1./0.95
-    if kw_saxo is True and kw_2nddate is True:
+    if kw_saxo and kw_2nddate:
         str_saxo = 'with_saxo'
         nmap     = nsaxomap*1
         beta_wfs = 1./0.6
@@ -124,7 +121,7 @@ fdir_pupils  = fdir / 'data' / '2D' / 'pupils' / 'SPHERE'
 fdir_zelda   = fdir / 'data' / '2D' / 'ZELDA' / str_date / str_obs  
 fdir_saxo    = fdir / 'data' / '2D' / 'ZELDA' / '2018-04-03'
 
-if kw_aberr is True:
+if kw_aberr:
     fdir_results = fdir / 'results' / '2D' / 'data' / 'SPHERE' / str_aberr / str_date / str_obs / str_saxo / str_corr  
 else:
     fdir_results = fdir / 'results' / '2D' / 'data' / 'SPHERE' / str_aberr / str_obs / str_saxo / str_corr  
@@ -141,17 +138,17 @@ fname_Apod2d_OPDmapnm = 'apo_substrate_D1.fits'
 fname_Ampmap2d   = 'sphere_pupil_clear_BH_field.fits'
 fname_LyotStop2d = 'sphere_stop_ST_ALC2.fits'
 
-if kw_aberr is True:
-    if kw_skyobs is True:
+if kw_aberr:
+    if kw_skyobs:
         fname_ZELDAmapnm3d = '2018-04-01_night_ncpa_loop_700modes_5_ncpa_loop_opd.fits'
-        if kw_2nddate is True:
+        if kw_2nddate:
             fname_ZELDAmapnm3d = '2018-04-03_night_ncpa_loop_sky_2_ncpa_loop_opd.fits'
     else:
         fname_ZELDAmapnm3d = '2018-04-01_ncpa_loop_700modes_2_ncpa_loop_opd.fits'        
-        if kw_2nddate is True:        
+        if kw_2nddate:        
             fname_ZELDAmapnm3d = '2018-04-03_ncpa_loop_700modes_ncpa_loop_opd.fits'
     
-    if kw_saxo is True and kw_2nddate is True:    
+    if kw_saxo and kw_2nddate:    
         fname_SAXOmapnm3d = '2018-04-04T03_06_15-saxo_residual_turbulence.fits'
 
 #%%
@@ -162,9 +159,9 @@ fpath_Apod2d          = fdir_pupils / fname_Apod2d
 fpath_Apod2d_OPDmapnm = fdir_pupils / fname_Apod2d_OPDmapnm
 fpath_Ampmap2d        = fdir_pupils / fname_Ampmap2d
 
-if kw_aberr is True:
+if kw_aberr:
     fpath_ZELDAmapnm3d = fdir_zelda  / fname_ZELDAmapnm3d   
-    if kw_saxo is True and kw_2nddate is True:
+    if kw_saxo and kw_2nddate:
         fpath_SAXOmapnm3d = fdir_saxo / fname_SAXOmapnm3d
     
 fpath_LyotStop2d = fdir_pupils / fname_LyotStop2d    
@@ -174,7 +171,7 @@ fpath_LyotStop2d = fdir_pupils / fname_LyotStop2d
 ### File reading
 """
 # Pupil
-if kw_skyobs is True:
+if kw_skyobs:
     Pupil2d = aperture.vlt_pupil(nPup, nPup, dead_actuator_diameter=0)
 else:
     Pupil2d = aperture.disc(nPup, nPup/2)
@@ -188,14 +185,14 @@ Apod2d_OPDmapnm[np.isnan(Apod2d_OPDmapnm)] = 0
 
 #%% Amplitude errors
 Ampmap2d = None
-if kw_aberr is True:
+if kw_aberr:
     Ampmap2d = fits.getdata(fpath_Ampmap2d)
 
 #%% Phase errors
-if kw_aberr is True:
+if kw_aberr:
     ZELDAmapnm3d = fits.getdata(fpath_ZELDAmapnm3d)
 
-    if kw_saxo is True and kw_2nddate is True:
+    if kw_saxo and kw_2nddate:
         SAXOmapnm3d_tmp = fits.getdata(fpath_SAXOmapnm3d)
         if saxofudge != 1.:
             SAXOmapnm3d_tmp *= saxofudge 
@@ -275,13 +272,12 @@ fpath_corono_mono_prf_avg_f = fdir_results / fname_corono_mono_prf_avg_f
 fpath_direct_mono_prf_std_f = fdir_results / fname_direct_mono_prf_std_f
 fpath_corono_mono_prf_std_f = fdir_results / fname_corono_mono_prf_std_f
 
-
 #%%
 """
 ### Image generation
 """
 # definition of the coronagraph class
-if kw_aberr is True:
+if kw_aberr:
     OPDmap2d0 = (beta_wfs*ZELDAmapnm3d[imap0]+Apod2d_OPDmapnm\
                 +defo_ampl*Defo_mapnm2d\
                 +tipp_ampl*Tipp_mapnm2d\
@@ -291,8 +287,8 @@ if kw_aberr is True:
 for imap in range(nmap):
     t0 = time.time()
     OPDmap2d = None
-    if kw_aberr is True:           
-        if kw_saxo is True and kw_2nddate is True:
+    if kw_aberr:           
+        if kw_saxo and kw_2nddate:
             OPDmap2d = OPDmap2d0 + SAXOmapnm3d[saxomap_i+imap]*1e-9
         else:
             OPDmap2d = OPDmap2d0*1.
