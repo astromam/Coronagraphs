@@ -59,12 +59,12 @@ bw     = width/wv
 # simulation configuration   
 kw_aberr     = True
 kw_2nddate   = True    
-kw_skyobs    = False
+kw_skyobs    = True
 kw_aftercorr = False
-kw_saxo      = False
+kw_saxo      = True
 saxofudge    = 1. #80/120.
 saxomap_i    = 0
-saxomap_f    = 100#int(30*1380)
+saxomap_f    = 1000 #int(30*1380)
 
 # test on the order of the min and max number of saxo phase screen
 if saxomap_i <= saxomap_f:
@@ -383,7 +383,7 @@ pl.axhline(10**(-cDarkHole), xmin=corono00.xi2d.min()*fac, xmax=corono00.xi2d.ma
            linewidth=1, color='k', linestyle='--')
 pl.xlabel(r'Angular separation in {0}'.format(unit))
 pl.ylabel(r'1$\sigma$ normalized intensity in log scale')
-pl.ylim(3e-8, 3e-4)
+pl.ylim(3e-7, 3e-3)
 pl.legend()
 pl.title(r'Intensity profile in broadband light ($\Delta\lambda/\lambda_0$={0:.1f}%)'.format(bw*100))
 pl.tight_layout()
@@ -394,7 +394,7 @@ if kw_mas is False:
 f2 = pl.figure(24, figsize=(6,4.5))
 pl.clf()
 exec('ax{0} = f2.add_subplot(1,{1},{0})'.format(1,1))
-exec('im = ax{0}.imshow(np.log10(np.fliplr(corono_poly_img_f)/direct_poly_img_f.max()), cmap = "inferno", vmin=-7.5, vmax=-3.5)'.format(1))
+exec('im = ax{0}.imshow(np.log10(np.fliplr(corono_poly_img_f)/direct_poly_img_f.max()), cmap = "inferno", vmin=-7., vmax=-3.)'.format(1))
 exec('ax{0}.text(nImg2d/2, 0.1*nImg2d, "nmap={1:05d} (flip lr)", fontsize=16, horizontalalignment="center", color = "white")'.format(1,nmap))
 exec('ax{0}.tick_params(axis="x", which="both", bottom="off", top="off", labelbottom="off")'.format(1,))
 exec('ax{0}.tick_params(axis="y", which="both", left="off", right="off", labelleft="off")'.format(1,))
