@@ -159,8 +159,6 @@ if kw_aberr:
     
     if kw_saxo and kw_2nddate:    
         fname_SAXOmapnm3d = '2018-04-04T03_06_15-saxo_residual_turbulence.fits'
-        if kw_aftercorr:
-            fname_SAXOmapnm3d = '2018-04-04T03_12_50-saxo_residual_turbulence.fits'
 
 #%%
 """
