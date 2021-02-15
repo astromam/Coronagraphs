@@ -33,7 +33,7 @@ Pupil2dSym  = False
 
 # Spectral bandwidth
 wv0        = 1.593e-6
-width     = 52e-9
+width      = 52e-9
 
 # Telescope characteristics
 dAper     = 8
@@ -73,7 +73,7 @@ kw_aftercorr = False
 kw_saxo      = True
 saxofudge    = 1. #80/120.
 saxomap_i    = 0
-saxomap_f    = 1 #int(30*1380)
+saxomap_f    = int(2*1380)-1 #int(30*1380)
 
 # test on the order of the min and max number of saxo phase screen
 if saxomap_i <= saxomap_f:
