@@ -14,8 +14,8 @@ License: MIT license
 ### Initialization
 """
 import sys
-sys.path.append('/home/avigan/GitHub/Coronagraphs/')
-sys.path.append('/Users/avigan/Work/GitHub/Coronagraphs/')
+#sys.path.append('/home/avigan/GitHub/Coronagraphs/')
+#sys.path.append('/Users/avigan/Work/GitHub/Coronagraphs/')
 
 import numpy as np
 import os
@@ -69,8 +69,8 @@ def compute_corono_image(img_index, saxo_i, saxo_f):
     corono_mono_img_cube_np = array_to_numpy(corono_mono_img_cube, corono_mono_img_cube_shape)
     
     # create temporary images
-    direct_mono_img_f = np.zeros((nImg2d, nImg2d))
-    corono_mono_img_f = np.zeros((nImg2d, nImg2d))
+    direct_mono_img_f = np.zeros((nlam, nImg2d, nImg2d))
+    corono_mono_img_f = np.zeros((nlam, nImg2d, nImg2d))
 
     # loop on phase screens
     saxo_i = int(saxo_i)
@@ -102,7 +102,7 @@ if __name__ == '__main__':
     Pupil2dSym  = False
 
     # Spectral bandwidth
-    wv0        = 1.593e-6
+    wv0       = 1.593e-6
     width     = 52e-9
 
     # Telescope characteristics
@@ -130,6 +130,12 @@ if __name__ == '__main__':
     nlam   = 3
     bw     = width/wv0 
 
+    lam0   = 1. 
+    dlam   = bw*lam0
+    lam_t  = np.linspace(lam0-dlam/2*(nlam>1),lam0+dlam/2,nlam)
+    wv_t   = wv0*lam_t
+
+
     # simulation configuration   
     kw_aberr     = True
     kw_2nddate   = True    
@@ -137,8 +143,8 @@ if __name__ == '__main__':
     kw_aftercorr = bool(eval(sys.argv[1]))
     kw_saxo      = True
     saxofudge    = 1 #60/120              # saxo amplitude errors fudge factor
-    saxomap_i    = 0               # saxo first screen
-    saxomap_f    = int(2*1380)    # saxo last screen
+    saxomap_i    = 0                    # saxo first screen
+    saxomap_f    = 1000#int(2*1380)     # saxo last screen
 
     # multi-processing
     nproc = multiprocessing.cpu_count()//2 - 1
@@ -148,7 +154,7 @@ if __name__ == '__main__':
     nsaxomap  = nsaxomap - (nsaxomap % nproc)
 
     ndefo = 21
-    defo_ampl_arr = [np.float(sys.argv[2])]#-100 + 10.*np.arange(21)
+    defo_ampl = 0#-100 + 10.*np.arange(21)
     tipp_ampl = 0
     tilt_ampl = 0 
 
@@ -335,109 +341,107 @@ if __name__ == '__main__':
     ### Filepaths for the file results
     """
 
-    for i, defo_ampl in enumerate(defo_ampl_arr):
-        print('defo={0}nm rms'.format(defo_ampl))
-        str_common = '_mono_nmap={:05d}_saxofudge={:.2f}_nlam={:04d}'.format(nmap, saxofudge, nlam)
+    str_common = '_mono_nmap={:05d}_saxofudge={:.2f}_nlam={:04d}'.format(nmap, saxofudge, nlam)
+    
+    # filepaths for the images
+    fname_direct_mono_img_f     = 'direct' + str_common + '_img_f.fits'
+    fname_corono_mono_img_f     = 'corono' + str_common + '_img_f.fits'
+    fpath_direct_mono_img_f     = fdir_results / fname_direct_mono_img_f
+    fpath_corono_mono_img_f     = fdir_results / fname_corono_mono_img_f
 
-        
-        # filepaths for the images
-        fname_direct_mono_img_f     = 'direct' + str_common + '_img_f.fits'
-        fname_corono_mono_img_f     = 'corono' + str_common + '_img_f.fits'
-        fpath_direct_mono_img_f     = fdir_results / fname_direct_mono_img_f
-        fpath_corono_mono_img_f     = fdir_results / fname_corono_mono_img_f
+    # filepaths for the profiles
+    fname_direct_mono_prf_avg_f = 'direct' + str_common + '_prf_avg_f.fits'
+    fname_corono_mono_prf_avg_f = 'corono' + str_common + '_prf_avg_f.fits'
+    fname_direct_mono_prf_std_f = 'direct' + str_common + '_prf_std_f.fits'
+    fname_corono_mono_prf_std_f = 'corono' + str_common + '_prf_std_f.fits'
+    fpath_direct_mono_prf_avg_f = fdir_results / fname_direct_mono_prf_avg_f
+    fpath_corono_mono_prf_avg_f = fdir_results / fname_corono_mono_prf_avg_f
+    fpath_direct_mono_prf_std_f = fdir_results / fname_direct_mono_prf_std_f
+    fpath_corono_mono_prf_std_f = fdir_results / fname_corono_mono_prf_std_f
 
-        # filepaths for the profiles
-        fname_direct_mono_prf_avg_f = 'direct' + str_common + '_prf_avg_f.fits'
-        fname_corono_mono_prf_avg_f = 'corono' + str_common + '_prf_avg_f.fits'
-        fname_direct_mono_prf_std_f = 'direct' + str_common + '_prf_std_f.fits'
-        fname_corono_mono_prf_std_f = 'corono' + str_common + '_prf_std_f.fits'
-        fpath_direct_mono_prf_avg_f = fdir_results / fname_direct_mono_prf_avg_f
-        fpath_corono_mono_prf_avg_f = fdir_results / fname_corono_mono_prf_avg_f
-        fpath_direct_mono_prf_std_f = fdir_results / fname_direct_mono_prf_std_f
-        fpath_corono_mono_prf_std_f = fdir_results / fname_corono_mono_prf_std_f
+    #%%
+    # definition of the coronagraph class
+    if kw_aberr:
+        OPDmap2d0 = (beta_wfs*ZELDAmapnm3d[imap0]+Apod2d_OPDmapnm\
+                    +defo_ampl*Defo_mapnm2d\
+                    +tipp_ampl*Tipp_mapnm2d\
+                    +tilt_ampl*Tilt_mapnm2d)*1e-9
 
-        #%%
-        # definition of the coronagraph class
-        if kw_aberr:
-            OPDmap2d0 = (beta_wfs*ZELDAmapnm3d[imap0]+Apod2d_OPDmapnm\
-                        +defo_ampl*Defo_mapnm2d\
-                        +tipp_ampl*Tipp_mapnm2d\
-                        +tilt_ampl*Tilt_mapnm2d)*1e-9
+    t0 = time.time()
+    if kw_aberr:
+        if kw_saxo and kw_2nddate:
 
-        t0 = time.time()
-        if kw_aberr:
-            if kw_saxo and kw_2nddate:
+            # create shared arrays
+            direct_mono_img_cube_shape = (nproc, nImg2d, nImg2d)
+            direct_mono_img_cube_data  = multiprocessing.RawArray(ctypes.c_double, int(np.prod(direct_mono_img_cube_shape)))
+            direct_mono_img_cube_np    = array_to_numpy(direct_mono_img_cube_data, direct_mono_img_cube_shape)
+            
+            corono_mono_img_cube_shape = (nproc, nImg2d, nImg2d)
+            corono_mono_img_cube_data  = multiprocessing.RawArray(ctypes.c_double, int(np.prod(corono_mono_img_cube_shape)))
+            corono_mono_img_cube_np    = array_to_numpy(corono_mono_img_cube_data, corono_mono_img_cube_shape)
 
-                # create shared arrays
-                direct_mono_img_cube_shape = (nproc, nImg2d, nImg2d)
-                direct_mono_img_cube_data  = multiprocessing.RawArray(ctypes.c_double, int(np.prod(direct_mono_img_cube_shape)))
-                direct_mono_img_cube_np    = array_to_numpy(direct_mono_img_cube_data, direct_mono_img_cube_shape)
-                
-                corono_mono_img_cube_shape = (nproc, nImg2d, nImg2d)
-                corono_mono_img_cube_data  = multiprocessing.RawArray(ctypes.c_double, int(np.prod(corono_mono_img_cube_shape)))
-                corono_mono_img_cube_np    = array_to_numpy(corono_mono_img_cube_data, corono_mono_img_cube_shape)
+            # create thread pool
+            tpool = multiprocessing.Pool(processes=nproc, initializer=tpool_init,
+                                         initargs=(OPDmap2d0, SAXOmapnm3d, corono0, direct_mono_img_cube_data, direct_mono_img_cube_shape,
+                                                   corono_mono_img_cube_data, corono_mono_img_cube_shape))
+            # tpool_init(OPDmap2d0, SAXOmapnm3d, corono0, direct_mono_img_cube_data, direct_mono_img_cube_shape,
+            #            corono_mono_img_cube_data, corono_mono_img_cube_shape)
 
-                # create thread pool
-                tpool = multiprocessing.Pool(processes=nproc, initializer=tpool_init,
-                                             initargs=(OPDmap2d0, SAXOmapnm3d, corono0, direct_mono_img_cube_data, direct_mono_img_cube_shape,
-                                                       corono_mono_img_cube_data, corono_mono_img_cube_shape))
-                # tpool_init(OPDmap2d0, SAXOmapnm3d, corono0, direct_mono_img_cube_data, direct_mono_img_cube_shape,
-                #            corono_mono_img_cube_data, corono_mono_img_cube_shape)
+            # create tasks
+            tasks = []
+            for image_index in range(nproc):
+                block = nmap / nproc
+                idx_i = image_index*block
+                idx_f = (image_index+1)*block-1
+                tasks.append(tpool.apply_async(compute_corono_image, args=(image_index, idx_i, idx_f)))
+                # compute_corono_image(image_index, idx_i, idx_f)
+                # stop
 
-                # create tasks
-                tasks = []
-                for image_index in range(nproc):
-                    block = nmap / nproc
-                    idx_i = image_index*block
-                    idx_f = (image_index+1)*block-1
-                    tasks.append(tpool.apply_async(compute_corono_image, args=(image_index, idx_i, idx_f)))
-                    # compute_corono_image(image_index, idx_i, idx_f)
-                    # stop
+            for idx, task in enumerate(tasks):
+                task.wait()
 
-                for idx, task in enumerate(tasks):
-                    task.wait()
+            # close thread pool
+            tpool.close()
+            tpool.join()
 
-                # close thread pool
-                tpool.close()
-                tpool.join()
+            direct_mono_img_cube_np = array_to_numpy(direct_mono_img_cube_data, direct_mono_img_cube_shape)
+            corono_mono_img_cube_np = array_to_numpy(corono_mono_img_cube_data, corono_mono_img_cube_shape)
+            
+            direct_mono_img_f += direct_mono_img_cube_np.sum(axis=0)
+            corono_mono_img_f += corono_mono_img_cube_np.sum(axis=0)
 
-                direct_mono_img_cube_np = array_to_numpy(direct_mono_img_cube_data, direct_mono_img_cube_shape)
-                corono_mono_img_cube_np = array_to_numpy(corono_mono_img_cube_data, corono_mono_img_cube_shape)
-                
-                direct_mono_img_f += direct_mono_img_cube_np.sum(axis=0)
-                corono_mono_img_f += corono_mono_img_cube_np.sum(axis=0)
-
-            else:
-                direct_mono_img_f += corono0.compute_direct_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d0)
-                corono_mono_img_f += corono0.compute_corono_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d0)
         else:
-            direct_mono_img_f += corono0.compute_direct_intensity_2d_bis(Apod2d)
-            corono_mono_img_f += corono0.compute_corono_intensity_2d_bis(Apod2d)    
+            direct_mono_img_f += corono0.compute_direct_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d0, poly=False)
+            corono_mono_img_f += corono0.compute_corono_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d0, poly=False)
+    else:
+        direct_mono_img_f += corono0.compute_direct_intensity_2d_bis(Apod2d)
+        corono_mono_img_f += corono0.compute_corono_intensity_2d_bis(Apod2d)    
 
-        # computation of the averaged images
-        direct_mono_img_f /= nmap
-        corono_mono_img_f /= nmap
+    # computation of the averaged images
+    direct_mono_img_f /= nmap
+    corono_mono_img_f /= nmap
 
+    for ilam in range(nlam):
         # image normalization
-        direct_peak_val = direct_mono_img_f.max()
-        direct_mono_img_f /= direct_peak_val
-        corono_mono_img_f /= direct_peak_val
+        direct_peak_val = direct_mono_img_f[ilam].max()
+        direct_mono_img_f[ilam] /= direct_peak_val
+        corono_mono_img_f[ilam] /= direct_peak_val
 
         # computation of the averaged and standard deviation profiles of the images   
-        direct_mono_prf_avg_f, rad_direct = imutils.profile(direct_mono_img_f, type='mean')
-        corono_mono_prf_avg_f, rad_corono = imutils.profile(corono_mono_img_f, type='mean')
-        direct_mono_prf_std_f, rad_direct = imutils.profile(direct_mono_img_f, type='std')
-        corono_mono_prf_std_f, rad_corono = imutils.profile(corono_mono_img_f, type='std')
+        direct_mono_prf_avg_f[ilam], rad_direct = imutils.profile(direct_mono_img_f[ilam], type='mean')
+        corono_mono_prf_avg_f[ilam], rad_corono = imutils.profile(corono_mono_img_f[ilam], type='mean')
+        direct_mono_prf_std_f[ilam], rad_direct = imutils.profile(direct_mono_img_f[ilam], type='std')
+        corono_mono_prf_std_f[ilam], rad_corono = imutils.profile(corono_mono_img_f[ilam], type='std')
 
-        #%% saving of the images
-        """
-        ### File saving
-        """
-        fits.writeto(fpath_direct_mono_img_f, direct_mono_img_f, overwrite=True)
-        fits.writeto(fpath_corono_mono_img_f, corono_mono_img_f, overwrite=True)
+    #%% saving of the images
+    """
+    ### File saving
+    """
+    fits.writeto(fpath_direct_mono_img_f, direct_mono_img_f, overwrite=True)
+    fits.writeto(fpath_corono_mono_img_f, corono_mono_img_f, overwrite=True)
 
-        fits.writeto(fpath_direct_mono_prf_avg_f, direct_mono_prf_avg_f, overwrite=True)
-        fits.writeto(fpath_corono_mono_prf_avg_f, corono_mono_prf_avg_f, overwrite=True)
-        fits.writeto(fpath_direct_mono_prf_std_f, direct_mono_prf_std_f, overwrite=True)
-        fits.writeto(fpath_corono_mono_prf_std_f, corono_mono_prf_std_f, overwrite=True)
+    fits.writeto(fpath_direct_mono_prf_avg_f, direct_mono_prf_avg_f, overwrite=True)
+    fits.writeto(fpath_corono_mono_prf_avg_f, corono_mono_prf_avg_f, overwrite=True)
+    fits.writeto(fpath_direct_mono_prf_std_f, direct_mono_prf_std_f, overwrite=True)
+    fits.writeto(fpath_corono_mono_prf_std_f, corono_mono_prf_std_f, overwrite=True)
 
