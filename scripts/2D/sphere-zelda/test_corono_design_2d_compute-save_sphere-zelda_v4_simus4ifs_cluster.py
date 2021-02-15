@@ -144,7 +144,7 @@ if __name__ == '__main__':
     kw_saxo      = True
     saxofudge    = 1 #60/120              # saxo amplitude errors fudge factor
     saxomap_i    = 0                    # saxo first screen
-    saxomap_f    = 1000#int(2*1380)     # saxo last screen
+    saxomap_f    = 100 #int(2*1380)     # saxo last screen
 
     # multi-processing
     nproc = multiprocessing.cpu_count()//2 - 1
@@ -372,11 +372,11 @@ if __name__ == '__main__':
         if kw_saxo and kw_2nddate:
 
             # create shared arrays
-            direct_mono_img_cube_shape = (nproc, nImg2d, nImg2d)
+            direct_mono_img_cube_shape = (nproc, nlam, nImg2d, nImg2d)
             direct_mono_img_cube_data  = multiprocessing.RawArray(ctypes.c_double, int(np.prod(direct_mono_img_cube_shape)))
             direct_mono_img_cube_np    = array_to_numpy(direct_mono_img_cube_data, direct_mono_img_cube_shape)
             
-            corono_mono_img_cube_shape = (nproc, nImg2d, nImg2d)
+            corono_mono_img_cube_shape = (nproc, nlam, nImg2d, nImg2d)
             corono_mono_img_cube_data  = multiprocessing.RawArray(ctypes.c_double, int(np.prod(corono_mono_img_cube_shape)))
             corono_mono_img_cube_np    = array_to_numpy(corono_mono_img_cube_data, corono_mono_img_cube_shape)
 
