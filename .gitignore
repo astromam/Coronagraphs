@@ -147,3 +147,7 @@ scripts/2D/results/2D/dat_pyth/sbr/sbr_APLC_obs=0.14_lsid=0.28_lsod=1.00_IWA=5.0
 *.fits
 data/2D/turbulence/Obs-Sequence-Parameters.csv
 *.png
+*.png
+*.txt
+*.dat
+*.dat

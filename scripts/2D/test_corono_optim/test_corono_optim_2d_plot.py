@@ -24,7 +24,7 @@ Parameters
 pl.close('all')
 
 test_gurobi = False
-if True:
+if False:
     # Telescope name
     corono_name  = 'APLC' # 'SP' or 'APLC'
     pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
@@ -64,7 +64,7 @@ if True:
     nlam = 5
 
     
-    do_fits = True
+    do_fits = False
 
 nlambis = 11    
 Fmax2dbis = 50
@@ -75,7 +75,9 @@ nImg2dbis = 500
 File reading for Pupil and Lyot stop
 """
 if True:
-    fdir = Path('../../data/2D/pupils/').resolve()
+#    fdir = Path('../../data/2D/pupils/').resolve()
+    fdir = Path('/Users/mndiaye/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs/data/2D/pupils/').resolve()
+
     if pupil_name == 'lvr':
         fname_pup = 'ATLAST_Aperture_nPup={0}.fits'.format(nPup,)
         fname_lys = 'ATLAST_LyotStop_nPup={0}.fits'.format(nPup,)
@@ -106,7 +108,8 @@ params = coro.to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
 """
 Working directories
 """
-fdir = Path('../../results/2D/dat_pyth').resolve() / pupil_name
+#fdir = Path('../../results/2D/dat_pyth').resolve() / pupil_name
+fdir = Path('/Users/mndiaye/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
 
 fdir_pdf = Path('../../results/2D/plots/').resolve()
 if not os.path.exists(fdir_pdf):
@@ -149,7 +152,6 @@ fpath     = fdir / fname
 
 
 if test_gurobi is True:
-#%%
     idx_pup = problem1.idx_pup
     npp = problem1.npp
     

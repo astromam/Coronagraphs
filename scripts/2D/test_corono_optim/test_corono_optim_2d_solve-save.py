@@ -23,8 +23,8 @@ from astropy.io import fits
 Parameters
 """
 # Telescope name
-corono_name  = 'APLC' # 'SP' or 'APLC'
-pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
+corono_name  = 'SP' # 'SP' or 'APLC'
+pupil_name   = 'elt' # 'vlt' or 'sbr' or 'lvr'
 problem_name = 'MaxTau' # 'MaxTau' # ,'MaxContrastLinf' # 'MaxContrastL1' #
 solver       = 'stdgrb' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
 slvLogToConsole = 1
@@ -38,7 +38,7 @@ FirstDerGlobalLim = 100.
 BinarityReg       = 0.1
 
 #nPup = corono0.params['nPup']
-nPup = 100
+nPup = 1024
 nFPM = 50
 Fmax2d = 22.5
 nImg2d = 45
@@ -72,7 +72,9 @@ do_fits = True
 """
 File reading for Pupil and Lyot stop
 """
-fdir = Path('../../data/2D/pupils/').resolve()
+#fdir = Path('../../data/2D/pupils/').resolve()
+fdir = Path('/Users/mndiaye/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs/data/2D/pupils/').resolve()
+
 if pupil_name == 'lvr':
     fname_pup = 'ATLAST_Aperture_nPup={0}.fits'.format(nPup,)
     fname_lys = 'ATLAST_LyotStop_nPup={0}.fits'.format(nPup,)
@@ -156,7 +158,8 @@ if Pupil2dSym == True:
 """
 Save apodizer
 """
-fdir = Path('../../results/2D/dat_pyth').resolve() / pupil_name
+#fdir = Path('../../results/2D/dat_pyth').resolve() / pupil_name
+fdir = Path('/Users/mndiaye/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
 if not os.path.exists(fdir):
     os.makedirs(fdir)
     

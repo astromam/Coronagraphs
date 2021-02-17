@@ -62,8 +62,9 @@ kw_2nddate   = True
 kw_skyobs    = True
 kw_aftercorr = False
 kw_saxo      = True
+saxofudge    = 1. #80/120.
 saxomap_i    = 0
-saxomap_f    = 100#int(30*1380)
+saxomap_f    = 1000 #int(30*1380)
 
 # test on the order of the min and max number of saxo phase screen
 if saxomap_i <= saxomap_f:
@@ -121,7 +122,8 @@ else:
         beta_wfs = 1.0
 
 #%%
-fdir = Path('../../').resolve()
+#fdir = Path('../../').resolve()
+fdir = Path('/Users/mndiaye/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs').resolve()
 
 fdir_pupils  = fdir / 'data' / '2D' / 'pupils' / 'SPHERE' 
 fdir_zelda   = fdir / 'data' / '2D' / 'ZELDA' / str_date / str_obs  
@@ -189,16 +191,16 @@ ncase = len(label_lst)
 """
 ### Filepaths for the file results
 """        
-fname_direct_poly_img_f     = 'direct_poly_img_nmap={0:05d}_defo={1:.1f}_tip={2:.1f}_tilt={3:.1f}_f.fits'.format(nmap, defo_ampl, tipp_ampl, tilt_ampl)
-fname_corono_poly_img_f     = 'corono_poly_img_nmap={0:05d}_defo={1:.1f}_tip={2:.1f}_tilt={3:.1f}_f.fits'.format(nmap, defo_ampl, tipp_ampl, tilt_ampl)
+fname_direct_poly_img_f     = 'direct_poly_img_nmap={:05d}_saxofudge={:.2f}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_f.fits'.format(nmap, saxofudge, defo_ampl, tipp_ampl, tilt_ampl)
+fname_corono_poly_img_f     = 'corono_poly_img_nmap={:05d}_saxofudge={:.2f}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_f.fits'.format(nmap, saxofudge, defo_ampl, tipp_ampl, tilt_ampl)
 fpath_direct_poly_img_f     = fdir_results / fname_direct_poly_img_f
 fpath_corono_poly_img_f     = fdir_results / fname_corono_poly_img_f
 
 #%%
-fname_direct_poly_prf_avg_f = 'direct_poly_prf_nmap={0:05d}_defo={1:.1f}_tip={2:.1f}_tilt={3:.1f}_avg_f.fits'.format(nmap, defo_ampl, tipp_ampl, tilt_ampl)
-fname_corono_poly_prf_avg_f = 'corono_poly_prf_nmap={0:05d}_defo={1:.1f}_tip={2:.1f}_tilt={3:.1f}_avg_f.fits'.format(nmap, defo_ampl, tipp_ampl, tilt_ampl)
-fname_direct_poly_prf_std_f = 'direct_poly_prf_nmap={0:05d}_defo={1:.1f}_tip={2:.1f}_tilt={3:.1f}_std_f.fits'.format(nmap, defo_ampl, tipp_ampl, tilt_ampl)
-fname_corono_poly_prf_std_f = 'corono_poly_prf_nmap={0:05d}_defo={1:.1f}_tip={2:.1f}_tilt={3:.1f}_std_f.fits'.format(nmap, defo_ampl, tipp_ampl, tilt_ampl)
+fname_direct_poly_prf_avg_f = 'direct_poly_prf_nmap={:05d}_saxofudge={:.2f}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_avg_f.fits'.format(nmap, saxofudge, defo_ampl, tipp_ampl, tilt_ampl)
+fname_corono_poly_prf_avg_f = 'corono_poly_prf_nmap={:05d}_saxofudge={:.2f}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_avg_f.fits'.format(nmap, saxofudge, defo_ampl, tipp_ampl, tilt_ampl)
+fname_direct_poly_prf_std_f = 'direct_poly_prf_nmap={:05d}_saxofudge={:.2f}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_std_f.fits'.format(nmap, saxofudge, defo_ampl, tipp_ampl, tilt_ampl)
+fname_corono_poly_prf_std_f = 'corono_poly_prf_nmap={:05d}_saxofudge={:.2f}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_std_f.fits'.format(nmap, saxofudge, defo_ampl, tipp_ampl, tilt_ampl)
 fpath_direct_poly_prf_avg_f = fdir_results / fname_direct_poly_prf_avg_f
 fpath_corono_poly_prf_avg_f = fdir_results / fname_corono_poly_prf_avg_f
 fpath_direct_poly_prf_std_f = fdir_results / fname_direct_poly_prf_std_f
@@ -381,7 +383,7 @@ pl.axhline(10**(-cDarkHole), xmin=corono00.xi2d.min()*fac, xmax=corono00.xi2d.ma
            linewidth=1, color='k', linestyle='--')
 pl.xlabel(r'Angular separation in {0}'.format(unit))
 pl.ylabel(r'1$\sigma$ normalized intensity in log scale')
-pl.ylim(3e-8, 3e-4)
+pl.ylim(3e-7, 3e-3)
 pl.legend()
 pl.title(r'Intensity profile in broadband light ($\Delta\lambda/\lambda_0$={0:.1f}%)'.format(bw*100))
 pl.tight_layout()
@@ -392,7 +394,7 @@ if kw_mas is False:
 f2 = pl.figure(24, figsize=(6,4.5))
 pl.clf()
 exec('ax{0} = f2.add_subplot(1,{1},{0})'.format(1,1))
-exec('im = ax{0}.imshow(np.log10(np.fliplr(corono_poly_img_f)/direct_poly_img_f.max()), cmap = "inferno", vmin=-7.5, vmax=-3.5)'.format(1))
+exec('im = ax{0}.imshow(np.log10(np.fliplr(corono_poly_img_f)/direct_poly_img_f.max()), cmap = "inferno", vmin=-7., vmax=-3.)'.format(1))
 exec('ax{0}.text(nImg2d/2, 0.1*nImg2d, "nmap={1:05d} (flip lr)", fontsize=16, horizontalalignment="center", color = "white")'.format(1,nmap))
 exec('ax{0}.tick_params(axis="x", which="both", bottom="off", top="off", labelbottom="off")'.format(1,))
 exec('ax{0}.tick_params(axis="y", which="both", left="off", right="off", labelleft="off")'.format(1,))
@@ -401,12 +403,12 @@ f2.subplots_adjust(bottom=0.1, top=0.9, left=0.1, right=0.8,
                     wspace=0.02, hspace=0.02)
 
 f2.subplots_adjust(right=0.8)
-ax1.set_title('{0}'.format(str_corr))
-cbar_ax = f2.add_axes([0.85, 0.15, 0.05, 0.7])
-cbar    = f2.colorbar(im, cax=cbar_ax)
-cbar.ax.set_ylabel('intensity in log scale', rotation=270, labelpad = 10)
-pl.savefig(str(fpath_image_plane_f_disp), transparent=True)
-pl.tight_layout()
+exec('ax{0}.set_title("{1}")'.format(1,str_corr))
+exec('cbar_ax = f2.add_axes([0.85, 0.15, 0.05, 0.7])')
+exec('cbar    = f2.colorbar(im, cax=cbar_ax)')
+exec('cbar.ax.set_ylabel("intensity in log scale", rotation=270, labelpad = 10)')
+pl.savefig(str(fpath_image_plane_f_disp), transparent=True, bbox_inches='tight')
+#pl.tight_layout()
 
 pl.show()
 

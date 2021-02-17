@@ -173,10 +173,12 @@ class Coronagraph(object):
                 np.pi/self.R*self.xii[:,:,None]*self.r[None,None,:])
 
         # clear Pupil
-        self.ClearPupil2d = uniform_disk(self.nPup, self.nPup/2., CtrBtwnPix=self.CtrBtwnPix)
+        self.ClearPupil2d = uniform_disk(self.nPup, self.nPup/2., 
+                                         CtrBtwnPix=self.CtrBtwnPix)
 
         # Focal plane mask
-        self.mask2d       = uniform_disk(self.nFPM, self.nFPM/2., CtrBtwnPix=self.CtrBtwnPix)
+        self.mask2d       = uniform_disk(self.nFPM, self.nFPM/2., 
+                                         CtrBtwnPix=self.CtrBtwnPix)
 
         # Final image plane coordinate
         val = 0
@@ -462,7 +464,7 @@ class Coronagraph(object):
         Apod2d : array_like
             Entrance pupil apodization :math:`\Phi`
         
-        poly : thuth value (default=True)
+        poly : boolean (default=True)
             Parameter to compute broadband image or monochromatic images
             at all the wavelengths
                 
@@ -473,7 +475,6 @@ class Coronagraph(object):
             
         """        
         direct_field_2d = self.compute_direct_field_2d(Apod2d)
-        
         if poly:
             return np.sum(np.abs(direct_field_2d)**2,0)
         else:
@@ -496,12 +497,11 @@ class Coronagraph(object):
         Returns    
         ----------
         res : array_like
-            Intensity of the coronagraphic broadband image or monocrhomatic
+            Intensity of the coronagraphic broadband image or monochromatic
             images.
         
         """
-        corono_field_2d = self.compute_corono_field_2d(Apod2d)
-            
+        corono_field_2d = self.compute_corono_field_2d(Apod2d)   
         if poly:
             return np.sum(np.abs(corono_field_2d)**2,0)
         else:
@@ -742,15 +742,31 @@ class APLC1d(Coronagraph):
         # FPM image plane coordinate
         self.mi = np.arange(self.nFPM +1)*self.dmi
         
+        # # variable inside the Bessel function for Hankel transform to the FPM plane
+        # self.HK_B_var = np.pi*self.ilam_t[:,None, None]*self.mi[None,:,None]*\
+        # self.r[None,None,:]
+        # # Hankel kernel (direct transform) to the FPM plane
+        # self.HK_B = np.pi*self.ilam_t[:,None, None]*\
+        # besselJ0(self.HK_B_var)*self.r[None, None,:]*self.dr
+        # # Hankel kernel (inverse transform) to the FPM plane
+        # self.iHK_B = np.pi*self.ilam_t[:,None, None]*\
+        # besselJ0(self.HK_B_var.transpose(0,2,1))*self.mi[None, None,:]*self.dmi
+
+    
+        self.nFPMi = (self.nFPM*self.ilam_t).astype(int)
+        self.nFPMi_max = np.max(self.nFPMi)
+        
+        self.FPM_t = np.arange(self.nFPMi_max+1)                           
+        self.mi   = self.dmi*self.FPM_t*\
+            (self.FPM_t[None,:] <= self.nFPMi[:,None])           
+                
         # variable inside the Bessel function for Hankel transform to the FPM plane
-        self.HK_B_var = np.pi*self.ilam_t[:,None, None]*self.mi[None,:,None]*\
-        self.r[None,None,:]
+        self.HK_B_var = np.pi*self.mi[:,:,None]*self.r[None,None,:]
         # Hankel kernel (direct transform) to the FPM plane
-        self.HK_B = np.pi*self.ilam_t[:,None, None]*\
-        besselJ0(self.HK_B_var)*self.r[None, None,:]*self.dr
+        self.HK_B = np.pi*besselJ0(self.HK_B_var)*self.r[None, None,:]*self.dr
         # Hankel kernel (inverse transform) to the FPM plane
-        self.iHK_B = np.pi*self.ilam_t[:,None, None]*\
-        besselJ0(self.HK_B_var.transpose(0,2,1))*self.mi[None, None,:]*self.dmi
+        self.iHK_B = np.pi*besselJ0(self.HK_B_var.transpose(0,2,1))*\
+            self.mi[:, None,:]*self.dmi        
 
         # term inside the Bessel function for the hankel transform to the final image plane
         self.HK_D_var = np.pi*self.ilam_t[:,None,None]*self.xi[None,:,None]*\
@@ -759,6 +775,7 @@ class APLC1d(Coronagraph):
         self.HK_D = np.pi*self.ilam_t[:,None, None]*besselJ0(self.HK_D_var)*\
         self.r[None, None, :]*self.dr
 
+    
         
 #%% # direct propagation (no focal plane mask)
     def compute_direct_field_1d(self,Apod):
@@ -805,22 +822,22 @@ class APLC1d(Coronagraph):
             
         """
         E_field = Apod*self.Pupil1d
-    #    FPM_field = np.zeros((nlam,nFPM+1))
-    #    for i in range(nlam):
-    #        FPM_field[i] = HK_B[i].dot(E_field)
+        # FPM_field = np.zeros((self.nlam,self.nFPM+1))
+        # for i in range(self.nlam):
+        #     FPM_field[i] = self.HK_B[i].dot(E_field)
         FPM_field = np.einsum("ijk,k->ij", self.HK_B, E_field)
                    
-    #    iFPM_field = np.zeros((nlam,nPup))
-    #    for i in range(nlam):
-    #        iFPM_field[i] = iHK_B[i].dot(FPM_field[i])
+        # iFPM_field = np.zeros((self.nlam,self.nPup))
+        # for i in range(self.nlam):
+        #     iFPM_field[i] = self.iHK_B[i].dot(FPM_field[i])
         iFPM_field = np.einsum("ijk,ik->ij", self.iHK_B, FPM_field)
                                 
         lyot_field = (Apod[None,:]*self.Pupil1d[None,:]-iFPM_field)*\
         self.LyotStop1d[None,:]
         
-    #    corono_field = np.zeros((nlam,nImg+1))
-    #    for i in range(nlam):
-    #        corono_field[i] = HK_D[i].dot(lyot_field[i])
+        # corono_field = np.zeros((self.nlam,self.nImg+1))
+        # for i in range(self.nlam):
+        #     corono_field[i] = self.HK_D[i].dot(lyot_field[i])
         corono_field = np.einsum("ijk,ik-> ij", self.HK_D, lyot_field)
         
         return corono_field
@@ -1728,6 +1745,7 @@ class APLC2d(Coronagraph):
                 field_Dtmp[i] = sft_even(field_L, self.nImg2d, self.mD_t[i], 
                           CtrBtwnPix=self.CtrBtwnPix2) 
                                 
+        # return (self.lam0/self.lam_t[:,None,None])*field_Dtmp (in mathematica)
         return field_Dtmp
  
 #%%
@@ -1753,7 +1771,6 @@ class APLC2d(Coronagraph):
             at all the wavelengths
             
         """        
-
         field_A    = Apod2d*self.Pupil2d
         if self.OPDmap2d is not None:
             phasor_t   = 2.*np.pi*self.OPDmap2d[None, :, :]/(self.wv*self.lam_t[:, None,None])             
@@ -1770,7 +1787,7 @@ class APLC2d(Coronagraph):
             if self.OPDmap2d is None:
                 field = field_A
             else:
-                field = field_A[i]                
+                field = field_A[i]               
             if self.ImPart is True:                
                 field_B       = self.mask2d*sft(field, self.nFPM, self.mB_t[i], 
                                                 CtrBtwnPix=self.CtrBtwnPix)
@@ -1787,8 +1804,10 @@ class APLC2d(Coronagraph):
                                                CtrBtwnPix=self.CtrBtwnPix)
                 field_L       = field_C*self.LyotStop2d
                 field_Dtmp[i] = sft_even(field_L, self.nImg2d, self.mD_t[i], 
-                          CtrBtwnPix=self.CtrBtwnPix2)                         
-        return field_Dtmp   
+                          CtrBtwnPix=self.CtrBtwnPix2)
+                         
+        # return (self.lam0/self.lam_t[:,None,None])*field_Dtmp (in mathematica)
+        return field_Dtmp
 
 #%% direct propagation (no focal plane mask)
     def compute_direct_field_2d_bis(self,Apod2d,OPDmap2d=None):
@@ -2006,7 +2025,7 @@ class SP2d(Coronagraph):
     def __init__(self, **kwargs):
         r"""
         __init__ : method
-            Constructor for the APLC2d class.
+            Constructor for the SP2d class.
         
         Attributes
         ----------        
@@ -2115,7 +2134,7 @@ class DZPM2d(Coronagraph):
     def __init__(self, **kwargs):
         r"""
         __init__ : method
-            Constructor for the APLC2d class.
+            Constructor for the DZPM2d class.
         
         Attributes
         ----------        

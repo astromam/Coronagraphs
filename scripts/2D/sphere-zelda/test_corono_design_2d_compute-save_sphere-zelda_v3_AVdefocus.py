@@ -128,7 +128,8 @@ else:
         beta_wfs = 1./0.6
 
 #%%
-fdir = Path('/Users/avigan/Work/GitHub/Coronagraphs/')
+#fdir = Path('../../').resolve()
+fdir = Path('/Users/mndiaye/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs').resolve()
 fdir_pupils  = fdir / 'data' / '2D' / 'pupils' / 'SPHERE' 
 fdir_zelda   = fdir / 'data' / '2D' / 'ZELDA' / str_date / str_obs  
 fdir_saxo    = fdir / 'data' / '2D' / 'ZELDA' / '2018-04-03'
