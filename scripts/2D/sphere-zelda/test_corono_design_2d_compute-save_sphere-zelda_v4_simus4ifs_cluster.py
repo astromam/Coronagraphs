@@ -19,6 +19,7 @@ import sys
 
 import numpy as np
 import os
+import pwd
 import time
 from pyzelda.utils import aperture, imutils, zernike
 from pathlib import Path
@@ -26,7 +27,7 @@ from astropy.io import fits
 import corono as coro
 import ctypes
 import multiprocessing
-
+import pwd
 
 def array_to_numpy(shared_array, shape):
     '''
@@ -144,7 +145,7 @@ if __name__ == '__main__':
     kw_saxo      = True
     saxofudge    = 1 #60/120              # saxo amplitude errors fudge factor
     saxomap_i    = 0                    # saxo first screen
-    saxomap_f    = int(2*1380)     # saxo last screen
+    saxomap_f    = 10#int(2*1380)     # saxo last screen
 
     # multi-processing
     nproc = multiprocessing.cpu_count()//2 - 1
@@ -198,18 +199,31 @@ if __name__ == '__main__':
 
     #%%
 #    fdir = Path('~/data/ZELDA/CoroSimulations/').expanduser()
-    fdir = Path('/Users/mndiaye/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs').resolve()
+    user = pwd.getpwuid(os.getuid())[0]
+    syst = sys.platform
+    
+    if user == 'mndiaye':
+        if syst == 'darwin':
+            fdir = Path('~/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs').expanduser()
+        elif syst == 'linux':
+            fdir = Path('/SCRATCH/{0}/data/Coronagraphs/'.format(user)).resolve()
+        else:
+            raise ValueError('Unknown operating system {0}'.format(user))
+    else:
+        raise ValueError('Unknown user {0}'.format(user))
+    
+
     fdir_pupils  = fdir / 'data' / '2D' / 'pupils' / 'SPHERE' 
     fdir_zelda   = fdir / 'data' / '2D' / 'ZELDA' / str_date / str_obs  
     fdir_saxo    = fdir / 'data' / '2D' / 'ZELDA' / '2018-04-03'
 
     if kw_aberr:
-        fdir_results = fdir / 'results' / '2D' / 'data' / 'SPHERE' / str_aberr / str_date / str_obs / str_saxo / str_corr  
+        fdir_res = fdir / 'results' / '2D' / 'data' / 'SPHERE' / str_aberr / str_date / str_obs / str_saxo / str_corr  
     else:
-        fdir_results = fdir / 'results' / '2D' / 'data' / 'SPHERE' / str_aberr / str_obs / str_saxo / str_corr  
+        fdir_res = fdir / 'results' / '2D' / 'data' / 'SPHERE' / str_aberr / str_obs / str_saxo / str_corr  
 
-    if not os.path.exists(fdir_results):
-        os.makedirs(fdir_results)
+    if not os.path.exists(fdir_res):
+        os.makedirs(fdir_res)
 
     #%%
     """
@@ -346,18 +360,18 @@ if __name__ == '__main__':
     # filepaths for the images
     fname_direct_mono_img_f     = 'direct' + str_common + '_img_f.fits'
     fname_corono_mono_img_f     = 'corono' + str_common + '_img_f.fits'
-    fpath_direct_mono_img_f     = fdir_results / fname_direct_mono_img_f
-    fpath_corono_mono_img_f     = fdir_results / fname_corono_mono_img_f
+    fpath_direct_mono_img_f     = fdir_res / fname_direct_mono_img_f
+    fpath_corono_mono_img_f     = fdir_res / fname_corono_mono_img_f
 
     # filepaths for the profiles
     fname_direct_mono_prf_avg_f = 'direct' + str_common + '_prf_avg_f.fits'
     fname_corono_mono_prf_avg_f = 'corono' + str_common + '_prf_avg_f.fits'
     fname_direct_mono_prf_std_f = 'direct' + str_common + '_prf_std_f.fits'
     fname_corono_mono_prf_std_f = 'corono' + str_common + '_prf_std_f.fits'
-    fpath_direct_mono_prf_avg_f = fdir_results / fname_direct_mono_prf_avg_f
-    fpath_corono_mono_prf_avg_f = fdir_results / fname_corono_mono_prf_avg_f
-    fpath_direct_mono_prf_std_f = fdir_results / fname_direct_mono_prf_std_f
-    fpath_corono_mono_prf_std_f = fdir_results / fname_corono_mono_prf_std_f
+    fpath_direct_mono_prf_avg_f = fdir_res / fname_direct_mono_prf_avg_f
+    fpath_corono_mono_prf_avg_f = fdir_res / fname_corono_mono_prf_avg_f
+    fpath_direct_mono_prf_std_f = fdir_res / fname_direct_mono_prf_std_f
+    fpath_corono_mono_prf_std_f = fdir_res / fname_corono_mono_prf_std_f
 
     #%%
     # definition of the coronagraph class
