@@ -28,6 +28,7 @@ import corono as coro
 import ctypes
 import multiprocessing
 import pwd
+import psutil
 
 def array_to_numpy(shared_array, shape):
     '''
@@ -92,6 +93,8 @@ def compute_corono_image(img_index, saxo_i, saxo_f):
 
 
 if __name__ == '__main__':
+    
+    t_ini = time.time()
     #%% APLC2d tests
     """
     ### Parameters
@@ -145,7 +148,7 @@ if __name__ == '__main__':
     kw_saxo      = True
     saxofudge    = 1 #60/120              # saxo amplitude errors fudge factor
     saxomap_i    = 0                    # saxo first screen
-    saxomap_f    = 10#int(2*1380)     # saxo last screen
+    saxomap_f    = 100 #int(2*1380)     # saxo last screen
 
     # multi-processing
     nproc = multiprocessing.cpu_count()//2 - 1
@@ -459,3 +462,7 @@ if __name__ == '__main__':
     fits.writeto(fpath_direct_mono_prf_std_f, direct_mono_prf_std_f, overwrite=True)
     fits.writeto(fpath_corono_mono_prf_std_f, corono_mono_prf_std_f, overwrite=True)
 
+    #%%
+    t_end = time.time()
+    print('\ntime usage:   {0:.2f}s for nlam={1:03} and nmap={2:05d}'.format(t_end-t_ini,nlam,nmap))
+    print('\nmemory usage: {0:.2f}Mb  for nlam={1:03} and nmap={2:05d}'.format(psutil.Process(os.getpid()).memory_info().rss / 1024 ** 2,nlam,nmap))
