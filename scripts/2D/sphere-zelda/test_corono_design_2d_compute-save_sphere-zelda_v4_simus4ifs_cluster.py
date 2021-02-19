@@ -206,7 +206,7 @@ if __name__ == '__main__':
         if syst == 'darwin':
             fdir = Path('~/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs').expanduser()
         elif syst == 'linux':
-            fdir = Path('/SCRATCH/{0}/data/Coronagraphs/'.format(user)).resolve()
+            fdir = Path('/scratch/{0}/data/Coronagraphs/'.format(user)).resolve()
         else:
             raise ValueError('Unknown operating system {0}'.format(user))
     else:
