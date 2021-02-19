@@ -144,11 +144,11 @@ if __name__ == '__main__':
     kw_aberr     = True
     kw_2nddate   = True    
     kw_skyobs    = True
-    kw_aftercorr = bool(eval(sys.argv[1]))
+    kw_aftercorr = False
     kw_saxo      = True
     saxofudge    = 1 #60/120              # saxo amplitude errors fudge factor
-    saxomap_i    = 0                    # saxo first screen
-    saxomap_f    = int(30*1380)     # saxo last screen
+    saxomap_i    = int(1380*(eval(sys.argv[1])))                    # saxo first screen
+    saxomap_f    = int(1380*(eval(sys.argv[1])+1))     # saxo last screen
 
     # multi-processing
     nproc = multiprocessing.cpu_count()//2 - 1
@@ -358,7 +358,7 @@ if __name__ == '__main__':
     ### Filepaths for the file results
     """
 
-    str_common = '_mono_nmap={:05d}_saxofudge={:.2f}_nlam={:04d}'.format(nmap, saxofudge, nlam)
+    str_common = '_mono_nmap={:05d}_saxofudge={:.2f}_nlam={:04d}_saxomap_i={:05d}_f={:05d}'.format(nmap, saxofudge, nlam, saxomap_i, saxomap_f)
     
     # filepaths for the images
     fname_direct_mono_img_f     = 'direct' + str_common + '_img_f.fits'
