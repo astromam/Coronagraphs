@@ -147,8 +147,8 @@ if __name__ == '__main__':
     kw_aftercorr = False
     kw_saxo      = True
     saxofudge    = 1 #60/120              # saxo amplitude errors fudge factor
-    saxomap_i    = int(1*5*(eval(sys.argv[1])))                    # saxo first screen
-    saxomap_f    = int(1*5*(eval(sys.argv[1])+1))     # saxo last screen
+    saxomap_i    = int(1*9*(eval(sys.argv[1])))                    # saxo first screen
+    saxomap_f    = int(1*9*(eval(sys.argv[1])+1))     # saxo last screen
 
     # multi-processing
     nproc = multiprocessing.cpu_count()//2 - 1
