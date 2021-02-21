@@ -131,7 +131,7 @@ if __name__ == '__main__':
     nFre2d = nImg2d/loD    # spatial frequencies in the final image plane
     
     # wavelength sampling
-    nlam   = 300
+    nlam   = 892
     bw     = width/wv0 
 
     lam0   = 1. 
@@ -147,8 +147,8 @@ if __name__ == '__main__':
     kw_aftercorr = False
     kw_saxo      = True
     saxofudge    = 1 #60/120              # saxo amplitude errors fudge factor
-    saxomap_i    = int(150*(eval(sys.argv[1])))                    # saxo first screen
-    saxomap_f    = int(150*(eval(sys.argv[1])+1))     # saxo last screen
+    saxomap_i    = int(450*(eval(sys.argv[1])))                    # saxo first screen
+    saxomap_f    = int(450*(eval(sys.argv[1])+1))     # saxo last screen
 
     # multi-processing
     nproc = multiprocessing.cpu_count()//2 - 1

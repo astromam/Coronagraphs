@@ -34,8 +34,8 @@ CtrBtwnPix2 = False
 Pupil2dSym  = False
 
 # Spectral bandwidth
-wv0        = 1.593e-6
-width      = 52e-9
+wv0       = 1625e-9 #1.593e-6
+width     = 290e-9  #52e-9
 
 # Telescope characteristics
 dAper     = 8
@@ -59,7 +59,7 @@ loD    = wv0/dAper*180/np.pi*3600*1000/pixel
 nFre2d = nImg2d/loD    # spatial frequencies in the final image plane
 
 # wavelength sampling
-nlam   = 3
+nlam   = 300
 bw     = width/wv0 
 
 lam0   = 1. 
@@ -75,9 +75,9 @@ kw_aftercorr = False
 kw_saxo      = True
 saxofudge    = 1. #80/120.
 
-pack_i = 5
-saxomap_i    = int(1380*5*pack_i)                    # saxo first screen
-saxomap_f    = int(1380*5*(pack_i+1))     # saxo last screen
+pack_i = 0
+saxomap_i    = int(150*pack_i)                    # saxo first screen
+saxomap_f    = int(150*(pack_i+1))     # saxo last screen
 
 # test on the order of the min and max number of saxo phase screen
 if saxomap_i <= saxomap_f:
