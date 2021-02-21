@@ -131,7 +131,7 @@ if __name__ == '__main__':
     nFre2d = nImg2d/loD    # spatial frequencies in the final image plane
     
     # wavelength sampling
-    nlam   = 3
+    nlam   = 300
     bw     = width/wv0 
 
     lam0   = 1. 
