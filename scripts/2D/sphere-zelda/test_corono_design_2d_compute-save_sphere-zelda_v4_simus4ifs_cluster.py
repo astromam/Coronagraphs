@@ -106,8 +106,8 @@ if __name__ == '__main__':
     Pupil2dSym  = False
 
     # Spectral bandwidth
-    wv0       = 1.593e-6
-    width     = 52e-9
+    wv0       = 1625e-9 #1.593e-6
+    width     = 290e-9  #52e-9
 
     # Telescope characteristics
     dAper     = 8
@@ -147,8 +147,8 @@ if __name__ == '__main__':
     kw_aftercorr = False
     kw_saxo      = True
     saxofudge    = 1 #60/120              # saxo amplitude errors fudge factor
-    saxomap_i    = int(6900*(eval(sys.argv[1])))                    # saxo first screen
-    saxomap_f    = int(6900*(eval(sys.argv[1])+1))     # saxo last screen
+    saxomap_i    = int(150*(eval(sys.argv[1])))                    # saxo first screen
+    saxomap_f    = int(150*(eval(sys.argv[1])+1))     # saxo last screen
 
     # multi-processing
     nproc = multiprocessing.cpu_count()//2 - 1
