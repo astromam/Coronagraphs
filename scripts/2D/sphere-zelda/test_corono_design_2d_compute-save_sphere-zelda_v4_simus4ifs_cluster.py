@@ -151,7 +151,7 @@ if __name__ == '__main__':
     saxomap_f    = int(450*(eval(sys.argv[1])+1))     # saxo last screen
 
     # multi-processing
-    nproc = multiprocessing.cpu_count()//2 - 1
+    nproc = multiprocessing.cpu_count()//2 - 2
     
     # make sure we have a number of phase screens multiple of the number of CPUs
     nsaxomap  = saxomap_f - saxomap_i + 1
