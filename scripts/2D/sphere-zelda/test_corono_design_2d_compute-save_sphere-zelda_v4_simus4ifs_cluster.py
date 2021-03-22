@@ -147,8 +147,11 @@ if __name__ == '__main__':
     kw_aftercorr = False
     kw_saxo      = True
     saxofudge    = 1 #60/120              # saxo amplitude errors fudge factor
-    saxomap_i    = int(450*(eval(sys.argv[1])))                    # saxo first screen
-    saxomap_f    = int(450*(eval(sys.argv[1])+1))     # saxo last screen
+    saxomap_i    = int(690*(eval(sys.argv[1])))       # saxo first screen
+    saxomap_f    = int(690*(eval(sys.argv[1])+1))     # saxo last screen
+
+    # seeing for on-sky observations
+    seeing = 0.7
 
     # multi-processing
     nproc = multiprocessing.cpu_count()//2 - 2
@@ -237,23 +240,26 @@ if __name__ == '__main__':
     fname_Ampmap2d   = 'sphere_pupil_clear_BH_field.fits'
     fname_LyotStop2d = 'sphere_stop_ST_ALC2.fits'
 
-    if kw_aberr:
-        if kw_skyobs:
+    if kw_aberr is True:
+        if kw_skyobs is True:
+            fname_Ampmap2d   = '2018-04-01_night_sphere_pupil_clear_sky_FeII_field.fits'
             fname_ZELDAmapnm3d = '2018-04-01_night_ncpa_loop_700modes_5_ncpa_loop_opd.fits'
-            if kw_2nddate:
+            if kw_2nddate is True:
+                fname_Ampmap2d   = '2018-04-03_night_sphere_pupil_clear_sky_FeII_field.fits'
                 fname_ZELDAmapnm3d = '2018-04-03_night_ncpa_loop_sky_2_ncpa_loop_opd.fits'
         else:
+            fname_Ampmap2d   = 'sphere_pupil_clear_BH_field.fits'
             fname_ZELDAmapnm3d = '2018-04-01_ncpa_loop_700modes_2_ncpa_loop_opd.fits'        
-            if kw_2nddate:        
+            if kw_2nddate is True:
                 fname_ZELDAmapnm3d = '2018-04-03_ncpa_loop_700modes_ncpa_loop_opd.fits'
 
         if kw_saxo and kw_2nddate:
-            fname_SAXOmapnm3d = '2018-04-04T03_06_15-saxo_residual_turbulence.fits'
+            fname_SAXOmapnm3d = '2018-04-04T00-41-34-saxo_residual_turbulence_time=30.0sec_seeing={:.1f}as_tiptilt=1_gains=0_fitting=1_alias=1.fits'.format(seeing)
 
     #%% Filepaths for the file sources
     fpath_Apod2d          = fdir_pupils / fname_Apod2d
     fpath_Apod2d_OPDmapnm = fdir_pupils / fname_Apod2d_OPDmapnm
-    fpath_Ampmap2d        = fdir_pupils / fname_Ampmap2d
+    fpath_Ampmap2d        = fdir_zelda / fname_Ampmap2d
 
     if kw_aberr:
         fpath_ZELDAmapnm3d = fdir_zelda  / fname_ZELDAmapnm3d   
@@ -358,7 +364,7 @@ if __name__ == '__main__':
     ### Filepaths for the file results
     """
 
-    str_common = '_mono_nmap={:05d}_saxofudge={:.2f}_nlam={:04d}_saxomap_i={:05d}_f={:05d}'.format(nmap, saxofudge, nlam, saxomap_i, saxomap_f)
+    str_common = '_mono_nmap={:05d}_nlam={:04d}_saxomap_i{:05d}_f{:05d}'.format(nmap, nlam, saxomap_i, saxomap_f)
     
     # filepaths for the images
     fname_direct_mono_img_f     = 'direct' + str_common + '_img_f.fits'
