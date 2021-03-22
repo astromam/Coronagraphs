@@ -18,7 +18,7 @@ import os
 # SPARTA reconstruction parameters
 #
 t_max             = 30    # length of the required sequence, in seconds
-reconstruct_turb  = True
+reconstruct_turb  = False
 include_tiptilt   = True
 include_gains     = False
 plot_stats        = False
