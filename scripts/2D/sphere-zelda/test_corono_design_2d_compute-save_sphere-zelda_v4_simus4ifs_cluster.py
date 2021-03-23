@@ -153,7 +153,7 @@ if __name__ == '__main__':
     # seeing for on-sky observations
     seeing = 0.7
 
-    # multi-processing
+    # multi-processing (to adjust with respect to the available proc, 10 and 20 cores in fdr and x40)
     nproc = multiprocessing.cpu_count()//2 - 2
     
     # make sure we have a number of phase screens multiple of the number of CPUs

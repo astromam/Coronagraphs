@@ -59,7 +59,7 @@ loD    = wv0/dAper*180/np.pi*3600*1000/pixel
 nFre2d = nImg2d/loD    # spatial frequencies in the final image plane
 
 # wavelength sampling
-nlam   = 300
+nlam   = 892
 bw     = width/wv0 
 
 lam0   = 1. 
@@ -76,13 +76,13 @@ kw_saxo      = True
 saxofudge    = 1. #80/120.
 
 pack_i = 0
-saxomap_i    = int(150*pack_i)                    # saxo first screen
-saxomap_f    = int(150*(pack_i+1))     # saxo last screen
+saxomap_i    = int(690*pack_i)         # saxo first screen
+saxomap_f    = int(690*(pack_i+1))     # saxo last screen
 
 # test on the order of the min and max number of saxo phase screen
 if saxomap_i <= saxomap_f:
     nsaxomap     = saxomap_f - saxomap_i + 1
-    nproc = 9
+    nproc = 8
     nsaxomap  = nsaxomap - (nsaxomap % nproc)
 else:
     raise NameError('initial saxo map (saxomap_i={0}) must be smaller than final saxo map (saxomap_f={1})!'.format(saxomap_i, saxomap_f))
@@ -215,7 +215,7 @@ ncase = len(label_lst)
 """
 ### Filepaths for the file results
 """        
-str_common = '_mono_nmap={:05d}_saxofudge={:.2f}_nlam={:04d}_saxomap_i={:05d}_f={:05d}'.format(nmap, saxofudge, nlam, saxomap_i, saxomap_f)
+str_common = '_mono_nmap={:05d}_nlam={:04d}_saxomap_i{:05d}_f{:05d}'.format(nmap, nlam, saxomap_i, saxomap_f)
 
 # filepaths for the images
 fname_direct_mono_img_f     = 'direct' + str_common + '_img_f.fits'
