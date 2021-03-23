@@ -148,13 +148,13 @@ if __name__ == '__main__':
     kw_saxo      = True
     saxofudge    = 1 #60/120              # saxo amplitude errors fudge factor
     saxomap_i    = int(690*(eval(sys.argv[1])))       # saxo first screen
-    saxomap_f    = int(690*(eval(sys.argv[1])+1))     # saxo last screen
+    saxomap_f    = int(690*(eval(sys.argv[1])+1)-1)     # saxo last screen
 
     # seeing for on-sky observations
     seeing = 0.7
 
     # multi-processing (to adjust with respect to the available proc, 10 and 20 cores in fdr and x40)
-    nproc = multiprocessing.cpu_count()//2 - 2
+    nproc = multiprocessing.cpu_count()//2
     
     # make sure we have a number of phase screens multiple of the number of CPUs
     nsaxomap  = saxomap_f - saxomap_i + 1
