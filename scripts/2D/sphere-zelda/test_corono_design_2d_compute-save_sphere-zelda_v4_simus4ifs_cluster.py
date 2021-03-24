@@ -155,6 +155,8 @@ if __name__ == '__main__':
 
     # multi-processing (to adjust with respect to the available proc, 10 and 20 cores in fdr and x40)
     nproc = multiprocessing.cpu_count()//2
+    print(nproc)
+    stop
     
     # make sure we have a number of phase screens multiple of the number of CPUs
     nsaxomap  = saxomap_f - saxomap_i + 1
