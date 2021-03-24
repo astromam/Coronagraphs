@@ -154,19 +154,19 @@ if __name__ == '__main__':
     seeing = 0.7
 
     # multi-processing (to adjust with respect to the available proc, 10 and 20 cores in fdr and x40)
-    nproc = multiprocessing.cpu_count()//2
+    nproc = 15#multiprocessing.cpu_count()//2
     print(nproc)
-    stop
+    
     
     # make sure we have a number of phase screens multiple of the number of CPUs
     nsaxomap  = saxomap_f - saxomap_i + 1
     nsaxomap  = nsaxomap - (nsaxomap % nproc)
-
+    print(nsaxomap)
     ndefo = 21
     defo_ampl = 0#-100 + 10.*np.arange(21)
     tipp_ampl = 0
     tilt_ampl = 0 
-
+    stop
     #%%
     """
     ### Directories
