@@ -105,10 +105,6 @@ if __name__ == '__main__':
     CtrBtwnPix2 = False
     Pupil2dSym  = False
 
-    # Spectral bandwidth
-    wv0       = 1625e-9 #1.593e-6
-    width     = 290e-9  #52e-9
-
     # Telescope characteristics
     dAper     = 8
     Fratio    = 40
@@ -116,9 +112,6 @@ if __name__ == '__main__':
     # Focal plane mask 
     mas2rad   = np.pi/(180.*3600) # Conversion factor from mas to rads
     rMask_m   = 287e-6/2.         # mask size in m
-    rMask     = rMask_m/(wv0*Fratio)  # mask size in lam0/D
-    rMask_mas = 1000.*rMask * (wv0/dAper)/mas2rad
-    print('Mask radius: {0:.2f} mas at {1:.3f}um'.format(rMask_mas, wv0*1e6))
 
     # sampling
     nPup   = 384   # pupil
@@ -126,19 +119,7 @@ if __name__ == '__main__':
     nImg2d = 200   # final image plane 
 
     # compute spatial frequencies in the final image plane
-    pixel  = 12.25 # IRDIS pixel sampling [mas/pix]
-    loD    = wv0/dAper*180/np.pi*3600*1000/pixel
-    nFre2d = nImg2d/loD    # spatial frequencies in the final image plane
-    
-    # wavelength sampling
-    nlam   = 892
-    bw     = width/wv0 
-
-    lam0   = 1. 
-    dlam   = bw*lam0
-    lam_t  = np.linspace(lam0-dlam/2*(nlam>1),lam0+dlam/2,nlam)
-    wv_t   = wv0*lam_t
-
+    pixel  = 12.25 # IRDIS pixel sampling [mas/pix]    
 
     # simulation configuration   
     kw_aberr     = True
@@ -147,26 +128,71 @@ if __name__ == '__main__':
     kw_aftercorr = False
     kw_saxo      = True
     saxofudge    = 1 #60/120              # saxo amplitude errors fudge factor
-    saxomap_i    = int(690*(eval(sys.argv[1])))       # saxo first screen
-    saxomap_f    = int(690*(eval(sys.argv[1])+1)-1)     # saxo last screen
-
-    # seeing for on-sky observations
+    nmap_sub     = 10                    # number of saxo maps for a single node
+    saxomap_i    = int(nmap_sub*(eval(sys.argv[1])))       # saxo first screen
+    saxomap_f    = int(nmap_sub*(eval(sys.argv[1])+1)-1)     # saxo last screen
+    print('saxomap_i {}'.format(saxomap_i))
+    print('saxomap_f {}'.format(saxomap_f))
+    # seeing for on-sky observations [arcsec]
     seeing = 0.7
 
     # multi-processing (to adjust with respect to the available proc, 10 and 20 cores in fdr and x40)
-    nproc = 15#multiprocessing.cpu_count()//2
-    print(nproc)
-    
+    nproc = 1      #multiprocessing.cpu_count()//2
+    print('number of proc: {:02d}'.format(nproc))    
     
     # make sure we have a number of phase screens multiple of the number of CPUs
     nsaxomap  = saxomap_f - saxomap_i + 1
     nsaxomap  = nsaxomap - (nsaxomap % nproc)
-    print(nsaxomap)
+    print('number of saxomaps to work with: {:05d}'.format(nsaxomap))
+    
     ndefo = 21
     defo_ampl = 0#-100 + 10.*np.arange(21)
     tipp_ampl = 0
     tilt_ampl = 0 
-    stop
+
+    # save multi-spectral images
+    do_sav = True 
+
+    #%%
+    """
+    ### Spectral parameters
+    """
+    band = 'BB_H'
+    if band == 'H2':
+        nlam  = 11
+        wv0   = 2.2e-6#1.593e-6
+        width = 52e-9
+    elif band == 'BB_H':
+        nlam  = 11
+        wv0   = 1625e-9 #1.593e-6
+        width = 290e-9  #52e-9        
+    else:
+        raise ValueError(f'Unknown {band} band')
+    
+    # wavelength sampling
+    bw     = width/wv0 
+    lam0   = 1. 
+    dlam   = bw*lam0
+    lam_t  = np.linspace(lam0-dlam/2*(nlam>1),lam0+dlam/2,nlam)
+    wv_t   = wv0*lam_t
+    dwv_t  = np.zeros((1))
+    wv_R   = 0
+    if nlam > 1:
+        dwv_t  = np.asarray([wv_t[1]-wv_t[0]]*nlam)
+        # spectral resolution
+        wv_R      = wv0/dwv_t[0]
+    
+    # compute spatial frequencies in the final image plane
+    pixel  = 12.25 # IRDIS pixel sampling [mas/pix]
+    loD    = wv0/dAper*180/np.pi*3600*1000/pixel
+    nFre2d = nImg2d/loD    # spatial frequencies in the final image plane
+    
+    # Focal plane mask 
+    rMask     = rMask_m/(wv0*Fratio)  # mask size in lam0/D
+    rMask_mas = 1000.*rMask * (wv0/dAper)/mas2rad
+    print('Mask radius: {0:.2f} mas at {1:.3f}um'.format(rMask_mas, wv0*1e6))
+    
+    
     #%%
     """
     ### Directories
@@ -303,19 +329,19 @@ if __name__ == '__main__':
 
             # read SAXO phase residuals
             SAXOmapnm3d_tmp = fits.getdata(fpath_SAXOmapnm3d)
-
+            print(SAXOmapnm3d_tmp.shape)
             # select only phase screens that will be actually used
-            SAXOmapnm3d_tmp = SAXOmapnm3d_tmp[saxomap_i:saxomap_f]
-
+            SAXOmapnm3d_tmp = SAXOmapnm3d_tmp[saxomap_i:saxomap_f+1]
+            print(SAXOmapnm3d_tmp.shape)
             # apply SAXO performance fudge factor
             if saxofudge != 1:
                 SAXOmapnm3d_tmp *= saxofudge
-            
+            print(SAXOmapnm3d_tmp.shape)
             # rescale NCPA map
             SAXOmapnm3d = np.empty((nmap, nPup, nPup))
             for i in range(nmap):
                 SAXOmapnm3d[i] = imutils.scale(SAXOmapnm3d_tmp[i], 0, new_dim=(nPup,nPup), method='interp')
-                print('{0:05}/{1:05}: SAXO map before scaling: {2:.2f} nm RMS, after: {3:.2f} nm RMS'.format(i+1, nmap, np.std(SAXOmapnm3d_tmp[i, pupil_tmp != 0]), np.std(np.asarray(SAXOmapnm3d)[i, pupil != 0])))
+                print('{0:05}/{1:05}: SAXO map before scaling: {2:6.2f} nm RMS, after: {3:6.2f} nm RMS'.format(i+1, nmap, np.std(SAXOmapnm3d_tmp[i, pupil_tmp != 0]), np.std(np.asarray(SAXOmapnm3d)[i, pupil != 0])))
 
             del SAXOmapnm3d_tmp
             
@@ -366,7 +392,7 @@ if __name__ == '__main__':
     ### Filepaths for the file results
     """
 
-    str_common = '_mono_nmap={:05d}_nlam={:04d}_saxomap_i{:05d}_f{:05d}'.format(nmap, nlam, saxomap_i, saxomap_f)
+    str_common = '_mono_nmap={:05d}_nlam={:04d}_saxomap_i{:05d}_f{:05d}_band={}'.format(nmap, nlam, saxomap_i, saxomap_f,band)
     
     # filepaths for the images
     fname_direct_mono_img_f     = 'direct' + str_common + '_img_f.fits'
@@ -462,14 +488,34 @@ if __name__ == '__main__':
     """
     ### File saving
     """
-    fits.writeto(fpath_direct_mono_img_f, direct_mono_img_f, overwrite=True)
-    fits.writeto(fpath_corono_mono_img_f, corono_mono_img_f, overwrite=True)
-
-    fits.writeto(fpath_direct_mono_prf_avg_f, direct_mono_prf_avg_f, overwrite=True)
-    fits.writeto(fpath_corono_mono_prf_avg_f, corono_mono_prf_avg_f, overwrite=True)
-    fits.writeto(fpath_direct_mono_prf_std_f, direct_mono_prf_std_f, overwrite=True)
-    fits.writeto(fpath_corono_mono_prf_std_f, corono_mono_prf_std_f, overwrite=True)
-
+    if do_sav:
+        data_list = [direct_mono_img_f,corono_mono_img_f,direct_mono_prf_avg_f,
+                     corono_mono_prf_avg_f,direct_mono_prf_std_f,corono_mono_prf_std_f]
+        fpath_list = [fpath_direct_mono_img_f,fpath_corono_mono_img_f,fpath_direct_mono_prf_avg_f,
+                      fpath_corono_mono_prf_avg_f,fpath_direct_mono_prf_std_f,fpath_corono_mono_prf_std_f]
+        nlist = len(data_list)
+        
+        for ilist in range(nlist):
+        # save in FITS format
+            hdu_prim = fits.PrimaryHDU()
+            hdu_img  = fits.ImageHDU(data_list[ilist])
+            hdu_wave = fits.BinTableHDU.from_columns([
+                fits.Column(name='wave', unit='nm', array=wv_t, format='D'),
+                fits.Column(name='dwave', unit='nm', array=dwv_t, format='D')
+            ])
+        
+            # set some keywords in primary header
+            hdu_prim.header['BAND']     = (band, 'Filter')
+            hdu_prim.header['WAVE_MIN'] = (wv_t[0], 'Minimum wavelength [nm]')
+            hdu_prim.header['WAVE_CEN'] = (wv_t[nlam//2], 'Central wavelength [nm]')
+            hdu_prim.header['WAVE_MAX'] = (wv_t[-1], 'Maximum wavelength [nm]')
+            hdu_prim.header['RESOL']    = (wv_R, 'Spectral resolution')
+            hdu_prim.header['PIXELSIM'] = (pixel, 'Input simulation pixel size [mas]')
+        
+            hdu = fits.HDUList([hdu_prim, hdu_img, hdu_wave])
+        
+            hdu.writeto(fpath_list[ilist], overwrite=True)    
+    
     #%%
     t_end = time.time()
     print('\ntime usage:   {0:.2f}s for nlam={1:03} and nmap={2:05d}'.format(t_end-t_ini,nlam,nmap))

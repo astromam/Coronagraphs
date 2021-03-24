@@ -31,10 +31,6 @@ CtrBtwnPix  = True
 CtrBtwnPix2 = False
 Pupil2dSym  = False
 
-# Spectral bandwidth
-wv0       = 1.593e-6
-width     = 52e-9
-
 # Telescope characteristics
 dAper     = 8
 Fratio    = 40
@@ -42,28 +38,11 @@ Fratio    = 40
 # Focal plane mask 
 mas2rad   = np.pi/(180.*3600) # Conversion factor from mas to rads
 rMask_m   = 287e-6/2.         # mask size in m
-rMask     = rMask_m/(wv0*Fratio)  # mask size in lam0/D
-rMask_mas = 1000.*rMask * (wv0/dAper)/mas2rad
-print('Mask radius: {0:.2f} mas at {1:.3f}um'.format(rMask_mas, wv0*1e6))
 
-# sampling
+# spatial sampling
 nPup   = 384   # pupil
 nFPM   = 200   # focal plane mask
 nImg2d = 200   # final image plane 
-
-# compute spatial frequencies in the final image plane
-pixel  = 12.25 # IRDIS pixel sampling [mas/pix]
-loD    = wv0/dAper*180/np.pi*3600*1000/pixel
-nFre2d = nImg2d/loD    # spatial frequencies in the final image plane
-
-# wavelength sampling
-nlam   = 3
-bw     = width/wv0 
-
-lam0   = 1. 
-dlam   = bw*lam0
-lam_t  = np.linspace(lam0-dlam/2*(nlam>1),lam0+dlam/2,nlam)
-wv_t   = wv0*lam_t
 
 # simulation configuration   
 kw_aberr     = True
@@ -88,7 +67,49 @@ ndefo = 21
 defo_ampl = 0.#-100 + 10.*np.arange(ndefo)
 tipp_ampl = 0
 tilt_ampl = 0 
+
+# save multi-spectral images
+do_sav = True 
     
+#%%
+"""
+### Spectral parameters
+"""
+band = 'H2'
+if band == 'H2':
+    nlam = 11
+    wv0   = 1.593e-6
+    width = 52e-9
+elif band == 'BB_H':
+    nlam  = 11
+    wv0   = 1625e-9 #1.593e-6
+    width = 290e-9  #52e-9        
+else:
+    raise ValueError(f'Unknown {band} band')
+
+# wavelength sampling
+bw     = width/wv0 
+lam0   = 1. 
+dlam   = bw*lam0
+lam_t  = np.linspace(lam0-dlam/2*(nlam>1),lam0+dlam/2,nlam)
+wv_t   = wv0*lam_t
+dwv_t  = np.zeros((1))
+wv_R   = 0
+if nlam > 1:
+    dwv_t  = np.asarray([wv_t[1]-wv_t[0]]*nlam)
+    # spectral resolution
+    wv_R      = wv0/dwv_t[0]
+
+# compute spatial frequencies in the final image plane
+pixel  = 12.25 # IRDIS pixel sampling [mas/pix]
+loD    = wv0/dAper*180/np.pi*3600*1000/pixel
+nFre2d = nImg2d/loD    # spatial frequencies in the final image plane
+
+# Focal plane mask 
+rMask     = rMask_m/(wv0*Fratio)  # mask size in lam0/D
+rMask_mas = 1000.*rMask * (wv0/dAper)/mas2rad
+print('Mask radius: {0:.2f} mas at {1:.3f}um'.format(rMask_mas, wv0*1e6))
+
 #%%
 """
 ### Directories
@@ -219,7 +240,7 @@ if kw_aberr:
         SAXOmapnm3d = np.empty((nmap, nPup, nPup))
         for i in range(nmap):
             SAXOmapnm3d[i] = imutils.scale(SAXOmapnm3d_tmp[i+saxomap_i], 0, new_dim=(nPup,nPup), method='interp')
-            print('{0:05}/{1:05}: SAXO map before scaling: {2:.2f} nm RMS, after: {3:.2f} nm RMS'.format(i+1, nmap, np.std(SAXOmapnm3d_tmp[i, pupil_tmp != 0]), np.std(np.asarray(SAXOmapnm3d)[i, pupil != 0])))
+            print('{0:05}/{1:05}: SAXO map before scaling: {2:6.2f} nm RMS, after: {3:6.2f} nm RMS'.format(i+1, nmap, np.std(SAXOmapnm3d_tmp[i, pupil_tmp != 0]), np.std(np.asarray(SAXOmapnm3d)[i, pupil != 0])))
 
         del SAXOmapnm3d_tmp
         
@@ -269,7 +290,7 @@ corono0  = coro.design.APLC2d(**params)
 """
 ### Filepaths for the results
 """          
-str_common = '_mono_nmap={:05d}_nlam={:04d}_saxomap_i{:05d}_f{:05d}'.format(nmap, nlam, saxomap_i, saxomap_f)
+str_common = '_mono_nmap={:05d}_nlam={:04d}_saxomap_i{:05d}_f{:05d}_band={}'.format(nmap, nlam, saxomap_i, saxomap_f,band)
 
 # filepaths for the images
 fname_direct_mono_img_f     = 'direct' + str_common + '_img_f.fits'
@@ -334,10 +355,31 @@ for ilam in range(nlam):
 """
 ### File saving
 """
-fits.writeto(fpath_direct_mono_img_f, direct_mono_img_f, overwrite=True)
-fits.writeto(fpath_corono_mono_img_f, corono_mono_img_f, overwrite=True)
-
-fits.writeto(fpath_direct_mono_prf_avg_f, direct_mono_prf_avg_f, overwrite=True)
-fits.writeto(fpath_corono_mono_prf_avg_f, corono_mono_prf_avg_f, overwrite=True)
-fits.writeto(fpath_direct_mono_prf_std_f, direct_mono_prf_std_f, overwrite=True)
-fits.writeto(fpath_corono_mono_prf_std_f, corono_mono_prf_std_f, overwrite=True) 
+if do_sav:
+    data_list = [direct_mono_img_f,corono_mono_img_f,direct_mono_prf_avg_f,
+                 corono_mono_prf_avg_f,direct_mono_prf_std_f,corono_mono_prf_std_f]
+    fpath_list = [fpath_direct_mono_img_f,fpath_corono_mono_img_f,fpath_direct_mono_prf_avg_f,
+                  fpath_corono_mono_prf_avg_f,fpath_direct_mono_prf_std_f,fpath_corono_mono_prf_std_f]
+    nlist = len(data_list)
+    
+    for ilist in range(nlist):
+    # save in FITS format
+        hdu_prim = fits.PrimaryHDU()
+        hdu_img  = fits.ImageHDU(data_list[ilist])
+        hdu_wave = fits.BinTableHDU.from_columns([
+            fits.Column(name='wave', unit='nm', array=wv_t, format='D'),
+            fits.Column(name='dwave', unit='nm', array=dwv_t, format='D')
+        ])
+    
+        # set some keywords in primary header
+        hdu_prim.header['BAND']     = (band, 'Filter')
+        hdu_prim.header['WAVE_MIN'] = (wv_t[0], 'Minimum wavelength [nm]')
+        hdu_prim.header['WAVE_CEN'] = (wv_t[nlam//2], 'Central wavelength [nm]')
+        hdu_prim.header['WAVE_MAX'] = (wv_t[-1], 'Maximum wavelength [nm]')
+        hdu_prim.header['RESOL']    = (wv_R, 'Spectral resolution')
+        hdu_prim.header['PIXELSIM'] = (pixel, 'Input simulation pixel size [mas]')
+    
+        hdu = fits.HDUList([hdu_prim, hdu_img, hdu_wave])
+    
+        hdu.writeto(fpath_list[ilist], overwrite=True)    
+    

@@ -44,9 +44,6 @@ Fratio    = 40
 # Focal plane mask
 mas2rad   = np.pi/(180.*3600)
 rMask_m   = 287e-6/2.
-rMask     = rMask_m/(wv0*Fratio)
-rMask_mas = 1000.*rMask * (wv0/dAper)/mas2rad
-print('Mask radius: {0:.2f} mas at {1:.3f}um'.format(rMask_mas, wv0*1e6))
 
 # sampling
 nPup   = 384   # pupil
@@ -55,17 +52,6 @@ nImg2d = 200   # final image plane
 
 # compute spatial frequencies in the final image plane
 pixel  = 12.25 # IRDIS pixel sampling [mas/pix]
-loD    = wv0/dAper*180/np.pi*3600*1000/pixel
-nFre2d = nImg2d/loD    # spatial frequencies in the final image plane
-
-# wavelength sampling
-nlam   = 892
-bw     = width/wv0 
-
-lam0   = 1. 
-dlam   = bw*lam0
-lam_t  = np.linspace(lam0-dlam/2*(nlam>1),lam0+dlam/2,nlam)
-wv_t   = wv0*lam_t
 
 # simulation configuration   
 kw_aberr     = True
@@ -76,13 +62,14 @@ kw_saxo      = True
 saxofudge    = 1. #80/120.
 
 pack_i = 0
-saxomap_i    = int(690*pack_i)         # saxo first screen
-saxomap_f    = int(690*(pack_i+1))     # saxo last screen
+nmap_sub     = 10                    # number of saxo maps for a single node
+saxomap_i    = int(nmap_sub*pack_i)         # saxo first screen
+saxomap_f    = int(nmap_sub*(pack_i+1)-1)     # saxo last screen
 
 # test on the order of the min and max number of saxo phase screen
 if saxomap_i <= saxomap_f:
     nsaxomap     = saxomap_f - saxomap_i + 1
-    nproc = 8
+    nproc = 1
     nsaxomap  = nsaxomap - (nsaxomap % nproc)
 else:
     raise NameError('initial saxo map (saxomap_i={0}) must be smaller than final saxo map (saxomap_f={1})!'.format(saxomap_i, saxomap_f))
@@ -96,6 +83,46 @@ cDarkHole   = 6
 defo_ampl = 0.
 tipp_ampl = 0
 tilt_ampl = 0 
+
+#%%
+"""
+### Spectral parameters
+"""
+band = 'BB_H'
+if band == 'H2':
+    nlam  = 11
+    wv0   = 2.2e-6#1.593e-6
+    width = 52e-9
+elif band == 'BB_H':
+    nlam  = 11
+    wv0   = 1625e-9 #1.593e-6
+    width = 290e-9  #52e-9        
+else:
+    raise ValueError(f'Unknown {band} band')
+
+# wavelength sampling
+bw     = width/wv0 
+lam0   = 1. 
+dlam   = bw*lam0
+lam_t  = np.linspace(lam0-dlam/2*(nlam>1),lam0+dlam/2,nlam)
+wv_t   = wv0*lam_t
+dwv_t  = np.zeros((1))
+wv_R   = 0
+if nlam > 1:
+    dwv_t  = np.asarray([wv_t[1]-wv_t[0]]*nlam)
+    # spectral resolution
+    wv_R      = wv0/dwv_t[0]
+
+# compute spatial frequencies in the final image plane
+pixel  = 12.25 # IRDIS pixel sampling [mas/pix]
+loD    = wv0/dAper*180/np.pi*3600*1000/pixel
+nFre2d = nImg2d/loD    # spatial frequencies in the final image plane
+
+# Focal plane mask 
+rMask     = rMask_m/(wv0*Fratio)  # mask size in lam0/D
+rMask_mas = 1000.*rMask * (wv0/dAper)/mas2rad
+print('Mask radius: {0:.2f} mas at {1:.3f}um'.format(rMask_mas, wv0*1e6))
+
 
 #%%
 """
@@ -215,7 +242,7 @@ ncase = len(label_lst)
 """
 ### Filepaths for the file results
 """        
-str_common = '_mono_nmap={:05d}_nlam={:04d}_saxomap_i{:05d}_f{:05d}'.format(nmap, nlam, saxomap_i, saxomap_f)
+str_common = '_mono_nmap={:05d}_nlam={:04d}_saxomap_i{:05d}_f{:05d}_band={}'.format(nmap, nlam, saxomap_i, saxomap_f,band)
 
 # filepaths for the images
 fname_direct_mono_img_f     = 'direct' + str_common + '_img_f.fits'
@@ -402,9 +429,14 @@ i0 = 0
 pl.figure(12)
 pl.clf()
 for ilam in range(nlam):
-    pl.semilogy(x_abs, corono_mono_prf_std_f[ilam]/direct_mono_img_f[ilam].max(),
+    if int(ilam % 223) == 0 or ilam == nlam-1:
+        print(ilam)
+        pl.semilogy(x_abs, corono_mono_prf_std_f[ilam]/direct_mono_img_f[ilam].max(),
             label=r'$\lambda=${0:.3f}$\mu$m'.format(wv_t[ilam]*1e6), color = colors_cor[ilam])
-
+    else:
+        pl.semilogy(x_abs, corono_mono_prf_std_f[ilam]/direct_mono_img_f[ilam].max(),
+            label=None, color = colors_cor[ilam])
+    
 pl.axvline(x=rMask*fac, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
 pl.axvline(x=rho0*fac, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
 pl.axvline(x=rho1*fac, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
@@ -424,7 +456,7 @@ f2 = pl.figure(24, figsize=(6,4.5))
 pl.clf()
 exec('ax{0} = f2.add_subplot(1,{1},{0})'.format(1,1))
 exec('im = ax{0}.imshow(np.log10(np.fliplr(corono_mono_img_f[nlam//2])/direct_mono_img_f[nlam//2].max()), cmap = "inferno", vmin=-7., vmax=-3.)'.format(1))
-exec('ax{0}.text(nImg2d/2, 0.1*nImg2d, "nmap={1:05d} (flip lr)", fontsize=16, horizontalalignment="center", color = "white")'.format(1,nmap))
+exec('ax{0}.text(nImg2d/2, 0.1*nImg2d, r"nmap={1:05d}, $\lambda={2:.3f}\mu$m", fontsize=16, horizontalalignment="center", color = "white")'.format(1,nmap, wv_t[nlam//2]*1e6))
 exec('ax{0}.tick_params(axis="x", which="both", bottom="off", top="off", labelbottom="off")'.format(1,))
 exec('ax{0}.tick_params(axis="y", which="both", left="off", right="off", labelleft="off")'.format(1,))
 
@@ -432,7 +464,7 @@ f2.subplots_adjust(bottom=0.1, top=0.9, left=0.1, right=0.8,
                     wspace=0.02, hspace=0.02)
 
 f2.subplots_adjust(right=0.8)
-exec('ax{0}.set_title("{1}")'.format(1,str_corr))
+#exec('ax{0}.set_title("{1}")'.format(1,str_corr))
 exec('cbar_ax = f2.add_axes([0.85, 0.15, 0.05, 0.7])')
 exec('cbar    = f2.colorbar(im, cax=cbar_ax)')
 exec('cbar.ax.set_ylabel("intensity in log scale", rotation=270, labelpad = 10)')

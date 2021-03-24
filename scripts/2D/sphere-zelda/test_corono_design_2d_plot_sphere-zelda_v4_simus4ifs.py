@@ -42,28 +42,11 @@ Fratio    = 40
 # Focal plane mask
 mas2rad   = np.pi/(180.*3600)
 rMask_m   = 287e-6/2.
-rMask     = rMask_m/(wv0*Fratio)
-rMask_mas = 1000.*rMask * (wv0/dAper)/mas2rad
-print('Mask radius: {0:.2f} mas at {1:.3f}um'.format(rMask_mas, wv0*1e6))
 
 # sampling
 nPup   = 384   # pupil
 nFPM   = 200   # focal plane mask
 nImg2d = 200   # final image plane 
-
-# compute spatial frequencies in the final image plane
-pixel  = 12.25 # IRDIS pixel sampling [mas/pix]
-loD    = wv0/dAper*180/np.pi*3600*1000/pixel
-nFre2d = nImg2d/loD    # spatial frequencies in the final image plane
-
-# wavelength sampling
-nlam   = 3
-bw     = width/wv0 
-
-lam0   = 1. 
-dlam   = bw*lam0
-lam_t  = np.linspace(lam0-dlam/2*(nlam>1),lam0+dlam/2,nlam)
-wv_t   = wv0*lam_t
 
 # simulation configuration   
 kw_aberr     = True
@@ -73,7 +56,10 @@ kw_aftercorr = False
 kw_saxo      = True
 saxofudge    = 1. #80/120.
 saxomap_i    = 0
-saxomap_f    = int(2*1380)-1 #int(30*1380)
+saxomap_f    = 10#int(2*1380)-1 #int(30*1380)
+
+# seeing for on-sky observations
+seeing = 0.7
 
 # test on the order of the min and max number of saxo phase screen
 if saxomap_i <= saxomap_f:
@@ -90,6 +76,45 @@ cDarkHole   = 6
 defo_ampl = 0.
 tipp_ampl = 0
 tilt_ampl = 0 
+
+#%%
+"""
+### Spectral parameters
+"""
+band = 'H2'
+if band == 'H2':
+    nlam = 11
+    wv0   = 1.593e-6
+    width = 52e-9
+elif band == 'BB_H':
+    nlam  = 11
+    wv0   = 1625e-9 #1.593e-6
+    width = 290e-9  #52e-9        
+else:
+    raise ValueError(f'Unknown {band} band')
+
+# wavelength sampling
+bw     = width/wv0 
+lam0   = 1. 
+dlam   = bw*lam0
+lam_t  = np.linspace(lam0-dlam/2*(nlam>1),lam0+dlam/2,nlam)
+wv_t   = wv0*lam_t
+dwv_t  = np.zeros((1))
+wv_R   = 0
+if nlam > 1:
+    dwv_t  = np.asarray([wv_t[1]-wv_t[0]]*nlam)
+    # spectral resolution
+    wv_R      = wv0/dwv_t[0]
+
+# compute spatial frequencies in the final image plane
+pixel  = 12.25 # IRDIS pixel sampling [mas/pix]
+loD    = wv0/dAper*180/np.pi*3600*1000/pixel
+nFre2d = nImg2d/loD    # spatial frequencies in the final image plane
+
+# Focal plane mask 
+rMask     = rMask_m/(wv0*Fratio)  # mask size in lam0/D
+rMask_mas = 1000.*rMask * (wv0/dAper)/mas2rad
+print('Mask radius: {0:.2f} mas at {1:.3f}um'.format(rMask_mas, wv0*1e6))
 
 #%%
 """
@@ -198,7 +223,7 @@ ncase = len(label_lst)
 """
 ### Filepaths for the file results
 """        
-str_common = '_mono_nmap={:05d}_saxofudge={:.2f}_nlam={:04d}'.format(nmap, saxofudge, nlam)
+str_common = '_mono_nmap={:05d}_nlam={:04d}_saxomap_i{:05d}_f{:05d}_band={}'.format(nmap, nlam, saxomap_i, saxomap_f,band)
 
 # filepaths for the images
 fname_direct_mono_img_f     = 'direct' + str_common + '_img_f.fits'
