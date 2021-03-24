@@ -160,7 +160,7 @@ if __name__ == '__main__':
     band = 'BB_H'
     if band == 'H2':
         nlam  = 11
-        wv0   = 2.2e-6#1.593e-6
+        wv0   = 1.593e-6
         width = 52e-9
     elif band == 'BB_H':
         nlam  = 11
