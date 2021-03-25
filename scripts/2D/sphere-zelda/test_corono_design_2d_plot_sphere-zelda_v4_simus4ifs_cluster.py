@@ -248,7 +248,7 @@ ncase = len(label_lst)
 """
 ### Filepaths for the file results
 """        
-str_common = '_mono_nmap={:05d}_nlam={:04d}_saxomap_i{:05d}_f{:05d}_band={}'.format(nmap, nlam, saxomap_i, saxomap_f,band)
+str_common = '_mono_nmap{:05d}_nlam{:04d}_saxomap_i{:05d}_f{:05d}_band{}'.format(nmap, nlam, saxomap_i, saxomap_f,band)
 
 # filepaths for the images
 fname_direct_mono_img_f     = 'direct' + str_common + '_img_f.fits'
