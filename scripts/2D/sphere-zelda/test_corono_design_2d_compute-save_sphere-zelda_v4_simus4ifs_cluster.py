@@ -118,6 +118,9 @@ if __name__ == '__main__':
     nFPM   = 200   # focal plane mask
     nImg2d = 200   # final image plane 
 
+    # spectral band
+    band = 'BB_H' # 'BB_J', 'BB_H', 'H2' filters
+
     # compute spatial frequencies in the final image plane
     pixel  = 12.25 # IRDIS pixel sampling [mas/pix]    
 
@@ -157,7 +160,6 @@ if __name__ == '__main__':
     """
     ### Spectral parameters
     """
-    band = 'BB_H'
     if band == 'H2':
         nlam  = 11
         wv0   = 1.593e-6
