@@ -95,8 +95,12 @@ if band == 'H2':
     width = 52e-9
 elif band == 'BB_H':
     nlam  = 892
-    wv0   = 1625e-9 #1.593e-6
-    width = 290e-9  #52e-9        
+    wv0   = 1625e-9
+    width = 290e-9
+elif band == 'BB_J':
+    nlam  = 964
+    wv0   = 1245e-9
+    width = 240e-9       
 else:
     raise ValueError(f'Unknown {band} band')
 
