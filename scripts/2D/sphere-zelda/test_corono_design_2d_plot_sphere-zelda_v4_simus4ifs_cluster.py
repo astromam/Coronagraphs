@@ -62,14 +62,14 @@ kw_saxo      = True
 saxofudge    = 1. #80/120.
 
 pack_i = 0
-nmap_sub     = 10                    # number of saxo maps for a single node
+nmap_sub     = 690                    # number of saxo maps for a single node
 saxomap_i    = int(nmap_sub*pack_i)         # saxo first screen
 saxomap_f    = int(nmap_sub*(pack_i+1)-1)     # saxo last screen
 
 # test on the order of the min and max number of saxo phase screen
 if saxomap_i <= saxomap_f:
     nsaxomap     = saxomap_f - saxomap_i + 1
-    nproc = 1
+    nproc = 15
     nsaxomap  = nsaxomap - (nsaxomap % nproc)
 else:
     raise NameError('initial saxo map (saxomap_i={0}) must be smaller than final saxo map (saxomap_f={1})!'.format(saxomap_i, saxomap_f))
@@ -94,7 +94,7 @@ if band == 'H2':
     wv0   = 1.593e-6
     width = 52e-9
 elif band == 'BB_H':
-    nlam  = 11
+    nlam  = 892
     wv0   = 1625e-9 #1.593e-6
     width = 290e-9  #52e-9        
 else:
