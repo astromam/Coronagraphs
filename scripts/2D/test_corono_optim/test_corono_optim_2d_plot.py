@@ -27,7 +27,7 @@ test_gurobi = False
 if False:
     # Telescope name
     corono_name  = 'APLC' # 'SP' or 'APLC'
-    pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
+    pupil_name   = 'vlt' # 'vlt' or 'sbr' or 'lvr'
     problem_name = 'MaxTau' # 'MaxContrastL1' #'MaxTau' # , 'MaxContrastLinf' # #  
     solver       = 'stdgrb' # 'stdgrb' #  'gurobipy', 'scipy.linprog'
     
@@ -35,7 +35,7 @@ if False:
     FirstDerGlobalLim = 1.
     
     #nPup = corono0.params['nPup']
-    nPup = 50
+    nPup = 200
     nFPM = 50
     Fmax2d = 50
     nImg2d = 500

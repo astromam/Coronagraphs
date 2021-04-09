@@ -23,13 +23,14 @@ from astropy.io import fits
 Parameters
 """
 # Telescope name
-corono_name  = 'SP' # 'SP' or 'APLC'
-pupil_name   = 'elt' # 'vlt' or 'sbr' or 'lvr'
+corono_name  = 'APLC' # 'SP' or 'APLC'
+pupil_name   = 'vlt' # 'vlt' or 'sbr' or 'lvr'
 problem_name = 'MaxTau' # 'MaxTau' # ,'MaxContrastLinf' # 'MaxContrastL1' #
 solver       = 'stdgrb' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
 slvLogToConsole = 1
 slvCrossover    = 0
 slvMethod       = 2
+slvSparse       = 0
 allLogToConsole = 1
 
 MinIsland   = False
@@ -38,7 +39,7 @@ FirstDerGlobalLim = 100.
 BinarityReg       = 0.1
 
 #nPup = corono0.params['nPup']
-nPup = 1024
+nPup = 200
 nFPM = 50
 Fmax2d = 22.5
 nImg2d = 45
@@ -102,6 +103,7 @@ params = coro.to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
                  corono_name = corono_name, pupil_name = pupil_name,
                  slvLogToConsole = slvLogToConsole,
                  slvCrossover = slvCrossover, slvMethod = slvMethod,
+                 slvSparse = slvSparse,
                  allLogToConsole = allLogToConsole,
                  MinIsland = MinIsland, FirstDerGlobalLim = FirstDerGlobalLim,
                  Binarity = Binarity, BinarityReg = BinarityReg,
