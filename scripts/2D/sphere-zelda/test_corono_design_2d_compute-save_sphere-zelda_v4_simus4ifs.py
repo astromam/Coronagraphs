@@ -21,6 +21,7 @@ from pathlib import Path
 from astropy.io import fits
 import corono as coro
 
+
 #%% APLC2d tests
 """
 ### Parameters
@@ -36,7 +37,8 @@ dAper     = 8
 Fratio    = 40
 
 # Focal plane mask 
-mas2rad   = np.pi/(180.*3600) # Conversion factor from mas to rads
+mas2rad   = np.pi/(180.*3600*1000) # Conversion factor from mas to rads
+rad2mas   = 1/mas2rad
 rMask_m   = 287e-6/2.         # mask size in m
 
 # spatial sampling
@@ -70,6 +72,15 @@ tilt_ampl = 0
 
 # save multi-spectral images
 do_sav = True 
+
+# case with planet for plots
+kwd_pla = True
+
+# Planet position properties
+sep_mas_p   = 12.25*16  #5*pscale      # planet separation in mas
+theta_deg_p = 0  # planet position angle in degrees
+
+
     
 #%%
 """
@@ -107,8 +118,17 @@ nFre2d = nImg2d/loD    # spatial frequencies in the final image plane
 
 # Focal plane mask 
 rMask     = rMask_m/(wv0*Fratio)  # mask size in lam0/D
-rMask_mas = 1000.*rMask * (wv0/dAper)/mas2rad
+rMask_mas = rMask * (wv0/dAper)/mas2rad
 print('Mask radius: {0:.2f} mas at {1:.3f}um'.format(rMask_mas, wv0*1e6))
+
+# planet position properties
+sep_loD_p   = sep_mas_p/(wv_t[nlam//2]/dAper*rad2mas) # planet separation in lam0/D
+theta_rad_p = theta_deg_p*(np.pi/180)          # planet position angle in radians
+print('planet sep: {:6.1f}mas, {:6.2f}lam0/D'.format(sep_mas_p,sep_loD_p))
+print('planet ang: {:6.1f}deg, {:6.2f}rad'.format(theta_deg_p,theta_rad_p))
+pla_dRA   = sep_mas_p*np.cos(theta_rad_p)      # delta in RA, in mas
+pla_dDEC  = sep_mas_p*np.sin(theta_rad_p)      # delta in DEC, in mas
+
 
 #%%
 """
@@ -260,12 +280,17 @@ Tilt_mapnm2d = zernike.zernike1(3, npix=nPup, outside=0.)
 # define the averaged image
 direct_mono_img_f = np.zeros((nlam, nImg2d, nImg2d))
 corono_mono_img_f = np.zeros((nlam, nImg2d, nImg2d))
+direct_peak_val   = np.zeros((nlam))
 
 # define the averaged and standard deviation profiles of the images
 direct_mono_prf_avg_f = np.zeros((nlam, nImg2d//2))
 corono_mono_prf_avg_f = np.zeros((nlam, nImg2d//2))
 direct_mono_prf_std_f = np.zeros((nlam, nImg2d//2))
 corono_mono_prf_std_f = np.zeros((nlam, nImg2d//2))
+
+# define the averaged image
+direct_mono_img_fp = np.zeros((nlam, nImg2d, nImg2d))
+corono_mono_img_fp = np.zeros((nlam, nImg2d, nImg2d))
 
 #%% 
 """
@@ -290,7 +315,8 @@ corono0  = coro.design.APLC2d(**params)
 """
 ### Filepaths for the results
 """          
-str_common = '_mono_nmap={:05d}_nlam={:04d}_saxomap_i{:05d}_f{:05d}_band={}'.format(nmap, nlam, saxomap_i, saxomap_f,band)
+str_common = '_mono_nmap{:05d}_nlam{:04d}_saxomap_i{:05d}_f{:05d}_band{}'.format(nmap, nlam, saxomap_i, saxomap_f,band)
+str_offaxis = '_sep{:04d}mas'.format(int(round(sep_mas_p)))
 
 # filepaths for the images
 fname_direct_mono_img_f     = 'direct' + str_common + '_img_f.fits'
@@ -307,6 +333,13 @@ fpath_direct_mono_prf_avg_f = fdir_results / fname_direct_mono_prf_avg_f
 fpath_corono_mono_prf_avg_f = fdir_results / fname_corono_mono_prf_avg_f
 fpath_direct_mono_prf_std_f = fdir_results / fname_direct_mono_prf_std_f
 fpath_corono_mono_prf_std_f = fdir_results / fname_corono_mono_prf_std_f
+
+# filepaths for the images for the off-axis planet
+fname_direct_mono_img_fp = 'direct' + str_common + '_img_f' + str_offaxis + '.fits'
+fname_corono_mono_img_fp = 'corono' + str_common + '_img_f' + str_offaxis + '.fits'
+fpath_direct_mono_img_fp = fdir_results / fname_direct_mono_img_fp
+fpath_corono_mono_img_fp = fdir_results / fname_corono_mono_img_fp
+
 
 #%%
 """
@@ -341,9 +374,9 @@ corono_mono_img_f /= nmap
 
 for ilam in range(nlam):
     # image normalization
-    direct_peak_val = direct_mono_img_f[ilam].max()
-    direct_mono_img_f[ilam] /= direct_peak_val
-    corono_mono_img_f[ilam] /= direct_peak_val
+    direct_peak_val[ilam] = direct_mono_img_f[ilam].max()
+    direct_mono_img_f[ilam] /= direct_peak_val[ilam]
+    corono_mono_img_f[ilam] /= direct_peak_val[ilam]
      
     # computation of the averaged and standard deviation profiles of the images   
     direct_mono_prf_avg_f[ilam], rad_direct = imutils.profile(direct_mono_img_f[ilam], type='mean')
@@ -351,15 +384,48 @@ for ilam in range(nlam):
     direct_mono_prf_std_f[ilam], rad_direct = imutils.profile(direct_mono_img_f[ilam], type='std')
     corono_mono_prf_std_f[ilam], rad_corono = imutils.profile(corono_mono_img_f[ilam], type='std')
 
+#%%
+"""
+### Image generation for the off-axis companion
+"""
+# Generation of a tip and tilt mode
+opd_p0 = wv0*(sep_loD_p/4)*(np.sin(theta_rad_p)*Tipp_mapnm2d + np.cos(theta_rad_p)*Tilt_mapnm2d)
+
+for imap in range(nmap):
+    t0 = time.time()
+    OPDmap2d = None
+    if kw_aberr:           
+        if kw_saxo and kw_2nddate:
+            OPDmap2d = OPDmap2d0 + SAXOmapnm3d[saxomap_i+imap]*1e-9 + opd_p0
+        else:
+            OPDmap2d = OPDmap2d0*1. + opd_p0
+    direct_mono_img_fp += corono0.compute_direct_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d, poly=False)
+    corono_mono_img_fp += corono0.compute_corono_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d, poly=False)                
+
+    t1 = time.time()
+    if (imap+1) % 10 == 0: 
+        print('map {1}/{2}, computation time: {0:.2f}s'.format(t1-t0, imap+1, nmap))
+
+# computation of the averaged images
+direct_mono_img_fp /= nmap
+corono_mono_img_fp /= nmap
+
+for ilam in range(nlam):
+    # image normalization
+    direct_mono_img_fp[ilam] /= direct_peak_val[ilam]
+    corono_mono_img_fp[ilam] /= direct_peak_val[ilam]
+
 #%% saving of the images
 """
 ### File saving
 """
 if do_sav:
     data_list = [direct_mono_img_f,corono_mono_img_f,direct_mono_prf_avg_f,
-                 corono_mono_prf_avg_f,direct_mono_prf_std_f,corono_mono_prf_std_f]
+                 corono_mono_prf_avg_f,direct_mono_prf_std_f,corono_mono_prf_std_f,
+                 direct_mono_img_fp, corono_mono_img_fp]
     fpath_list = [fpath_direct_mono_img_f,fpath_corono_mono_img_f,fpath_direct_mono_prf_avg_f,
-                  fpath_corono_mono_prf_avg_f,fpath_direct_mono_prf_std_f,fpath_corono_mono_prf_std_f]
+                  fpath_corono_mono_prf_avg_f,fpath_direct_mono_prf_std_f,fpath_corono_mono_prf_std_f,
+                  fpath_direct_mono_img_fp, fpath_corono_mono_img_fp]
     nlist = len(data_list)
     
     for ilist in range(nlist):
