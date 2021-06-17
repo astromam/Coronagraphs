@@ -21,6 +21,7 @@ from pathlib import Path
 from astropy.io import fits
 import corono as coro
 
+import matplotlib.pyplot as plt
 
 #%% APLC2d tests
 """
@@ -54,7 +55,7 @@ kw_aftercorr = False
 kw_saxo      = True
 saxofudge    = 1. #80/120.
 saxomap_i    = 0    # saxo first screen
-saxomap_f    = 10 # saxo last screen
+saxomap_f    = 100 # saxo last screen
 
 # seeing for on-sky observations
 seeing = 0.7
@@ -173,6 +174,7 @@ fdir = Path('/Users/mndiaye/OneDrive - Université Nice Sophia Antipolis/data/C
 fdir_pupils  = fdir / 'data' / '2D' / 'pupils' / 'SPHERE' 
 fdir_zelda   = fdir / 'data' / '2D' / 'ZELDA' / str_date / str_obs  
 fdir_saxo    = fdir / 'data' / '2D' / 'ZELDA' / '2018-04-03'
+fdir_spectra = fdir / 'data' / '2D' / 'package_simu_spectra'
 
 if kw_aberr:
     fdir_results = fdir / 'results' / '2D' / 'data' / 'SPHERE' / str_aberr / str_date / str_obs / str_saxo / str_corr  
@@ -221,7 +223,50 @@ if kw_aberr:
         fpath_SAXOmapnm3d = fdir_saxo / fname_SAXOmapnm3d
     
 fpath_LyotStop2d = fdir_pupils / fname_LyotStop2d    
+  
+#%%
+"""
+### Filename for the spectra
+"""
+# stellar parameters
+star_SpT    = 'A0'
+star_mass   = 2.2
+star_age    = 20
+star_dist   = 50 
+#star_magH = 4.0
+star_band   = 'H'
+star_wv_res = 1000
+
+plnt_mass   = 5
+plnt_age    = 20
+plnt_dist   = 50
+plnt_wv_res = 1000
+
+
+if star_band == 'J':
+    star_wv_min = 0.9
+    star_wv_max = 1.4
+    plnt_wv_min = 0.9
+    plnt_wv_max = 1.4
+elif star_band == 'H':
+    star_wv_min = 1.4
+    star_wv_max = 1.8
+    plnt_wv_min = 1.4
+    plnt_wv_max = 1.8
+else:
+    raise ValueError()
     
+fname_spectra_star = 'sphplus_medres_{}_{:.1f}MSun_{}Myr_{}pc_{:.1f}_{:.1f}_mic_R{}.fits'.format(star_SpT, star_mass, int(round(star_age)), int(round(star_dist)), star_wv_min, star_wv_max, int(round(star_wv_res)))
+fname_spectra_plnt = 'sphplus_medres_{}MJup_{}Myr_{}pc_{:.1f}_{:.1f}_mic_R{}.fits'.format(int(round(plnt_mass)), int(round(plnt_age)), int(round(plnt_dist)), plnt_wv_min, plnt_wv_max,int(round(plnt_wv_res)))
+
+
+#%%
+"""
+### Filepath for the spectra
+"""
+fpath_spectra_star = fdir_spectra / fname_spectra_star
+fpath_spectra_plnt = fdir_spectra / fname_spectra_plnt
+  
 #%% 
 """
 ### File reading
@@ -414,6 +459,34 @@ for ilam in range(nlam):
     # image normalization
     direct_mono_img_fp[ilam] /= direct_peak_val[ilam]
     corono_mono_img_fp[ilam] /= direct_peak_val[ilam]
+
+#%%
+"""
+### Photometry and spectra for the star 
+"""
+star_spec = fits.getdata(fpath_spectra_star)
+plnt_spec = fits.getdata(fpath_spectra_plnt)
+
+star_wave = star_spec[0]
+star_flux = star_spec[1]
+
+plnt_wave = plnt_spec[0]
+plnt_flux = plnt_spec[1]
+
+
+
+#%%
+"""
+### Photometry and spectra for the planet 
+"""
+
+plt.figure(0)
+plt.clf()
+plt.plot(star_wave, np.log10(star_flux))
+plt.plot(plnt_wave, np.log10(plnt_flux))
+plt.show()
+
+
 
 #%% saving of the images
 """
