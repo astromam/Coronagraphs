@@ -108,6 +108,20 @@ inst_transmission = 1
 # Noise
 kwd_noi = False
 std_ron = 10 # photo-electrons
+
+# stellar parameters
+star_SpT    = 'A0'
+star_mass   = 2.2
+star_age    = 20
+star_dist   = 50 
+#star_magH = 4.0
+star_band   = 'H'
+star_wv_res = 1000
+
+plnt_mass   = 1
+plnt_age    = 20
+plnt_dist   = 50
+plnt_wv_res = 1000
     
 #%%
 """
@@ -255,21 +269,6 @@ fpath_LyotStop2d = fdir_pupils / fname_LyotStop2d
 """
 ### Filename for the spectra
 """
-# stellar parameters
-star_SpT    = 'A0'
-star_mass   = 2.2
-star_age    = 20
-star_dist   = 50 
-#star_magH = 4.0
-star_band   = 'H'
-star_wv_res = 1000
-
-plnt_mass   = 1
-plnt_age    = 20
-plnt_dist   = 50
-plnt_wv_res = 1000
-
-
 if star_band == 'J':
     star_wv_min = 0.9
     star_wv_max = 1.4
@@ -426,7 +425,7 @@ corono_mono_prf_avg_f = np.zeros((nlam, nImg2d//2))
 direct_mono_prf_std_f = np.zeros((nlam, nImg2d//2))
 corono_mono_prf_std_f = np.zeros((nlam, nImg2d//2))
 
-# define the averaged image
+# define the averaged image for the planet
 direct_mono_img_fp = np.zeros((nlam, nImg2d, nImg2d))
 corono_mono_img_fp = np.zeros((nlam, nImg2d, nImg2d))
 
