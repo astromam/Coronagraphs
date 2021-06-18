@@ -614,12 +614,16 @@ if __name__ == '__main__':
             corono_mono_img_cube_data  = multiprocessing.RawArray(ctypes.c_double, int(np.prod(corono_mono_img_cube_shape)))
             corono_mono_img_cube_np    = array_to_numpy(corono_mono_img_cube_data, corono_mono_img_cube_shape)
 
+            print('ok 1')
+
             # create thread pool
             tpool = multiprocessing.Pool(processes=nproc, initializer=tpool_init,
                                          initargs=(OPDmap2d0, SAXOmapnm3d, corono0, direct_mono_img_cube_data, direct_mono_img_cube_shape,
                                                    corono_mono_img_cube_data, corono_mono_img_cube_shape))
             # tpool_init(OPDmap2d0, SAXOmapnm3d, corono0, direct_mono_img_cube_data, direct_mono_img_cube_shape,
             #            corono_mono_img_cube_data, corono_mono_img_cube_shape)
+
+            print('ok 2')
 
             # create tasks
             tasks = []
