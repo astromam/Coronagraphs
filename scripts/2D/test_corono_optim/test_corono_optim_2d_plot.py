@@ -24,12 +24,12 @@ Parameters
 pl.close('all')
 
 test_gurobi = False
-if False:
+if True:
     # Telescope name
     corono_name  = 'APLC' # 'SP' or 'APLC'
     pupil_name   = 'vlt' # 'vlt' or 'sbr' or 'lvr'
     problem_name = 'MaxTau' # 'MaxContrastL1' #'MaxTau' # , 'MaxContrastLinf' # #  
-    solver       = 'stdgrb' # 'stdgrb' #  'gurobipy', 'scipy.linprog'
+    solver       = 'gurobipy' # 'stdgrb' #  'gurobipy', 'scipy.linprog'
     
     MinIsland   = False
     FirstDerGlobalLim = 1.
@@ -61,7 +61,7 @@ if False:
     
     #nlam
     bw   = 0.1
-    nlam = 5
+    nlam = 1
 
     
     do_fits = False
