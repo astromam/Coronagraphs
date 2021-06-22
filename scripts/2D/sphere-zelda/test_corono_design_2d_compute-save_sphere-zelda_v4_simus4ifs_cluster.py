@@ -211,7 +211,7 @@ if __name__ == '__main__':
     kw_aftercorr = False
     kw_saxo      = True
     saxofudge    = 1 #60/120              # saxo amplitude errors fudge factor
-    nmap_sub     = 4 #690                    # number of saxo maps for a single node
+    nmap_sub     = 11                    # number of saxo maps for a single node
     saxomap_i    = int(nmap_sub*(eval(sys.argv[1])))       # saxo first screen
     saxomap_f    = int(nmap_sub*(eval(sys.argv[1])+1)-1)     # saxo last screen
     print('saxomap_i {}'.format(saxomap_i))
