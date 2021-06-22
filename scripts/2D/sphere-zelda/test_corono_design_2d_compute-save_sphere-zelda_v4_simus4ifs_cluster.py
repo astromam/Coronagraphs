@@ -211,7 +211,7 @@ if __name__ == '__main__':
     kw_aftercorr = False
     kw_saxo      = True
     saxofudge    = 1 #60/120              # saxo amplitude errors fudge factor
-    nmap_sub     = 40                    # number of saxo maps for a single node
+    nmap_sub     = 690                    # number of saxo maps for a single node
     saxomap_i    = int(nmap_sub*(eval(sys.argv[1])))       # saxo first screen
     saxomap_f    = int(nmap_sub*(eval(sys.argv[1])+1)-1)     # saxo last screen
     print('saxomap_i {}'.format(saxomap_i))
@@ -220,7 +220,7 @@ if __name__ == '__main__':
     seeing = 0.7
 
     # multi-processing (to adjust with respect to the available proc, 10 and 20 cores in fdr and x40)
-    nproc = multiprocessing.cpu_count()//2  #15
+    nproc = 15 #multiprocessing.cpu_count()//2  #15
     print('number of proc: {:02d}'.format(nproc))    
     
     # make sure we have a number of phase screens multiple of the number of CPUs
