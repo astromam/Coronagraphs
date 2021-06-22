@@ -68,7 +68,6 @@ def tpool_init(OPDmap2d0_i, SAXOmapnm3d_i, corono0_i,
     direct_mono_img_cube_shape = direct_mono_img_cube_shape_i
     corono_mono_img_cube       = corono_mono_img_cube_i
     corono_mono_img_cube_shape = corono_mono_img_cube_shape_i
-
     
 def compute_corono_image(img_index, saxo_i, saxo_f):
     '''
@@ -100,6 +99,8 @@ def compute_corono_image(img_index, saxo_i, saxo_f):
     # save result in shared arrays
     direct_mono_img_cube_np[img_index] = direct_mono_img_f
     corono_mono_img_cube_np[img_index] = corono_mono_img_f
+
+
 
 #%%
 """
@@ -210,7 +211,7 @@ if __name__ == '__main__':
     kw_aftercorr = False
     kw_saxo      = True
     saxofudge    = 1 #60/120              # saxo amplitude errors fudge factor
-    nmap_sub     = 10 #690                    # number of saxo maps for a single node
+    nmap_sub     = 4 #690                    # number of saxo maps for a single node
     saxomap_i    = int(nmap_sub*(eval(sys.argv[1])))       # saxo first screen
     saxomap_f    = int(nmap_sub*(eval(sys.argv[1])+1)-1)     # saxo last screen
     print('saxomap_i {}'.format(saxomap_i))
@@ -254,6 +255,9 @@ if __name__ == '__main__':
     # Noise
     kwd_noi = False
     std_ron = 10 # photo-electrons
+
+    # Photometry
+    kwd_sav_onlyphot = True
     
     # stellar parameters
     star_SpT    = 'A0'
@@ -274,7 +278,7 @@ if __name__ == '__main__':
     ### Spectral parameters
     """
     if band == 'H2':
-        nlam  = 3 #11
+        nlam  = 11
         wv0   = 1.593e-6
         width = 52e-9
     elif band == 'BB_H':
@@ -561,35 +565,35 @@ if __name__ == '__main__':
     ### Filepaths for the file results
     """
 
-    str_common = '_mono_nmap{:05d}_nlam{:04d}_saxomap_i{:05d}_f{:05d}_band{}'.format(nmap, nlam, saxomap_i, saxomap_f,band)
+    str_common = '_nmap{:05d}_i{:05d}_f{:05d}_band{}_nlam{:04d}'.format(nmap, saxomap_i, saxomap_f,band, nlam)
     str_offaxis = '_sep{:04d}mas'.format(int(round(sep_mas_p)))
     str_sphplus = '_{}_{}dMSun_{}MJup_{}Myr'.format(star_SpT, int(round(star_mass*10)), int(round(plnt_mass)), int(round(star_age)))
     
     # filepaths for the images
-    fname_direct_mono_img_f     = 'direct' + str_common + '_img_f.fits'
-    fname_corono_mono_img_f     = 'corono' + str_common + '_img_f.fits'
+    fname_direct_mono_img_f     = 'dir' + str_common + '_img_f.fits'
+    fname_corono_mono_img_f     = 'cor' + str_common + '_img_f.fits'
     fpath_direct_mono_img_f     = fdir_res / fname_direct_mono_img_f
     fpath_corono_mono_img_f     = fdir_res / fname_corono_mono_img_f
-
+    
     # filepaths for the profiles
-    fname_direct_mono_prf_avg_f = 'direct' + str_common + '_prf_avg_f.fits'
-    fname_corono_mono_prf_avg_f = 'corono' + str_common + '_prf_avg_f.fits'
-    fname_direct_mono_prf_std_f = 'direct' + str_common + '_prf_std_f.fits'
-    fname_corono_mono_prf_std_f = 'corono' + str_common + '_prf_std_f.fits'
+    fname_direct_mono_prf_avg_f = 'dir' + str_common + '_prf_avg_f.fits'
+    fname_corono_mono_prf_avg_f = 'cor' + str_common + '_prf_avg_f.fits'
+    fname_direct_mono_prf_std_f = 'dir' + str_common + '_prf_std_f.fits'
+    fname_corono_mono_prf_std_f = 'cor' + str_common + '_prf_std_f.fits'
     fpath_direct_mono_prf_avg_f = fdir_res / fname_direct_mono_prf_avg_f
     fpath_corono_mono_prf_avg_f = fdir_res / fname_corono_mono_prf_avg_f
     fpath_direct_mono_prf_std_f = fdir_res / fname_direct_mono_prf_std_f
     fpath_corono_mono_prf_std_f = fdir_res / fname_corono_mono_prf_std_f
     
     # filepaths for the images for the off-axis planet
-    fname_direct_mono_img_fp = 'direct' + str_common + '_img_f' + str_offaxis + '.fits'
-    fname_corono_mono_img_fp = 'corono' + str_common + '_img_f' + str_offaxis + '.fits'
+    fname_direct_mono_img_fp = 'dir' + str_common + '_img_f' + str_offaxis + '.fits'
+    fname_corono_mono_img_fp = 'cor' + str_common + '_img_f' + str_offaxis + '.fits'
     fpath_direct_mono_img_fp = fdir_res / fname_direct_mono_img_fp
     fpath_corono_mono_img_fp = fdir_res / fname_corono_mono_img_fp
     
     # filepath for the images with star and planet
-    fname_direct_cube = 'direct' + str_common + '_img_f' + str_sphplus + '.fits'
-    fname_corono_cube = 'corono' + str_common + '_img_f' + str_sphplus + '.fits'
+    fname_direct_cube = 'dir' + str_common + '_img_f' + str_offaxis + str_sphplus + '.fits'
+    fname_corono_cube = 'cor' + str_common + '_img_f' + str_offaxis + str_sphplus + '.fits'
     fpath_direct_cube = fdir_res / fname_direct_cube
     fpath_corono_cube = fdir_res / fname_corono_cube
 
@@ -614,16 +618,12 @@ if __name__ == '__main__':
             corono_mono_img_cube_data  = multiprocessing.RawArray(ctypes.c_double, int(np.prod(corono_mono_img_cube_shape)))
             corono_mono_img_cube_np    = array_to_numpy(corono_mono_img_cube_data, corono_mono_img_cube_shape)
 
-            print('ok 1')
-
             # create thread pool
             tpool = multiprocessing.Pool(processes=nproc, initializer=tpool_init,
                                          initargs=(OPDmap2d0, SAXOmapnm3d, corono0, direct_mono_img_cube_data, direct_mono_img_cube_shape,
                                                    corono_mono_img_cube_data, corono_mono_img_cube_shape))
             # tpool_init(OPDmap2d0, SAXOmapnm3d, corono0, direct_mono_img_cube_data, direct_mono_img_cube_shape,
             #            corono_mono_img_cube_data, corono_mono_img_cube_shape)
-
-            print('ok 2')
 
             # create tasks
             tasks = []
@@ -662,6 +662,7 @@ if __name__ == '__main__':
     for ilam in range(nlam):
         # image normalization
         direct_peak_val[ilam] = direct_mono_img_f[ilam].max()
+        print('intensity peak at lam {}: {}'.format(ilam, direct_peak_val[ilam]))
         direct_mono_img_f[ilam] /= direct_peak_val[ilam]
         corono_mono_img_f[ilam] /= direct_peak_val[ilam]
 
@@ -831,27 +832,24 @@ if __name__ == '__main__':
     """
     _log.info('Add sky transmission and emission')
     fname_sky = fdir_sky / f'skytable_airmass={airmass:.2f}.fits'
-    if fname_sky.exists():
-         sky = fits.getdata(fname_sky)
-    else:
-         sky = skycalc.sky_model(observatory='3060', airmass=airmass,
-                                 pwv_mode='pwv', season=0, time=0, pwv=2.5, msolflux=130.0,
-                                 incl_moon='N', incl_starlight='Y', incl_zodiacal='N',
-                                 incl_loweratm='Y', incl_upperatm='Y', incl_airglow='Y',
-                                 vacair='vac', wmin=950, wmax=1801,
-                                 wgrid_mode='fixed_spectral_resolution', wres=star_wv_res)
-         fits.writeto(fname_sky, sky)
+    wave_min_nm = int(round(wv_t[0] *1e9))
+    wave_max_nm = int(round(wv_t[-1]*1e9))
+    wdelta_nm   = dwv_t[0]*1e9
+    
+    # if fname_sky.exists():
+    #      sky = fits.getdata(fname_sky)
+    # else:
+    sky = skycalc.sky_model(observatory='2640', airmass=airmass,
+                            pwv_mode='pwv', season=0, time=0, pwv=2.5, msolflux=130.0,
+                            incl_moon='N', incl_starlight='Y', incl_zodiacal='N',
+                            incl_loweratm='Y', incl_upperatm='Y', incl_airglow='Y',
+                            vacair='vac', wmin=wave_min_nm, wmax=wave_max_nm, wdelta=wdelta_nm,
+                            wgrid_mode='fixed_wavelength_step', wres=star_wv_res)
+    fits.writeto(fname_sky, sky, overwrite=True)
     
     # transmission
     sky_wave = sky['lam'] * u.nm
     sky_trsm = sky['trans']
-    
-    wave_min = wv_t[0] *u.m
-    wave_max = wv_t[-1] *u.m
-    
-    ii = (wave_min <= sky_wave) & (sky_wave <= wave_max)
-    sky_wave = sky_wave[:nlam]
-    sky_trsm = sky_trsm[:nlam]
     
     direct_cube *= sky_trsm[:, None, None]
     corono_cube *= sky_trsm[:, None, None]
@@ -896,14 +894,18 @@ if __name__ == '__main__':
     ### File saving
     """
     if do_sav:
-        data_list = [direct_mono_img_f,corono_mono_img_f,direct_mono_prf_avg_f,
-                     corono_mono_prf_avg_f,direct_mono_prf_std_f,corono_mono_prf_std_f,
-                      direct_mono_img_fp, corono_mono_img_fp,
-                     direct_cube.value, corono_cube.value]
-        fpath_list = [fpath_direct_mono_img_f,fpath_corono_mono_img_f,fpath_direct_mono_prf_avg_f,
-                      fpath_corono_mono_prf_avg_f,fpath_direct_mono_prf_std_f,fpath_corono_mono_prf_std_f,
-                       fpath_direct_mono_img_fp, fpath_corono_mono_img_fp,
-                      fpath_direct_cube, fpath_corono_cube]
+        if kwd_sav_onlyphot:
+            data_list = [direct_cube.value, corono_cube.value]
+            fpath_list = [fpath_direct_cube, fpath_corono_cube]
+        else:
+            data_list = [direct_mono_img_f,corono_mono_img_f,direct_mono_prf_avg_f,
+                         corono_mono_prf_avg_f,direct_mono_prf_std_f,corono_mono_prf_std_f,
+                         direct_mono_img_fp, corono_mono_img_fp,
+                         direct_cube.value, corono_cube.value]
+            fpath_list = [fpath_direct_mono_img_f,fpath_corono_mono_img_f,fpath_direct_mono_prf_avg_f,
+                          fpath_corono_mono_prf_avg_f,fpath_direct_mono_prf_std_f,fpath_corono_mono_prf_std_f,
+                          fpath_direct_mono_img_fp, fpath_corono_mono_img_fp,
+                          fpath_direct_cube, fpath_corono_cube]
         nlist = len(data_list)
         
         for ilist in range(nlist):
@@ -925,7 +927,7 @@ if __name__ == '__main__':
         
             hdu = fits.HDUList([hdu_prim, hdu_img, hdu_wave])
         
-            hdu.writeto(fpath_list[ilist], overwrite=True)    
+            hdu.writeto(fpath_list[ilist], overwrite=True)   
     
     #%%
     t_end = time.time()
