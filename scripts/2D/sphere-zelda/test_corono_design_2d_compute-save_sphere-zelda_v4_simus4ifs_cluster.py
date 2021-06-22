@@ -196,7 +196,7 @@ if __name__ == '__main__':
     # sampling
     nPup   = 384   # pupil
     nFPM   = 200   # focal plane mask
-    nImg2d = 200   # final image plane 
+    nImg2d = 100   # final image plane 
 
     # spectral band
     band = 'BB_H' # 'BB_J', 'BB_H', 'H2' filters
@@ -240,7 +240,7 @@ if __name__ == '__main__':
     kwd_pla = True
     
     # Planet position properties
-    sep_mas_p   = 12.25*16  #5*pscale      # planet separation in mas
+    sep_mas_p   = 12.25*8  #5*pscale      # planet separation in mas
     theta_deg_p = 0  # planet position angle in degrees
     
     # observation parameters
