@@ -199,7 +199,7 @@ if __name__ == '__main__':
     nImg2d = 200   # final image plane 
 
     # spectral band
-    band = 'H2' # 'BB_J', 'BB_H', 'H2' filters
+    band = 'BB_H' # 'BB_J', 'BB_H', 'H2' filters
 
     # compute spatial frequencies in the final image plane
     pixel  = 12.25 # IRDIS pixel sampling [mas/pix]    
