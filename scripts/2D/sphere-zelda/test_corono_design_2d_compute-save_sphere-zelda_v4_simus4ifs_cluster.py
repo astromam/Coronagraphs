@@ -196,7 +196,7 @@ if __name__ == '__main__':
     # sampling
     nPup   = 384   # pupil
     nFPM   = 200   # focal plane mask
-    nImg2d = 100   # final image plane 
+    nImg2d = 50   # final image plane 
 
     # spectral band
     band = 'H2' # 'BB_J', 'BB_H', 'H2' filters
@@ -257,7 +257,7 @@ if __name__ == '__main__':
     std_ron = 10 # photo-electrons
 
     # Photometry
-    kwd_sav_onlyphot = True
+    kwd_sav_onlyphot = False
     
     # stellar parameters
     star_SpT    = 'A0'
