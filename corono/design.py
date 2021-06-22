@@ -43,6 +43,7 @@ class Coronagraph(object):
     """    
     default_params = default.get_default_params_Coronagraph()
     fname_format   = fname_coronagraph
+    __slots__ = ()
 #%%
     def __init__(self, **kwargs):
         r"""
@@ -348,6 +349,9 @@ class Coronagraph(object):
             Value of parameter that is related to name 
                 
         """
+        if isinstance(name, str) and name[:2] == name[-2:] == '__':
+            # skip non-existing dunder method lookups
+            raise AttributeError(name)
         return self.params[name]
 
 #%% # direct propagation (no focal plane mask)
