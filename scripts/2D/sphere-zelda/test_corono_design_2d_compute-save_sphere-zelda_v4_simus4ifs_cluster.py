@@ -274,7 +274,7 @@ if __name__ == '__main__':
     ### Spectral parameters
     """
     if band == 'H2':
-        nlam  = 11
+        nlam  = 3 #11
         wv0   = 1.593e-6
         width = 52e-9
     elif band == 'BB_H':
@@ -672,7 +672,7 @@ if __name__ == '__main__':
         corono_mono_prf_std_f[ilam], rad_corono = imutils.profile(corono_mono_img_f[ilam], type='std')
 
     #%%
-    # definition of the coronagraph class
+    # # definition of the coronagraph class
     opd_p0 = wv0*(sep_loD_p/4)*(np.sin(theta_rad_p)*Tipp_mapnm2d + np.cos(theta_rad_p)*Tilt_mapnm2d)
 
 
@@ -691,8 +691,8 @@ if __name__ == '__main__':
 
             # create thread pool
             tpool = multiprocessing.Pool(processes=nproc, initializer=tpool_init,
-                                         initargs=(OPDmap2d0+opd_p0, SAXOmapnm3d, corono0, direct_mono_img_fp_cube_data, direct_mono_img_fp_cube_shape,
-                                                   corono_mono_img_fp_cube_data, corono_mono_img_fp_cube_shape))
+                                          initargs=(OPDmap2d0+opd_p0, SAXOmapnm3d, corono0, direct_mono_img_fp_cube_data, direct_mono_img_fp_cube_shape,
+                                                    corono_mono_img_fp_cube_data, corono_mono_img_fp_cube_shape))
             # tpool_init(OPDmap2d0, SAXOmapnm3d, corono0, direct_mono_img_cube_data, direct_mono_img_cube_shape,
             #            corono_mono_img_cube_data, corono_mono_img_cube_shape)
 
@@ -762,15 +762,7 @@ if __name__ == '__main__':
     #%%
     """
     ### Photometry and spectra for the planet 
-    """
-    
-    plt.figure(0)
-    plt.clf()
-    plt.plot(star_wave, np.log10(star_flux))
-    plt.plot(plnt_wave, np.log10(plnt_flux))
-    plt.show()
-    
-    
+    """    
     #%%
     
     star_wave *= u.um
@@ -906,11 +898,11 @@ if __name__ == '__main__':
     if do_sav:
         data_list = [direct_mono_img_f,corono_mono_img_f,direct_mono_prf_avg_f,
                      corono_mono_prf_avg_f,direct_mono_prf_std_f,corono_mono_prf_std_f,
-                     direct_mono_img_fp, corono_mono_img_fp,
+                      direct_mono_img_fp, corono_mono_img_fp,
                      direct_cube.value, corono_cube.value]
         fpath_list = [fpath_direct_mono_img_f,fpath_corono_mono_img_f,fpath_direct_mono_prf_avg_f,
                       fpath_corono_mono_prf_avg_f,fpath_direct_mono_prf_std_f,fpath_corono_mono_prf_std_f,
-                      fpath_direct_mono_img_fp, fpath_corono_mono_img_fp,
+                       fpath_direct_mono_img_fp, fpath_corono_mono_img_fp,
                       fpath_direct_cube, fpath_corono_cube]
         nlist = len(data_list)
         
