@@ -70,7 +70,7 @@ kw_aftercorr = False
 kw_saxo      = True
 saxofudge    = 1. #80/120.
 saxomap_i    = 0    # saxo first screen
-saxomap_f    = 100 # saxo last screen
+saxomap_f    = 3 # saxo last screen
 
 # seeing for on-sky observations
 seeing = 0.7
@@ -108,6 +108,9 @@ inst_transmission = 1
 # Noise
 kwd_noi = False
 std_ron = 10 # photo-electrons
+
+# Photometry
+kwd_sav_onlyphot = True
 
 # stellar parameters
 star_SpT    = 'A0'
@@ -218,12 +221,12 @@ fdir_spectra = fdir / 'data' / '2D' / 'package_simu_spectra'
 fdir_sky     = fdir / 'data' / '2D' / 'skytable'
 
 if kw_aberr:
-    fdir_results = fdir / 'results' / '2D' / 'data' / 'SPHERE' / str_aberr / str_date / str_obs / str_saxo / str_corr  
+    fdir_res = fdir / 'results' / '2D' / 'data' / 'SPHERE' / str_aberr / str_date / str_obs / str_saxo / str_corr  
 else:
-    fdir_results = fdir / 'results' / '2D' / 'data' / 'SPHERE' / str_aberr / str_obs / str_saxo / str_corr  
+    fdir_res = fdir / 'results' / '2D' / 'data' / 'SPHERE' / str_aberr / str_obs / str_saxo / str_corr  
 
-if not os.path.exists(fdir_results):
-    os.makedirs(fdir_results)
+if not os.path.exists(fdir_res):
+    os.makedirs(fdir_res)
 
 #%%
 """
@@ -452,37 +455,37 @@ corono0  = coro.design.APLC2d(**params)
 """
 ### Filepaths for the results
 """          
-str_common = '_mono_nmap{:05d}_nlam{:04d}_saxomap_i{:05d}_f{:05d}_band{}'.format(nmap, nlam, saxomap_i, saxomap_f,band)
+str_common = '_nmap{:05d}_i{:05d}_f{:05d}_band{}_nlam{:04d}'.format(nmap, saxomap_i, saxomap_f,band, nlam)
 str_offaxis = '_sep{:04d}mas'.format(int(round(sep_mas_p)))
 str_sphplus = '_{}_{}dMSun_{}MJup_{}Myr'.format(star_SpT, int(round(star_mass*10)), int(round(plnt_mass)), int(round(star_age)))
 
 # filepaths for the images
-fname_direct_mono_img_f     = 'direct' + str_common + '_img_f.fits'
-fname_corono_mono_img_f     = 'corono' + str_common + '_img_f.fits'
-fpath_direct_mono_img_f     = fdir_results / fname_direct_mono_img_f
-fpath_corono_mono_img_f     = fdir_results / fname_corono_mono_img_f
+fname_direct_mono_img_f     = 'dir' + str_common + '_img_f.fits'
+fname_corono_mono_img_f     = 'cor' + str_common + '_img_f.fits'
+fpath_direct_mono_img_f     = fdir_res / fname_direct_mono_img_f
+fpath_corono_mono_img_f     = fdir_res / fname_corono_mono_img_f
 
 # filepaths for the profiles
-fname_direct_mono_prf_avg_f = 'direct' + str_common + '_prf_avg_f.fits'
-fname_corono_mono_prf_avg_f = 'corono' + str_common + '_prf_avg_f.fits'
-fname_direct_mono_prf_std_f = 'direct' + str_common + '_prf_std_f.fits'
-fname_corono_mono_prf_std_f = 'corono' + str_common + '_prf_std_f.fits'
-fpath_direct_mono_prf_avg_f = fdir_results / fname_direct_mono_prf_avg_f
-fpath_corono_mono_prf_avg_f = fdir_results / fname_corono_mono_prf_avg_f
-fpath_direct_mono_prf_std_f = fdir_results / fname_direct_mono_prf_std_f
-fpath_corono_mono_prf_std_f = fdir_results / fname_corono_mono_prf_std_f
+fname_direct_mono_prf_avg_f = 'dir' + str_common + '_prf_avg_f.fits'
+fname_corono_mono_prf_avg_f = 'cor' + str_common + '_prf_avg_f.fits'
+fname_direct_mono_prf_std_f = 'dir' + str_common + '_prf_std_f.fits'
+fname_corono_mono_prf_std_f = 'cor' + str_common + '_prf_std_f.fits'
+fpath_direct_mono_prf_avg_f = fdir_res / fname_direct_mono_prf_avg_f
+fpath_corono_mono_prf_avg_f = fdir_res / fname_corono_mono_prf_avg_f
+fpath_direct_mono_prf_std_f = fdir_res / fname_direct_mono_prf_std_f
+fpath_corono_mono_prf_std_f = fdir_res / fname_corono_mono_prf_std_f
 
 # filepaths for the images for the off-axis planet
-fname_direct_mono_img_fp = 'direct' + str_common + '_img_f' + str_offaxis + '.fits'
-fname_corono_mono_img_fp = 'corono' + str_common + '_img_f' + str_offaxis + '.fits'
-fpath_direct_mono_img_fp = fdir_results / fname_direct_mono_img_fp
-fpath_corono_mono_img_fp = fdir_results / fname_corono_mono_img_fp
+fname_direct_mono_img_fp = 'dir' + str_common + '_img_f' + str_offaxis + '.fits'
+fname_corono_mono_img_fp = 'cor' + str_common + '_img_f' + str_offaxis + '.fits'
+fpath_direct_mono_img_fp = fdir_res / fname_direct_mono_img_fp
+fpath_corono_mono_img_fp = fdir_res / fname_corono_mono_img_fp
 
 # filepath for the images with star and planet
-fname_direct_cube = 'direct' + str_common + '_img_f' + str_sphplus + '.fits'
-fname_corono_cube = 'corono' + str_common + '_img_f' + str_sphplus + '.fits'
-fpath_direct_cube = fdir_results / fname_direct_cube
-fpath_corono_cube = fdir_results / fname_corono_cube
+fname_direct_cube = 'dir' + str_common + '_img_f' + str_offaxis + str_sphplus + '.fits'
+fname_corono_cube = 'cor' + str_common + '_img_f' + str_offaxis + str_sphplus + '.fits'
+fpath_direct_cube = fdir_res / fname_direct_cube
+fpath_corono_cube = fdir_res / fname_corono_cube
 
 
 #%%
@@ -663,27 +666,32 @@ corono_cube = corono_mono_img_f_obs + corono_mono_img_fp_obs
 """
 _log.info('Add sky transmission and emission')
 fname_sky = fdir_sky / f'skytable_airmass={airmass:.2f}.fits'
-if fname_sky.exists():
-     sky = fits.getdata(fname_sky)
-else:
-     sky = skycalc.sky_model(observatory='3060', airmass=airmass,
-                             pwv_mode='pwv', season=0, time=0, pwv=2.5, msolflux=130.0,
-                             incl_moon='N', incl_starlight='Y', incl_zodiacal='N',
-                             incl_loweratm='Y', incl_upperatm='Y', incl_airglow='Y',
-                             vacair='vac', wmin=950, wmax=1801,
-                             wgrid_mode='fixed_spectral_resolution', wres=star_wv_res)
-     fits.writeto(fname_sky, sky)
+
+wave_min_nm = int(round(wv_t[0] *1e9))
+wave_max_nm = int(round(wv_t[-1]*1e9))
+wdelta_nm   = dwv_t[0]*1e9
+
+# if fname_sky.exists():
+#      sky = fits.getdata(fname_sky)
+# else:
+sky = skycalc.sky_model(observatory='2640', airmass=airmass,
+                        pwv_mode='pwv', season=0, time=0, pwv=2.5, msolflux=130.0,
+                        incl_moon='N', incl_starlight='Y', incl_zodiacal='N',
+                        incl_loweratm='Y', incl_upperatm='Y', incl_airglow='Y',
+                        vacair='vac', wmin=wave_min_nm, wmax=wave_max_nm, wdelta=wdelta_nm,
+                        wgrid_mode='fixed_wavelength_step', wres=star_wv_res)
+fits.writeto(fname_sky, sky, overwrite=True)
 
 # transmission
 sky_wave = sky['lam'] * u.nm
 sky_trsm = sky['trans']
 
-wave_min = wv_t[0] *u.m
-wave_max = wv_t[-1] *u.m
-
-ii = (wave_min <= sky_wave) & (sky_wave <= wave_max)
-sky_wave = sky_wave[:nlam]
-sky_trsm = sky_trsm[:nlam]
+#wave_min = wv_t[0] *u.m
+#wave_max = wv_t[-1] *u.m
+#%%
+#ii = (wave_min <= sky_wave) & (sky_wave <= wave_max)
+#sky_wave = sky_wave[ii]
+#sky_trsm = sky_trsm[ii]
 
 direct_cube *= sky_trsm[:, None, None]
 corono_cube *= sky_trsm[:, None, None]
@@ -726,14 +734,18 @@ else:
 ### File saving
 """
 if do_sav:
-    data_list = [direct_mono_img_f,corono_mono_img_f,direct_mono_prf_avg_f,
-                 corono_mono_prf_avg_f,direct_mono_prf_std_f,corono_mono_prf_std_f,
-                 direct_mono_img_fp, corono_mono_img_fp,
-                 direct_cube.value, corono_cube.value]
-    fpath_list = [fpath_direct_mono_img_f,fpath_corono_mono_img_f,fpath_direct_mono_prf_avg_f,
-                  fpath_corono_mono_prf_avg_f,fpath_direct_mono_prf_std_f,fpath_corono_mono_prf_std_f,
-                  fpath_direct_mono_img_fp, fpath_corono_mono_img_fp,
-                  fpath_direct_cube, fpath_corono_cube]
+    if kwd_sav_onlyphot:
+        data_list = [direct_cube.value, corono_cube.value]
+        fpath_list = [fpath_direct_cube, fpath_corono_cube]
+    else:
+        data_list = [direct_mono_img_f,corono_mono_img_f,direct_mono_prf_avg_f,
+                     corono_mono_prf_avg_f,direct_mono_prf_std_f,corono_mono_prf_std_f,
+                     direct_mono_img_fp, corono_mono_img_fp,
+                     direct_cube.value, corono_cube.value]
+        fpath_list = [fpath_direct_mono_img_f,fpath_corono_mono_img_f,fpath_direct_mono_prf_avg_f,
+                      fpath_corono_mono_prf_avg_f,fpath_direct_mono_prf_std_f,fpath_corono_mono_prf_std_f,
+                      fpath_direct_mono_img_fp, fpath_corono_mono_img_fp,
+                      fpath_direct_cube, fpath_corono_cube]
     nlist = len(data_list)
     
     for ilist in range(nlist):
