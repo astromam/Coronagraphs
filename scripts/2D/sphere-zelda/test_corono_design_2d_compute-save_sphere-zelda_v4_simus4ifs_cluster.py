@@ -246,15 +246,15 @@ if __name__ == '__main__':
     # observation parameters
     exposure  = 0      # exposure number in the sequence
     airmass   = 1.2    # airmass for exposure
-    DIT       = 1      # sec
+    DIT       = nsaxomap/1380      # sec
     
     # telescope and instrument transmission]
     tel_transmission = 1
     inst_transmission = 1
 
     # Noise
-    kwd_noi = False
-    std_ron = 10 # photo-electrons
+    kwd_noi = True
+    std_ron = 1 # photo-electrons
 
     # Photometry
     kwd_sav_onlyphot = False
@@ -893,6 +893,7 @@ if __name__ == '__main__':
     """
     ### File saving
     """
+    _log.info('Save data cubes')
     if do_sav:
         if kwd_sav_onlyphot:
             data_list = [direct_cube.value, corono_cube.value]
