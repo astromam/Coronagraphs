@@ -763,24 +763,24 @@ if do_sav:
     
         # set some keywords in primary header
         hdu_prim.header['BAND']     = (band, 'Filter')
-        hdu_prim.header['WAVE_MIN'] = (wv_t[0], 'Minimum wavelength [nm]')
-        hdu_prim.header['WAVE_CEN'] = (wv_t[nlam//2], 'Central wavelength [nm]')
-        hdu_prim.header['WAVE_MAX'] = (wv_t[-1], 'Maximum wavelength [nm]')
+        hdu_prim.header['WAVE_MIN'] = (wv_t[0], 'Minimum wavelength [m]')
+        hdu_prim.header['WAVE_CEN'] = (wv_t[nlam//2], 'Central wavelength [m]')
+        hdu_prim.header['WAVE_MAX'] = (wv_t[-1], 'Maximum wavelength [m]')
         hdu_prim.header['RESOL']    = (wv_R, 'Spectral resolution')
         hdu_prim.header['PIXELSIM'] = (pixel, 'Input simulation pixel size [mas]')
 
-        hdu_prim.header['STAR_SpT'] = (star_SpT, 'Star spectral type')
-        hdu_prim.header['STAR_MASS']= (star_mass, 'Star mass [MSun]')
-        hdu_prim.header['STAR_AGE'] = (star_age, 'Star age [Myr]')
-        hdu_prim.header['STAR_DIST']= (star_dist, 'Star distance [pc]')
+        hdu_prim.header['STR_SpT'] = (star_SpT, 'Star spectral type')
+        hdu_prim.header['STR_MASS']= (star_mass, 'Star mass [MSun]')
+        hdu_prim.header['STR_AGE'] = (star_age, 'Star age [Myr]')
+        hdu_prim.header['STR_DIST']= (star_dist, 'Star distance [pc]')
 
-        hdu_prim.header['PLNT_MASS']= (star_mass, 'Planet mass [MJup]')
-        hdu_prim.header['PLNT_AGE'] = (star_age, 'Planet age [Myr]')
-        hdu_prim.header['PLNT_DIST']= (star_dist, 'Planet distance [pc]')
+        hdu_prim.header['PLT_MASS']= (star_mass, 'Planet mass [MJup]')
+        hdu_prim.header['PLT_AGE'] = (star_age, 'Planet age [Myr]')
+        hdu_prim.header['PLT_DIST']= (star_dist, 'Planet distance [pc]')
         
         if kwd_noi:
             hdu_prim.header['RON']     = (std_ron, 'Readout noise [e rms]')
-            hdu_prim.header['PHOTON_NOISE'] = ('YES', 'Photon noise')
+            hdu_prim.header['PH_NOISE'] = ('YES', 'Photon noise')
     
         hdu = fits.HDUList([hdu_prim, hdu_img, hdu_wave])
     
