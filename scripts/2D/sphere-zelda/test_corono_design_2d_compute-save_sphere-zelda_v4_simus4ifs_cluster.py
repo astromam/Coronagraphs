@@ -171,7 +171,7 @@ if __name__ == '__main__':
     """
     ### Simulation case
     """
-    # mode
+    # simulation case
     sim_case = 'test' # 'test' or 'server'
     # multi-processing (to adjust with respect to the available proc, 10 and 20 cores in fdr and x40)
    
@@ -183,6 +183,55 @@ if __name__ == '__main__':
         nmap_sub = 690                    # number of saxo maps for a single node
     else:
         raise ValueError(f'unknown {sim_case}')    
+
+#%%
+    """
+    ### Science case
+    """
+    # science case
+    sci_case    = 'mature' # 'young' or mature'
+    star_SpT0   = 'A' # 'A', 'F', 'K'
+    star_band   = 'H'
+    star_wv_res = 5000
+    plnt_wv_res = star_wv_res
+    
+    if sci_case == 'young':
+        print('young system')
+        if star_SpT0 == 'A':
+            star_SpT = 'A0'
+            star_mass   = 2.2
+        elif star_SpT0 == 'F':
+            star_SpT = 'F4'
+            star_mass   = 1.5
+        elif star_SpT0 == 'K':
+            star_SpT = 'K5'
+            star_mass   = 1.0
+        else:
+            raise ValueError(f'unknown {star_SpT0}')
+        star_age    = 20
+        star_dist   = 50         
+        plnt_mass   = 1
+    elif sci_case == 'mature':
+        print('mature system')
+        if star_SpT0 == 'A':
+            star_SpT = 'A4'
+            star_mass   = 2.2
+        elif star_SpT0 == 'F':
+            star_SpT = 'F3'
+            star_mass   = 1.5
+        elif star_SpT0 == 'K':
+            star_SpT = 'K0'
+            star_mass   = 1.0
+        else:
+            raise ValueError(f'unknown {star_SpT0}')
+        star_age    = 500
+        star_dist   = 20 
+        plnt_mass   = 5        
+    else:
+        raise ValueError(f'unknown {sci_case}')
+    plnt_age    = star_age
+    plnt_dist   = star_dist
+    
     
 #%%    
     """
@@ -267,20 +316,6 @@ if __name__ == '__main__':
 
     # Photometry
     kwd_sav_onlyphot = True
-    
-    # stellar parameters
-    star_SpT    = 'A0'
-    star_mass   = 2.2
-    star_age    = 20
-    star_dist   = 50 
-    #star_magH = 4.0
-    star_band   = 'H'
-    star_wv_res = 1000
-    
-    plnt_mass   = 1
-    plnt_age    = 20
-    plnt_dist   = 50
-    plnt_wv_res = 1000
 
     #%%
     """
