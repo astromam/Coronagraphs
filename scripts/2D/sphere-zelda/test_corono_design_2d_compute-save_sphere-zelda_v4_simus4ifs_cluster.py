@@ -257,7 +257,7 @@ if __name__ == '__main__':
     std_ron = 1 # photo-electrons
 
     # Photometry
-    kwd_sav_onlyphot = False
+    kwd_sav_onlyphot = True
     
     # stellar parameters
     star_SpT    = 'A0'
