@@ -458,6 +458,9 @@ corono0  = coro.design.APLC2d(**params)
 str_common = '_nmap{:05d}_i{:05d}_f{:05d}_band{}_nlam{:04d}'.format(nmap, saxomap_i, saxomap_f,band, nlam)
 str_offaxis = '_sep{:04d}mas'.format(int(round(sep_mas_p)))
 str_sphplus = '_{}_{}dMSun_{}MJup_{}Myr'.format(star_SpT, int(round(star_mass*10)), int(round(plnt_mass)), int(round(star_age)))
+str_noi = ''
+if kwd_noi:
+    str_noi = '_noise'
 
 # filepaths for the images
 fname_direct_mono_img_f     = 'dir' + str_common + '_img_f.fits'
@@ -482,8 +485,8 @@ fpath_direct_mono_img_fp = fdir_res / fname_direct_mono_img_fp
 fpath_corono_mono_img_fp = fdir_res / fname_corono_mono_img_fp
 
 # filepath for the images with star and planet
-fname_direct_cube = 'dir' + str_common + '_img_f' + str_offaxis + str_sphplus + '.fits'
-fname_corono_cube = 'cor' + str_common + '_img_f' + str_offaxis + str_sphplus + '.fits'
+fname_direct_cube = 'dir' + str_common + '_img_f' + str_offaxis + str_sphplus + str_noi + '.fits'
+fname_corono_cube = 'cor' + str_common + '_img_f' + str_offaxis + str_sphplus + str_noi + '.fits'
 fpath_direct_cube = fdir_res / fname_direct_cube
 fpath_corono_cube = fdir_res / fname_corono_cube
 
@@ -765,6 +768,19 @@ if do_sav:
         hdu_prim.header['WAVE_MAX'] = (wv_t[-1], 'Maximum wavelength [nm]')
         hdu_prim.header['RESOL']    = (wv_R, 'Spectral resolution')
         hdu_prim.header['PIXELSIM'] = (pixel, 'Input simulation pixel size [mas]')
+
+        hdu_prim.header['STAR_SpT'] = (star_SpT, 'Star spectral type')
+        hdu_prim.header['STAR_MASS']= (star_mass, 'Star mass [MSun]')
+        hdu_prim.header['STAR_AGE'] = (star_age, 'Star age [Myr]')
+        hdu_prim.header['STAR_DIST']= (star_dist, 'Star distance [pc]')
+
+        hdu_prim.header['PLNT_MASS']= (star_mass, 'Planet mass [MJup]')
+        hdu_prim.header['PLNT_AGE'] = (star_age, 'Planet age [Myr]')
+        hdu_prim.header['PLNT_DIST']= (star_dist, 'Planet distance [pc]')
+        
+        if kwd_noi:
+            hdu_prim.header['RON']     = (std_ron, 'Readout noise [e rms]')
+            hdu_prim.header['PHOTON_NOISE'] = ('YES', 'Photon noise')
     
         hdu = fits.HDUList([hdu_prim, hdu_img, hdu_wave])
     
