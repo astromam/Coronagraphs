@@ -28,6 +28,7 @@ import corono as coro
 import ctypes
 import multiprocessing
 import psutil
+import itertools
 
 import logging
 import scipy.interpolate as interpolate
@@ -172,7 +173,7 @@ if __name__ == '__main__':
     ### Simulation case
     """
     # simulation case
-    sim_case = 'test' # 'test' or 'server'
+    sim_case = 'server' # 'test' or 'server'
     # multi-processing (to adjust with respect to the available proc, 10 and 20 cores in fdr and x40)
    
     if sim_case == 'test':
@@ -194,6 +195,13 @@ if __name__ == '__main__':
     star_band   = 'H'
     star_wv_res = 5000
     plnt_wv_res = star_wv_res
+
+    sci_case_lst  = ['young', 'mature']
+    star_SpT0_lst = ['A', 'F', 'K']
+    new_lst = list(itertools.product(sci_case_lst, star_SpT0_lst))
+
+    sci_case    = new_lst[eval(sys.argv[1])][0] # 'young' or mature'
+    star_SpT0   = new_lst[eval(sys.argv[1])][1] # 'A', 'F', 'K'
     
     if sci_case == 'young':
         print('young system')
@@ -274,8 +282,10 @@ if __name__ == '__main__':
     kw_aftercorr = False
     kw_saxo      = True
     saxofudge    = 1 #60/120              # saxo amplitude errors fudge factor
-    saxomap_i    = int(nmap_sub*(eval(sys.argv[1])))       # saxo first screen
-    saxomap_f    = int(nmap_sub*(eval(sys.argv[1])+1)-1)     # saxo last screen
+    # saxomap_i    = int(nmap_sub*(eval(sys.argv[1])))       # saxo first screen
+    # saxomap_f    = int(nmap_sub*(eval(sys.argv[1])+1)-1)     # saxo last screen
+    saxomap_i    = int(nmap_sub*(0))       # saxo first screen
+    saxomap_f    = int(nmap_sub*(0+1)-1)     # saxo last screen
     print('saxomap_i {}'.format(saxomap_i))
     print('saxomap_f {}'.format(saxomap_f))
     # seeing for on-sky observations [arcsec]
