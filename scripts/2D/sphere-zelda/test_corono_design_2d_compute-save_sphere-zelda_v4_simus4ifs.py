@@ -60,7 +60,7 @@ rMask_m   = 287e-6/2.         # mask size in m
 # spatial sampling
 nPup   = 384   # pupil
 nFPM   = 200   # focal plane mask
-nImg2d = 200   # final image plane 
+nImg2d = 50   # final image plane 
 
 # simulation configuration   
 kw_aberr     = True
@@ -93,21 +93,21 @@ do_sav = True
 kwd_pla = True
 
 # Planet position properties
-sep_mas_p   = 12.25*16  #5*pscale      # planet separation in mas
+sep_mas_p   = 12.25*8  #5*pscale      # planet separation in mas
 theta_deg_p = 0  # planet position angle in degrees
 
 # observation parameters
 exposure  = 0      # exposure number in the sequence
 airmass   = 1.2    # airmass for exposure
-DIT       = 1      # sec
+DIT       = nsaxomap/1380.      # sec
 
 # telescope and instrument transmission]
 tel_transmission = 1
 inst_transmission = 1
 
 # Noise
-kwd_noi = False
-std_ron = 10 # photo-electrons
+kwd_noi = True
+std_ron = 1 # photo-electrons
 
 # Photometry
 kwd_sav_onlyphot = True
@@ -733,6 +733,7 @@ else:
 """
 ### File saving
 """
+_log.info('Save data cubes')
 if do_sav:
     if kwd_sav_onlyphot:
         data_list = [direct_cube.value, corono_cube.value]
