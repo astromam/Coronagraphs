@@ -39,7 +39,10 @@ import matplotlib.pyplot as plt
 logging.basicConfig(format='[%(asctime)s - %(process)6s - %(levelname)-8s] %(message)s', level='INFO')
 _log = logging.getLogger(__name__)
 
-
+#%%
+"""
+### Functions
+"""
 def array_to_numpy(shared_array, shape):
     '''
     Map a raw memory array to a numpy array
@@ -100,12 +103,6 @@ def compute_corono_image(img_index, saxo_i, saxo_f):
     direct_mono_img_cube_np[img_index] = direct_mono_img_f
     corono_mono_img_cube_np[img_index] = corono_mono_img_f
 
-
-
-#%%
-"""
-### Spectral binning function
-"""
 def spectral_binning(wave, dwave, obj_wave, obj_phot):
     '''
     Spectral binning of a spectrum on an irregular wavelength grid
@@ -165,15 +162,32 @@ def spectral_binning(wave, dwave, obj_wave, obj_phot):
     # reapply units
     return obj_phot_bin_ul * u.ph * u.s**-1 * u.m**-2
 
-
+#%%
 
 if __name__ == '__main__':
     
     t_ini = time.time()
-    #%% APLC2d tests
+#%%
+    """
+    ### Simulation case
+    """
+    # mode
+    sim_case = 'test' # 'test' or 'server'
+    # multi-processing (to adjust with respect to the available proc, 10 and 20 cores in fdr and x40)
+   
+    if sim_case == 'test':
+        nproc    = multiprocessing.cpu_count()//2  #15
+        nmap_sub = 4                    # number of saxo maps for a single node 
+    elif sim_case == 'server':
+        nproc    = 15 #multiprocessing.cpu_count()//2  #15
+        nmap_sub = 690                    # number of saxo maps for a single node
+    else:
+        raise ValueError(f'unknown {sim_case}')    
+    
+#%%    
     """
     ### Parameters
-    """
+    """ 
     # Coronagraph type
     corono_name   = 'APLC' # 'SP' or 'APLC' or DZPM
     CtrBtwnPix  = True
@@ -199,7 +213,7 @@ if __name__ == '__main__':
     nImg2d = 50   # final image plane 
 
     # spectral band
-    band = 'BB_H' # 'BB_J', 'BB_H', 'H2' filters
+    band = 'H2' # 'BB_J', 'BB_H', 'H2' filters
 
     # compute spatial frequencies in the final image plane
     pixel  = 12.25 # IRDIS pixel sampling [mas/pix]    
@@ -211,17 +225,12 @@ if __name__ == '__main__':
     kw_aftercorr = False
     kw_saxo      = True
     saxofudge    = 1 #60/120              # saxo amplitude errors fudge factor
-    nmap_sub     = 690                    # number of saxo maps for a single node
     saxomap_i    = int(nmap_sub*(eval(sys.argv[1])))       # saxo first screen
     saxomap_f    = int(nmap_sub*(eval(sys.argv[1])+1)-1)     # saxo last screen
     print('saxomap_i {}'.format(saxomap_i))
     print('saxomap_f {}'.format(saxomap_f))
     # seeing for on-sky observations [arcsec]
     seeing = 0.7
-
-    # multi-processing (to adjust with respect to the available proc, 10 and 20 cores in fdr and x40)
-    nproc = 15 #multiprocessing.cpu_count()//2  #15
-    print('number of proc: {:02d}'.format(nproc))    
     
     # make sure we have a number of phase screens multiple of the number of CPUs
     nsaxomap  = saxomap_f - saxomap_i + 1
