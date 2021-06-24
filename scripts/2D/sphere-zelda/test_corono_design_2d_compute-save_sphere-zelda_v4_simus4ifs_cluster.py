@@ -40,6 +40,9 @@ import matplotlib.pyplot as plt
 logging.basicConfig(format='[%(asctime)s - %(process)6s - %(levelname)-8s] %(message)s', level='INFO')
 _log = logging.getLogger(__name__)
 
+user = pwd.getpwuid(os.getuid())[0]
+syst = sys.platform
+
 #%%
 """
 ### Functions
@@ -172,10 +175,20 @@ if __name__ == '__main__':
     """
     ### Simulation case
     """
-    # simulation case
-    sim_case = 'server' # 'test' or 'server'
-    # multi-processing (to adjust with respect to the available proc, 10 and 20 cores in fdr and x40)
-   
+    # simulation case and directory
+    if user == 'mndiaye':
+        if syst == 'darwin':
+            fdir = Path('~/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs').expanduser()
+            sim_case = 'test' # 'test' or 'server'
+        elif syst == 'linux':
+            fdir = Path('/scratch/{0}/data/Coronagraphs/'.format(user)).resolve()
+            sim_case = 'server' # 'test' or 'server'            
+        else:
+            raise ValueError('Unknown operating system {0}'.format(user))
+    else:
+        raise ValueError('Unknown user {0}'.format(user))
+
+    # multi-processing (to adjust with respect to the available proc, 10 and 20 cores in fdr and x40)   
     if sim_case == 'test':
         nproc    = multiprocessing.cpu_count()//2  #15
         nmap_sub = 4                    # number of saxo maps for a single node 
@@ -189,10 +202,12 @@ if __name__ == '__main__':
     """
     ### Science case
     """
+    # spectral band
+    band = 'H2' # 'BB_J', 'BB_H', 'H2' filters
+
     # science case
     sci_case    = 'mature' # 'young' or mature'
     star_SpT0   = 'A' # 'A', 'F', 'K'
-    star_band   = 'H'
     star_wv_res = 5000
     plnt_wv_res = star_wv_res
 
@@ -237,6 +252,17 @@ if __name__ == '__main__':
         plnt_mass   = 5        
     else:
         raise ValueError(f'unknown {sci_case}')
+        
+        
+    if band == 'BB_H' or band == 'H2':
+        print('BB_H band')
+        star_band = 'H'
+    elif band == 'BB_J':
+        print('BB_J band')
+        star_band = 'J'
+    else:
+        raise ValueError(f'unknown {band} band')
+        
     plnt_age    = star_age
     plnt_dist   = star_dist
     
@@ -268,9 +294,6 @@ if __name__ == '__main__':
     nPup   = 384   # pupil
     nFPM   = 200   # focal plane mask
     nImg2d = 50   # final image plane 
-
-    # spectral band
-    band = 'BB_H' # 'BB_J', 'BB_H', 'H2' filters
 
     # compute spatial frequencies in the final image plane
     pixel  = 12.25 # IRDIS pixel sampling [mas/pix]    
@@ -344,7 +367,8 @@ if __name__ == '__main__':
         wv0   = 1245e-9
         width = 240e-9            
     else:
-        raise ValueError(f'Unknown {band} band')
+        raise ValueError(f'Unknown {band} band') 
+    print(f'number of wavelengths: {nlam}')
     
     # wavelength sampling
     bw     = width/wv0 
@@ -419,18 +443,8 @@ if __name__ == '__main__':
 
     #%%
 #    fdir = Path('~/data/ZELDA/CoroSimulations/').expanduser()
-    user = pwd.getpwuid(os.getuid())[0]
-    syst = sys.platform
     
-    if user == 'mndiaye':
-        if syst == 'darwin':
-            fdir = Path('~/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs').expanduser()
-        elif syst == 'linux':
-            fdir = Path('/scratch/{0}/data/Coronagraphs/'.format(user)).resolve()
-        else:
-            raise ValueError('Unknown operating system {0}'.format(user))
-    else:
-        raise ValueError('Unknown user {0}'.format(user))
+
     
 
     fdir_pupils  = fdir / 'data' / '2D' / 'pupils' / 'SPHERE' 
@@ -940,10 +954,17 @@ if __name__ == '__main__':
         # apply stellar photometry
         direct_cube *= u.dimensionless_unscaled
         corono_cube *= u.dimensionless_unscaled
+        
+        # rounding of the values
+        direct_cube = np.rint(direct_cube.value).astype(int)
+        corono_cube = np.rint(corono_cube.value).astype(int)
+        
+        # clip negative values to zero
+        direct_cube = direct_cube.clip(min=0)
+        corono_cube = corono_cube.clip(min=0)
+        
     else:
         _log.warning(' ==> no noise added!')
-     
-
 
 
     #%% saving of the images
@@ -953,13 +974,13 @@ if __name__ == '__main__':
     _log.info('Save data cubes')
     if do_sav:
         if kwd_sav_onlyphot:
-            data_list = [direct_cube.value, corono_cube.value]
+            data_list = [direct_cube, corono_cube]
             fpath_list = [fpath_direct_cube, fpath_corono_cube]
         else:
             data_list = [direct_mono_img_f,corono_mono_img_f,direct_mono_prf_avg_f,
                          corono_mono_prf_avg_f,direct_mono_prf_std_f,corono_mono_prf_std_f,
                          direct_mono_img_fp, corono_mono_img_fp,
-                         direct_cube.value, corono_cube.value]
+                         direct_cube, corono_cube]
             fpath_list = [fpath_direct_mono_img_f,fpath_corono_mono_img_f,fpath_direct_mono_prf_avg_f,
                           fpath_corono_mono_prf_avg_f,fpath_direct_mono_prf_std_f,fpath_corono_mono_prf_std_f,
                           fpath_direct_mono_img_fp, fpath_corono_mono_img_fp,
