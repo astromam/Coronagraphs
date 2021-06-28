@@ -568,9 +568,10 @@ if __name__ == '__main__':
                 SAXOmapnm3d_tmp *= saxofudge
             # rescale NCPA map
             SAXOmapnm3d = np.empty((nmap, nPup, nPup))
-            for i in tqdm.tqdm(range(nmap), desc="AO map rescaling"):
+            pbar_maps = tqdm.tqdm(range(nmap), desc="AO map rescaling")
+            for i in pbar_maps:
                 SAXOmapnm3d[i] = imutils.scale(SAXOmapnm3d_tmp[i], 0, new_dim=(nPup,nPup), method='interp')
-                # print(f'{i+1:05}/{nmap:05}: SAXO map before scaling: {np.std(SAXOmapnm3d_tmp[i, pupil_tmp != 0]):6.2f} nm RMS, after: {np.std(np.asarray(SAXOmapnm3d)[i, pupil != 0])):6.2f} nm RMS')
+                #pbar_maps.set_description(f'{i+1:05}/{nmap:05}: SAXO map scaling - before: {np.std(SAXOmapnm3d_tmp[i, pupil_tmp != 0]):6.2f} nm RMS, after: {np.std(np.asarray(SAXOmapnm3d)[i, pupil != 0]):6.2f} nm RMS')
 
             del SAXOmapnm3d_tmp
             
@@ -723,10 +724,11 @@ if __name__ == '__main__':
     direct_mono_img_f /= nmap
     corono_mono_img_f /= nmap
 
-    for ilam in tqdm.tqdm(range(nlam), desc="wavelength", position=0):
+    pbar_lam = tqdm.tqdm(range(nlam), desc="wavelength", position=0)
+    for ilam in pbar_lam:
         # image normalization
         direct_peak_val[ilam] = direct_mono_img_f[ilam].max()
-        #print(f'intensity peak at lam {ilam}: {direct_peak_val[ilam]}')
+        #pbar_lam.set_description(f'intensity peak at lam {ilam}: {direct_peak_val[ilam]}')
         direct_mono_img_f[ilam] /= direct_peak_val[ilam]
         corono_mono_img_f[ilam] /= direct_peak_val[ilam]
 
