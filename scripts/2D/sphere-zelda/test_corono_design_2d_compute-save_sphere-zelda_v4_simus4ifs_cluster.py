@@ -29,6 +29,7 @@ import ctypes
 import multiprocessing
 import psutil
 import itertools
+import tqdm
 
 import logging
 import scipy.interpolate as interpolate
@@ -94,14 +95,14 @@ def compute_corono_image(img_index, saxo_i, saxo_f):
     saxo_i = int(saxo_i)
     saxo_f = int(saxo_f)
     nmap = saxo_f - saxo_i + 1
-    for imap in range(nmap):
+    for imap in tqdm.tqdm(range(nmap), desc="AO maps"):
         OPDmap2d = OPDmap2d0 + SAXOmapnm3d[saxo_i+imap]*1e-9
         direct_mono_img_f += corono0.compute_direct_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d, poly=False)
         corono_mono_img_f += corono0.compute_corono_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d, poly=False)
 
         t_mean = (time.time()-t0) / (imap+1)
         if (imap+1) % 10 == 0:
-            print('map {1}/{2}, average computation time: {0:.2f}s'.format(t_mean, imap+1, nmap))
+            print(f'map {imap+1}/{nmap}, average computation time: {t_mean:.2f}s')
 
     # save result in shared arrays
     direct_mono_img_cube_np[img_index] = direct_mono_img_f
@@ -203,7 +204,7 @@ if __name__ == '__main__':
     ### Science case
     """
     # spectral band
-    band = 'BB_J' # 'BB_J', 'BB_H', 'H2' filters
+    band = 'H2' # 'BB_J', 'BB_H', 'H2' filters
 
     # science case
     sci_case    = 'mature' # 'young' or mature'
@@ -218,8 +219,8 @@ if __name__ == '__main__':
     sci_case    = new_lst[eval(sys.argv[1])][0] # 'young' or mature'
     star_SpT0   = new_lst[eval(sys.argv[1])][1] # 'A', 'F', 'K'
     
-    if sci_case == 'young':
-        print('young system')
+    _log.info(f'{sci_case} system, {star_SpT0} star, {band} band')
+    if sci_case == 'young':        
         if star_SpT0 == 'A':
             star_SpT = 'A0'
             star_mass   = 2.2
@@ -235,7 +236,6 @@ if __name__ == '__main__':
         star_dist   = 50         
         plnt_mass   = 1
     elif sci_case == 'mature':
-        print('mature system')
         if star_SpT0 == 'A':
             star_SpT = 'A4'
             star_mass   = 2.2
@@ -252,13 +252,10 @@ if __name__ == '__main__':
         plnt_mass   = 5        
     else:
         raise ValueError(f'unknown {sci_case}')
-        
-        
-    if band == 'BB_H' or band == 'H2':
-        print('BB_H band')
+            
+    if band == 'BB_H' or band == 'H2':       
         star_band = 'H'
     elif band == 'BB_J':
-        print('BB_J band')
         star_band = 'J'
     else:
         raise ValueError(f'unknown {band} band')
@@ -309,15 +306,14 @@ if __name__ == '__main__':
     # saxomap_f    = int(nmap_sub*(eval(sys.argv[1])+1)-1)     # saxo last screen
     saxomap_i    = int(nmap_sub*(0))       # saxo first screen
     saxomap_f    = int(nmap_sub*(0+1)-1)     # saxo last screen
-    print('saxomap_i {}'.format(saxomap_i))
-    print('saxomap_f {}'.format(saxomap_f))
+    _log.info(f'saxomap_i: {saxomap_i}, saxomap_f {saxomap_f}')
     # seeing for on-sky observations [arcsec]
     seeing = 0.7
     
     # make sure we have a number of phase screens multiple of the number of CPUs
     nsaxomap  = saxomap_f - saxomap_i + 1
     nsaxomap  = nsaxomap - (nsaxomap % nproc)
-    print('number of saxomaps to work with: {:05d}'.format(nsaxomap))
+    _log.info(f'number of saxomaps to work with: {nsaxomap:05d}')
     
     ndefo = 21
     defo_ampl = 0#-100 + 10.*np.arange(21)
@@ -368,7 +364,7 @@ if __name__ == '__main__':
         width = 240e-9            
     else:
         raise ValueError(f'Unknown {band} band') 
-    print(f'number of wavelengths: {nlam}')
+    _log.info(f'number of wavelengths: {nlam}')
     
     # wavelength sampling
     bw     = width/wv0 
@@ -391,13 +387,13 @@ if __name__ == '__main__':
     # Focal plane mask 
     rMask     = rMask_m/(wv0*Fratio)  # mask size in lam0/D
     rMask_mas = rMask * (wv0/dAper)/mas2rad
-    print('Mask radius: {0:.2f} mas at {1:.3f}um'.format(rMask_mas, wv0*1e6))
+    _log.info(f'Mask radius: {rMask_mas:.2f} mas at {wv0*1e6:.3f}um')
     
     # planet position properties
     sep_loD_p   = sep_mas_p/(wv_t[nlam//2]/dAper*rad2mas) # planet separation in lam0/D
     theta_rad_p = theta_deg_p*(np.pi/180)          # planet position angle in radians
-    print('planet sep: {:6.1f}mas, {:6.2f}lam0/D'.format(sep_mas_p,sep_loD_p))
-    print('planet ang: {:6.1f}deg, {:6.2f}rad'.format(theta_deg_p,theta_rad_p))
+    _log.info(f'planet sep: {sep_mas_p:6.1f}mas, {sep_loD_p:6.2f}lam0/D')
+    _log.info(f'planet ang: {theta_deg_p:6.1f}deg, {theta_rad_p:6.2f}rad')
     pla_dRA   = sep_mas_p*np.cos(theta_rad_p)      # delta in RA, in mas
     pla_dDEC  = sep_mas_p*np.sin(theta_rad_p)      # delta in DEC, in mas
 
@@ -565,19 +561,16 @@ if __name__ == '__main__':
 
             # read SAXO phase residuals
             SAXOmapnm3d_tmp = fits.getdata(fpath_SAXOmapnm3d)
-            print(SAXOmapnm3d_tmp.shape)
             # select only phase screens that will be actually used
             SAXOmapnm3d_tmp = SAXOmapnm3d_tmp[saxomap_i:saxomap_f+1]
-            print(SAXOmapnm3d_tmp.shape)
             # apply SAXO performance fudge factor
             if saxofudge != 1:
                 SAXOmapnm3d_tmp *= saxofudge
-            print(SAXOmapnm3d_tmp.shape)
             # rescale NCPA map
             SAXOmapnm3d = np.empty((nmap, nPup, nPup))
-            for i in range(nmap):
+            for i in tqdm.tqdm(range(nmap), desc="AO map rescaling"):
                 SAXOmapnm3d[i] = imutils.scale(SAXOmapnm3d_tmp[i], 0, new_dim=(nPup,nPup), method='interp')
-                print('{0:05}/{1:05}: SAXO map before scaling: {2:6.2f} nm RMS, after: {3:6.2f} nm RMS'.format(i+1, nmap, np.std(SAXOmapnm3d_tmp[i, pupil_tmp != 0]), np.std(np.asarray(SAXOmapnm3d)[i, pupil != 0])))
+                # print(f'{i+1:05}/{nmap:05}: SAXO map before scaling: {np.std(SAXOmapnm3d_tmp[i, pupil_tmp != 0]):6.2f} nm RMS, after: {np.std(np.asarray(SAXOmapnm3d)[i, pupil != 0])):6.2f} nm RMS')
 
             del SAXOmapnm3d_tmp
             
@@ -730,10 +723,10 @@ if __name__ == '__main__':
     direct_mono_img_f /= nmap
     corono_mono_img_f /= nmap
 
-    for ilam in range(nlam):
+    for ilam in tqdm.tqdm(range(nlam), desc="wavelength", position=0):
         # image normalization
         direct_peak_val[ilam] = direct_mono_img_f[ilam].max()
-        print('intensity peak at lam {}: {}'.format(ilam, direct_peak_val[ilam]))
+        #print(f'intensity peak at lam {ilam}: {direct_peak_val[ilam]}')
         direct_mono_img_f[ilam] /= direct_peak_val[ilam]
         corono_mono_img_f[ilam] /= direct_peak_val[ilam]
 
@@ -802,7 +795,7 @@ if __name__ == '__main__':
     direct_mono_img_fp /= nmap
     corono_mono_img_fp /= nmap
 
-    for ilam in range(nlam):
+    for ilam in tqdm.tqdm(range(nlam), desc="wavelength"):
         # image normalization
         direct_mono_img_fp[ilam] /= direct_peak_val[ilam]
         corono_mono_img_fp[ilam] /= direct_peak_val[ilam]
@@ -987,7 +980,7 @@ if __name__ == '__main__':
                           fpath_direct_cube, fpath_corono_cube]
         nlist = len(data_list)
         
-        for ilist in range(nlist):
+        for ilist in tqdm.tqdm(range(nlist), "file saving"):
         # save in FITS format
             hdu_prim = fits.PrimaryHDU()
             hdu_img  = fits.ImageHDU(data_list[ilist])
@@ -1023,5 +1016,5 @@ if __name__ == '__main__':
     
     #%%
     t_end = time.time()
-    print('\ntime usage:   {0:.2f}s for nlam={1:03} and nmap={2:05d}'.format(t_end-t_ini,nlam,nmap))
-    print('\nmemory usage: {0:.2f}Mb  for nlam={1:03} and nmap={2:05d}'.format(psutil.Process(os.getpid()).memory_info().rss / 1024 ** 2,nlam,nmap))
+    _log.info(f'time usage:   {t_end-t_ini:.2f}s for nlam={nlam:03} and nmap={nmap:05d}')
+    _log.info(f'memory usage: {psutil.Process(os.getpid()).memory_info().rss / 1024 ** 2:.2f}Mb  for nlam={nlam:03} and nmap={nmap:05d}')
