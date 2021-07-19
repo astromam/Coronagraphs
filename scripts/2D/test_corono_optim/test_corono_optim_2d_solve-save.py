@@ -24,9 +24,9 @@ Parameters
 """
 # Telescope name
 corono_name  = 'APLC' # 'SP' or 'APLC'
-pupil_name   = 'vlt' # 'vlt' or 'sbr' or 'lvr'
-problem_name = 'MaxTau' # 'MaxTau' # ,'MaxContrastLinf' # 'MaxContrastL1' #
-solver       = 'gurobipy' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
+pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
+problem_name = 'MaxContrastLinf' # 'MaxTau' # ,'MaxContrastLinf' # 'MaxContrastL1' #
+solver       = 'stdgrb' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
 slvLogToConsole = 1
 slvCrossover    = 0
 slvMethod       = 2
@@ -41,21 +41,21 @@ BinarityReg       = 0.1
 #nPup = corono0.params['nPup']
 nPup = 200
 nFPM = 50
-Fmax2d = 22.5
-nImg2d = 45
+Fmax2d = 45#22.5
+nImg2d = 90#45
 
 # mask radius in lam0/D units
 rMask = 2.8
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
 rho0 =  5.0
-rho1 = 10.0
+rho1 = 20.0
 
 # contrast in the dark region
 cDarkHole = 7.0
 
 # tau (integrated Pupil transmission)
-tau   = 0.4
+tau   = 0.5
 
 # CtrBtwnPix2
 CtrBtwnPix  = True

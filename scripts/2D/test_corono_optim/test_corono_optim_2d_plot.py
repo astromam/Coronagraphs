@@ -27,9 +27,9 @@ test_gurobi = False
 if True:
     # Telescope name
     corono_name  = 'APLC' # 'SP' or 'APLC'
-    pupil_name   = 'vlt' # 'vlt' or 'sbr' or 'lvr'
-    problem_name = 'MaxTau' # 'MaxContrastL1' #'MaxTau' # , 'MaxContrastLinf' # #  
-    solver       = 'gurobipy' # 'stdgrb' #  'gurobipy', 'scipy.linprog'
+    pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
+    problem_name = 'MaxContrastLinf' # 'MaxContrastL1' #'MaxTau' # , 'MaxContrastLinf' # #  
+    solver       = 'stdgrb' # 'stdgrb' #  'gurobipy', 'scipy.linprog'
     
     MinIsland   = False
     FirstDerGlobalLim = 1.
@@ -45,13 +45,13 @@ if True:
     
     # dark zone bounds (inner and outer edges) in lam0/D unit
     rho0 =  5.0
-    rho1 = 10.0
+    rho1 = 20.0
     
     # contrast in the dark region
     cDarkHole = 7.0
     
     # tau (integrated Pupil transmission)
-    tau   = 0.4
+    tau   = 0.5
     
     # CtrBtwnPix2
 
@@ -192,7 +192,7 @@ fpath = fdir_pdf / fname
 pl.figure(5)
 pl.clf()
 pl.imshow(Apod_pyth*corono0.Pupil2d, cmap = cm.Greys_r)
-pl.title('Apod 1 transmission - MaxTau problem - '+ solver)
+pl.title(f'Apod 1 transmission - {problem_name} problem - {solver}')
 pl.savefig(str(fpath))
 
 #%% Signal in intensity
@@ -277,7 +277,7 @@ else:
     pl.semilogy(xi2d,poly_corono_image1[nImg2dbis//2,nImg2dbis//2:]/poly_direct_image1.max(),label=solver)    
 #pl.semilogy(corono0.xi2d,poly_corono_image2[nImg2d//2,nImg2d//2:]/poly_direct_image2.max(),label=r'MaxContrast, L$_1$-norm')
 #pl.semilogy(corono0.xi2d,poly_corono_image3[nImg2d//2,nImg2d//2:]/poly_direct_image3.max(),label=r'MaxContrast, L$_{\infty}$-norm')
-#pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
+pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
 pl.axvline(x=corono0.rho0, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
 pl.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
 pl.axhline(10**(-cDarkHole), xmin=corono0.xi.min(), xmax=corono0.xi.max(), linewidth=1, color='k', linestyle='--')
@@ -316,7 +316,7 @@ for i in range(corono0.nlam):
                     label=r'{0:.2f}$\lambda_0$'.format(corono0.lam_t[i]),  color = colors[i])
 #pl.semilogy(corono0.xi2d,poly_corono_image2[nImg2d//2,nImg2d//2:]/poly_direct_image2.max(),label=r'MaxContrast, L$_1$-norm')
 #pl.semilogy(corono0.xi2d,poly_corono_image3[nImg2d//2,nImg2d//2:]/poly_direct_image3.max(),label=r'MaxContrast, L$_{\infty}$-norm')
-#pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
+pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
 pl.axvline(x=corono0.rho0, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
 pl.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
 pl.axhline(10**(-cDarkHole), xmin=corono0.xi.min(), xmax=corono0.xi.max(), linewidth=1, color='k', linestyle='--')
