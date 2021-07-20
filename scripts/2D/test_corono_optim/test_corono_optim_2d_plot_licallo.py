@@ -401,7 +401,7 @@ poly_corono_image1_arr = [poly_corono_image1_z, poly_corono_image1_Y,
 rMask_arr = [corono0_z.rMask, corono0_Y.rMask, corono0_J.rMask, corono0_H.rMask]
 
 for iband in range(nband):
-    pl.figure(18+iband)
+    pl.figure(21+iband)
     pl.clf()
     pl.title(f'Radial intensity profiles of the images in {bands[iband]} band')
     #pl.semilogy(corono0.xi2d,poly_direct_image1[nImg2d//2,nImg2d//2:]/poly_direct_image1.max(),label='Direct - pyth')
@@ -440,7 +440,7 @@ mono_corono_image1 = corono0.compute_corono_intensity_2d(Apod_pyth, poly=False)
 
 
 
-pl.figure(21)
+pl.figure(31)
 pl.clf()
 pl.title('Radial intensity profiles of the images')
 #pl.semilogy(corono0.xi2d,poly_direct_image1[nImg2d//2,nImg2d//2:]/poly_direct_image1.max(),label='Direct')
