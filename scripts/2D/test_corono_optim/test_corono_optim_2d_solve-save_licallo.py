@@ -32,7 +32,7 @@ Parameters
 corono_name  = 'APLC' # 'SP' or 'APLC'
 pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
 problem_name = 'MaxContrastLinf' # 'MaxTau' # ,'MaxContrastLinf' # 'MaxContrastL1' #
-solver       = 'gurobipy' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
+solver       = 'stdgrb' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
 slvLogToConsole = 1
 slvCrossover    = 0
 slvMethod       = 2
@@ -50,8 +50,18 @@ nFPM = 50
 Fmax2d = 45#22.5
 nImg2d = 90#45
 
+# telescope parameters
+dAper     = 7.92
+Fratio    = 64
+
+# Focal plane mask 
+mas2rad   = np.pi/(180.*3600*1000) # Conversion factor from mas to rads
+rad2mas   = 1/mas2rad
+
 # mask radius in lam0/D units
-rMask = 2.8
+rMask_m = 453e-6/2 
+
+#rMask = 2.8
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
 rho0 =  5.0
@@ -70,10 +80,50 @@ Pupil2dSym  = True
 ImPart = False 
 
 #nlam
-bw   = 0.1
-nlam = 1
+band = 'GPI_J'
+#bw   = 0.1
+nlam = 3
 
 do_fits = True
+
+#%%
+"""
+### Spectral parameters
+"""
+if band == 'HSC_z':
+    wv0   = 8925.96e-10
+    width = 792.99e-10
+elif band == 'GPI_Y':
+    wv0   = 10433.59e-10
+    width = 1889.08e-10
+elif band == 'GPI_J':
+    wv0   = 12317.58e-10
+    width = 2273.20e-10
+elif band == 'GPI_H':
+    wv0   = 16444.09e-10
+    width = 2984.82e-10
+elif band == 'H2':
+    wv0   = 1.593e-6
+    width = 52e-9
+elif band == 'BB_J':
+    wv0   = 1245e-9
+    width = 240e-9
+elif band == 'BB_H':
+    wv0   = 1625e-9
+    width = 290e-9            
+else:
+    raise ValueError(f'Unknown {band} band') 
+
+# wavelength sampling
+bw     = width/wv0 
+lam0   = 1. 
+dlam   = bw*lam0
+lam_t  = np.linspace(lam0-dlam/2*(nlam>1),lam0+dlam/2,nlam)
+wv_t   = wv0*lam_t
+
+rMask     = rMask_m/(wv0*Fratio)  # mask size in lam0/D
+rMask_mas = rMask * (wv0/dAper)/mas2rad
+
 
 #%%
 """
