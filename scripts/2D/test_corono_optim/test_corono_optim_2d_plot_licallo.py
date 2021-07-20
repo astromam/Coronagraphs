@@ -357,13 +357,29 @@ pl.imshow(poly_direct_image1**0.25, cmap = cm.inferno)
 pl.title('Apod1 - direct image')
 pl.savefig(str(fpath))
 
+bands = ['z', 'Y', 'J', 'H']
+nband = len(bands)
+
+vmin0 = -8
+vmax0 = -3
+
 fname = fname_gen + '_apodized_image.pdf'
 fpath = fdir_pdf / fname
 
-pl.figure(11)
+pl.figure(11, (16, 4.5))
 pl.clf()
-pl.imshow(poly_corono_image1**0.25, cmap = cm.inferno)
-pl.title('Apod1 - apodized image')
+pl.subplot(141)
+pl.imshow(np.log10(poly_corono_image1_z/poly_direct_image1_z.max()), cmap = cm.inferno, vmin=vmin0,vmax=vmax0)
+pl.title(f'{corono_name}, {bands[0]} band')
+pl.subplot(142)
+pl.imshow(np.log10(poly_corono_image1_Y/poly_direct_image1_Y.max()), cmap = cm.inferno, vmin=vmin0,vmax=vmax0)
+pl.title(f'{corono_name}, {bands[1]} band')
+pl.subplot(143)
+pl.imshow(np.log10(poly_corono_image1_J/poly_direct_image1_J.max()), cmap = cm.inferno, vmin=vmin0,vmax=vmax0)
+pl.title(f'{corono_name}, {bands[2]} band')
+pl.subplot(144)
+pl.imshow(np.log10(poly_corono_image1_H/poly_direct_image1_H.max()), cmap = cm.inferno, vmin=vmin0,vmax=vmax0)
+pl.title(f'{corono_name}, {bands[3]} band')
 pl.savefig(str(fpath))
 
 #%% Intensity profiles of the direct and coronagraphic images
@@ -391,8 +407,7 @@ nImg2d = corono0.params['nImg2d']
 fname = fname_gen + '_intensity_profiles.pdf'
 fpath = fdir_pdf / fname
 
-bands = ['z', 'Y', 'J', 'H']
-nband = len(bands)
+
 
 poly_direct_image1_arr = [poly_direct_image1_z, poly_direct_image1_Y, 
               poly_direct_image1_J, poly_direct_image1_H]
