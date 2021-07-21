@@ -33,15 +33,18 @@ syst = sys.platform
 ### Parameters
 """
 nPup= 200
-do_fits = True
+do_fits = False
 
 pdiam, odiam = 7.92, 2.3  # tel. and obst. diameters (meters)
 thick = 0.25              # adopted spider thickness (meters)
 offset = 1.278            # spider intersection offset (meters)
 beta = 51.75              # spider angle beta
 
-odiam2 = 1.5*odiam
-thick2 = 1.5*thick
+
+fac = 2.0
+
+odiam2 = fac*odiam
+thick2 = fac*thick
 
 
 
