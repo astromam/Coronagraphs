@@ -16,6 +16,7 @@ import os
 from matplotlib import cm
 from astropy.io import fits
 import corono as coro
+from pyzelda.utils import imutils
 
 import pwd
 import sys
@@ -343,6 +344,33 @@ poly_corono_image1_Y = corono0_Y.compute_corono_intensity_2d(Apod_pyth)
 poly_corono_image1_J = corono0_J.compute_corono_intensity_2d(Apod_pyth)
 poly_corono_image1_H = corono0_H.compute_corono_intensity_2d(Apod_pyth)
 
+# normalization
+poly_direct_image1_z_pk = poly_direct_image1_z.max()
+poly_direct_image1_Y_pk = poly_direct_image1_Y.max()
+poly_direct_image1_J_pk = poly_direct_image1_J.max()
+poly_direct_image1_H_pk = poly_direct_image1_H.max()
+
+poly_direct_image1_z /= poly_direct_image1_z_pk
+poly_direct_image1_Y /= poly_direct_image1_Y_pk
+poly_direct_image1_J /= poly_direct_image1_J_pk
+poly_direct_image1_H /= poly_direct_image1_H_pk
+
+poly_corono_image1_z /= poly_direct_image1_z_pk
+poly_corono_image1_Y /= poly_direct_image1_Y_pk
+poly_corono_image1_J /= poly_direct_image1_J_pk
+poly_corono_image1_H /= poly_direct_image1_H_pk
+
+# azithally averaged intensity profiles
+poly_corono_prf_avg_z, rad_corono_z = imutils.profile(poly_corono_image1_z, type='mean')
+poly_corono_prf_avg_Y, rad_corono_Y = imutils.profile(poly_corono_image1_Y, type='mean')
+poly_corono_prf_avg_J, rad_corono_J = imutils.profile(poly_corono_image1_J, type='mean')
+poly_corono_prf_avg_H, rad_corono_H = imutils.profile(poly_corono_image1_H, type='mean')
+
+poly_corono_prf_std_z, rad_corono_z = imutils.profile(poly_corono_image1_z, type='std')
+poly_corono_prf_std_Y, rad_corono_Y = imutils.profile(poly_corono_image1_Y, type='std')
+poly_corono_prf_std_J, rad_corono_J = imutils.profile(poly_corono_image1_J, type='std')
+poly_corono_prf_std_H, rad_corono_H = imutils.profile(poly_corono_image1_H, type='std')
+
 
 #%% image plot
 """
@@ -369,16 +397,16 @@ fpath = fdir_pdf / fname
 pl.figure(11, (16, 4.5))
 pl.clf()
 pl.subplot(141)
-pl.imshow(np.log10(poly_corono_image1_z/poly_direct_image1_z.max()), cmap = cm.inferno, vmin=vmin0,vmax=vmax0)
+pl.imshow(np.log10(poly_corono_image1_z), cmap = cm.inferno, vmin=vmin0,vmax=vmax0)
 pl.title(f'{corono_name}, {bands[0]} band')
 pl.subplot(142)
-pl.imshow(np.log10(poly_corono_image1_Y/poly_direct_image1_Y.max()), cmap = cm.inferno, vmin=vmin0,vmax=vmax0)
+pl.imshow(np.log10(poly_corono_image1_Y), cmap = cm.inferno, vmin=vmin0,vmax=vmax0)
 pl.title(f'{corono_name}, {bands[1]} band')
 pl.subplot(143)
-pl.imshow(np.log10(poly_corono_image1_J/poly_direct_image1_J.max()), cmap = cm.inferno, vmin=vmin0,vmax=vmax0)
+pl.imshow(np.log10(poly_corono_image1_J), cmap = cm.inferno, vmin=vmin0,vmax=vmax0)
 pl.title(f'{corono_name}, {bands[2]} band')
 pl.subplot(144)
-pl.imshow(np.log10(poly_corono_image1_H/poly_direct_image1_H.max()), cmap = cm.inferno, vmin=vmin0,vmax=vmax0)
+pl.imshow(np.log10(poly_corono_image1_H), cmap = cm.inferno, vmin=vmin0,vmax=vmax0)
 pl.title(f'{corono_name}, {bands[3]} band')
 pl.savefig(str(fpath))
 
@@ -413,6 +441,19 @@ poly_direct_image1_arr = [poly_direct_image1_z, poly_direct_image1_Y,
               poly_direct_image1_J, poly_direct_image1_H]
 poly_corono_image1_arr = [poly_corono_image1_z, poly_corono_image1_Y, 
               poly_corono_image1_J, poly_corono_image1_H]
+
+rad_corono_arr = np.asarray([rad_corono_z, rad_corono_Y,
+                  rad_corono_J, rad_corono_H])*Fmax2dbis/nImg2dbis
+
+poly_corono_prf_avg_arr = [poly_corono_prf_avg_z, poly_corono_prf_avg_Y,
+                           poly_corono_prf_avg_J, poly_corono_prf_avg_H]
+
+poly_corono_prf_std_arr = [poly_corono_prf_std_z, poly_corono_prf_std_Y,
+                           poly_corono_prf_std_J, poly_corono_prf_std_H]
+poly_corono_prf_stdpl1_arr = np.asarray(poly_corono_prf_avg_arr)+np.asarray(poly_corono_prf_std_arr)
+poly_corono_prf_stdmn1_arr = np.asarray(poly_corono_prf_avg_arr)-np.asarray(poly_corono_prf_std_arr)
+
+
 rMask_arr = [corono0_z.rMask, corono0_Y.rMask, corono0_J.rMask, corono0_H.rMask]
 
 for iband in range(nband):
@@ -425,14 +466,17 @@ for iband in range(nband):
     #pl.semilogy(corono0.xi,poly_direct_image3/poly_direct_image3.max(),label='Direct')
     if corono_name == 'SP':
     #    pl.semilogy(xi2d,poly_corono_image1[nImg2d//2,nImg2d//2:]/poly_corono_image1.max(),label='Apod - pyth')
-        pl.semilogy(xi2d,poly_corono_image1_arr[iband][nImg2dbis//2,nImg2dbis//2:]/poly_corono_image1_arr[iband].max(),label=solver)
+        pl.semilogy(xi2d,poly_corono_image1_arr[iband][nImg2dbis//2,nImg2dbis//2:]/poly_corono_image1_arr[iband].max(),label='radial cut')
     elif corono_name == 'APLC':
     #    pl.semilogy(xi2d,poly_corono_image1[nImg2d//2,nImg2d//2:]/poly_direct_image1.max(),label='Apod - pyth')
-        pl.semilogy(xi2d,poly_corono_image1_arr[iband][nImg2dbis//2,nImg2dbis//2:]/poly_direct_image1_arr[iband].max(),label=solver)    
+        pl.semilogy(xi2d,poly_corono_image1_arr[iband][nImg2dbis//2,nImg2dbis//2:]/poly_direct_image1_arr[iband].max(),label='radial cut')    
     else:
         raise NameError(f'{corono_name}: Not an existing coronagraph!')
-    #pl.semilogy(corono0.xi2d,poly_corono_image2[nImg2d//2,nImg2d//2:]/poly_direct_image2.max(),label=r'MaxContrast, L$_1$-norm')
-    #pl.semilogy(corono0.xi2d,poly_corono_image3[nImg2d//2,nImg2d//2:]/poly_direct_image3.max(),label=r'MaxContrast, L$_{\infty}$-norm')
+    pl.semilogy(rad_corono_arr[iband], poly_corono_prf_avg_arr[iband], ls='--', label='avg')
+    pl.semilogy(rad_corono_arr[iband], poly_corono_prf_stdpl1_arr[iband], ls='-.', label=r'avg+1$\sigma$')
+    pl.semilogy(rad_corono_arr[iband], poly_corono_prf_stdmn1_arr[iband], ls='-.', label=r'avg-1$\sigma$')
+
+    
     pl.axvline(x=rMask_arr[iband], ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
     pl.axvline(x=corono0.rho0, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
     pl.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
@@ -455,7 +499,7 @@ mono_corono_image1 = corono0.compute_corono_intensity_2d(Apod_pyth, poly=False)
 
 
 
-pl.figure(31)
+pl.figure(41)
 pl.clf()
 pl.title('Radial intensity profiles of the images')
 #pl.semilogy(corono0.xi2d,poly_direct_image1[nImg2d//2,nImg2d//2:]/poly_direct_image1.max(),label='Direct')
