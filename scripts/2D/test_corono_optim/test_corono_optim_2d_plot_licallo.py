@@ -53,8 +53,9 @@ if True:
     offset = 1.278            # spider intersection offset (meters)
     beta = 51.75              # spider angle beta
     
-    odiam2 = 1.5*odiam
-    thick2 = 1.5*thick
+    fac = 1.5
+    odiam2 = fac*odiam
+    thick2 = fac*thick
     Fratio    = 64
 
     # Focal plane mask 
@@ -81,7 +82,7 @@ if True:
     Pupil2dSym  = True # set it True only for optimization
     
     #nlam
-    band = 'GPI_J'
+    band = 'GPI_H'
     # bw   = 0.1
     nlam = 3
 
@@ -163,7 +164,7 @@ if True:
         fname_pup = f'ATLAST_Aperture_nPup={nPup}.fits'
         fname_lys = f'ATLAST_LyotStop_nPup={nPup}.fits'
     elif pupil_name == 'sbr':
-        fname_pup = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
+        fname_pup = f'pupil=sbr_nPup={nPup}_odiam={int(odiam*100)}_thick={int(thick*100):03d}.fits'
         fname_lys = f'pupil=sbr_nPup={nPup}_odiam={int(odiam2*100)}_thick={int(thick2*100):03d}.fits'
     else:
         raise NameError(f'{pupil_name}: unknown pupil name')
@@ -238,7 +239,7 @@ else:
 Read files
 """
 fname_gen = problem1.get_filename()
-fname     = fname_gen + '.fits'
+fname     = fname_gen + f'_{band}band.fits'
 fpath     = fdir / fname
 
 
