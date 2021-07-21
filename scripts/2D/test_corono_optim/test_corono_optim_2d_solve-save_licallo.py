@@ -51,7 +51,14 @@ Fmax2d = 45#22.5
 nImg2d = 90#45
 
 # telescope parameters
-dAper     = 7.92
+pdiam, odiam = 7.92, 2.3  # tel. and obst. diameters (meters)
+thick = 0.25              # adopted spider thickness (meters)
+offset = 1.278            # spider intersection offset (meters)
+beta = 51.75              # spider angle beta
+
+odiam2 = 1.5*odiam
+thick2 = 1.5*thick
+
 Fratio    = 64
 
 # Focal plane mask 
@@ -113,7 +120,7 @@ lam_t  = np.linspace(lam0-dlam/2*(nlam>1),lam0+dlam/2,nlam)
 wv_t   = wv0*lam_t
 
 rMask     = rMask_m/(wv0*Fratio)  # mask size in lam0/D
-rMask_mas = rMask * (wv0/dAper)/mas2rad
+rMask_mas = rMask * (wv0/pdiam)/mas2rad
 
 
 #%%
@@ -132,11 +139,13 @@ else:
     raise ValueError('Unknown user {0}'.format(user))
 
 if pupil_name == 'lvr':
-    fname_pup = 'ATLAST_Aperture_nPup={0}.fits'.format(nPup,)
-    fname_lys = 'ATLAST_LyotStop_nPup={0}.fits'.format(nPup,)
-else:
+    fname_pup = f'ATLAST_Aperture_nPup={nPup}.fits'
+    fname_lys = f'ATLAST_LyotStop_nPup={nPup}.fits'
+elif pupil_name == 'sbr':
     fname_pup = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
-    fname_lys = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
+    fname_lys = f'pupil=sbr_nPup={nPup}_odiam={int(odiam2*100)}_thick={int(thick2*100):03d}.fits'
+else:
+    raise NameError(f'{pupil_name}: unknown pupil name')
 
 fpath_pup = fdir / fname_pup
 fpath_lys = fdir / fname_lys

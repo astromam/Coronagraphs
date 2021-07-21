@@ -48,7 +48,13 @@ if True:
     nImg2d = 500
 
     # telescope parameters
-    dAper     = 7.92
+    pdiam, odiam = 7.92, 2.3  # tel. and obst. diameters (meters)
+    thick = 0.25              # adopted spider thickness (meters)
+    offset = 1.278            # spider intersection offset (meters)
+    beta = 51.75              # spider angle beta
+    
+    odiam2 = 1.5*odiam
+    thick2 = 1.5*thick
     Fratio    = 64
 
     # Focal plane mask 
@@ -134,7 +140,7 @@ lam_t  = np.linspace(lam0-dlam/2*(nlam>1),lam0+dlam/2,nlam)
 wv_t   = wv0*lam_t
 
 rMask     = rMask_m/(wv0*Fratio)  # mask size in lam0/D
-rMask_mas = rMask * (wv0/dAper)/mas2rad
+rMask_mas = rMask * (wv0/pdiam)/mas2rad
 
 
 #%%
@@ -154,11 +160,13 @@ if True:
         raise ValueError('Unknown user {0}'.format(user))
 
     if pupil_name == 'lvr':
-        fname_pup = 'ATLAST_Aperture_nPup={0}.fits'.format(nPup,)
-        fname_lys = 'ATLAST_LyotStop_nPup={0}.fits'.format(nPup,)
-    else:
+        fname_pup = f'ATLAST_Aperture_nPup={nPup}.fits'
+        fname_lys = f'ATLAST_LyotStop_nPup={nPup}.fits'
+    elif pupil_name == 'sbr':
         fname_pup = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
-        fname_lys = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
+        fname_lys = f'pupil=sbr_nPup={nPup}_odiam={int(odiam2*100)}_thick={int(thick2*100):03d}.fits'
+    else:
+        raise NameError(f'{pupil_name}: unknown pupil name')
     
     fpath_pup = fdir / fname_pup
     fpath_lys = fdir / fname_lys
@@ -394,20 +402,28 @@ vmax0 = -3
 fname = fname_gen + '_apodized_image.pdf'
 fpath = fdir_pdf / fname
 
-pl.figure(11, (16, 4.5))
+f1 = pl.figure(11, (16, 4.5))
 pl.clf()
-pl.subplot(141)
-pl.imshow(np.log10(poly_corono_image1_z), cmap = cm.inferno, vmin=vmin0,vmax=vmax0)
-pl.title(f'{corono_name}, {bands[0]} band')
-pl.subplot(142)
-pl.imshow(np.log10(poly_corono_image1_Y), cmap = cm.inferno, vmin=vmin0,vmax=vmax0)
-pl.title(f'{corono_name}, {bands[1]} band')
-pl.subplot(143)
-pl.imshow(np.log10(poly_corono_image1_J), cmap = cm.inferno, vmin=vmin0,vmax=vmax0)
-pl.title(f'{corono_name}, {bands[2]} band')
-pl.subplot(144)
-pl.imshow(np.log10(poly_corono_image1_H), cmap = cm.inferno, vmin=vmin0,vmax=vmax0)
-pl.title(f'{corono_name}, {bands[3]} band')
+
+ax1 = f1.add_subplot(141)
+im = ax1.imshow(np.log10(poly_corono_image1_z), cmap = cm.inferno, vmin=vmin0,vmax=vmax0)
+ax1.set_title(f'{corono_name}, {bands[0]} band')
+
+ax2 = f1.add_subplot(142)
+im = ax2.imshow(np.log10(poly_corono_image1_Y), cmap = cm.inferno, vmin=vmin0,vmax=vmax0)
+ax2.set_title(f'{corono_name}, {bands[1]} band')
+
+ax3 = f1.add_subplot(143)
+im = ax3.imshow(np.log10(poly_corono_image1_J), cmap = cm.inferno, vmin=vmin0,vmax=vmax0)
+ax3.set_title(f'{corono_name}, {bands[2]} band')
+
+ax4 = f1.add_subplot(144)
+im = ax4.imshow(np.log10(poly_corono_image1_H), cmap = cm.inferno, vmin=vmin0,vmax=vmax0)
+ax4.set_title(f'{corono_name}, {bands[3]} band')
+
+cbar_ax = f1.add_axes([0.92, 0.15, 0.03, 0.7])
+cbar = f1.colorbar(im, cax = cbar_ax)
+cbar.ax.set_ylabel("intensity in log scale", rotation=270, labelpad = 10)
 pl.savefig(str(fpath))
 
 #%% Intensity profiles of the direct and coronagraphic images
@@ -451,7 +467,7 @@ poly_corono_prf_avg_arr = [poly_corono_prf_avg_z, poly_corono_prf_avg_Y,
 poly_corono_prf_std_arr = [poly_corono_prf_std_z, poly_corono_prf_std_Y,
                            poly_corono_prf_std_J, poly_corono_prf_std_H]
 poly_corono_prf_stdpl1_arr = np.asarray(poly_corono_prf_avg_arr)+np.asarray(poly_corono_prf_std_arr)
-poly_corono_prf_stdmn1_arr = np.asarray(poly_corono_prf_avg_arr)-np.asarray(poly_corono_prf_std_arr)
+poly_corono_prf_stdpl3_arr = np.abs(np.asarray(poly_corono_prf_avg_arr)+3*np.asarray(poly_corono_prf_std_arr))
 
 
 rMask_arr = [corono0_z.rMask, corono0_Y.rMask, corono0_J.rMask, corono0_H.rMask]
@@ -460,22 +476,9 @@ for iband in range(nband):
     pl.figure(21+iband)
     pl.clf()
     pl.title(f'Radial intensity profiles of the images in {bands[iband]} band')
-    #pl.semilogy(corono0.xi2d,poly_direct_image1[nImg2d//2,nImg2d//2:]/poly_direct_image1.max(),label='Direct - pyth')
-    #pl.semilogy(corono0.xi2d,poly_direct_image2[nImg2d//2,nImg2d//2:]/poly_direct_image2.max(),label='Direct - cyth')
-    #pl.semilogy(corono0.xi,poly_direct_image2/poly_direct_image2.max(),label='Direct')
-    #pl.semilogy(corono0.xi,poly_direct_image3/poly_direct_image3.max(),label='Direct')
-    if corono_name == 'SP':
-    #    pl.semilogy(xi2d,poly_corono_image1[nImg2d//2,nImg2d//2:]/poly_corono_image1.max(),label='Apod - pyth')
-        pl.semilogy(xi2d,poly_corono_image1_arr[iband][nImg2dbis//2,nImg2dbis//2:]/poly_corono_image1_arr[iband].max(),label='radial cut')
-    elif corono_name == 'APLC':
-    #    pl.semilogy(xi2d,poly_corono_image1[nImg2d//2,nImg2d//2:]/poly_direct_image1.max(),label='Apod - pyth')
-        pl.semilogy(xi2d,poly_corono_image1_arr[iband][nImg2dbis//2,nImg2dbis//2:]/poly_direct_image1_arr[iband].max(),label='radial cut')    
-    else:
-        raise NameError(f'{corono_name}: Not an existing coronagraph!')
-    pl.semilogy(rad_corono_arr[iband], poly_corono_prf_avg_arr[iband], ls='--', label='avg')
-    pl.semilogy(rad_corono_arr[iband], poly_corono_prf_stdpl1_arr[iband], ls='-.', label=r'avg+1$\sigma$')
-    pl.semilogy(rad_corono_arr[iband], poly_corono_prf_stdmn1_arr[iband], ls='-.', label=r'avg-1$\sigma$')
-
+    pl.semilogy(rad_corono_arr[iband], poly_corono_prf_avg_arr[iband], ls='-', label='avg')
+    pl.semilogy(rad_corono_arr[iband], poly_corono_prf_stdpl1_arr[iband], ls='--', label=r'avg+1$\sigma$')
+    pl.semilogy(rad_corono_arr[iband], poly_corono_prf_stdpl3_arr[iband], ls='-.', label=r'avg+3$\sigma$')
     
     pl.axvline(x=rMask_arr[iband], ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
     pl.axvline(x=corono0.rho0, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
