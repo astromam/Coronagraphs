@@ -1390,18 +1390,18 @@ class MaxContrast(ProblemMatrix):
             # Add terms corresponding to the MinIaland auxiliary variables        
             AZ0vv = np.zeros((self.nvv,  np.shape(A0tmp)[1]))
 
-            A0 = np.concatenate((A0tmp, AZ0vv))
-            A1 = np.concatenate((A1tmp, AZ0vv))
+            A0tmp = np.concatenate((A0tmp, AZ0vv))
+            A1tmp = np.concatenate((A1tmp, AZ0vv))
 
             # Compute b term corresponding to A0 and A1
             b01 = np.zeros((2*len(corono_field_t.T)))
 
             #  Yield the A and b matrices for the optimization problem
             if k == 0:
-                self.A = np.concatenate((A0,A1), axis=1)
+                self.A = np.concatenate((A0tmp,A1tmp), axis=1)
                 self.b = b01*1
             else:
-                self.A = np.concatenate((self.A, A0, A1), axis=1)
+                self.A = np.concatenate((self.A, A0tmp, A1tmp), axis=1)
                 self.b = np.concatenate((self.b, b01,))
 
         # Compute constraint on the auxiliary variable epsilon
