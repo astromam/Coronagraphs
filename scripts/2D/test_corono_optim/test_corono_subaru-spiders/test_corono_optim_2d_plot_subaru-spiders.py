@@ -9,7 +9,9 @@ License: MIT license
 
 """
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as pl
+ftsz = 12 
+pl.rcParams.update({'font.size': ftsz})
 from pathlib import Path
 
 import os
@@ -35,7 +37,7 @@ if True:
     # Telescope name
     corono_name  = 'APLC' # 'SP' or 'APLC'
     pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
-    problem_name = 'MaxContrastLinf' # 'MaxContrastL1' #'MaxTau' # , 'MaxContrastLinf' # #  
+    problem_name = 'MaxTau' # 'MaxContrastL1' #'MaxTau' # , 'MaxContrastLinf' # #  
     solver       = 'stdgrb' # 'stdgrb' #  'gurobipy', 'scipy.linprog'
     
     MinIsland   = False
@@ -53,7 +55,7 @@ if True:
     offset = 1.278            # spider intersection offset (meters)
     beta = 51.75              # spider angle beta
     
-    fac = 1.5
+    fac = 2.0
     odiam2 = fac*odiam
     thick2 = fac*thick
     Fratio    = 64
@@ -66,7 +68,7 @@ if True:
     rMask_m = 453e-6/2 
     
     # dark zone bounds (inner and outer edges) in lam0/D unit
-    rho0 =  5.0
+    rho0 =  4.0
     rho1 = 20.0
     
     # contrast in the dark region
@@ -82,12 +84,13 @@ if True:
     Pupil2dSym  = True # set it True only for optimization
     
     #nlam
-    band = 'GPI_H'
+    band = 'GPI_J'
     # bw   = 0.1
     nlam = 3
 
     
     do_fits = False
+    do_plot = True
 
 nlambis = 11    
 Fmax2dbis = 50
@@ -449,8 +452,7 @@ if nImg2dbis%2 == 0:
     xi2d = corono0.xi2d_ctr
 
 nImg2d = corono0.params['nImg2d']
-fname = fname_gen + '_intensity_profiles.pdf'
-fpath = fdir_pdf / fname
+
 
 
 
@@ -474,9 +476,12 @@ poly_corono_prf_stdpl3_arr = np.abs(np.asarray(poly_corono_prf_avg_arr)+3*np.asa
 rMask_arr = [corono0_z.rMask, corono0_Y.rMask, corono0_J.rMask, corono0_H.rMask]
 
 for iband in range(nband):
+    
+    fname = fname_gen + f'_intensity_profiles_{bands[iband]}.pdf'
+    fpath = fdir_pdf / fname
     pl.figure(21+iband)
     pl.clf()
-    pl.title(f'Radial intensity profiles of the images in {bands[iband]} band')
+    pl.title(f'Azimith averaged intensity profiles of the images in {bands[iband]} band')
     pl.semilogy(rad_corono_arr[iband], poly_corono_prf_avg_arr[iband], ls='-', label='avg')
     pl.semilogy(rad_corono_arr[iband], poly_corono_prf_stdpl1_arr[iband], ls='--', label=r'avg+1$\sigma$')
     pl.semilogy(rad_corono_arr[iband], poly_corono_prf_stdpl3_arr[iband], ls='-.', label=r'avg+3$\sigma$')
@@ -487,7 +492,7 @@ for iband in range(nband):
     pl.axhline(10**(-cDarkHole), xmin=corono0.xi.min(), xmax=corono0.xi.max(), linewidth=1, color='k', linestyle='--')
     pl.xlabel(r'Angular separation in $\lambda_0$/D')
     pl.ylabel('Normalized intensity in log scale')
-    pl.ylim(1e-9, 2e0)
+    pl.ylim(1e-8, 1e-2)
     pl.legend()
     pl.tight_layout()
     pl.savefig(str(fpath))
@@ -532,41 +537,222 @@ pl.tight_layout()
 
 
 #%%
+"""
+Robustness to spectral bandwidth
+"""   
+nlam_ter = 101
+bw_ter   = 0.92
+   
+fname_gen  = problem1.get_filename(nlam=nlambis)
+params3    = coro.update_params(params, Fmax2d = Fmax2dbis, nImg2d = nImg2dbis, 
+                                nlam = nlam_ter, bw = bw_ter)
+
+if corono_name == 'SP':
+    corono3 = coro.design.SP2d(**params3)
+elif corono_name == 'APLC':
+    corono3 = coro.design.APLC2d(**params3)
+else:
+    raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
+
+if corono_name == 'APLC':
+    direct_poly_img_f3 = corono3.compute_direct_intensity_2d(Apod_pyth)
+    direct_mono_img_t3 = corono3.compute_direct_intensity_2d(Apod_pyth, poly=False)
+elif corono_name == 'SP':
+    direct_poly_img_f3 = corono3.compute_direct_intensity_2d(corono0.Pupil2d)
+    direct_mono_img_t3 = corono3.compute_direct_intensity_2d(corono0.Pupil2d, poly=False)
+else:
+    raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
+corono_poly_img_f3 = corono3.compute_corono_intensity_2d(Apod_pyth)
+corono_mono_img_t3 = corono3.compute_corono_intensity_2d(Apod_pyth, poly=False)
+
+
+#%%
+val = 0
+if nImg2dbis%2 == 0:
+    val = 1/2
+
+sepbis=3.0
+septer=6.0
+
+# array of angular distances in the final image plane
+xx,yy  = np.meshgrid(np.arange(nImg2dbis)-nImg2dbis//2+val, np.arange(nImg2dbis)-nImg2dbis//2+val)
+mydist = (Fmax2dbis/nImg2dbis)*np.hypot(yy,xx)        
+resbis = (mydist <= sepbis +0.5)*(mydist >= sepbis -0.5)
+rester = (mydist <= septer +0.5)*(mydist >= septer -0.5)
+
+#%%
+corono_poly_avg_resbis_wv_t = []
+corono_poly_avg_rester_wv_t = []
+
+for i in range(nlam_ter):
+    corono_poly_avg_resbis_wv_t.append(np.mean(corono_mono_img_t3[i, resbis != 0])/direct_mono_img_t3[(nlam_ter-1)//2].max())
+    corono_poly_avg_rester_wv_t.append(np.mean(corono_mono_img_t3[i, rester != 0])/direct_mono_img_t3[(nlam_ter-1)//2].max())
+    
+
+
+#%%
+colors_shifts = pl.cm.rainbow(np.linspace(0,1,2))
+ls_shifts = ["-", "--"]
+
+fname_bw_plot = 'corono_poly_bw_sensitivity_plot_nPup={0}_disp.pdf'.format(nPup)
+fpath_bw_plot = fdir_pdf / fname_bw_plot
+
+plot_lines = []
+
+wv_ind = (wv0*corono3.lam_t >= (wv0_z - width_z/2))*(wv0*corono3.lam_t <= (wv0_H + width_H/2))
+
+pl.figure(51)
+pl.clf()
+l1, = pl.semilogy(corono3.lam_t[wv_ind]*wv0*1e6, np.asarray(corono_poly_avg_resbis_wv_t)[wv_ind],
+            color = colors_shifts[0], marker='x', ls ='-')
+l2, = pl.semilogy(corono3.lam_t[wv_ind]*wv0*1e6, np.asarray(corono_poly_avg_rester_wv_t)[wv_ind],
+            color = colors_shifts[1], marker='x', ls ='-')
+
+#l5, = pl.semilogy([], [], color = "k", ls='-')
+#l6, = pl.semilogy([], [], color = "k", ls='--')
+
+pl.xlabel(r'Wavelength in $\mu$m ($\lambda_0={0:.3f}\mu$m)'.format(wv0*1e6))
+pl.ylabel(r'Averaged normalized intensity')
+pl.axvline(x=(corono3.lam0-bw/2)*wv0*1e6, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
+pl.axvline(x=(corono3.lam0+bw/2)*wv0*1e6, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
+pl.axhline(10**(-cDarkHole+2), xmin=0, xmax=1,
+           linewidth=1, color='k', linestyle='--')    
+pl.axhline(10**(-cDarkHole), xmin=0, xmax=1, 
+           linewidth=1, color='k', linestyle='--')    
+#pl.xlim((corono3.lam0-corono3.bw/2)*wv0*1e6, (corono3.lam0+corono3.bw/2)*wv0*1e6)
+pl.xlim(corono3.lam_t[wv_ind].min()*wv0*1e6, corono3.lam_t[wv_ind].max()*wv0*1e6)
+pl.ylim(1e-9, 1e-3)  
+pl.title(r'Averaged intensity in monochromatic light')
+pl.grid(True,which="both",ls="--")
+
+#legend1 = pl.legend([l5,l6], ["x-axis", "y-axis"], loc=3)
+#pl.gca().add_artist(legend1)
+pl.legend([l1,l2], [r'{0:.1f} $\lambda_0/D$'.format(sepbis), r'{0:.1f} $\lambda_0/D$'.format(septer)], loc=4)
+
+pl.tight_layout()
+if do_plot is True:
+    pl.savefig(str(fpath_bw_plot), transparent=True)
+
+#%%
+"""
+Contour plot for spectral bandwidth robustness
+""" 
+    
+direct_mono_prf_avg_t3 = np.zeros((nlam_ter, nImg2dbis//2))
+corono_mono_prf_avg_t3 = np.zeros((nlam_ter, nImg2dbis//2))
+
+direct_mono_prf_std_t3 = np.zeros((nlam_ter, nImg2dbis//2))
+corono_mono_prf_std_t3 = np.zeros((nlam_ter, nImg2dbis//2))
+
+#%%
+for i in range(corono3.nlam):
+    direct_mono_prf_avg_t3[i], rad_direct = imutils.profile(direct_mono_img_t3[i], type='mean')
+    corono_mono_prf_avg_t3[i], rad_corono = imutils.profile(corono_mono_img_t3[i], type='mean')
+    direct_mono_prf_std_t3[i], rad_direct = imutils.profile(direct_mono_img_t3[i], type='std')
+    corono_mono_prf_std_t3[i], rad_corono = imutils.profile(corono_mono_img_t3[i], type='std')    
+
+#%%
+# normalization term    
+direct_mono_img_f3_peak = direct_mono_img_t3[nlam_ter//2].max()
+
+lam0D_corono = rad_corono*Fmax2dbis/nImg2dbis
+
+wv_ind = (wv0*corono3.lam_t >= (wv0_z - width_z/2))*(wv0*corono3.lam_t <= (wv0_H + width_H/2))
+lam0D_ind = lam0D_corono >= 1.0
+
+# bounds for the separations
+lam0D_min = lam0D_corono[lam0D_ind].min()
+lam0D_max = lam0D_corono[lam0D_ind].max()
+
+# bounds for the wavelengths
+lam_min0 = corono3.lam_t.min()
+lam_min = corono3.lam_t[wv_ind].min()
+lam_max = corono3.lam_t[wv_ind].max()
+
+# bounds for the optimization wavelength 
+lam0 = 1.
+lam_opt_min = lam0 - 0.5*bw#corono0.lam_t.min()
+lam_opt_max = lam0 + 0.5*bw#corono0.lam_t.max()
+
+#%%
+fname_image_plane_f_disp = 'corono_poly_bw_sensitivity_contour_nPup={0}_disp.pdf'.format(nPup)
+fpath_image_plane_f_disp = fdir_pdf / fname_image_plane_f_disp
+
+# line width parameter
+lw0 = 2.5
+
+lam02um = wv0*1e6 
+lam0D2mas = (wv0/pdiam)*(180.*3600*1000/np.pi)
+
+tmp = corono_mono_prf_std_t3[wv_ind]
+
+Z0 = np.log10(tmp[:, lam0D_ind]/direct_mono_img_f3_peak)
+extent0 = [lam0D_min, lam0D_max, lam_min, lam_max]
+
+f2 = pl.figure(52, figsize=(12,4.5))
+pl.clf()
+ax0 = f2.add_subplot(111)
+im = ax0.imshow(Z0, 
+                cmap = "inferno", 
+                vmin=-9.0, vmax=-3.0,
+                extent = extent0,
+                origin = 'lower',
+                )
+
+cs = ax0.contour(Z0, [-7., -6., -5.], colors = 'white',
+            extent = extent0,linestyles = '-')
+ax0.clabel(cs, inline=1, fontsize=ftsz, fmt = '%1.1f')
+
+ax0.set_xlabel(r'Angular separation in $\lambda_0$/D')
+ax0.set_ylabel(r'Wavelength $\lambda$ in $\lambda_0$')
+ax0.set_aspect('auto')
+#ax0.set_title(r'New APLC design')
+ax0.text(10**(np.log10(lam0D_max)/2), 1.4, "New APLC design", fontsize=ftsz, 
+         horizontalalignment="center", color = "white")
+#exec('ax{0}.tick_params(axis="x", which="both", bottom="off", top="off", labelbottom="off")'.format(1,))
+#exec('ax{0}.tick_params(axis="y", which="both", left="off", right="off", labelleft="off")'.format(1,))
+
+ax0.axvline(x=rMask, ymin=-12, ymax =2, linewidth=lw0, color='r', linestyle='--')
+ax0.axvline(x=rho0, ymin=-12, ymax =2, linewidth=lw0, color='b', linestyle='--')
+ax0.axvline(x=rho1, ymin=-12, ymax =2, linewidth=lw0, color='b', linestyle='--')
+
+ax0.axhline(y=1.0, xmin=0., xmax =lam0D_max, 
+            linewidth=lw0, color='g', linestyle=':')
+ax0.axhline(y=lam_opt_min, xmin=0., xmax =lam0D_max, 
+            linewidth=lw0, color='k', linestyle=':')
+ax0.axhline(y=lam_opt_max, xmin=0., xmax =lam0D_max, 
+            linewidth=lw0, color='k', linestyle=':')
+
+ax0.autoscale(False)
+ax0.set_xscale("log")
+
+ax2 = ax0.twinx()
+ax2.set_ylim(lam_min*lam02um, lam_max*lam02um)
+ax2.set_ylabel(r'$\lambda$ in $\mu$m ($\lambda_0={0:.3f}\mu$m)'.format(wv0*1e6), 
+               rotation=270, labelpad = ftsz)
+#
+ax3 = ax0.twiny()
+ax3.set_xlim(lam0D_min*lam0D2mas, lam0D_max*lam0D2mas)
+##ax3.set_yticks()
+ax3.set_xlabel(r'Angular separation in mas')
+ax3.set_xscale("log")
+
+
+
+f2.subplots_adjust(bottom=0.13, top=0.87, left=0.1, right=0.75,
+                    wspace=0.02, hspace=0.02)
+#
+#f2.subplots_adjust(right=0.8)
+cbar_ax = f2.add_axes([0.86, 0.15, 0.05, 0.7])
+cbar    = f2.colorbar(im, cax=cbar_ax)
+cbar.ax.set_ylabel('1$\sigma$ intensity in log scale', rotation=270, labelpad = 16)
+if do_plot is True:
+    pl.savefig(str(fpath_image_plane_f_disp), transparent=True)
+pl.tight_layout()
 pl.show()
 
 
 
-
-##%% Intensity profiles of the direct and coronagraphic images
-#"""
-#Display of the intensity profiles of the coronagraphic images
-#"""
-#
-#nImg2d = corono0.params['nImg2d']
-#fname = fname_gen + '_intensity_profiles.pdf'
-#fpath = fdir_pdf / fname
-#
-#pl.figure(8)
-#pl.clf()
-#pl.title('Radial intensity profiles of the images')
-#pl.semilogy(corono0.xi2d,poly_direct_image1[nImg2d//2,nImg2d//2:]/poly_direct_image1.max(),label='Direct')
-##pl.semilogy(corono0.xi,poly_direct_image2/poly_direct_image2.max(),label='Direct')
-##pl.semilogy(corono0.xi,poly_direct_image3/poly_direct_image3.max(),label='Direct')
-#if corono_name == 'SP':
-#    pl.semilogy(corono0.xi2d,poly_corono_image1[nImg2d//2,nImg2d//2:]/poly_corono_image1.max(),label='Apod')
-#else:
-#    pl.semilogy(corono0.xi2d,poly_corono_image1[nImg2d//2,nImg2d//2:]/poly_direct_image1.max(),label='MaxTau')
-#    
-##pl.semilogy(corono0.xi2d,poly_corono_image2[nImg2d//2,nImg2d//2:]/poly_direct_image2.max(),label=r'MaxContrast, L$_1$-norm')
-##pl.semilogy(corono0.xi2d,poly_corono_image3[nImg2d//2,nImg2d//2:]/poly_direct_image3.max(),label=r'MaxContrast, L$_{\infty}$-norm')
-##pl.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
-#pl.axvline(x=corono0.rho0, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
-#pl.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
-#pl.axhline(10**(-cDarkHole), xmin=corono0.xi.min(), xmax=corono0.xi.max(), linewidth=1, color='k', linestyle='--')
-#pl.xlabel(r'Angular separation in $\lambda_0$/D')
-#pl.ylabel('Normalized intensity in log scale')
-#pl.legend()
-#pl.savefig(str(fpath))
 
 #%%
 pl.show()

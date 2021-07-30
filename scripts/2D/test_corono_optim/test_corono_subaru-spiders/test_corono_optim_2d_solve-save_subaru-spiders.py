@@ -31,7 +31,7 @@ Parameters
 # Telescope name
 corono_name  = 'APLC' # 'SP' or 'APLC'
 pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
-problem_name = 'MaxContrastLinf' # 'MaxTau' # ,'MaxContrastLinf' # 'MaxContrastL1' #
+problem_name = 'MaxTau' # 'MaxTau' # ,'MaxContrastLinf' # 'MaxContrastL1' #
 solver       = 'stdgrb' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
 slvLogToConsole = 1
 slvCrossover    = 0
@@ -56,7 +56,7 @@ thick = 0.25              # adopted spider thickness (meters)
 offset = 1.278            # spider intersection offset (meters)
 beta = 51.75              # spider angle beta
 
-fac = 1.5
+fac = 2.0
 
 odiam2 = fac*odiam
 thick2 = fac*thick
@@ -73,7 +73,7 @@ rMask_m = 453e-6/2
 #rMask = 2.8
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
-rho0 =  5.0
+rho0 =  4.0
 rho1 = 20.0
 
 # contrast in the dark region
@@ -89,7 +89,7 @@ Pupil2dSym  = True
 ImPart = False 
 
 #nlam
-band = 'GPI_H'
+band = 'GPI_J'
 #bw   = 0.1
 nlam = 3
 
