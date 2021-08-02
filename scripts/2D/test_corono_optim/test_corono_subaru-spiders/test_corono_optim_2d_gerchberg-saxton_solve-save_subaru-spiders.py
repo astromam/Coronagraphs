@@ -91,7 +91,7 @@ Pupil2dSym  = True
 ImPart = False 
 
 #nlam
-band = 'GPI_J'
+band = 'GPI_Y'
 #bw   = 0.1
 nlam = 5
 nlam1 = 101

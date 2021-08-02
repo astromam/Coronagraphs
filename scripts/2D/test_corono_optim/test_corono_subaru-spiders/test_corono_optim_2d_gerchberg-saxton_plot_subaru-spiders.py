@@ -84,7 +84,7 @@ if True:
     Pupil2dSym  = True # set it True only for optimization
     
     #nlam
-    band = 'GPI_J'
+    band = 'GPI_Y'
     # bw   = 0.1
     nlam = 1
 
@@ -106,6 +106,14 @@ bw_z  = width_z/wv0_z
 rMask_z = rMask_m/(wv0_z*Fratio) 
 
 wv0_Y   = 10433.59e-10
+if fac == 1.0:
+    wv1_Y = 1.09814232e-06
+elif fac == 1.5:
+    wv1_Y = 1.09814232e-06
+elif fac == 2.0:
+    wv1_Y = 1.090586e-06
+else:    
+    wv1_Y = (1.72/1.65)*wv0_Y
 width_Y = 1889.08e-10
 bw_Y  = width_Y/wv0_Y
 rMask_Y = rMask_m/(wv0_Y*Fratio) 
