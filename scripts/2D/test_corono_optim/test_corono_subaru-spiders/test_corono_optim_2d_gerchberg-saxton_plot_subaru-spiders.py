@@ -55,7 +55,7 @@ if True:
     offset = 1.278            # spider intersection offset (meters)
     beta = 51.75              # spider angle beta
     
-    fac = 1.0
+    fac = 2.0
     odiam2 = fac*odiam
     thick2 = fac*thick
     Fratio    = 64
@@ -68,7 +68,7 @@ if True:
     rMask_m = 453e-6/2 
     
     # dark zone bounds (inner and outer edges) in lam0/D unit
-    rho0 =  4.0
+    rho0 =  5.0
     rho1 = 20.0
     
     # contrast in the dark region
@@ -84,7 +84,7 @@ if True:
     Pupil2dSym  = True # set it True only for optimization
     
     #nlam
-    band = 'GPI_H'
+    band = 'GPI_J'
     # bw   = 0.1
     nlam = 1
 
@@ -111,30 +111,50 @@ bw_Y  = width_Y/wv0_Y
 rMask_Y = rMask_m/(wv0_Y*Fratio) 
 
 wv0_J   = 12317.58e-10
+if fac == 1.0:
+    wv1_J = 1.2385776e-06
+elif fac == 1.5:
+    wv1_J = 1.2385776e-06
+elif fac == 2.0:
+    wv1_J = 1.2385776e-06
+else:
+    wv1_J   = (1.72/1.65)*wv0_J
 width_J = 2273.20e-10
 bw_J  = width_J/wv0_J
 rMask_J = rMask_m/(wv0_J*Fratio) 
 
 wv0_H   = 16444.09e-10
+if fac == 1.0:
+    wv1_H   = 1.61754562e-06
+elif fac == 1.5:
+    wv1_H   = 1.63843936e-06
+elif fac == 2.0:
+    wv1_H   = 1.6891813e-06
+else:
+    (1.72/1.65)*wv0_H
 width_H = 2984.82e-10
 bw_H  = width_H/wv0_H
 rMask_H = rMask_m/(wv0_H*Fratio)            
 
 if band == 'HSC_z':
     wv0 = wv0_z
+    wv1 = wv0*1
     width = width_z 
 elif band == 'GPI_Y':
     wv0 = wv0_Y
+    wv1 = wv0*1
     width = width_Y
 elif band == 'GPI_J':
     wv0 = wv0_J
+    wv1 = wv1_J
     width = width_J
 elif band == 'GPI_H':
     wv0 = wv0_H
+    wv1 = wv1_H
     width = width_H           
 else:
     raise ValueError(f'Unknown {band} band')
-
+    
 
 # wavelength sampling
 bw     = width/wv0 
@@ -145,6 +165,8 @@ wv_t   = wv0*lam_t
 
 rMask     = rMask_m/(wv0*Fratio)  # mask size in lam0/D
 rMask_mas = rMask * (wv0/pdiam)/mas2rad
+
+rMask1    = rMask_m/(wv1*Fratio)  # mask size in lam1/D
 
 
 #%%
@@ -214,10 +236,14 @@ if not os.path.exists(fdir_pdf):
 """ 
 Coronagraph defintion
 """
+params1    = coro.update_params(params, rMask=rMask1) 
+
 if corono_name == 'SP':
     corono0 = coro.design.SP2d(**params)
+    corono1 = coro.design.SP2d(**params1)
 elif corono_name == 'APLC':
     corono0 = coro.design.APLC2d(**params)
+    corono1 = coro.design.APLC2d(**params1)
 else:
     raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
 
@@ -227,13 +253,13 @@ Problem defintion
 """
 if problem_name == 'MaxTau':
     # Maximization of the integrated amplitude transmission of the apodizer
-    problem1 = coro.optim_2d.MaxTau(corono=corono0, **params)
+    problem1 = coro.optim_2d.MaxTau(corono=corono1, **params1)
 elif problem_name == 'MaxContrastL1':
     # Maximization of the contrast under L1-norm
-    problem1 = coro.optim_2d.MaxContrast(corono=corono0, Lnorm='L1',**params)
+    problem1 = coro.optim_2d.MaxContrast(corono=corono1, Lnorm='L1',**params1)
 elif problem_name == 'MaxContrastLinf':
     # Maximization of the contrast under L-infinite norm
-    problem1 = coro.optim_2d.MaxContrast(corono=corono0, Lnorm='Linf',**params)
+    problem1 = coro.optim_2d.MaxContrast(corono=corono1, Lnorm='Linf',**params1)
 else:
     raise NameError('{0}: Not an existing optimization problem!'.format(problem_name))
 
@@ -243,9 +269,9 @@ Read files
 """
 fname_gen = problem1.get_filename()
 fname     = fname_gen + f'_{band}band_gbsx.fits'
-fpath     = fdir / fname
+fpath_apod= fdir / fname
 
-Apod_pyth = fits.getdata(fpath,)
+Apod_pyth = fits.getdata(fpath_apod,)
 
 #%% Display of the apodizer
 """
@@ -266,7 +292,7 @@ pl.imshow(corono0.Pupil2d, cmap = cm.Greys_r)
 pl.title('Pupil')
 pl.subplot(132)
 pl.imshow(Apod_pyth*corono0.Pupil2d, cmap = cm.Greys_r)
-pl.title(f'Apod 1 transmission \n {problem_name} problem - {solver}')
+pl.title('Apod 1 transmission \n Gerchberg-Saxton')
 pl.subplot(133)
 pl.imshow(corono0.LyotStop2d, cmap = cm.Greys_r)
 pl.title('Lyot Stop')
@@ -363,7 +389,7 @@ poly_corono_prf_std_H, rad_corono_H = imutils.profile(poly_corono_image1_H, type
 """
 Display direct and coronagraphic images
 """
-fname = fname_gen + '_direct_image.pdf'
+fname = fname_gen + '_direct_image_gbsx.pdf'
 fpath = fdir_pdf / fname
 
 pl.figure(10)
