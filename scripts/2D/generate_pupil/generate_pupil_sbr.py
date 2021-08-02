@@ -36,17 +36,19 @@ nPup= 200
 do_fits = False
 
 pdiam, odiam = 7.92, 2.3  # tel. and obst. diameters (meters)
-thick = 0.25              # adopted spider thickness (meters)
+thick = 0.              # adopted spider thickness (meters)
 offset = 1.278            # spider intersection offset (meters)
 beta = 51.75              # spider angle beta
 
 
-fac = 2.0
+fac = 1.0
 
 odiam2 = fac*odiam
 thick2 = fac*thick
 
-
+kwd_spiders = True
+if thick <= 0.:
+    kwd_spiders = False
 
 #%%
 """
@@ -58,7 +60,7 @@ pupil_sbr = xaosim.pupil.subaru(nPup, nPup, nPup/2, between_pix=True)
 
 pupil = xaosim.pupil.four_spider_mask(nPup, nPup, nPup/2, pdiam, odiam=odiam2,
                         beta=beta, thick=thick2, offset=offset,
-                        spiders=True,
+                        spiders=kwd_spiders,
                         between_pix=True)
 
 pupil_diff = pupil*1 - pupil_sbr*1
