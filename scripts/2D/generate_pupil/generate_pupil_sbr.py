@@ -94,7 +94,7 @@ for ipdiam, kpdiam in enumerate(kpdiam_t):
                                                   beta=beta, thick=thick2, offset=offset,
                                                   spiders=kwd_spiders,between_pix=True)
                         
-            fname = f'pupil=sbr_nPup={nPup}_kpdiam={int(kpdiam*100):03d}_kodiam={int(kodiam*100):03d}_kthick={int(kthick*100):03d}.fits' 
+            fname = f'pupilsbr_nPup{nPup}_kpdiam{int(np.round(kpdiam*100)):03d}_kodiam{int(np.round(kodiam*100)):03d}_kthick{int(np.round(kthick*100)):03d}.fits' 
             fpath = fdir / fname
             
             if do_fits:
