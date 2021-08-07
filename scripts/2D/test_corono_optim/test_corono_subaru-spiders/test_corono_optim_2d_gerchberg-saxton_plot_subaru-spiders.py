@@ -44,7 +44,7 @@ if True:
     FirstDerGlobalLim = 1.
     
     #nPup = corono0.params['nPup']
-    nPup = 200
+    nPup = 1200
     nFPM = 50
     Fmax2d = 50
     nImg2d = 500
@@ -55,10 +55,19 @@ if True:
     offset = 1.278            # spider intersection offset (meters)
     beta = 51.75              # spider angle beta
     
-    fac = 2.0
-    odiam2 = fac*odiam
-    thick2 = fac*thick
-    Fratio    = 64
+    pdiam2 = 7.92
+    odiam2 = 2.65#2.53#
+    thick2 = 0.25
+    Fratio = 64
+
+    kpdiam1 = pdiam/pdiam
+    kodiam1 = odiam/odiam
+    kthick1 = thick/thick
+    
+    kpdiam2 = pdiam2/pdiam
+    kodiam2 = odiam2/odiam
+    kthick2 = thick2/thick
+    
 
     # Focal plane mask 
     mas2rad   = np.pi/(180.*3600*1000) # Conversion factor from mas to rads
@@ -84,13 +93,15 @@ if True:
     Pupil2dSym  = True # set it True only for optimization
     
     #nlam
-    band = 'GPI_Y'
+    band = 'GPI_J'
     # bw   = 0.1
     nlam = 1
 
+    do_EDA  = True
     
     do_fits = False
     do_plot = True
+
 
 nlambis = 11    
 Fmax2dbis = 50
@@ -106,40 +117,40 @@ bw_z  = width_z/wv0_z
 rMask_z = rMask_m/(wv0_z*Fratio) 
 
 wv0_Y   = 10433.59e-10
-if fac == 1.0:
-    wv1_Y = 1.09814232e-06
-elif fac == 1.5:
-    wv1_Y = 1.09814232e-06
-elif fac == 2.0:
-    wv1_Y = 1.090586e-06
-else:    
-    wv1_Y = (1.72/1.65)*wv0_Y
+# if fac == 1.0:
+#     wv1_Y = 1.09814232e-06
+# elif fac == 1.5:
+#     wv1_Y = 1.09814232e-06
+# elif fac == 2.0:
+#     wv1_Y = 1.090586e-06
+# else:    
+#     wv1_Y = (1.72/1.65)*wv0_Y
 width_Y = 1889.08e-10
 bw_Y  = width_Y/wv0_Y
 rMask_Y = rMask_m/(wv0_Y*Fratio) 
 
 wv0_J   = 12317.58e-10
-if fac == 1.0:
-    wv1_J = 1.2385776e-06
-elif fac == 1.5:
-    wv1_J = 1.2385776e-06
-elif fac == 2.0:
-    wv1_J = 1.2385776e-06
-else:
-    wv1_J   = (1.72/1.65)*wv0_J
+# if fac == 1.0:
+#     wv1_J = 1.2385776e-06
+# elif fac == 1.5:
+#     wv1_J = 1.2385776e-06
+# elif fac == 2.0:
+#     wv1_J = 1.2385776e-06
+# else:
+#     wv1_J   = (1.72/1.65)*wv0_J
 width_J = 2273.20e-10
 bw_J  = width_J/wv0_J
 rMask_J = rMask_m/(wv0_J*Fratio) 
 
 wv0_H   = 16444.09e-10
-if fac == 1.0:
-    wv1_H   = 1.61754562e-06
-elif fac == 1.5:
-    wv1_H   = 1.63843936e-06
-elif fac == 2.0:
-    wv1_H   = 1.6891813e-06
-else:
-    (1.72/1.65)*wv0_H
+# if fac == 1.0:
+#     wv1_H   = 1.61754562e-06
+# elif fac == 1.5:
+#     wv1_H   = 1.63843936e-06
+# elif fac == 2.0:
+#     wv1_H   = 1.6891813e-06
+# else:
+#     (1.72/1.65)*wv0_H
 width_H = 2984.82e-10
 bw_H  = width_H/wv0_H
 rMask_H = rMask_m/(wv0_H*Fratio)            
@@ -154,11 +165,11 @@ elif band == 'GPI_Y':
     width = width_Y
 elif band == 'GPI_J':
     wv0 = wv0_J
-    wv1 = wv1_J
+#    wv1 = wv1_J
     width = width_J
 elif band == 'GPI_H':
     wv0 = wv0_H
-    wv1 = wv1_H
+#    wv1 = wv1_H
     width = width_H           
 else:
     raise ValueError(f'Unknown {band} band')
@@ -174,8 +185,8 @@ wv_t   = wv0*lam_t
 rMask     = rMask_m/(wv0*Fratio)  # mask size in lam0/D
 rMask_mas = rMask * (wv0/pdiam)/mas2rad
 
-rMask1    = rMask_m/(wv1*Fratio)  # mask size in lam1/D
-
+rMask1    = 2.72#rMask_m/(wv1*Fratio)  # mask size in lam1/D
+wv1 = rMask_m/(rMask1*Fratio)
 
 #%%
 """
@@ -193,12 +204,10 @@ if True:
     else:
         raise ValueError('Unknown user {0}'.format(user))
 
-    if pupil_name == 'lvr':
-        fname_pup = f'ATLAST_Aperture_nPup={nPup}.fits'
-        fname_lys = f'ATLAST_LyotStop_nPup={nPup}.fits'
-    elif pupil_name == 'sbr':
-        fname_pup = f'pupil=sbr_nPup={nPup}_odiam={int(odiam*100)}_thick={int(thick*100):03d}.fits'
-        fname_lys = f'pupil=sbr_nPup={nPup}_odiam={int(odiam2*100)}_thick={int(thick2*100):03d}.fits'
+    if pupil_name == 'sbr':
+        fname_pup = f'pupilsbr_nPup{nPup}_kpdiam{int(np.round(kpdiam1*100)):03d}_kodiam{int(np.round(kodiam1*100)):03d}_kthick{int(np.round(kthick1*100)):03d}.fits' 
+#        fname_lys = f'pupil=sbr_nPup={nPup}_odiam={int(odiam2*100)}_thick={int(thick2*100):03d}.fits'
+        fname_lys = f'pupilsbr_nPup{nPup}_kpdiam{int(np.round(kpdiam2*100)):03d}_kodiam{int(np.round(kodiam2*100)):03d}_kthick{int(np.round(kthick2*100)):03d}.fits' 
     else:
         raise NameError(f'{pupil_name}: unknown pupil name')
     
@@ -221,21 +230,15 @@ params = coro.to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
                  corono_name = corono_name, pupil_name = pupil_name,
                  MinIsland = MinIsland, FirstDerGlobalLim = FirstDerGlobalLim)
 
+str_EDA = ''
+if do_EDA:
+    str_EDA = '_EDA'
+
 #%%
 """
 Working directories
 """
 #fdir = Path('../../results/2D/dat_pyth').resolve() / pupil_name
-if user == 'mndiaye':
-    if syst == 'darwin':
-        fdir = Path('/Users/mndiaye/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
-    elif syst == 'linux':
-        fdir = Path('/scratch/mndiaye/data/Coronagraphs/results/2D/dat_pyth/').resolve()
-    else:
-        raise ValueError('Unknown operating system {0}'.format(syst))
-else:
-    raise ValueError('Unknown user {0}'.format(user))
-
 fdir_pdf = Path('../../results/2D/plots/').resolve()
 if not os.path.exists(fdir_pdf):
     os.makedirs(fdir_pdf)
@@ -246,10 +249,7 @@ Coronagraph defintion
 """
 params1    = coro.update_params(params, rMask=rMask1) 
 
-if corono_name == 'SP':
-    corono0 = coro.design.SP2d(**params)
-    corono1 = coro.design.SP2d(**params1)
-elif corono_name == 'APLC':
+if corono_name == 'APLC':
     corono0 = coro.design.APLC2d(**params)
     corono1 = coro.design.APLC2d(**params1)
 else:
@@ -257,27 +257,11 @@ else:
 
 #%%
 """
-Problem defintion
-"""
-if problem_name == 'MaxTau':
-    # Maximization of the integrated amplitude transmission of the apodizer
-    problem1 = coro.optim_2d.MaxTau(corono=corono1, **params1)
-elif problem_name == 'MaxContrastL1':
-    # Maximization of the contrast under L1-norm
-    problem1 = coro.optim_2d.MaxContrast(corono=corono1, Lnorm='L1',**params1)
-elif problem_name == 'MaxContrastLinf':
-    # Maximization of the contrast under L-infinite norm
-    problem1 = coro.optim_2d.MaxContrast(corono=corono1, Lnorm='Linf',**params1)
-else:
-    raise NameError('{0}: Not an existing optimization problem!'.format(problem_name))
-
-#%%
-"""
 Read files
 """
-fname_gen = problem1.get_filename()
-fname     = fname_gen + f'_{band}band_gbsx.fits'
-fpath_apod= fdir / fname
+#fname_apod = f'pupilsbr_nPup{nPup}_pdiam{int(np.round(pdiam*100))}_odiam{int(np.round(odiam*100))}_thick{int(np.round(thick*100)):03d}_Apod_rMask{int(np.round(rMask1*100)):03d}.fits'
+fname_apod = f'pupilsbr_nPup{nPup}_pdiam{int(np.round(pdiam*100))}_odiam{int(np.round(odiam*100))}_thick{int(np.round(thick*100)):03d}_Apod_rMask{int(np.round(rMask1*100)):03d}' + str_EDA + '.fits'
+fpath_apod= fdir / fname_apod
 
 Apod_pyth = fits.getdata(fpath_apod,)
 
@@ -290,7 +274,7 @@ Plot display of the apodizers
 # pl.imshow(corono0.Pupil2d, cmap = cm.Greys_r)
 # pl.title('Pupil transmission')
 
-fname = fname_gen + '_apodisation_ampl_gbsx.pdf'
+fname = f'pupilsbr_nPup{nPup}_pdiam{int(np.round(pdiam*100))}_odiam{int(np.round(odiam*100))}_thick{int(np.round(thick*100)):03d}_Apod_rMask{int(np.round(rMask1*100)):03d}' + str_EDA + '.pdf'
 fpath = fdir_pdf / fname
 
 pl.figure(5, (12,4))
@@ -310,20 +294,19 @@ pl.savefig(str(fpath))
 """
 Computation of the direct and coronagraphic images
 """
-fname_gen  = problem1.get_filename(nlam=nlambis)
+#fname_gen  = problem1.get_filename(nlam=nlambis)
+fname_gen = 'test_tbd'
 params2    = coro.update_params(params, nlam=nlambis, Fmax2d = Fmax2dbis, nImg2d = nImg2dbis) 
 
 if corono_name == 'APLC':
     corono0 = coro.design.APLC2d(**params2)
-elif corono_name == 'SP':
-    corono0 = coro.design.SP2d(**params2)
 else:
     raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
 
 if corono_name == 'APLC':
     poly_direct_image1 = corono0.compute_direct_intensity_2d(Apod_pyth)
 else:
-    poly_direct_image1 = corono0.compute_direct_intensity_2d(corono0.Pupil2d)
+    raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
 poly_corono_image1 = corono0.compute_corono_intensity_2d(Apod_pyth)
 
 #%%
@@ -397,7 +380,7 @@ poly_corono_prf_std_H, rad_corono_H = imutils.profile(poly_corono_image1_H, type
 """
 Display direct and coronagraphic images
 """
-fname = fname_gen + '_direct_image_gbsx.pdf'
+fname = fname_gen + '_direct_image_gbsx' + str_EDA + '.pdf'
 fpath = fdir_pdf / fname
 
 pl.figure(10)
@@ -412,7 +395,7 @@ nband = len(bands)
 vmin0 = -8
 vmax0 = -3
 
-fname = fname_gen + '_apodized_image_gbsx.pdf'
+fname = fname_gen + '_apodized_image_gbsx' + str_EDA + '.pdf'
 fpath = fdir_pdf / fname
 
 f1 = pl.figure(11, (16, 4.5))
@@ -486,7 +469,7 @@ rMask_arr = [corono0_z.rMask, corono0_Y.rMask, corono0_J.rMask, corono0_H.rMask]
 
 for iband in range(nband):
     
-    fname = fname_gen + f'_intensity_profiles_{bands[iband]}_gbsx.pdf'
+    fname = fname_gen + f'_intensity_profiles_{bands[iband]}_gbsx' + str_EDA + '.pdf'
     fpath = fdir_pdf / fname
     pl.figure(21+iband)
     pl.clf()
@@ -552,7 +535,7 @@ Robustness to spectral bandwidth
 nlam_ter = 101
 bw_ter   = 0.92
    
-fname_gen  = problem1.get_filename(nlam=nlambis)
+#fname_gen  = problem1.get_filename(nlam=nlambis)
 params3    = coro.update_params(params, Fmax2d = Fmax2dbis, nImg2d = nImg2dbis, 
                                 nlam = nlam_ter, bw = bw_ter)
 
@@ -603,7 +586,7 @@ for i in range(nlam_ter):
 colors_shifts = pl.cm.rainbow(np.linspace(0,1,2))
 ls_shifts = ["-", "--"]
 
-fname_bw_plot = 'corono_poly_bw_sensitivity_plot_nPup={0}_gbsx.pdf'.format(nPup)
+fname_bw_plot = 'corono_poly_bw_sensitivity_plot_nPup={0}_gbsx'.format(nPup) + str_EDA + '.pdf'
 fpath_bw_plot = fdir_pdf / fname_bw_plot
 
 plot_lines = []
@@ -624,6 +607,9 @@ pl.xlabel(r'Wavelength in $\mu$m ($\lambda_0={0:.3f}\mu$m)'.format(wv0*1e6))
 pl.ylabel(r'Averaged normalized intensity')
 pl.axvline(x=(corono3.lam0-bw/2)*wv0*1e6, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
 pl.axvline(x=(corono3.lam0+bw/2)*wv0*1e6, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
+pl.axvline(x=(corono3.lam0)*wv0*1e6, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
+pl.axvline(x=wv1*1e6, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
+
 pl.axhline(10**(-cDarkHole+2), xmin=0, xmax=1,
            linewidth=1, color='k', linestyle='--')    
 pl.axhline(10**(-cDarkHole), xmin=0, xmax=1, 
@@ -684,7 +670,7 @@ lam_opt_min = lam0 - 0.5*bw#corono0.lam_t.min()
 lam_opt_max = lam0 + 0.5*bw#corono0.lam_t.max()
 
 #%%
-fname_image_plane_f_disp = 'corono_poly_bw_sensitivity_contour_nPup={0}_gbsx.pdf'.format(nPup)
+fname_image_plane_f_disp = 'corono_poly_bw_sensitivity_contour_nPup={0}_gbsx'.format(nPup) + str_EDA + '.pdf'
 fpath_image_plane_f_disp = fdir_pdf / fname_image_plane_f_disp
 
 # line width parameter

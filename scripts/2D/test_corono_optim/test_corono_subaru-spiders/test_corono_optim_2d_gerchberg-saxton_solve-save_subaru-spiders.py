@@ -49,8 +49,8 @@ BinarityReg       = 0.1
 #nPup = corono0.params['nPup']
 nPup = 200
 nFPM = 50
-Fmax2d = 45#22.5
-nImg2d = 90#45
+Fmax2d = 44#22.5
+nImg2d = 4*Fmax2d#45
 
 # telescope parameters
 pdiam, odiam = 7.92, 2.3  # tel. and obst. diameters (meters)
@@ -58,10 +58,19 @@ thick = 0.25              # adopted spider thickness (meters)
 offset = 1.278            # spider intersection offset (meters)
 beta = 51.75              # spider angle beta
 
-fac = 2.0
+kpdiam_t = np.linspace(0.9, 1.0, 11)
+kodiam_t = np.linspace(1.0, 2.0, 21)
+kthick_t = np.linspace(1.0, 2.0, 11)
 
-odiam2 = fac*odiam
-thick2 = fac*thick
+pdiam2_t = np.asarray(kpdiam_t)*pdiam
+odiam2_t = np.asarray(kodiam_t)*odiam
+thick2_t = np.asarray(kthick_t)*thick 
+
+npdiam = len(kpdiam_t)
+nodiam = len(kodiam_t)
+nthick = len(kthick_t)
+
+nIter = npdiam*nodiam*nthick
 
 Fratio    = 64
 
@@ -75,7 +84,7 @@ rMask_m = 453e-6/2
 #rMask = 2.8
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
-rho0 =  5.0
+rho0 = 5.0
 rho1 = 20.0
 
 # contrast in the dark region
@@ -91,10 +100,10 @@ Pupil2dSym  = True
 ImPart = False 
 
 #nlam
-band = 'GPI_Y'
+band = 'GPI_J'
 #bw   = 0.1
 nlam = 5
-nlam1 = 101
+#nlam1 = 101
 
 do_fits = True
 
@@ -153,9 +162,16 @@ wv_t   = wv0*lam_t
 rMask     = rMask_m/(wv0*Fratio)  # mask size in lam0/D
 rMask_mas = rMask * (wv0/pdiam)/mas2rad
 
-lam1_t  = np.linspace(lam0-dlam/2*(nlam>1),lam0+dlam/2,nlam1)
-wv1_t   = wv0*lam1_t
-rMask1_t = rMask_m/(wv1_t*Fratio)
+# lam1_t  = np.linspace(lam0-dlam/2*(nlam>1),lam0+dlam/2,nlam1)
+# wv1_t   = wv0*lam1_t
+# rMask1_t = rMask_m/(wv1_t*Fratio)
+
+rMask1min = np.round(rMask_m/((wv0_H+width_H/2)*Fratio), decimals=2)
+rMask1max = np.round(rMask_m/((wv0_z-width_z/2)*Fratio), decimals=2)
+
+nMask1 = int(np.round((rMask1max-rMask1min)*100))+1
+
+rMask1_t = np.linspace(rMask1min, rMask1max, nMask1)
 
 #%%
 """
@@ -172,12 +188,9 @@ if user == 'mndiaye':
 else:
     raise ValueError('Unknown user {0}'.format(user))
 
-if pupil_name == 'lvr':
-    fname_pup = f'ATLAST_Aperture_nPup={nPup}.fits'
-    fname_lys = f'ATLAST_LyotStop_nPup={nPup}.fits'
-elif pupil_name == 'sbr':
+if pupil_name == 'sbr':
     fname_pup = f'pupil=sbr_nPup={nPup}_odiam={int(odiam*100)}_thick={int(thick*100):03d}.fits'
-    fname_lys = f'pupil=sbr_nPup={nPup}_odiam={int(odiam2*100)}_thick={int(thick2*100):03d}.fits'
+    fname_lys = f'pupil=sbr_nPup={nPup}_odiam={int(odiam*100)}_thick={int(thick*100):03d}.fits'
 else:
     raise NameError(f'{pupil_name}: unknown pupil name')
 
@@ -220,9 +233,7 @@ params = coro.to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
 """ 
 Coronagraph defintion
 """
-if corono_name == 'SP':
-    corono0 = coro.design.SP2d(**params)
-elif corono_name == 'APLC':
+if corono_name == 'APLC':
     corono0 = coro.design.APLC2d(**params)
 else:
     raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
@@ -236,108 +247,49 @@ area_D = np.zeros((nImg2d, nImg2d))
 area_D[ind_D] = 1.  
 
 #%%
+EE_D_t = np.zeros((nIter, nMask1))
 
-Apod1_2d_t = np.zeros((nlam1, nPup, nPup))
-EE_D_t = np.zeros((nlam1))
+for ipdiam, kpdiam in enumerate(kpdiam_t):
+    for iodiam, kodiam in enumerate(kodiam_t):
+        for ithick, kthick in enumerate(kthick_t):
+            
+            iIter = ithick+ iodiam*nthick + ipdiam*nthick*nodiam
+            print(f'iIter: {iIter+1:04d}/{nIter:04d}')
+            
+            pdiam2 = pdiam2_t[ipdiam]
+            odiam2 = odiam2_t[iodiam]
+            thick2 = thick2_t[ithick]
+            
+            fname_lys = f'pupilsbr_nPup{nPup}_kpdiam{int(np.round(kpdiam*100)):03d}_kodiam{int(np.round(kodiam*100)):03d}_kthick{int(np.round(kthick*100)):03d}.fits' 
+            fpath_lys = fdir / fname_lys
+            LyotStop2d = fits.getdata(fpath_lys)
 
-for ilam1 in range(nlam1):
-    rMask1 = rMask1_t[ilam1]
-    params1    = coro.update_params(params, rMask=rMask1, nlam=1) 
-    if corono_name == 'SP':
-        corono1 = coro.design.SP2d(**params1)
-    elif corono_name == 'APLC':
-        corono1 = coro.design.APLC2d(**params1)
-    else:
-        raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
+            params2    = coro.update_params(params, LyotStop2d = LyotStop2d) 
+            if corono_name == 'APLC':
+                corono2 = coro.design.APLC2d(**params2)
+            else:
+                raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
+            
+            for iMask1, rMask1 in enumerate(rMask1_t):
+                fname_apo = f'pupilsbr_nPup{nPup}_pdiam{int(np.round(pdiam*100))}_odiam{int(np.round(odiam*100))}_thick{int(np.round(thick*100)):03d}_Apod_rMask{int(np.round(rMask1*100)):03d}.fits'
+                fpath_apo = fdir / fname_apo
+                Apod2d = fits.getdata(fpath_apo)
+                
+                Int_D0 = corono2.compute_direct_intensity_2d(Apod2d, poly=True)
+                Int_D  = corono2.compute_corono_intensity_2d(Apod2d, poly=True)
+                Int_D /= Int_D0.max()
+                EE_D_t[iIter, iMask1] = np.sum(area_D*Int_D**2)
     
-    
-    nIt = 100
-    Apod2d = np.zeros((nPup, nPup)) 
-    Apod2d = Input*1
-    EE_D = np.zeros((nIt))
-    
-    iIt = 0
-    while iIt < nIt: 
-        print(f'iteration number: {iIt:02d}')
-        Psi_C = corono1.compute_corono_lyot_field_2d(Apod2d)
-        Apod2d = np.abs((Apod2d - Psi_C[0])*Input)
-        Apod2d /= Apod2d.max()
-        Int_D0 = corono0.compute_direct_intensity_2d(Apod2d, poly=True)
-        Int_D  = corono0.compute_corono_intensity_2d(Apod2d, poly=True)
-        Int_D /= Int_D0.max()
-        EE_D[iIt] = np.sum(area_D*Int_D**2)
-        if (iIt > 1) and (EE_D[iIt] >= EE_D[iIt-1]) and (EE_D[iIt-1] >= EE_D[iIt-2]):
-            print(f'iteration: {iIt:02d}')
-            EE_D_t[ilam1] = EE_D[iIt]
-            break
-        if iIt == nIt:
-            print(f'iteration: {iIt:02d}')
-            EE_D_t[ilam1] = EE_D[iIt]
-            break
-        iIt += 1 
-    
-    
-    Apod1_2d_t[ilam1] = Apod2d
-   
-    #%%
-    """
-    Problem defintion
-    """
-    if problem_name == 'MaxTau':
-        # Maximization of the integrated amplitude transmission of the apodizer
-        problem1 = coro.optim_2d.MaxTau(corono=corono1, **params1)
-    elif problem_name == 'MaxContrastL1':
-        # Maximization of the contrast under L1-norm
-        problem1 = coro.optim_2d.MaxContrast(corono=corono1, Lnorm='L1',**params1)
-    elif problem_name == 'MaxContrastLinf':
-        # Maximization of the contrast under L-infinite norm
-        problem1 = coro.optim_2d.MaxContrast(corono=corono1, Lnorm='Linf',**params1)
-    else:
-        raise NameError('{0}: Not an existing optimization problem!'.format(problem_name))
-    
-    
-    
-    fdir = Path('../../results/2D/dat_pyth').resolve() / pupil_name
-    if user == 'mndiaye':
-        if syst == 'darwin':
-            fdir = Path('/Users/mndiaye/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
-        elif syst == 'linux':
-            fdir = Path('/scratch/mndiaye/data/Coronagraphs/results/2D/dat_pyth/').resolve()
-        else:
-            raise ValueError('Unknown operating system {0}'.format(syst))
-    else:
-        raise ValueError('Unknown user {0}'.format(user))
-    
-    
-    if not os.path.exists(fdir):
-        os.makedirs(fdir)
-        
-    fname = problem1.get_filename() + f'_{band}band_gbsx.fits'
-    fpath = fdir / fname
-    
-    if do_fits is True:
-         fits.writeto(fpath, Apod2d, overwrite=True)
-
-#%%
-"""
-### Display apodizer
-"""
-# pl.figure(0)
-# pl.clf()
-# pl.subplot(141)
-# pl.imshow(Pupil2dnospiders)
-# pl.subplot(142)
-# pl.imshow(Pupil2d)
-# pl.subplot(143)
-# pl.imshow(LyotStop2d)
-# pl.subplot(144)
-# pl.imshow(Apod1_2d)
 
 #%%
 """
 ### EE vs rMask
 """    
-pl.figure(1)
-pl.clf()
-pl.plot(rMask1_t, EE_D_t)
+fname_EE_D = f'pupilsbr_nPup{nPup}_EE_D_rho0{int(np.round(rho0*100)):03d}_rho1{int(np.round(rho1*100)):03d}.fits'
+fpath_EE_D = fdir / fname_EE_D
+
+    
+if do_fits is True:
+    fits.writeto(fpath_EE_D, EE_D_t, overwrite=True)
+
     

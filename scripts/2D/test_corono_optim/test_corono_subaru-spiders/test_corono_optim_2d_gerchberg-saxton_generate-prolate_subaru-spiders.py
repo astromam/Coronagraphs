@@ -44,7 +44,7 @@ FirstDerGlobalLim = 100.
 BinarityReg       = 0.1
 
 #nPup = corono0.params['nPup']
-nPup = 200
+nPup = 1200
 nFPM = 50
 Fmax2d = 45#22.5
 nImg2d = 90#45
@@ -56,6 +56,10 @@ offset = 1.278            # spider intersection offset (meters)
 beta = 51.75              # spider angle beta
 
 Fratio    = 64
+
+kpdiam = pdiam/7.92
+kodiam = odiam/2.3
+kthick = thick/0.25
 
 # Focal plane mask 
 mas2rad   = np.pi/(180.*3600*1000) # Conversion factor from mas to rads
@@ -143,8 +147,8 @@ wv_t   = wv0*lam_t
 rMask     = rMask_m/(wv0*Fratio)  # mask size in lam0/D
 rMask_mas = rMask * (wv0/pdiam)/mas2rad
 
-rMask1min = np.round(rMask_m/((wv0_H+width_H/2)*Fratio), decimals=2)
-rMask1max = np.round(rMask_m/((wv0_z-width_z/2)*Fratio), decimals=2)
+rMask1min = 2.72#np.round(rMask_m/((wv0_H+width_H/2)*Fratio), decimals=2)
+rMask1max = 2.72#np.round(rMask_m/((wv0_z-width_z/2)*Fratio), decimals=2)
 
 nMask1 = int(np.round((rMask1max-rMask1min)*100))+1
 
@@ -166,8 +170,8 @@ else:
     raise ValueError('Unknown user {0}'.format(user))
 
 if pupil_name == 'sbr':
-    fname_pup = f'pupil=sbr_nPup={nPup}_odiam={int(odiam*100)}_thick={int(thick*100):03d}.fits'
-    fname_lys = f'pupil=sbr_nPup={nPup}_odiam={int(odiam*100)}_thick={int(thick*100):03d}.fits'
+    fname_pup = f'pupilsbr_nPup{nPup}_kpdiam{int(np.round(kpdiam*100)):03d}_kodiam{int(np.round(kodiam*100)):03d}_kthick{int(np.round(kthick*100)):03d}.fits' 
+    fname_lys = f'pupilsbr_nPup{nPup}_kpdiam{int(np.round(kpdiam*100)):03d}_kodiam{int(np.round(kodiam*100)):03d}_kthick{int(np.round(kthick*100)):03d}.fits' 
 else:
     raise NameError(f'{pupil_name}: unknown pupil name')
 
