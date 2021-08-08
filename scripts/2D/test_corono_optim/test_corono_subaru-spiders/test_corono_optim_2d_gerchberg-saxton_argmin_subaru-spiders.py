@@ -116,6 +116,7 @@ nlam = 5
 #nlam1 = 101
 
 do_fits = True
+do_plot = True
 
 #%%
 """
@@ -238,6 +239,16 @@ params = coro.to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
                  MinIsland = MinIsland, FirstDerGlobalLim = FirstDerGlobalLim,
                  Binarity = Binarity, BinarityReg = BinarityReg,
                  ImPart = ImPart)
+
+#%%
+"""
+Working directories
+"""
+#fdir = Path('../../results/2D/dat_pyth').resolve() / pupil_name
+fdir_pdf = Path('../../results/2D/plots/').resolve()
+if not os.path.exists(fdir_pdf):
+    os.makedirs(fdir_pdf)
+
 
 #%%  
 """ 
@@ -411,7 +422,13 @@ ZZ_ylabel = [Z20_ylabel, Z21_ylabel, Z22_ylabel, Z23_ylabel]
 ZZ_text = [Z20_text, Z21_text, Z22_text, Z23_text]
 nZZ = len(ZZ_t)
 
+str_ZZ_t = ['thick_v_rMask', 'odiam_v_rMask', 'pdiam_v_rMask', 'pdiam_v_odiam']
+
 for iZZ, ZZ in enumerate(ZZ_t):
+
+    fname_image_plane_f_disp = 'corono_poly_bw_sensitivity_contour_nPup={0}_gbsx_'.format(nPup) + str_ZZ_t[iZZ] + '.pdf'
+    fpath_image_plane_f_disp = fdir_pdf / fname_image_plane_f_disp
+    
 
     f2 = pl.figure(60 + iZZ, figsize=(12,4.5))
     pl.clf()
@@ -475,8 +492,8 @@ for iZZ, ZZ in enumerate(ZZ_t):
     cbar_ax = f2.add_axes([0.86, 0.15, 0.05, 0.7])
     cbar    = f2.colorbar(im, cax=cbar_ax)
     cbar.ax.set_ylabel('1$\sigma$ intensity in log scale', rotation=270, labelpad = 16)
-    # if do_plot is True:
-    #     pl.savefig(str(fpath_image_plane_f_disp), transparent=True)
+    if do_plot is True:
+        pl.savefig(str(fpath_image_plane_f_disp), transparent=True)
     pl.tight_layout()
 pl.show()
 
