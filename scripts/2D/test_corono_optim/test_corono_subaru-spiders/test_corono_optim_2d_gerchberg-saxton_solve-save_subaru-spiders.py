@@ -49,7 +49,7 @@ BinarityReg       = 0.1
 #nPup = corono0.params['nPup']
 nPup = 200
 nFPM = 50
-Fmax2d = 44#22.5
+Fmax2d = 8#22.5
 nImg2d = 4*Fmax2d#45
 
 # telescope parameters
@@ -85,7 +85,7 @@ rMask_m = 453e-6/2
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
 rho0 = 5.0
-rho1 = 20.0
+rho1 = 7.0
 
 # contrast in the dark region
 cDarkHole = 7.0
