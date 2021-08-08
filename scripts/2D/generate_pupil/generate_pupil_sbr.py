@@ -32,7 +32,7 @@ syst = sys.platform
 """
 ### Parameters
 """
-nPup= 1200
+nPup= 200
 do_fits = True
 
 pdiam, odiam = 7.92, 2.3  # tel. and obst. diameters (meters)
@@ -40,9 +40,9 @@ thick = 0.25              # adopted spider thickness (meters)
 offset = 1.278            # spider intersection offset (meters)
 beta = 51.75              # spider angle beta
 
-kpdiam_t =  np.linspace(0.98, 1.0, 3)#np.linspace(0.9, 1.0, 11) #
-kodiam_t =  np.linspace(1.0, 1.2, 5)#np.linspace(1.0, 2.0, 21) #
-kthick_t = np.linspace(1.0, 1.2, 3)#np.linspace(1.0, 2.0, 11) # 
+kpdiam_t = np.linspace(0.9, 1.0, 11) # np.linspace(0.98, 1.0, 3)#
+kodiam_t = np.linspace(1.0, 2.0, 21) # np.linspace(1.0, 1.2, 5)#
+kthick_t = np.linspace(1.0, 2.0, 11) # np.linspace(1.0, 1.2, 3)#
 
 pdiam2_t = np.asarray(kpdiam_t)*pdiam
 odiam2_t = np.asarray(kodiam_t)*odiam
@@ -90,7 +90,7 @@ for ipdiam, kpdiam in enumerate(kpdiam_t):
             thick2 = thick2_t[ithick]            
             
             pupil = xaosim.pupil.four_spider_mask(nPup, nPup, nPup/2, 
-                                                  pdiam=pdiam2, odiam=odiam2,
+                                                  pdiam=pdiam, odiam=odiam2,
                                                   beta=beta, thick=thick2, offset=offset,
                                                   spiders=kwd_spiders,between_pix=True)
 
