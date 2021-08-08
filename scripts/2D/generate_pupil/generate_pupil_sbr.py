@@ -19,7 +19,7 @@ from pathlib import Path
 from astropy.io import fits
 
 import xaosim
-
+import corono as coro
 import os
 import pwd
 import sys
@@ -40,9 +40,9 @@ thick = 0.25              # adopted spider thickness (meters)
 offset = 1.278            # spider intersection offset (meters)
 beta = 51.75              # spider angle beta
 
-kpdiam_t = np.linspace(0.98, 1.0, 3)#np.linspace(0.9, 1.0, 11)
-kodiam_t = np.linspace(1.0, 1.2, 5)#np.linspace(1.0, 2.0, 21)
-kthick_t = np.linspace(1.0, 1.2, 3)#np.linspace(1.0, 2.0, 11)
+kpdiam_t =  np.linspace(0.98, 1.0, 3)#np.linspace(0.9, 1.0, 11) #
+kodiam_t =  np.linspace(1.0, 1.2, 5)#np.linspace(1.0, 2.0, 21) #
+kthick_t = np.linspace(1.0, 1.2, 3)#np.linspace(1.0, 2.0, 11) # 
 
 pdiam2_t = np.asarray(kpdiam_t)*pdiam
 odiam2_t = np.asarray(kodiam_t)*odiam
@@ -93,7 +93,11 @@ for ipdiam, kpdiam in enumerate(kpdiam_t):
                                                   pdiam=pdiam2, odiam=odiam2,
                                                   beta=beta, thick=thick2, offset=offset,
                                                   spiders=kwd_spiders,between_pix=True)
-                        
+
+            if kpdiam != 1.0:
+                outer_pupil = coro.utils.uniform_disk(nPup, (nPup/2)*kpdiam, CtrBtwnPix=True)
+                pupil = pupil*outer_pupil           
+            
             fname = f'pupilsbr_nPup{nPup}_kpdiam{int(np.round(kpdiam*100)):03d}_kodiam{int(np.round(kodiam*100)):03d}_kthick{int(np.round(kthick*100)):03d}.fits' 
             fpath = fdir / fname
             
@@ -119,4 +123,10 @@ for ipdiam, kpdiam in enumerate(kpdiam_t):
 # pl.imshow(pupil_diff)
 
 # pl.show()
+
+# a = coro.utils.uniform_disk(nPup, (nPup/2)*kpdiam, CtrBtwnPix=True)
+
+# pl.figure(0)
+# pl.clf()
+# pl.imshow(a*pupil)
 
