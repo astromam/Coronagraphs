@@ -55,9 +55,9 @@ if True:
     offset = 1.278            # spider intersection offset (meters)
     beta = 51.75              # spider angle beta
     
-    pdiam2 = 7.92
-    odiam2 = 2.65#2.53#
-    thick2 = 0.25
+    pdiam2 = 0.92*7.92
+    odiam2 = 1.25*2.3#2.53#
+    thick2 = 1.0*0.25
     Fratio = 64
 
     kpdiam1 = pdiam/pdiam
@@ -185,7 +185,7 @@ wv_t   = wv0*lam_t
 rMask     = rMask_m/(wv0*Fratio)  # mask size in lam0/D
 rMask_mas = rMask * (wv0/pdiam)/mas2rad
 
-rMask1    = 2.72#rMask_m/(wv1*Fratio)  # mask size in lam1/D
+rMask1    = 2.64#rMask_m/(wv1*Fratio)  # mask size in lam1/D
 wv1 = rMask_m/(rMask1*Fratio)
 
 #%%
@@ -747,7 +747,10 @@ pl.tight_layout()
 pl.show()
 
 
-
+#%%
+pl.figure(0)
+pl.clf()
+pl.imshow(LyotStop2d-Pupil2d)
 
 #%%
 pl.show()

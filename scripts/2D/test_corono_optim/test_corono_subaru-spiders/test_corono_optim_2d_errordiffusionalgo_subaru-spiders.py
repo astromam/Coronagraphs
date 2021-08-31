@@ -185,7 +185,7 @@ wv_t   = wv0*lam_t
 rMask     = rMask_m/(wv0*Fratio)  # mask size in lam0/D
 rMask_mas = rMask * (wv0/pdiam)/mas2rad
 
-rMask1    = 2.72#rMask_m/(wv1*Fratio)  # mask size in lam1/D
+rMask1    = 2.64#rMask_m/(wv1*Fratio)  # mask size in lam1/D
 wv1 = rMask_m/(rMask1*Fratio)
 
 #%%

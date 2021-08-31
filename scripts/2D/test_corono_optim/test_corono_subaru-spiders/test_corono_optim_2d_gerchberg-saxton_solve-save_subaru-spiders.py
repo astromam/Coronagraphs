@@ -278,7 +278,7 @@ for ipdiam, kpdiam in enumerate(kpdiam_t):
                 Int_D0 = corono2.compute_direct_intensity_2d(Apod2d, poly=True)
                 Int_D  = corono2.compute_corono_intensity_2d(Apod2d, poly=True)
                 Int_D /= Int_D0.max()
-                EE_D_t[iIter, iMask1] = np.sum(area_D*Int_D**2)
+                EE_D_t[iIter, iMask1] = np.sum(area_D*Int_D)
     
 
 #%%

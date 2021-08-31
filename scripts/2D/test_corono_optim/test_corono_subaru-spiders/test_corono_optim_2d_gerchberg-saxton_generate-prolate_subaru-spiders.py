@@ -147,8 +147,8 @@ wv_t   = wv0*lam_t
 rMask     = rMask_m/(wv0*Fratio)  # mask size in lam0/D
 rMask_mas = rMask * (wv0/pdiam)/mas2rad
 
-rMask1min = 2.72#np.round(rMask_m/((wv0_H+width_H/2)*Fratio), decimals=2)
-rMask1max = 2.72#np.round(rMask_m/((wv0_z-width_z/2)*Fratio), decimals=2)
+rMask1min = 2.64#np.round(rMask_m/((wv0_H+width_H/2)*Fratio), decimals=2)
+rMask1max = 2.64#np.round(rMask_m/((wv0_z-width_z/2)*Fratio), decimals=2)
 
 nMask1 = int(np.round((rMask1max-rMask1min)*100))+1
 

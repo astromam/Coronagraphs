@@ -95,7 +95,7 @@ rMask_m = 453e-6/2
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
 rho0 = 5.0
-rho1 = 20.0
+rho1 = 7.0
 
 # contrast in the dark region
 cDarkHole = 7.0
@@ -174,8 +174,7 @@ rMask     = rMask_m/(wv0*Fratio)  # mask size in lam0/D
 rMask_mas = rMask * (wv0/pdiam)/mas2rad
 
 # lam1_t  = np.linspace(lam0-dlam/2*(nlam>1),lam0+dlam/2,nlam1)
-# wv1_t   = wv0*lam1_t
-# rMask1_t = rMask_m/(wv1_t*Fratio)
+
 
 rMask1min = np.round(rMask_m/((wv0_H+width_H/2)*Fratio), decimals=2)
 rMask1max = np.round(rMask_m/((wv0_z-width_z/2)*Fratio), decimals=2)
@@ -183,6 +182,8 @@ rMask1max = np.round(rMask_m/((wv0_z-width_z/2)*Fratio), decimals=2)
 nMask1 = int(np.round((rMask1max-rMask1min)*100))+1
 
 rMask1_t = np.linspace(rMask1min, rMask1max, nMask1)
+
+# wv1_t   = rMask_m/(rMask1_t*Fratio)
 
 #%%
 """
@@ -340,10 +341,10 @@ pl.imshow(LyotStop2d_opt)
 """ 
 EE_D2_t = np.reshape(EE_D_t, (npdiam, nodiam, nthick, nMask1))
 
-kpdiam0 = 1.0
-kodiam0 = 1.15
+kpdiam0 = 0.92
+kodiam0 = 1.25
 kthick0 = 1.0
-rMask10 = 2.72
+rMask10 = 2.64
 
 EE_D20_t = EE_D2_t[kpdiam_t == kpdiam0, kodiam_t == kodiam0, :, :].reshape(nthick, nMask1)
 EE_D21_t = EE_D2_t[kpdiam_t == kpdiam0, :, kthick_t == kthick0, :].reshape(nodiam, nMask1)
@@ -435,12 +436,12 @@ for iZZ, ZZ in enumerate(ZZ_t):
     ax0 = f2.add_subplot(111)
     im = ax0.imshow(np.log10(ZZ.T), 
                     cmap = "inferno", 
-                    vmin=-9.0, vmax=-4.0,
+                    vmin=-5.5, vmax=-2.5,
                     extent = extentZZ[iZZ],
                     origin = 'lower',
                     )
     
-    cs = ax0.contour(np.log10(ZZ.T), [-9., -8., -7., -6.], colors = 'k',
+    cs = ax0.contour(np.log10(ZZ.T), [-5.0, -4.0, -3.0], colors = 'k',
                 extent = extentZZ[iZZ], linestyles = '-')
     ax0.clabel(cs, inline=1, fontsize=ftsz, fmt = '%1.1f')
     
