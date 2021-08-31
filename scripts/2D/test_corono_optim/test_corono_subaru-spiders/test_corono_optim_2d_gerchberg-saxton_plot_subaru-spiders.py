@@ -23,6 +23,8 @@ from pyzelda.utils import imutils
 import pwd
 import sys
 
+from scipy.ndimage import rotate
+
 user = pwd.getpwuid(os.getuid())[0]
 syst = sys.platform
 
@@ -101,6 +103,7 @@ if True:
     
     do_fits = False
     do_plot = True
+    do_num_mask = True
 
 
 nlambis = 11    
@@ -364,16 +367,51 @@ poly_corono_image1_Y /= poly_direct_image1_Y_pk
 poly_corono_image1_J /= poly_direct_image1_J_pk
 poly_corono_image1_H /= poly_direct_image1_H_pk
 
-# azithally averaged intensity profiles
-poly_corono_prf_avg_z, rad_corono_z = imutils.profile(poly_corono_image1_z, type='mean')
-poly_corono_prf_avg_Y, rad_corono_Y = imutils.profile(poly_corono_image1_Y, type='mean')
-poly_corono_prf_avg_J, rad_corono_J = imutils.profile(poly_corono_image1_J, type='mean')
-poly_corono_prf_avg_H, rad_corono_H = imutils.profile(poly_corono_image1_H, type='mean')
 
-poly_corono_prf_std_z, rad_corono_z = imutils.profile(poly_corono_image1_z, type='std')
-poly_corono_prf_std_Y, rad_corono_Y = imutils.profile(poly_corono_image1_Y, type='std')
-poly_corono_prf_std_J, rad_corono_J = imutils.profile(poly_corono_image1_J, type='std')
-poly_corono_prf_std_H, rad_corono_H = imutils.profile(poly_corono_image1_H, type='std')
+#%%
+num_mask = np.ones((nImg2dbis, nImg2dbis))
+if do_num_mask:
+    val = 0
+    if nImg2dbis %2 == 0:
+        val = 1/2
+    
+    xx1, yy1  = np.meshgrid(np.arange(nImg2dbis)-nImg2dbis//2, np.arange(nImg2dbis)-nImg2dbis//2)
+    
+    beta2 = (beta+90)*np.pi/180
+    beta3 = (-beta+90)*np.pi/180
+    xx2 = -np.sin(beta2)*xx1 + np.cos(beta2)*yy1
+    xx3 = -np.sin(beta3)*xx1 + np.cos(beta3)*yy1
+    
+    thick_diff = 32#(pdiam/thick2)*nImg2dbis/Fmax2dbis
+    
+    num_circ = coro.utils.uniform_disk(nImg2dbis, rMask_J*nImg2dbis/Fmax2dbis)
+    
+    num_mask[(xx2 <= thick_diff)*(xx2 >= -thick_diff)] = 0
+    num_mask[(xx3 <= thick_diff)*(xx3 >= -thick_diff)] = 0
+    num_mask[num_circ == 1] = 0
+    
+    
+    pl.figure(70)
+    pl.clf()
+    pl.subplot(131)
+    pl.imshow(num_mask, cmap='inferno')
+    pl.subplot(132)
+    pl.imshow(np.log10(poly_corono_image1_H), cmap='inferno')
+    pl.subplot(133)
+    pl.imshow(num_mask*np.log10(poly_corono_image1_H), cmap='inferno')
+
+
+#%%
+# azithally averaged intensity profiles
+poly_corono_prf_avg_z, rad_corono_z = imutils.profile(poly_corono_image1_z, type='mean', mask=num_mask)
+poly_corono_prf_avg_Y, rad_corono_Y = imutils.profile(poly_corono_image1_Y, type='mean', mask=num_mask)
+poly_corono_prf_avg_J, rad_corono_J = imutils.profile(poly_corono_image1_J, type='mean', mask=num_mask)
+poly_corono_prf_avg_H, rad_corono_H = imutils.profile(poly_corono_image1_H, type='mean', mask=num_mask)
+
+poly_corono_prf_std_z, rad_corono_z = imutils.profile(poly_corono_image1_z, type='std', mask=num_mask)
+poly_corono_prf_std_Y, rad_corono_Y = imutils.profile(poly_corono_image1_Y, type='std', mask=num_mask)
+poly_corono_prf_std_J, rad_corono_J = imutils.profile(poly_corono_image1_J, type='std', mask=num_mask)
+poly_corono_prf_std_H, rad_corono_H = imutils.profile(poly_corono_image1_H, type='std', mask=num_mask)
 
 
 #%% image plot
@@ -484,6 +522,7 @@ for iband in range(nband):
     pl.axhline(10**(-cDarkHole), xmin=corono0.xi.min(), xmax=corono0.xi.max(), linewidth=1, color='k', linestyle='--')
     pl.xlabel(r'Angular separation in $\lambda_0$/D')
     pl.ylabel('Normalized intensity in log scale')
+    pl.xlim(-1, corono0.xi.max()+1)
     pl.ylim(1e-8, 1e-2)
     pl.legend()
     pl.tight_layout()
@@ -641,10 +680,10 @@ corono_mono_prf_std_t3 = np.zeros((nlam_ter, nImg2dbis//2))
 
 #%%
 for i in range(corono3.nlam):
-    direct_mono_prf_avg_t3[i], rad_direct = imutils.profile(direct_mono_img_t3[i], type='mean')
-    corono_mono_prf_avg_t3[i], rad_corono = imutils.profile(corono_mono_img_t3[i], type='mean')
-    direct_mono_prf_std_t3[i], rad_direct = imutils.profile(direct_mono_img_t3[i], type='std')
-    corono_mono_prf_std_t3[i], rad_corono = imutils.profile(corono_mono_img_t3[i], type='std')    
+    direct_mono_prf_avg_t3[i], rad_direct = imutils.profile(direct_mono_img_t3[i], type='mean', mask=num_mask)
+    corono_mono_prf_avg_t3[i], rad_corono = imutils.profile(corono_mono_img_t3[i], type='mean', mask=num_mask)
+    direct_mono_prf_std_t3[i], rad_direct = imutils.profile(direct_mono_img_t3[i], type='std', mask=num_mask)
+    corono_mono_prf_std_t3[i], rad_corono = imutils.profile(corono_mono_img_t3[i], type='std', mask=num_mask)    
 
 #%%
 # normalization term    
