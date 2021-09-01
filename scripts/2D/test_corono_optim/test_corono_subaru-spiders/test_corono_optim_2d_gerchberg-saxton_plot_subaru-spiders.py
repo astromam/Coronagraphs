@@ -596,6 +596,16 @@ else:
 corono_poly_img_f3 = corono3.compute_corono_intensity_2d(Apod_pyth)
 corono_mono_img_t3 = corono3.compute_corono_intensity_2d(Apod_pyth, poly=False)
 
+# normalization term    
+#direct_mono_img_t3_peak = direct_mono_img_t3[nlam_ter//2].max()
+
+for i in range(nlam_ter):
+    pk_tmp = direct_mono_img_t3[i].max()
+    direct_mono_img_t3[i] /= pk_tmp
+    corono_mono_img_t3[i] /= pk_tmp
+    
+    
+
 
 #%%
 val = 0
@@ -608,16 +618,21 @@ septer=6.0
 # array of angular distances in the final image plane
 xx,yy  = np.meshgrid(np.arange(nImg2dbis)-nImg2dbis//2+val, np.arange(nImg2dbis)-nImg2dbis//2+val)
 mydist = (Fmax2dbis/nImg2dbis)*np.hypot(yy,xx)        
-resbis = (mydist <= sepbis +0.5)*(mydist >= sepbis -0.5)
-rester = (mydist <= septer +0.5)*(mydist >= septer -0.5)
+resbis = (mydist <= sepbis +0.5)*(mydist >= sepbis -0.5)*(num_mask ==1)
+rester = (mydist <= septer +0.5)*(mydist >= septer -0.5)*(num_mask ==1)
 
 #%%
-corono_poly_avg_resbis_wv_t = []
-corono_poly_avg_rester_wv_t = []
+pl.figure(80)
+pl.clf()
+pl.imshow(corono_mono_img_t3[50])
+
+#%%
+corono_mono_avg_resbis_wv_t = []
+corono_mono_avg_rester_wv_t = []
 
 for i in range(nlam_ter):
-    corono_poly_avg_resbis_wv_t.append(np.mean(corono_mono_img_t3[i, resbis != 0])/direct_mono_img_t3[(nlam_ter-1)//2].max())
-    corono_poly_avg_rester_wv_t.append(np.mean(corono_mono_img_t3[i, rester != 0])/direct_mono_img_t3[(nlam_ter-1)//2].max())
+    corono_mono_avg_resbis_wv_t.append(np.mean(corono_mono_img_t3[i, resbis != 0]))#/direct_mono_img_t3_peak)
+    corono_mono_avg_rester_wv_t.append(np.mean(corono_mono_img_t3[i, rester != 0]))#/direct_mono_img_t3_peak)
     
 
 
@@ -634,9 +649,9 @@ wv_ind = (wv0*corono3.lam_t >= (wv0_z - width_z/2))*(wv0*corono3.lam_t <= (wv0_H
 
 pl.figure(51)
 pl.clf()
-l1, = pl.semilogy(corono3.lam_t[wv_ind]*wv0*1e6, np.asarray(corono_poly_avg_resbis_wv_t)[wv_ind],
+l1, = pl.semilogy(corono3.lam_t[wv_ind]*wv0*1e6, np.asarray(corono_mono_avg_resbis_wv_t)[wv_ind],
             color = colors_shifts[0], marker='x', ls ='-')
-l2, = pl.semilogy(corono3.lam_t[wv_ind]*wv0*1e6, np.asarray(corono_poly_avg_rester_wv_t)[wv_ind],
+l2, = pl.semilogy(corono3.lam_t[wv_ind]*wv0*1e6, np.asarray(corono_mono_avg_rester_wv_t)[wv_ind],
             color = colors_shifts[1], marker='x', ls ='-')
 
 #l5, = pl.semilogy([], [], color = "k", ls='-')
@@ -671,7 +686,6 @@ if do_plot is True:
 """
 Contour plot for spectral bandwidth robustness
 """ 
-    
 direct_mono_prf_avg_t3 = np.zeros((nlam_ter, nImg2dbis//2))
 corono_mono_prf_avg_t3 = np.zeros((nlam_ter, nImg2dbis//2))
 
@@ -686,8 +700,6 @@ for i in range(corono3.nlam):
     corono_mono_prf_std_t3[i], rad_corono = imutils.profile(corono_mono_img_t3[i], type='std', mask=num_mask)    
 
 #%%
-# normalization term    
-direct_mono_img_f3_peak = direct_mono_img_t3[nlam_ter//2].max()
 
 lam0D_corono = rad_corono*Fmax2dbis/nImg2dbis
 
@@ -720,7 +732,7 @@ lam0D2mas = (wv0/pdiam)*(180.*3600*1000/np.pi)
 
 tmp = corono_mono_prf_std_t3[wv_ind]
 
-Z0 = np.log10(tmp[:, lam0D_ind]/direct_mono_img_f3_peak)
+Z0 = np.log10(tmp[:, lam0D_ind])#/direct_mono_img_t3_peak)
 extent0 = [lam0D_min, lam0D_max, lam_min, lam_max]
 
 f2 = pl.figure(52, figsize=(12,4.5))
