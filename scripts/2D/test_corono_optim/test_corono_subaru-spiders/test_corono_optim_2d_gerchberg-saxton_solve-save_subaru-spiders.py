@@ -49,7 +49,7 @@ BinarityReg       = 0.1
 #nPup = corono0.params['nPup']
 nPup = 200
 nFPM = 50
-Fmax2d = 8#22.5
+Fmax2d = 16#22.5
 nImg2d = 4*Fmax2d#45
 
 # telescope parameters
@@ -106,13 +106,14 @@ nlam = 5
 #nlam1 = 101
 
 do_fits = True
+do_num_mask = False
 
 #%%
 """
 ### Spectral parameters
 """
 wv0_z   = 8925.96e-10
-width_z = 792.99e-10
+width_z = 200.0e-10
 bw_z  = width_z/wv0_z
 rMask_z = rMask_m/(wv0_z*Fratio) 
 
@@ -238,13 +239,57 @@ if corono_name == 'APLC':
 else:
     raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
     
+
 #%%
+"""
+### Computation of a numerical mask to compute contrast outside the spiders diffraction pattern
+"""
+num_mask = np.ones((nImg2d, nImg2d))
+str_num_mask = ''
+if do_num_mask:
+    val = 0
+    if nImg2d %2 == 0:
+        val = 1/2
+    
+    xx1, yy1  = np.meshgrid(np.arange(nImg2d)-nImg2d//2, np.arange(nImg2d)-nImg2d//2)
+    
+    beta2 = (beta+90)*np.pi/180
+    beta3 = (-beta+90)*np.pi/180
+    xx2 = -np.sin(beta2)*xx1 + np.cos(beta2)*yy1
+    xx3 = -np.sin(beta3)*xx1 + np.cos(beta3)*yy1
+    
+    thick_diff = 6.4#32#(pdiam/thick2)*nImg2d/Fmax2d
+    
+    num_circ = coro.utils.uniform_disk(nImg2d, rMask_J*nImg2d/Fmax2d)
+    
+    num_mask[(xx2 <= thick_diff)*(xx2 >= -thick_diff)] = 0
+    num_mask[(xx3 <= thick_diff)*(xx3 >= -thick_diff)] = 0
+    num_mask[num_circ == 1] = 0
+    
+    str_num_mask = '_nummask=1'
+    
+
+#%%
+"""
+### computation of a array of the area in the image plane in which contrast should be computed
+"""
+
 rr_D = coro.utils.radius_disk(nImg2d, nImg2d//2, CtrBtwnPix=True)
 rr_D *= Fmax2d
-ind_D = (rr_D <= rho1)*(rr_D >= rho0)
+ind_D = (rr_D <= rho1)*(rr_D >= rho0)*(num_mask == 1)
 
 area_D = np.zeros((nImg2d, nImg2d))
 area_D[ind_D] = 1.  
+
+pl.figure(70)
+pl.clf()
+pl.subplot(131)
+pl.imshow(num_mask, cmap='inferno')
+pl.subplot(132)
+pl.imshow(area_D, cmap='inferno')
+pl.subplot(133)
+pl.imshow(rr_D, cmap='inferno')
+
 
 #%%
 EE_D_t = np.zeros((nIter, nMask1))
@@ -285,7 +330,7 @@ for ipdiam, kpdiam in enumerate(kpdiam_t):
 """
 ### EE vs rMask
 """    
-fname_EE_D = f'pupilsbr_nPup{nPup}_EE_D_rho0{int(np.round(rho0*100)):03d}_rho1{int(np.round(rho1*100)):03d}.fits'
+fname_EE_D = f'pupilsbr_nPup{nPup}_EE_D_rho0{int(np.round(rho0*100)):03d}_rho1{int(np.round(rho1*100)):03d}' + str_num_mask + '.fits'
 fpath_EE_D = fdir / fname_EE_D
 
     
