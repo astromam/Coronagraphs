@@ -42,7 +42,7 @@ beta = 51.75              # spider angle beta
 
 kpdiam_t = [0.92]#np.linspace(0.9, 1.0, 11) # np.linspace(0.98, 1.0, 3)#
 kodiam_t = [1.25]#np.linspace(1.0, 2.0, 21) # np.linspace(1.0, 1.2, 5)#
-kthick_t = [1.0]#np.linspace(1.0, 2.0, 11) # np.linspace(1.0, 1.2, 3)#
+kthick_t = [1.5]#np.linspace(1.0, 2.0, 11) # np.linspace(1.0, 1.2, 3)#
 
 pdiam2_t = np.asarray(kpdiam_t)*pdiam
 odiam2_t = np.asarray(kodiam_t)*odiam
