@@ -20,10 +20,10 @@ from astropy.io import fits
 import corono as coro
 from pyzelda.utils import imutils
 
+from xaosim import zernike
+
 import pwd
 import sys
-
-from scipy.ndimage import rotate
 
 user = pwd.getpwuid(os.getuid())[0]
 syst = sys.platform
@@ -46,7 +46,7 @@ if True:
     FirstDerGlobalLim = 1.
     
     #nPup = corono0.params['nPup']
-    nPup = 1200
+    nPup = 200
     nFPM = 50
     Fmax2d = 50
     nImg2d = 500
@@ -59,7 +59,7 @@ if True:
     
     pdiam2 = 0.92*7.92
     odiam2 = 1.25*2.3#2.53#
-    thick2 = 1.0*0.25
+    thick2 = 1.5*0.25
     Fratio = 64
 
     kpdiam1 = pdiam/pdiam
@@ -99,7 +99,7 @@ if True:
     # bw   = 0.1
     nlam = 1
 
-    do_EDA  = True
+    do_EDA  = False
     
     do_fits = False
     do_plot = True
@@ -115,7 +115,7 @@ nImg2dbis = 500
 ### Spectral parameters
 """
 wv0_z   = 8925.96e-10
-width_z = 792.99e-10
+width_z = 200.0e-10
 bw_z  = width_z/wv0_z
 rMask_z = rMask_m/(wv0_z*Fratio) 
 
@@ -412,6 +412,48 @@ poly_corono_prf_std_z, rad_corono_z = imutils.profile(poly_corono_image1_z, type
 poly_corono_prf_std_Y, rad_corono_Y = imutils.profile(poly_corono_image1_Y, type='std', mask=num_mask)
 poly_corono_prf_std_J, rad_corono_J = imutils.profile(poly_corono_image1_J, type='std', mask=num_mask)
 poly_corono_prf_std_H, rad_corono_H = imutils.profile(poly_corono_image1_H, type='std', mask=num_mask)
+
+#%%
+"""
+### tests for coronagraph throughput curve
+"""
+
+# generation of tip tilt modes for companion
+# ztip   = zernike.mkzer1(2, nPup, nPup//2)
+# ztil   = zernike.mkzer1(3, nPup, nPup//2)
+
+# nSep = 101
+# Sep_t = np.linspace(0,25, nSep)
+# poly_direct_image1_Jbis_t = np.zeros((nSep, nImg2dbis, nImg2dbis))
+# poly_corono_image1_Jbis_t = np.zeros((nSep, nImg2dbis, nImg2dbis))
+
+# for i, sep_loD_p in enumerate(Sep_t):
+#     theta_rad_p = 0*(np.pi/180)
+#     opd_p0 = wv0_J*(sep_loD_p/4)*(np.sin(theta_rad_p)*ztip + np.cos(theta_rad_p)*ztil)
+#     opd_p0 *= corono0_J.Pupil2d
+    
+#     poly_direct_image1_Jbis_t[i] = corono0_J.compute_direct_intensity_2d_bis(Apod_pyth, OPDmap2d=opd_p0)
+#     poly_corono_image1_Jbis_t[i] = corono0_J.compute_corono_intensity_2d_bis(Apod_pyth, OPDmap2d=opd_p0)
+#     poly_direct_image1_Jbis_t[i] /= poly_direct_image1_J_pk
+#     poly_corono_image1_Jbis_t[i] /= poly_direct_image1_J_pk
+    
+
+
+#%%
+# iSep =5
+
+
+# pl.figure(80)
+# pl.clf()
+# pl.subplot(221)
+# pl.imshow(np.log10(poly_direct_image1_J), cmap='inferno', vmin=-8, vmax=-3)
+# pl.subplot(222)
+# pl.imshow(np.log10(poly_direct_image1_Jbis_t[iSep]), cmap='inferno', vmin=-8, vmax=-3)
+# pl.subplot(223)
+# pl.imshow(np.log10(poly_corono_image1_J), cmap='inferno', vmin=-8, vmax=-3)
+# pl.subplot(224)
+# pl.imshow(np.log10(poly_corono_image1_Jbis_t[iSep]), cmap='inferno', vmin=-8, vmax=-3)
+
 
 
 #%% image plot
@@ -802,6 +844,11 @@ pl.show()
 pl.figure(0)
 pl.clf()
 pl.imshow(LyotStop2d-Pupil2d)
+
+#%%
+
+
+
 
 #%%
 pl.show()
