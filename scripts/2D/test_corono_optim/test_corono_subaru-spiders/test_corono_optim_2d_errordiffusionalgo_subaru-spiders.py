@@ -112,7 +112,7 @@ nImg2dbis = 500
 ### Spectral parameters
 """
 wv0_z   = 8925.96e-10
-width_z = 792.99e-10
+width_z = 200.0e-10
 bw_z  = width_z/wv0_z
 rMask_z = rMask_m/(wv0_z*Fratio) 
 
