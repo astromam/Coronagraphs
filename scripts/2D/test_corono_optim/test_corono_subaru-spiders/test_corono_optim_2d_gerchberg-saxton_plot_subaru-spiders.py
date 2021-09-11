@@ -46,7 +46,7 @@ if True:
     FirstDerGlobalLim = 1.
     
     #nPup = corono0.params['nPup']
-    nPup = 200
+    nPup = 1200
     nFPM = 50
     Fmax2d = 50
     nImg2d = 500
@@ -57,9 +57,9 @@ if True:
     offset = 1.278            # spider intersection offset (meters)
     beta = 51.75              # spider angle beta
     
-    pdiam2 = 0.92*7.92
-    odiam2 = 1.25*2.3#2.53#
-    thick2 = 1.5*0.25
+    pdiam2 = 0.98*7.92
+    odiam2 = 1.10*2.3#2.53#
+    thick2 = 1.4*0.25
     Fratio = 64
 
     kpdiam1 = pdiam/pdiam
@@ -76,7 +76,9 @@ if True:
     rad2mas   = 1/mas2rad
     
     # mask radius in lam0/D units
-    rMask_m = 453e-6/2 
+    rMask_m = 453e-6/2
+    # correpsonding mask size for the optimal prolate 
+    rMask1    = 2.65#2.64#rMask_m/(wv1*Fratio)  # mask size in lam1/D
     
     # dark zone bounds (inner and outer edges) in lam0/D unit
     rho0 =  5.0
@@ -99,12 +101,18 @@ if True:
     # bw   = 0.1
     nlam = 1
 
-    do_EDA  = False
+    do_EDA  = True
     
     do_fits = False
     do_plot = True
     do_num_mask = True
-
+    do_apod_spiders = False
+    
+    thick_apod = 0.
+    str_apod_spiders = '_apodnospiders'
+    if do_apod_spiders:
+        thick_apod = thick*1
+        str_apod_spiders = ''
 
 nlambis = 11    
 Fmax2dbis = 50
@@ -188,7 +196,7 @@ wv_t   = wv0*lam_t
 rMask     = rMask_m/(wv0*Fratio)  # mask size in lam0/D
 rMask_mas = rMask * (wv0/pdiam)/mas2rad
 
-rMask1    = 2.64#rMask_m/(wv1*Fratio)  # mask size in lam1/D
+
 wv1 = rMask_m/(rMask1*Fratio)
 
 #%%
@@ -263,7 +271,7 @@ else:
 Read files
 """
 #fname_apod = f'pupilsbr_nPup{nPup}_pdiam{int(np.round(pdiam*100))}_odiam{int(np.round(odiam*100))}_thick{int(np.round(thick*100)):03d}_Apod_rMask{int(np.round(rMask1*100)):03d}.fits'
-fname_apod = f'pupilsbr_nPup{nPup}_pdiam{int(np.round(pdiam*100))}_odiam{int(np.round(odiam*100))}_thick{int(np.round(thick*100)):03d}_Apod_rMask{int(np.round(rMask1*100)):03d}' + str_EDA + '.fits'
+fname_apod = f'pupilsbr_nPup{nPup}_pdiam{int(np.round(pdiam*100))}_odiam{int(np.round(odiam*100))}_thick{int(np.round(thick_apod*100)):03d}_Apod_rMask{int(np.round(rMask1*100)):03d}' + str_EDA + '.fits'
 fpath_apod= fdir / fname_apod
 
 Apod_pyth = fits.getdata(fpath_apod,)
@@ -844,6 +852,7 @@ pl.show()
 pl.figure(0)
 pl.clf()
 pl.imshow(LyotStop2d-Pupil2d)
+pl.title(f'difference between LyotStop and Aperture')
 
 #%%
 

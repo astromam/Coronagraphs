@@ -116,7 +116,15 @@ nlam = 5
 #nlam1 = 101
 
 do_fits = True
+do_num_mask = True
 do_plot = True
+do_apod_spiders = True
+
+thick_apod = 0.
+str_apod_spiders = '_apodnospiders'
+if do_apod_spiders:
+    thick_apod = thick*1
+    str_apod_spiders = ''
 
 #%%
 """
@@ -174,7 +182,8 @@ rMask     = rMask_m/(wv0*Fratio)  # mask size in lam0/D
 rMask_mas = rMask * (wv0/pdiam)/mas2rad
 
 # lam1_t  = np.linspace(lam0-dlam/2*(nlam>1),lam0+dlam/2,nlam1)
-
+#wv1opt = rMask_m/(rMask*Fratio)
+#print(f'lam1={wv1opt}m - wv1opt={wv1opt/wv0_J:.3f}lam0')
 
 rMask1min = np.round(rMask_m/((wv0_H+width_H/2)*Fratio), decimals=2)
 rMask1max = np.round(rMask_m/((wv0_z-width_z/2)*Fratio), decimals=2)
@@ -259,11 +268,40 @@ if corono_name == 'APLC':
     corono0 = coro.design.APLC2d(**params)
 else:
     raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
+
+#%%
+"""
+### Computation of a numerical mask to compute contrast outside the spiders diffraction pattern
+"""
+num_mask = np.ones((nImg2d, nImg2d))
+str_num_mask = ''
+if do_num_mask:
+    val = 0
+    if nImg2d %2 == 0:
+        val = 1/2
+    
+    xx1, yy1  = np.meshgrid(np.arange(nImg2d)-nImg2d//2, np.arange(nImg2d)-nImg2d//2)
+    
+    beta2 = (beta+90)*np.pi/180
+    beta3 = (-beta+90)*np.pi/180
+    xx2 = -np.sin(beta2)*xx1 + np.cos(beta2)*yy1
+    xx3 = -np.sin(beta3)*xx1 + np.cos(beta3)*yy1
+    
+    thick_diff = 6.4#32#(pdiam/thick2)*nImg2d/Fmax2d
+    
+    num_circ = coro.utils.uniform_disk(nImg2d, rMask_J*nImg2d/Fmax2d)
+    
+    num_mask[(xx2 <= thick_diff)*(xx2 >= -thick_diff)] = 0
+    num_mask[(xx3 <= thick_diff)*(xx3 >= -thick_diff)] = 0
+    num_mask[num_circ == 1] = 0
+    
+    str_num_mask = '_nummask=1'
+
     
 #%%
 rr_D = coro.utils.radius_disk(nImg2d, nImg2d//2, CtrBtwnPix=True)
 rr_D *= Fmax2d
-ind_D = (rr_D <= rho1)*(rr_D >= rho0)
+ind_D = (rr_D <= rho1)*(rr_D >= rho0)*(num_mask == 1)
 
 area_D = np.zeros((nImg2d, nImg2d))
 area_D[ind_D] = 1.  
@@ -271,7 +309,7 @@ area_D[ind_D] = 1.
 #%%
 EE_D_t = np.zeros((nIter, nMask1))
 
-fname_EE_D = f'pupilsbr_nPup{nPup}_EE_D_rho0{int(np.round(rho0*100)):03d}_rho1{int(np.round(rho1*100)):03d}.fits'
+fname_EE_D = f'pupilsbr_nPup{nPup}_EE_D_rho0{int(np.round(rho0*100)):03d}_rho1{int(np.round(rho1*100)):03d}' + str_num_mask + str_apod_spiders +'.fits'
 fpath_EE_D = fdir / fname_EE_D
 
 EE_D_t = fits.getdata(fpath_EE_D)
@@ -298,7 +336,9 @@ print(f'pdiam: {kpdiam_t[ipdiam]}, odiam: {kodiam_t[iodiam]}, thick: {kthick_t[i
 #%%
 rMask1 = rMask1_t[iMask1]
 
+wv1 = rMask_m/(rMask1*Fratio)
 print(f'rMask1: {rMask1}')
+print(f'wv1 = {wv1}m = {wv1/wv0_J:.3f}wv0_J')
 
 pdiam2 = pdiam2_t[ipdiam]
 odiam2 = odiam2_t[iodiam]
@@ -313,7 +353,7 @@ print(f'thick2: {thick2}')
 """
 ### Read optimal apodizer file
 """
-fname_apo = f'pupilsbr_nPup{nPup}_pdiam{int(np.round(pdiam*100))}_odiam{int(np.round(odiam*100))}_thick{int(np.round(thick*100)):03d}_Apod_rMask{int(np.round(rMask1*100)):03d}.fits'
+fname_apo = f'pupilsbr_nPup{nPup}_pdiam{int(np.round(pdiam*100))}_odiam{int(np.round(odiam*100))}_thick{int(np.round(thick_apod*100)):03d}_Apod_rMask{int(np.round(rMask1*100)):03d}.fits'
 fpath_apo = fdir / fname_apo
 Apod2d = fits.getdata(fpath_apo)
 
@@ -341,10 +381,12 @@ pl.imshow(LyotStop2d_opt)
 """ 
 EE_D2_t = np.reshape(EE_D_t, (npdiam, nodiam, nthick, nMask1))
 
-kpdiam0 = 0.92
-kodiam0 = 1.25
-kthick0 = 1.0
-rMask10 = 2.64
+kpdiam0 = 0.92#0.92#0.91#0.92
+kodiam0 = 1.1#1.1#1.05#1.25
+kthick0 = 1.0#1.0#1.0
+rMask10 = 2.87#2.65#2.87#2.86#2.64
+
+
 
 EE_D20_t = EE_D2_t[kpdiam_t == kpdiam0, kodiam_t == kodiam0, :, :].reshape(nthick, nMask1)
 EE_D21_t = EE_D2_t[kpdiam_t == kpdiam0, :, kthick_t == kthick0, :].reshape(nodiam, nMask1)
@@ -427,7 +469,7 @@ str_ZZ_t = ['thick_v_rMask', 'odiam_v_rMask', 'pdiam_v_rMask', 'pdiam_v_odiam']
 
 for iZZ, ZZ in enumerate(ZZ_t):
 
-    fname_image_plane_f_disp = 'corono_poly_bw_sensitivity_contour_nPup={0}_gbsx_'.format(nPup) + str_ZZ_t[iZZ] + '.pdf'
+    fname_image_plane_f_disp = 'corono_poly_bw_sensitivity_contour_nPup={0}_gbsx_'.format(nPup) + str_ZZ_t[iZZ] + str_num_mask + str_apod_spiders + '.pdf'
     fpath_image_plane_f_disp = fdir_pdf / fname_image_plane_f_disp
     
 
@@ -436,12 +478,12 @@ for iZZ, ZZ in enumerate(ZZ_t):
     ax0 = f2.add_subplot(111)
     im = ax0.imshow(np.log10(ZZ.T), 
                     cmap = "inferno", 
-                    vmin=-5.5, vmax=-2.5,
+                    vmin=-7., vmax=-3.,
                     extent = extentZZ[iZZ],
                     origin = 'lower',
                     )
     
-    cs = ax0.contour(np.log10(ZZ.T), [-5.0, -4.0, -3.0], colors = 'k',
+    cs = ax0.contour(np.log10(ZZ.T), [-6.0, -5.0, -4.0], colors = 'k',
                 extent = extentZZ[iZZ], linestyles = '-')
     ax0.clabel(cs, inline=1, fontsize=ftsz, fmt = '%1.1f')
     

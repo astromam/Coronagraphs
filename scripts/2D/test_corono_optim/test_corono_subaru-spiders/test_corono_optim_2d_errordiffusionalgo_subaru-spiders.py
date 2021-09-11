@@ -53,22 +53,24 @@ if True:
 
     # telescope parameters
     pdiam, odiam = 7.92, 2.3  # tel. and obst. diameters (meters)
-    thick = 0.25              # adopted spider thickness (meters)
+    thick = 0.              # adopted spider thickness (meters)
     offset = 1.278            # spider intersection offset (meters)
     beta = 51.75              # spider angle beta
     
-    pdiam2 = 7.92
-    odiam2 = 2.65#2.53#
-    thick2 = 0.25
+    pdiam2 = 0.98*7.92
+    odiam2 = 1.1*2.3#2.53#
+    thick2 = 1.4*0.25
     Fratio = 64
 
-    kpdiam1 = pdiam/pdiam
-    kodiam1 = odiam/odiam
-    kthick1 = thick/thick
+    kpdiam1 = 1.0#pdiam/pdiam
+    kodiam1 = 1.0#odiam/odiam
+    kthick1 = 1.0#thick/thick
     
     kpdiam2 = pdiam2/pdiam
     kodiam2 = odiam2/odiam
-    kthick2 = thick2/thick
+    kthick2 = 1.0
+    if thick != 0.:
+        kthick2 = thick2/thick
     
 
     # Focal plane mask 
@@ -77,6 +79,8 @@ if True:
     
     # mask radius in lam0/D units
     rMask_m = 453e-6/2 
+    # correpsonding mask size for the optimal prolate 
+    rMask1  = 2.65#2.64#rMask_m/(wv1*Fratio)  # mask size in lam1/D
     
     # dark zone bounds (inner and outer edges) in lam0/D unit
     rho0 =  5.0
@@ -102,6 +106,14 @@ if True:
     
     do_fits = False
     do_plot = True
+    do_num_mask = True
+    do_apod_spiders = False
+
+    thick_apod = 0.
+    str_apod_spiders = '_apodnospiders'
+    if do_apod_spiders:
+        thick_apod = thick*1
+        str_apod_spiders = ''
 
 nlambis = 11    
 Fmax2dbis = 50
@@ -185,7 +197,7 @@ wv_t   = wv0*lam_t
 rMask     = rMask_m/(wv0*Fratio)  # mask size in lam0/D
 rMask_mas = rMask * (wv0/pdiam)/mas2rad
 
-rMask1    = 2.64#rMask_m/(wv1*Fratio)  # mask size in lam1/D
+#rMask1    = 2.64#rMask_m/(wv1*Fratio)  # mask size in lam1/D
 wv1 = rMask_m/(rMask1*Fratio)
 
 #%%
@@ -236,8 +248,8 @@ params = coro.to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
 Read files
 """
 #fname_apod = f'pupilsbr_nPup{nPup}_pdiam{int(np.round(pdiam*100))}_odiam{int(np.round(odiam*100))}_thick{int(np.round(thick*100)):03d}_Apod_rMask{int(np.round(rMask1*100)):03d}.fits'
-fname_apod = f'pupilsbr_nPup{nPup}_pdiam{int(np.round(pdiam*100))}_odiam{int(np.round(odiam*100))}_thick{int(np.round(thick*100)):03d}_Apod_rMask{int(np.round(rMask1*100)):03d}.fits'
-fname_apod_EDA = f'pupilsbr_nPup{nPup}_pdiam{int(np.round(pdiam*100))}_odiam{int(np.round(odiam*100))}_thick{int(np.round(thick*100)):03d}_Apod_rMask{int(np.round(rMask1*100)):03d}_EDA.fits'
+fname_apod = f'pupilsbr_nPup{nPup}_pdiam{int(np.round(pdiam*100))}_odiam{int(np.round(odiam*100))}_thick{int(np.round(thick_apod*100)):03d}_Apod_rMask{int(np.round(rMask1*100)):03d}.fits'
+fname_apod_EDA = f'pupilsbr_nPup{nPup}_pdiam{int(np.round(pdiam*100))}_odiam{int(np.round(odiam*100))}_thick{int(np.round(thick_apod*100)):03d}_Apod_rMask{int(np.round(rMask1*100)):03d}_EDA.fits'
 
 fpath_apod= fdir / fname_apod
 fpath_apod_EDA = fdir / fname_apod_EDA

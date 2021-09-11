@@ -51,7 +51,7 @@ nImg2d = 90#45
 
 # telescope parameters
 pdiam, odiam = 7.92, 2.3  # tel. and obst. diameters (meters)
-thick = 0.25              # adopted spider thickness (meters)
+thick = 0.              # adopted spider thickness (meters)
 offset = 1.278            # spider intersection offset (meters)
 beta = 51.75              # spider angle beta
 
@@ -85,7 +85,7 @@ Pupil2dSym  = True
 ImPart = False 
 
 #nlam
-band = 'GPI_Y'
+band = 'GPI_J'
 #bw   = 0.1
 nlam = 1
 
@@ -147,8 +147,8 @@ wv_t   = wv0*lam_t
 rMask     = rMask_m/(wv0*Fratio)  # mask size in lam0/D
 rMask_mas = rMask * (wv0/pdiam)/mas2rad
 
-rMask1min = 2.64#np.round(rMask_m/((wv0_H+width_H/2)*Fratio), decimals=2)
-rMask1max = 2.64#np.round(rMask_m/((wv0_z-width_z/2)*Fratio), decimals=2)
+rMask1min = 2.65#np.round(rMask_m/((wv0_H+width_H/2)*Fratio), decimals=2)
+rMask1max = 2.65#np.round(rMask_m/((wv0_z-width_z/2)*Fratio), decimals=2)
 
 nMask1 = int(np.round((rMask1max-rMask1min)*100))+1
 

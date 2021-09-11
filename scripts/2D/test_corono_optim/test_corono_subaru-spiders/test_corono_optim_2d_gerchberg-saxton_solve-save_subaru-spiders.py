@@ -107,6 +107,13 @@ nlam = 5
 
 do_fits = True
 do_num_mask = False
+do_apod_spiders = False
+
+thick_apod = 0.
+str_apod_spiders = '_apodnospiders'
+if do_apod_spiders:
+    thick_apod = thick*1
+    str_apod_spiders = ''
 
 #%%
 """
@@ -316,21 +323,23 @@ for ipdiam, kpdiam in enumerate(kpdiam_t):
                 raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
             
             for iMask1, rMask1 in enumerate(rMask1_t):
-                fname_apo = f'pupilsbr_nPup{nPup}_pdiam{int(np.round(pdiam*100))}_odiam{int(np.round(odiam*100))}_thick{int(np.round(thick*100)):03d}_Apod_rMask{int(np.round(rMask1*100)):03d}.fits'
+                
+                fname_apo = f'pupilsbr_nPup{nPup}_pdiam{int(np.round(pdiam*100))}_odiam{int(np.round(odiam*100))}_thick{int(np.round(thick_apod*100)):03d}_Apod_rMask{int(np.round(rMask1*100)):03d}.fits'
                 fpath_apo = fdir / fname_apo
                 Apod2d = fits.getdata(fpath_apo)
                 
                 Int_D0 = corono2.compute_direct_intensity_2d(Apod2d, poly=True)
                 Int_D  = corono2.compute_corono_intensity_2d(Apod2d, poly=True)
                 Int_D /= Int_D0.max()
-                EE_D_t[iIter, iMask1] = np.sum(area_D*Int_D)
+                #EE_D_t[iIter, iMask1] = np.sum(area_D*Int_D)
+                EE_D_t[iIter, iMask1] = np.mean(Int_D[ind_D])
     
 
 #%%
 """
 ### EE vs rMask
 """    
-fname_EE_D = f'pupilsbr_nPup{nPup}_EE_D_rho0{int(np.round(rho0*100)):03d}_rho1{int(np.round(rho1*100)):03d}' + str_num_mask + '.fits'
+fname_EE_D = f'pupilsbr_nPup{nPup}_EE_D_rho0{int(np.round(rho0*100)):03d}_rho1{int(np.round(rho1*100)):03d}' + str_num_mask + str_apod_spiders +'.fits'
 fpath_EE_D = fdir / fname_EE_D
 
     
