@@ -448,47 +448,5 @@ if __name__ == '__main__':
     fits.writeto(fpath_direct_poly_prf_std_f, direct_poly_prf_std_f, overwrite=True)
     fits.writeto(fpath_corono_poly_prf_std_f, corono_poly_prf_std_f, overwrite=True)
         
-    print(fpath_corono_poly_prf_std_f)
-    print('ok')
-
-# import matplotlib.pyplot as plt
-# import matplotlib.colors as colors
-
-# data_psf = fits.getdata('/Users/avigan/data/ZELDA/2018-04-03_night/analysis/2018-04-03_night_aplc_test2_psf_zel_image.fits')
-# data_p_avg = fits.getdata('/Users/avigan/data/ZELDA/2018-04-03_night/analysis/2018-04-03_night_aplc_test2_coro_zel_profile_mean.fits')
-# data_p_avg = data_p_avg.mean(axis=0) / data_psf.max()
-
-# data_p_std = fits.getdata('/Users/avigan/data/ZELDA/2018-04-03_night/analysis/2018-04-03_night_aplc_test2_coro_zel_profile_std.fits')
-# data_p_std = data_p_std.mean(axis=0) / data_psf.max()
-
-# data_sep = np.arange(data_p_avg.size)*12.25
-
-# plt.figure(0, figsize=(21, 7))
-# plt.clf()
-
-# plt.subplot(131)
-# plt.imshow(direct_poly_img_f, norm=colors.LogNorm(), vmin=1e-6, vmax=1)
-
-# plt.subplot(132)
-# plt.imshow(corono_poly_img_f, norm=colors.LogNorm(), vmin=1e-6, vmax=1e-2)
-
-# plt.subplot(133)
-# sep = np.arange(corono_poly_prf_avg_f.size)*12.25
-# plt.plot(sep, direct_poly_prf_avg_f, label='simu psf', color='C0')
-# plt.plot(sep, corono_poly_prf_avg_f, label='simu coro avg', color='C1')
-# plt.plot(sep, corono_poly_prf_std_f, label='simu coro std', color='C2')
-# plt.plot(data_sep, data_p_avg, label='data coro avg', color='C1', linestyle='--')
-# plt.plot(data_sep, data_p_std, label='data coro std', color='C2', linestyle='--')
-# plt.xlabel('Separation [mas]')
-# plt.xlim(0, 2000)
-# plt.ylabel('Contrast')
-# plt.ylim(1e-6, 1)
-# plt.yscale('log')
-
-# plt.tight_layout()
-
-# plt.legend(loc='upper right')
-
-# plt.show()
-
-# plt.savefig(fdir_results / 'results.pdf')
+    print(fname_corono_poly_prf_std_f)
+    print('Done!')
