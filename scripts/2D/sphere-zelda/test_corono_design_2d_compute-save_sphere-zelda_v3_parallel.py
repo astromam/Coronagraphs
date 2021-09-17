@@ -135,8 +135,8 @@ if __name__ == '__main__':
     kw_skyobs    = False     # related to ZELDA map
     kw_aftercorr = bool(eval(sys.argv[2]))
     kw_saxo      = False
-    saxomap_i    = 0               # saxo first screen
-    saxomap_f    = int(30*1380)    # saxo last screen
+    imap_saxo_i  = 0               # saxo first screen
+    imap_saxo_f  = int(30*1380)    # saxo last screen
 
     # added low-order static aberrations
     defoc_ampl = -40
@@ -147,10 +147,10 @@ if __name__ == '__main__':
     seeing = 0.7
     
     # multi-processing
-    nproc = multiprocessing.cpu_count()//2 - 1
+    nproc = multiprocessing.cpu_count() // 2 - 1
     
     # make sure we have a number of phase screens multiple of the number of CPUs
-    nsaxomap  = saxomap_f - saxomap_i + 1
+    nsaxomap  = imap_saxo_f - imap_saxo_i + 1
     nsaxomap  = nsaxomap - (nsaxomap % nproc)
 
     #%%
@@ -165,9 +165,9 @@ if __name__ == '__main__':
         nmap      = 1
 
         if kw_skyobs is True:
-            str_obs   = 'sky'
+            str_obs = 'sky'
         else:
-            str_obs   = 'internal'
+            str_obs = 'internal'
     else:
         str_aberr = 'with_aberr'
         
@@ -184,16 +184,16 @@ if __name__ == '__main__':
             beta_wfs = 1 / 0.80
             
         if kw_aftercorr is True:
-            str_corr = 'after_correction'
-            imap0    = 3
+            str_corr   = 'after_correction'
+            imap_zelda = 3
         else:
             str_corr = 'before_correction'
-            imap0    = 0
+            imap_zelda = 0
             
         if kw_saxo is True:
             str_saxo = 'with_saxo'
-            nmap     = nsaxomap*1
-            beta_wfs = 1/0.64*1/0.8   # ??
+            nmap     = nsaxomap
+            beta_wfs = 1 / 0.64 * 1 / 0.8   # ??
         else:
             str_saxo = ''
             nmap     = 1
@@ -286,7 +286,7 @@ if __name__ == '__main__':
             SAXOmapnm3d_tmp = fits.getdata(fpath_SAXOmapnm3d)
 
             # select only phase screens that will be actually used
-            SAXOmapnm3d_tmp = SAXOmapnm3d_tmp[saxomap_i:saxomap_f]
+            SAXOmapnm3d_tmp = SAXOmapnm3d_tmp[imap_saxo_i:imap_saxo_f]
 
             # rescale NCPA map
             print('Rescaling SPARTA phase screens')
@@ -367,7 +367,7 @@ if __name__ == '__main__':
     #%%
     # definition of the coronagraph class
     if kw_aberr is True:
-        OPDmap2d0 = (beta_wfs*ZELDAmapnm3d[imap0]+Apod2d_OPDmapnm + defoc_ampl*Defo_mapnm2d +
+        OPDmap2d0 = (beta_wfs*ZELDAmapnm3d[imap_zelda]+Apod2d_OPDmapnm + defoc_ampl*Defo_mapnm2d +
                     tip_ampl*Tip_mapnm2d + tilt_ampl*Tilt_mapnm2d)*1e-9
 
     t0 = time.time()
