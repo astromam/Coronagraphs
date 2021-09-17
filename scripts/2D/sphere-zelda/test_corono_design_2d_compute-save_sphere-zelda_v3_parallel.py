@@ -34,7 +34,7 @@ def array_to_numpy(shared_array, shape):
     if shared_array is None:
         return None
 
-    numpy_array = np.frombuffer(shared_array, dtype=np.float)
+    numpy_array = np.frombuffer(shared_array, dtype=np.float64)
     if shape is not None:
         numpy_array.shape = shape
 
@@ -90,7 +90,6 @@ def compute_corono_image(img_index, saxo_i, saxo_f):
 
 
 if __name__ == '__main__':
-    #%% APLC2d tests
     """
     ### Parameters
     """
@@ -99,25 +98,25 @@ if __name__ == '__main__':
     corono_name = 'APLC'
 
     # Spectral bandwidth (m)
-    wv        = 1.593e-6
-    width     = 52e-9
+    wv    = 1.593e-6
+    width = 52e-9
 
     # simulation configuration
-    kw_aberr     = True                      # include aberrations
-    kw_2nddate   = bool(eval(sys.argv[1]))   # first/second date
-    kw_skyobs    = False                     # internal/on-sky ZELDA map
-    kw_aftercorr = bool(eval(sys.argv[2]))   # generate data before/after NCPA compensation
-    kw_saxo      = False                     # use reconstructed SAXO phase screens
-    imap_saxo_i  = 0                         # SAXO first screen
-    imap_saxo_f  = int(30*1380)              # SAXO last screen
+    kw_aberr     = True                    # include aberrations
+    kw_2nddate   = False                   # first/second date
+    kw_skyobs    = False                    # internal/on-sky ZELDA map
+    kw_aftercorr = True                    # generate data before/after NCPA compensation
+    kw_saxo      = False                   # use reconstructed SAXO phase screens
+    imap_saxo_i  = 0                       # SAXO first screen
+    imap_saxo_f  = int(2*1380)             # SAXO last screen
 
     # added low-order static aberrations (nm rms)
     defoc_ampl = -40
     tip_ampl   = 0
     tilt_ampl  = 0 
     
-    # seeing for on-sky observations (as)
-    seeing = 0.7
+    # seeing of on-sky observations (as)
+    seeing = 0.8
 
     #%% more or less fixed parameters
 
@@ -130,7 +129,7 @@ if __name__ == '__main__':
     dAper     = 8
     Fratio    = 40
 
-    # Focal plane mask 
+    # Focal-plane mask 
     mas2rad   = np.pi/(180.*3600)    # Conversion factor from mas to rads
     rMask_m   = 287e-6/2.            # mask size in m
     rMask     = rMask_m/(wv*Fratio)  # mask size in lam0/D
@@ -155,8 +154,8 @@ if __name__ == '__main__':
     nproc = multiprocessing.cpu_count() // 2 - 1
     
     # make sure we have a number of phase screens multiple of the number of CPUs
-    nsaxomap  = imap_saxo_f - imap_saxo_i + 1
-    nsaxomap  = nsaxomap - (nsaxomap % nproc)
+    nsaxomap = imap_saxo_f - imap_saxo_i + 1
+    nsaxomap = nsaxomap - (nsaxomap % nproc)
 
     #%%
     """
@@ -207,8 +206,8 @@ if __name__ == '__main__':
     # fdir = Path('~/GitHub/Coronagraphs/').expanduser()
     fdir = Path('~/Work/GitHub/Coronagraphs/').expanduser()
     # fdir = Path('/Users/mndiaye/Dropbox/python/Coronagraphs/')
-    fdir_pupils  = fdir / 'data' / '2D' / 'pupils' / 'SPHERE' 
-    fdir_zelda   = fdir / 'data' / '2D' / 'ZELDA' / str_date / str_obs  
+    fdir_pupils  = fdir / 'data' / '2D' / 'pupils' / 'SPHERE'
+    fdir_zelda   = fdir / 'data' / '2D' / 'ZELDA' / str_date / str_obs
     fdir_saxo    = fdir / 'data' / '2D' / 'ZELDA' / str_date
 
     if kw_aberr is True:
@@ -224,7 +223,6 @@ if __name__ == '__main__':
     ### Filenames for the sources
     """
     fname_Apod2d     = 'SPHERE_APO1_field_transmission_map.fits'
-    # fname_Apod2d     = 'vlt_APLC_obs=0.14_lsid=0.28_lsod=1.00_IWA=2.0_OWA=20.0_BW=0.20_nlam=05_1D_N=0384_nFPM=50.000000_rMask=2.252MaxContrastL1_tau=0.756_stdgrb.fits'
     fname_Apod2d_OPDmapnm = 'apo_substrate_D1.fits'
     fname_Ampmap2d   = 'sphere_pupil_clear_BH_field.fits'
     fname_LyotStop2d = 'sphere_stop_ST_ALC2.fits'
@@ -243,7 +241,7 @@ if __name__ == '__main__':
                 fname_ZELDAmapnm3d = '2018-04-03_ncpa_loop_700modes_ncpa_loop_opd.fits'
 
         if kw_saxo is True:
-            fname_SAXOmapnm3d = f'2018-04-04T00:41:34-saxo_residual_turbulence_time=30.0sec_seeing={seeing:.1f}as_tiptilt=1_gains=0_fitting=1_alias=1.fits'
+            fname_SAXOmapnm3d = f'2018-04-04T00:41:34-saxo_residual_turbulence_time=02.0sec_seeing={seeing:.1f}as_tiptilt=1_gains=0_fitting=1_alias=1.fits'
     
     #%% Filepaths for the file sources
     fpath_Apod2d          = fdir_pupils / fname_Apod2d
@@ -306,7 +304,7 @@ if __name__ == '__main__':
     #%% Lyot Stop
     LyotStop2d = fits.getdata(fpath_LyotStop2d)
 
-    #%%
+    #%% static low-order aberrations
     Defo_mapnm2d = zernike.zernike1(4, npix=nPup, outside=0.)
     Tip_mapnm2d  = zernike.zernike1(2, npix=nPup, outside=0.)
     Tilt_mapnm2d = zernike.zernike1(3, npix=nPup, outside=0.)
@@ -315,6 +313,7 @@ if __name__ == '__main__':
     """
     ### Image generation
     """
+    
     #%% array initialization
     # define the averaged image
     direct_poly_img_f = np.zeros((nImg2d, nImg2d))
@@ -372,8 +371,8 @@ if __name__ == '__main__':
     #%%
     # definition of the coronagraph class
     if kw_aberr is True:
-        OPDmap2d0 = (beta_wfs*ZELDAmapnm3d[imap_zelda]+Apod2d_OPDmapnm + defoc_ampl*Defo_mapnm2d +
-                    tip_ampl*Tip_mapnm2d + tilt_ampl*Tilt_mapnm2d)*1e-9
+        OPDmap2d0 = (beta_wfs*ZELDAmapnm3d[imap_zelda] + Apod2d_OPDmapnm + defoc_ampl*Defo_mapnm2d +
+                     tip_ampl*Tip_mapnm2d + tilt_ampl*Tilt_mapnm2d)*1e-9
 
     t0 = time.time()
     if kw_aberr is True:
