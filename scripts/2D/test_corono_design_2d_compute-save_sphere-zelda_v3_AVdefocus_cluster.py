@@ -113,7 +113,7 @@ if __name__ == '__main__':
     rMask_m   = 287e-6/2.            # mask size in m
     rMask     = rMask_m/(wv*Fratio)  # mask size in lam0/D
     rMask_mas = 1000.*rMask * (wv/dAper)/mas2rad
-    print('Mask radius: {0:.2f} mas at {1:.3f}um'.format(rMask_mas, wv*1e6))
+    print(f'Mask radius: {rMask_mas:.2f} mas at {wv*1e6:.3f}um')
 
     # sampling
     pixel  = 12.25  # IRDIS pixel sampling [mas/pix]
@@ -234,7 +234,7 @@ if __name__ == '__main__':
                 fname_ZELDAmapnm3d = '2018-04-03_ncpa_loop_700modes_ncpa_loop_opd.fits'
 
         if kw_saxo is True:
-            fname_SAXOmapnm3d = '2018-04-04T00:41:34-saxo_residual_turbulence_time=30.0sec_seeing={:.1f}as_tiptilt=1_gains=0_fitting=1_alias=1.fits'.format(seeing)
+            fname_SAXOmapnm3d = f'2018-04-04T00:41:34-saxo_residual_turbulence_time=30.0sec_seeing={seeing:.1f}as_tiptilt=1_gains=0_fitting=1_alias=1.fits'
     
     #%% Filepaths for the file sources
     fpath_Apod2d          = fdir_pupils / fname_Apod2d
@@ -290,7 +290,7 @@ if __name__ == '__main__':
             for i in range(nmap):
                 SAXOmapnm3d[i] = imutils.scale(SAXOmapnm3d_tmp[i], 0, new_dim=(nPup, nPup), method='interp')
                 if (i+1) % 1000 == 0:
-                    print('{0:05}/{1:05}: SAXO map before scaling: {2:.2f} nm RMS, after: {3:.2f} nm RMS'.format(i+1, nmap, np.std(SAXOmapnm3d_tmp[i, pupil_tmp != 0]), np.std(np.asarray(SAXOmapnm3d)[i, pupil != 0])))
+                    print(f'{i+1:05}/{nmap:05}: SAXO map before scaling: {np.std(SAXOmapnm3d_tmp[i, pupil_tmp != 0]):.2f} nm RMS, after: {np.std(np.asarray(SAXOmapnm3d)[i, pupil != 0]):.2f} nm RMS')
 
             del SAXOmapnm3d_tmp
             
@@ -346,17 +346,17 @@ if __name__ == '__main__':
 
 
     for i, defoc_ampl in enumerate(defoc_ampl_arr):
-        print('defo={0}nm rms'.format(defoc_ampl))    
-        fname_direct_poly_img_f     = 'direct_poly_img_nmap={:05d}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_f.fits'.format(nmap, defoc_ampl, tip_ampl, tilt_ampl)
-        fname_corono_poly_img_f     = 'corono_poly_img_nmap={:05d}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_f.fits'.format(nmap, defoc_ampl, tip_ampl, tilt_ampl)
+        print(f'defo={defoc_ampl}nm rms')
+        fname_direct_poly_img_f     = f'direct_poly_img_nmap={nmap:05d}_defo={defoc_ampl:.1f}_tip={tip_ampl:.1f}_tilt={tilt_ampl:.1f}_f.fits'
+        fname_corono_poly_img_f     = f'corono_poly_img_nmap={nmap:05d}_defo={defoc_ampl:.1f}_tip={tip_ampl:.1f}_tilt={tilt_ampl:.1f}_f.fits'
         fpath_direct_poly_img_f     = fdir_results / fname_direct_poly_img_f
         fpath_corono_poly_img_f     = fdir_results / fname_corono_poly_img_f
 
         #%%
-        fname_direct_poly_prf_avg_f = 'direct_poly_prf_nmap={:05d}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_avg_f.fits'.format(nmap, defoc_ampl, tip_ampl, tilt_ampl)
-        fname_corono_poly_prf_avg_f = 'corono_poly_prf_nmap={:05d}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_avg_f.fits'.format(nmap, defoc_ampl, tip_ampl, tilt_ampl)
-        fname_direct_poly_prf_std_f = 'direct_poly_prf_nmap={:05d}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_std_f.fits'.format(nmap, defoc_ampl, tip_ampl, tilt_ampl)
-        fname_corono_poly_prf_std_f = 'corono_poly_prf_nmap={:05d}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_std_f.fits'.format(nmap, defoc_ampl, tip_ampl, tilt_ampl)
+        fname_direct_poly_prf_avg_f = f'direct_poly_prf_nmap={nmap:05d}_defo={defoc_ampl:.1f}_tip={tip_ampl:.1f}_tilt={tilt_ampl:.1f}_avg_f.fits'
+        fname_corono_poly_prf_avg_f = f'corono_poly_prf_nmap={nmap:05d}_defo={defoc_ampl:.1f}_tip={tip_ampl:.1f}_tilt={tilt_ampl:.1f}_avg_f.fits'
+        fname_direct_poly_prf_std_f = f'direct_poly_prf_nmap={nmap:05d}_defo={defoc_ampl:.1f}_tip={tip_ampl:.1f}_tilt={tilt_ampl:.1f}_std_f.fits'
+        fname_corono_poly_prf_std_f = f'corono_poly_prf_nmap={nmap:05d}_defo={defoc_ampl:.1f}_tip={tip_ampl:.1f}_tilt={tilt_ampl:.1f}_std_f.fits'
         fpath_direct_poly_prf_avg_f = fdir_results / fname_direct_poly_prf_avg_f
         fpath_corono_poly_prf_avg_f = fdir_results / fname_corono_poly_prf_avg_f
         fpath_direct_poly_prf_std_f = fdir_results / fname_direct_poly_prf_std_f
