@@ -11,11 +11,14 @@ License: MIT license
 
 import numpy as np
 import pylab as pl
+ftsz = 16 
+pl.rcParams.update({'font.size': ftsz})
+from matplotlib.patches import Circle
+
 from pathlib import Path
-from pyzelda.utils import aperture, imutils, zernike
+from pyzelda.utils import imutils
 
 import os
-from matplotlib import cm
 from astropy.io import fits
 import corono as coro
 
@@ -31,17 +34,17 @@ if True:
     corono_name  = 'APLC' # 'SP' or 'APLC'
     pupil_name   = 'vlt' # 'vlt' or 'sbr' or 'lvr'
     problem_name = 'MaxContrastL1' # 'MaxContrastL1' #'MaxTau' # , 'MaxContrastLinf' # #  
-    solver       = 'gurobipy' # 'stdgrb' #  'gurobipy', 'scipy.linprog'
+    solver       = 'stdgrb' # 'stdgrb' #  'gurobipy', 'scipy.linprog'
     
     MinIsland   = False
     Binarity    = False
     FirstDerGlobalLim = 1.
     BinarityReg       = 0.1
-    LSRobustness = True
+    LSRobustness = False
     
     #nPup = corono0.params['nPup']
-    nPup = 200
-    nFPM = 20
+    nPup = 384
+    nFPM = 50
     Fmax2d = 22.5
     nImg2d = 45
     
@@ -50,7 +53,7 @@ if True:
     
     # dark zone bounds (inner and outer edges) in lam0/D unit
     rho0 =  2.0
-    rho1 = 10.0
+    rho1 = 20.0
     
     # contrast in the dark region
     cDarkHole = 6.0
@@ -70,12 +73,18 @@ if True:
    
     do_fits = True
 
-nlambis = 11    
-Fmax2dbis = 60
-nImg2dbis = 600
-
 do_plot = True    
 wv = 1.593e-6
+
+nImg2dbis = 256
+Fmax2dbis = nImg2dbis/(2*(wv/950e-9))
+nlambis   = 11
+
+Dtel = 8
+lam0D2mas = (wv/Dtel)*(180.*3600*1000/np.pi)
+
+lam02um = wv*1e6 
+
 
 #%%
 """
@@ -121,38 +130,38 @@ Working directories
 """
 fdir = Path('../../results/2D/dat_pyth').resolve() / pupil_name
 
-fdir_pdf = Path('../../results/2D/plots/').resolve()
-if not os.path.exists(fdir_pdf):
-    os.makedirs(fdir_pdf)
+fdir_plots = Path('../../results/2D/plots/').resolve()
+if not os.path.exists(fdir_plots):
+    os.makedirs(fdir_plots)
 
 #%%
 fname_direct_poly_img_f     = 'direct_poly_img_f.fits'
 fname_corono_poly_img_f     = 'corono_poly_img_f.fits'
-fpath_direct_poly_img_f     = fdir_pdf / fname_direct_poly_img_f
-fpath_corono_poly_img_f     = fdir_pdf / fname_corono_poly_img_f
+fpath_direct_poly_img_f     = fdir_plots / fname_direct_poly_img_f
+fpath_corono_poly_img_f     = fdir_plots / fname_corono_poly_img_f
 
 fname_direct_poly_prf_avg_f = 'direct_poly_prf_avg_f.fits'
 fname_corono_poly_prf_avg_f = 'corono_poly_prf_avg_f.fits'
 fname_direct_poly_prf_std_f = 'direct_poly_prf_std_f.fits'
 fname_corono_poly_prf_std_f = 'corono_poly_prf_std_f.fits'
-fpath_direct_poly_prf_avg_f = fdir_pdf / fname_direct_poly_prf_avg_f
-fpath_corono_poly_prf_avg_f = fdir_pdf / fname_corono_poly_prf_avg_f
-fpath_direct_poly_prf_std_f = fdir_pdf / fname_direct_poly_prf_std_f
-fpath_corono_poly_prf_std_f = fdir_pdf / fname_corono_poly_prf_std_f
+fpath_direct_poly_prf_avg_f = fdir_plots / fname_direct_poly_prf_avg_f
+fpath_corono_poly_prf_avg_f = fdir_plots / fname_corono_poly_prf_avg_f
+fpath_direct_poly_prf_std_f = fdir_plots / fname_direct_poly_prf_std_f
+fpath_corono_poly_prf_std_f = fdir_plots / fname_corono_poly_prf_std_f
 
 fname_direct_mono_img_t     = 'direct_mono_img_t.fits'
 fname_corono_mono_img_t     = 'corono_mono_img_t.fits'
-fpath_direct_mono_img_t     = fdir_pdf / fname_direct_mono_img_t
-fpath_corono_mono_img_t     = fdir_pdf / fname_corono_mono_img_t
+fpath_direct_mono_img_t     = fdir_plots / fname_direct_mono_img_t
+fpath_corono_mono_img_t     = fdir_plots / fname_corono_mono_img_t
 
 fname_direct_mono_prf_avg_t = 'direct_mono_prf_avg_t.fits'
 fname_corono_mono_prf_avg_t = 'corono_mono_prf_avg_t.fits'
 fname_direct_mono_prf_std_t = 'direct_mono_prf_std_t.fits'
 fname_corono_mono_prf_std_t = 'corono_mono_prf_std_t.fits'
-fpath_direct_mono_prf_avg_t = fdir_pdf / fname_direct_mono_prf_avg_t
-fpath_corono_mono_prf_avg_t = fdir_pdf / fname_corono_mono_prf_avg_t
-fpath_direct_mono_prf_std_t = fdir_pdf / fname_direct_mono_prf_std_t
-fpath_corono_mono_prf_std_t = fdir_pdf / fname_corono_mono_prf_std_t
+fpath_direct_mono_prf_avg_t = fdir_plots / fname_direct_mono_prf_avg_t
+fpath_corono_mono_prf_avg_t = fdir_plots / fname_corono_mono_prf_avg_t
+fpath_direct_mono_prf_std_t = fdir_plots / fname_direct_mono_prf_std_t
+fpath_corono_mono_prf_std_t = fdir_plots / fname_corono_mono_prf_std_t
 
 
 #%%  
@@ -201,8 +210,9 @@ pl.clf()
 pl.imshow(corono0.Pupil2d, cmap = 'inferno')
 pl.title('Pupil transmission')
 
-fname = fname_gen + '_apodisation_ampl_nPup={0}.pdf'.format(nPup)
-fpath = fdir_pdf / fname
+#fname = fname_gen + '_apodisation_ampl_nPup={0}.pdf'.format(nPup)
+fname = 'vlt_newAPLC_apod_nPup={0:04d}.pdf'.format(nPup)
+fpath = fdir_plots / fname
 
 #pl.figure(5)
 #pl.clf()
@@ -210,10 +220,10 @@ fpath = fdir_pdf / fname
 #pl.title('Apod 1 transmission - MaxTau problem - '+ solver)
 #pl.savefig(str(fpath))
 
-pl.figure(2)
+pl.figure(2, figsize=(5,5))
 pl.clf()
 pl.imshow(Apod_pyth*corono0.Pupil2d, cmap = 'inferno')
-pl.title('Apodized entrance pupil')
+pl.title('Apodization')
 pl.tight_layout()
 if do_plot is True:
     pl.savefig(str(fpath), transparent=True)
@@ -285,17 +295,42 @@ if nImg2dbis%2 == 0:
 
 
 #%%
+"""
+Display of the coronagraphic image
+"""
+fname_image_plane_f_disp = 'corono_poly_img_f_nPup={0:04d}_disp.pdf'.format(nPup)
+fpath_image_plane_f_disp = fdir_plots / fname_image_plane_f_disp
 
-fname_image_plane_f_disp = 'corono_poly_img_f_nPup={0}_disp.pdf'.format(nPup)
-fpath_image_plane_f_disp = fdir_pdf / fname_image_plane_f_disp
+lw0 = 2.5
 
-f2 = pl.figure(23, figsize=(8,4.5))
+# parameters for the circle definition
+cx0 = nImg2dbis/2
+cy0 = nImg2dbis/2
+crm = rMask*nImg2dbis/Fmax2dbis
+cr0 = rho0*nImg2dbis/Fmax2dbis
+cr1 = rho1*nImg2dbis/Fmax2dbis
+# definition of a circle for the pupil
+circle_mask = Circle((cx0, cy0), crm, color='red', fill = False, ls = '--',
+                     linewidth = lw0)
+circle_rho0 = Circle((cx0, cy0), cr0, color='blue', fill = False, ls = '--',
+                     linewidth = lw0)
+circle_rho1 = Circle((cx0, cy0), cr1, color='blue', fill = False, ls = '--',
+                     linewidth = lw0)
+# in the plot
+
+
+
+
+f2 = pl.figure(23, figsize=(7,5))
 pl.clf()
-exec('ax{0} = f2.add_subplot(1,{1},{0})'.format(1,1))
-exec('im = ax{0}.imshow(np.log10(corono_poly_img_f/direct_poly_img_f.max()), cmap = "inferno", vmin=-7.5, vmax=-3.5)'.format(1))
+ax0 = f2.add_subplot(111)
+im = ax0.imshow(np.log10(corono_poly_img_f/direct_poly_img_f.max()), cmap = "inferno", vmin=-7.5, vmax=-3.5)
 #exec('ax{0}.text(nImg2d/2, 0.1*nImg2d, "nmap={1:05d}", fontsize=16, horizontalalignment="center", color = "white")'.format(1,1))
-exec('ax{0}.tick_params(axis="x", which="both", bottom="off", top="off", labelbottom="off")'.format(1,))
-exec('ax{0}.tick_params(axis="y", which="both", left="off", right="off", labelleft="off")'.format(1,))
+ax0.tick_params(axis="x", which="both", bottom="off", top="off", labelbottom="off")
+ax0.tick_params(axis="y", which="both", left="off", right="off", labelleft="off")
+ax0.add_artist(circle_mask)
+ax0.add_artist(circle_rho0)
+ax0.add_artist(circle_rho1)
 
 f2.subplots_adjust(bottom=0.1, top=0.9, left=0.1, right=0.8,
                     wspace=0.02, hspace=0.02)
@@ -303,16 +338,94 @@ f2.subplots_adjust(bottom=0.1, top=0.9, left=0.1, right=0.8,
 f2.subplots_adjust(right=0.8)
 cbar_ax = f2.add_axes([0.85, 0.15, 0.05, 0.7])
 cbar    = f2.colorbar(im, cax=cbar_ax)
-cbar.ax.set_ylabel('intensity in log scale', rotation=270, labelpad = 10)
+cbar.ax.set_ylabel('Intensity in log scale', rotation=270, labelpad = 16)
 if do_plot is True:
     pl.savefig(str(fpath_image_plane_f_disp), transparent=True)
 pl.tight_layout()
 pl.show()
 
+#%%
+"""
+Display of the apodization and coronagraphic image
+"""
+fname_image_plane_f_disp = 'corono_poly_img_f_nPup={0:04d}_disp_all.pdf'.format(nPup)
+fpath_image_plane_f_disp = fdir_plots / fname_image_plane_f_disp
+
+lw0 = 2.5
+
+lam00D_corono = (Fmax2dbis/nImg2dbis)*np.linspace(-nImg2dbis/2-0.5, nImg2dbis/2-0.5, nImg2dbis)
+
+# bounds for the separations
+lam00D_min = lam00D_corono.min()
+lam00D_max = lam00D_corono.max()
+
+# parameters for the circle definition
+cx0 = 0#nImg2dbis/2
+cy0 = 0#nImg2dbis/2
+crm = rMask#*nImg2dbis/Fmax2dbis
+cr0 = rho0#*nImg2dbis/Fmax2dbis
+cr1 = rho1#*nImg2dbis/Fmax2dbis
+# definition of a circle for the pupil
+circle_mask = Circle((cx0, cy0), crm, color='red', fill = False, ls = '--',
+                     linewidth = lw0)
+circle_rho0 = Circle((cx0, cy0), cr0, color='blue', fill = False, ls = '--',
+                     linewidth = lw0)
+circle_rho1 = Circle((cx0, cy0), cr1, color='blue', fill = False, ls = '--',
+                     linewidth = lw0)
+# in the plot
+extent_pup = [-0.5, 0.5, -0.5, 0.5]
+extent_img = [lam00D_min, lam00D_max, lam00D_min, lam00D_max]
+
+
+f2 = pl.figure(24, figsize=(8,4.5))
+pl.clf()
+ax0 = f2.add_subplot(121)
+ax0.imshow(Apod_pyth*corono0.Pupil2d, cmap = 'inferno',
+           extent = extent_pup,
+           origin = 'lower')
+ax0.set_title('Apodization')
+ax0.set_xlabel(r'Pupil radius r in D')
+#ax0.tick_params(axis="x", which="both", bottom="off", top="off", labelbottom="off")
+#ax0.tick_params(axis="y", which="both", left="off", right="off", labelleft="off")
+
+
+ax1 = f2.add_subplot(122)
+im = ax1.imshow(np.log10(corono_poly_img_f/direct_poly_img_f.max()), 
+                cmap = "inferno", 
+                vmin=-7.5, vmax=-3.5,
+                extent = extent_img,
+                origin = 'lower')
+#exec('ax{0}.text(nImg2d/2, 0.1*nImg2d, "nmap={1:05d}", fontsize=16, horizontalalignment="center", color = "white")'.format(1,1))
+#ax1.tick_params(axis="x", which="both", bottom="off", top="off", labelbottom="off")
+#ax1.tick_params(axis="y", which="both", left="off", right="on", labelleft="off", labelright="on")
+ax1.set_title('Coronagraphic image')
+ax1.set_xlim(lam00D_min, lam00D_max)
+ax1.set_ylim(lam00D_min, lam00D_max)
+ax1.add_artist(circle_mask)
+ax1.add_artist(circle_rho0)
+ax1.add_artist(circle_rho1)
+ax1.set_xlabel(r'Angular separation in $\lambda_0$/D')
+
+#ax1.autoscale(False)
+
+f2.subplots_adjust(bottom=0.1, top=0.9, left=0.08, right=0.85,
+                    wspace=0.2, hspace=0.02)
+
+#f2.subplots_adjust(right=0.8)
+cbar_ax = f2.add_axes([0.87, 0.15, 0.05, 0.7])
+cbar    = f2.colorbar(im, cax=cbar_ax)
+cbar.ax.set_ylabel('Intensity in log scale', rotation=270, labelpad = 16)
+if do_plot is True:
+    pl.savefig(str(fpath_image_plane_f_disp), transparent=True)
+pl.tight_layout()
+pl.show()
+
+
+
 #%% plot displays at multiple wavelengths
 
 fname_image_plane_mono_plot = 'corono_poly_prf_std_t_mono_nPup={0}_plot.pdf'.format(nPup)
-fpath_image_plane_mono_plot = fdir_pdf / fname_image_plane_mono_plot
+fpath_image_plane_mono_plot = fdir_plots / fname_image_plane_mono_plot
 
 
 values = range(nlambis)
@@ -350,7 +463,7 @@ pl.show()
 #%% Intensity profiles of the direct and coronagraphic images
 
 fname_image_plane_plot = 'corono_poly_prf_std_t_nPup={0}_plot.pdf'.format(nPup)
-fpath_image_plane_plot = fdir_pdf / fname_image_plane_plot
+fpath_image_plane_plot = fdir_plots / fname_image_plane_plot
 
 rad_corono = np.arange(nImg2dbis//2)
 colors_cor = pl.cm.rainbow(np.linspace(0,1,1))
@@ -384,8 +497,8 @@ Robustness to spectral bandwidth
 
 #%%
    
-nlam_ter = 51
-bw_ter   = 1.0
+nlam_ter = 101
+bw_ter   = 0.92
    
 fname_gen  = problem1.get_filename(nlam=nlambis)
 params3    = coro.update_params(params, Fmax2d = Fmax2dbis, nImg2d = nImg2dbis, 
@@ -434,8 +547,8 @@ for i in range(nlam_ter):
 colors_shifts = pl.cm.rainbow(np.linspace(0,1,2))
 ls_shifts = ["-", "--"]
 
-fname_bw_plot = 'corono_poly_bw_sensitivity_plot.pdf'
-fpath_bw_plot = fdir_pdf / fname_bw_plot
+fname_bw_plot = 'corono_poly_bw_sensitivity_plot_nPup={0}_disp.pdf'.format(nPup)
+fpath_bw_plot = fdir_plots / fname_bw_plot
 
 plot_lines = []
 
@@ -469,4 +582,120 @@ pl.legend([l1,l2], [r'{0:.1f} $\lambda_0/D$'.format(sepbis), r'{0:.1f} $\lambda_
 pl.tight_layout()
 if do_plot is True:
     pl.savefig(str(fpath_bw_plot), transparent=True)
+
+#%%
+"""
+Contour plot for spectral bandwidth robustness
+""" 
+    
+direct_mono_prf_avg_t3 = np.zeros((nlam_ter, nImg2dbis//2))
+corono_mono_prf_avg_t3 = np.zeros((nlam_ter, nImg2dbis//2))
+
+direct_mono_prf_std_t3 = np.zeros((nlam_ter, nImg2dbis//2))
+corono_mono_prf_std_t3 = np.zeros((nlam_ter, nImg2dbis//2))
+
+#%%
+for i in range(corono3.nlam):
+    direct_mono_prf_avg_t3[i], rad_direct = imutils.profile(direct_mono_img_t3[i], type='mean')
+    corono_mono_prf_avg_t3[i], rad_corono = imutils.profile(corono_mono_img_t3[i], type='mean')
+    direct_mono_prf_std_t3[i], rad_direct = imutils.profile(direct_mono_img_t3[i], type='std')
+    corono_mono_prf_std_t3[i], rad_corono = imutils.profile(corono_mono_img_t3[i], type='std')    
+
+#%%
+# normalization term    
+direct_mono_img_f3_peak = direct_mono_img_t3[nlam_ter//2].max()
+
+lam0D_corono = rad_corono*Fmax2dbis/nImg2dbis
+
+wv_ind = wv*corono3.lam_t >= 0.95e-6
+lam0D_ind = lam0D_corono >= 1.0
+
+# bounds for the separations
+lam0D_min = lam0D_corono[lam0D_ind].min()
+lam0D_max = lam0D_corono[lam0D_ind].max()
+
+# bounds for the wavelengths
+lam_min0 = corono3.lam_t.min()
+lam_min = corono3.lam_t[wv_ind].min()
+lam_max = corono3.lam_t[wv_ind].max()
+
+# bounds for the optimization wavelength 
+lam0 = 1.
+lam_opt_min = lam0 - 0.5*bw#corono0.lam_t.min()
+lam_opt_max = lam0 + 0.5*bw#corono0.lam_t.max()
+
+#%%
+fname_image_plane_f_disp = 'corono_poly_bw_sensitivity_contour_nPup={0}_disp.pdf'.format(nPup)
+fpath_image_plane_f_disp = fdir_plots / fname_image_plane_f_disp
+
+# line width parameter
+lw0 = 2.5
+
+tmp = corono_mono_prf_std_t3[wv_ind]
+
+Z0 = np.log10(tmp[:, lam0D_ind]/direct_mono_img_f3_peak)
+extent0 = [lam0D_min, lam0D_max, lam_min, lam_max]
+
+f2 = pl.figure(32, figsize=(8,4.5))
+pl.clf()
+ax0 = f2.add_subplot(111)
+im = ax0.imshow(Z0, 
+                cmap = "inferno", 
+                vmin=-7.5, vmax=-3.5,
+                extent = extent0,
+                origin = 'lower',
+                )
+
+cs = ax0.contour(Z0, [-7., -6., -5.], colors = 'white',
+            extent = extent0,linestyles = '-')
+ax0.clabel(cs, inline=1, fontsize=ftsz, fmt = '%1.1f')
+
+ax0.set_xlabel(r'Angular separation in $\lambda_0$/D')
+ax0.set_ylabel(r'Wavelength $\lambda$ in $\lambda_0$')
+ax0.set_aspect('auto')
+#ax0.set_title(r'New APLC design')
+ax0.text(10**(np.log10(lam0D_max)/2), 1.4, "New APLC design", fontsize=ftsz, 
+         horizontalalignment="center", color = "white")
+#exec('ax{0}.tick_params(axis="x", which="both", bottom="off", top="off", labelbottom="off")'.format(1,))
+#exec('ax{0}.tick_params(axis="y", which="both", left="off", right="off", labelleft="off")'.format(1,))
+
+ax0.axvline(x=rMask, ymin=-12, ymax =2, linewidth=lw0, color='r', linestyle='--')
+ax0.axvline(x=rho0, ymin=-12, ymax =2, linewidth=lw0, color='b', linestyle='--')
+ax0.axvline(x=rho1, ymin=-12, ymax =2, linewidth=lw0, color='b', linestyle='--')
+
+ax0.axhline(y=1.0, xmin=0., xmax =lam0D_max, 
+            linewidth=lw0, color='g', linestyle=':')
+ax0.axhline(y=lam_opt_min, xmin=0., xmax =lam0D_max, 
+            linewidth=lw0, color='k', linestyle=':')
+ax0.axhline(y=lam_opt_max, xmin=0., xmax =lam0D_max, 
+            linewidth=lw0, color='k', linestyle=':')
+
+ax0.autoscale(False)
+ax0.set_xscale("log")
+
+ax2 = ax0.twinx()
+ax2.set_ylim(lam_min*lam02um, lam_max*lam02um)
+ax2.set_ylabel(r'$\lambda$ in $\mu$m ($\lambda_0={0}\mu$m)'.format(wv*1e6), 
+               rotation=270, labelpad = ftsz)
+#
+ax3 = ax0.twiny()
+ax3.set_xlim(lam0D_min*lam0D2mas, lam0D_max*lam0D2mas)
+##ax3.set_yticks()
+ax3.set_xlabel(r'Angular separation in mas')
+ax3.set_xscale("log")
+
+
+
+f2.subplots_adjust(bottom=0.13, top=0.87, left=0.1, right=0.75,
+                    wspace=0.02, hspace=0.02)
+#
+#f2.subplots_adjust(right=0.8)
+cbar_ax = f2.add_axes([0.86, 0.15, 0.05, 0.7])
+cbar    = f2.colorbar(im, cax=cbar_ax)
+cbar.ax.set_ylabel('1$\sigma$ intensity in log scale', rotation=270, labelpad = 16)
+if do_plot is True:
+    pl.savefig(str(fpath_image_plane_f_disp), transparent=True)
+pl.tight_layout()
+pl.show()
+
 

@@ -16,7 +16,7 @@ from .utils import to_dict, write_apod1d, load_apod1d, update_params
 
 __version__ = '0.1.0b'
 
-lst_submodule = ['design', 'optim_1d', 'optim_2d', 'default']
+lst_submodule = ['design', 'optim_1d', 'optim_2d', 'default','optim_func']
 lst_utils = ['reload', 'sft', 'isft', 'sft_even', 'uniform_disk', 'radius_disk',
              'to_dict', 'write_apod1d', 'load_apod1d',
              'update_params']

@@ -203,7 +203,7 @@ params = coro.to_dict(nPup=nPup, nImg2d=nImg2d, Fmax2d = Fmax2d, nFPM = nFPM,
                  OPDmap2d = None, Ampmap2d = None)
 corono00 = coro.design.APLC2d(**params)
 
-#%%
+"#%%
 label_lst  = ['all errors', 'phase errors only', 'ampl. errors only', 'no errors', 'no errors - th']
 
 ncase = len(label_lst)

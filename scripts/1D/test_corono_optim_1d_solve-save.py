@@ -20,8 +20,8 @@ import corono as coro
 Parameters
 """
 corono_name  = 'APLC' # 'APLC' or 'SP'
-problem_name = 'MaxTau' # ,'MaxTau' # 'MaxContrastLinf' #'MaxContrastL1'
-solver       = 'stdgrb' # 'stdgrb', 'gurobipy', 'scipy.linprog'
+problem_name = 'MaxContrastL2' # ,'MaxTau' # 'MaxContrastLinf' #'MaxContrastL1' #'MaxContrastL2', #MaxSNR
+solver       = 'gurobipy' # 'stdgrb', 'gurobipy', 'scipy.linprog' #Not for MaxContrastL2 problem
 slvLogToConsole = 0
 slvCrossover    = 0
 slvMethod       = 2
@@ -30,11 +30,11 @@ allLogToConsole = 0
 FirstDer    = False
 SecondDer   = False
 MinIsland   = False
-FirstDerLim = 0.01
-SecondDerLim= 0.001 
+FirstDerLim = 0.001/2
+SecondDerLim= 0.0001/2 
 FirstDerGlobalLim = 10.
 
-nPup = 500
+nPup = 1000
 nFPM = 50
 nImg = 44
 Fmax = 11
@@ -43,8 +43,8 @@ R    = 1
 bw   = 0.1
 nlam = 5
 
-PupilID    = 0.20
-rMask       = 4.4
+PupilID    = 0.15
+rMask       = 4
 
 rMask1      = 2.0
 rMask2      = 3.0
@@ -52,7 +52,7 @@ rMask3      = 3.5
 OPDx2       = 0.5
 OPDx3       = 0.75
 
-LyotStopID = 0.40
+LyotStopID = 0.30
 LyotStopOD = 1.0
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
@@ -125,6 +125,13 @@ elif problem_name == 'MaxContrastL1':
 elif problem_name == 'MaxContrastLinf':
     # Maximization of the contrast under L-infinite norm
     problem1 = coro.optim_1d.MaxContrast(corono=corono0, Lnorm='Linf',**params)
+elif problem_name == 'MaxContrastL2':
+    # Maximization of the contrast under L2 norm
+    problem1 = coro.optim_1d.MaxContrast(corono=corono0, Lnorm='L2',**params)
+    
+elif problem_name == 'MaxSNR':
+    # Maximization of the contrast under L2 norm
+    problem1 = coro.optim_1d.MaxSNR(corono=corono0,nmax=100000,gradmin=1e-9, initialisation='L2' ,**params)
 else:
      raise NameError('{0}: Not an existing optimization problem!'.format(problem_name))
     
@@ -135,7 +142,7 @@ Problem solving
 t0 = time.time()
 Apod_pyth = problem1.solve_model()
 t1 = time.time()
-print('optimization time              : {0:.2f}s'.format(t1-t0))
+print('optimization time              : {0:.2f}s\n'.format(t1-t0))
 
 #%% Apodizer solution for the problems
 """

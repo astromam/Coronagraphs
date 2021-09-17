@@ -28,11 +28,11 @@ Parameters
 corono_name  = 'APLC' # 'SP' or 'APLC'
 pupil_name   = 'vlt' # 'vlt' or 'sbr' or 'lvr'
 problem_name = 'MaxContrastL1' # 'MaxTau' # ,'MaxContrastLinf' # 'MaxContrastL1' #
-solver       = 'stdgrb' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
+solver       = 'gurobipy' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
 slvLogToConsole = 1
 slvCrossover    = 0
 slvMethod       = 2
-slvSparse       = 1
+slvSparse       = 0
 allLogToConsole = 1
 
 MinIsland   = False
@@ -44,10 +44,28 @@ BinarityReg       = 0.1
 nPup = 50
 nFPM = 50
 Fmax2d = 22.5
-nImg2d = 45
+nImg2d = np.int(Fmax2d*2)
 
 # mask radius in lam0/D units
-rMask = 2.252
+wv_min = 1.92e-6
+wv_max = 2.35e-6
+asym_ratio = 0.5
+
+wv = wv_min*(1 - asym_ratio) + wv_max*asym_ratio
+
+#wv        = 2.072e-6#1.593e-6#2.35e-6#2.0e-6#1.593e-6#1.593e-6
+dAper     = 8
+mas2rad   = np.pi/(180.*3600)
+rMask_m   = 372e-6/2.#287e-6/2.
+Fratio    = 40
+
+rMask  = rMask_m/(wv*Fratio)
+print('Mask radius: {0:.3f} lambda_0/D at {1:.3f}um'.format(rMask, wv*1e6))
+rMask_mas = 1000.*rMask * (wv/dAper)/mas2rad
+print('Mask radius: {0:.2f} mas at {1:.3f}um'.format(rMask_mas, wv*1e6))
+
+
+#rMask = 3.053/2#1.8#2.252
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
 rho0 =  2.0
@@ -65,10 +83,19 @@ CtrBtwnPix2 = True
 Pupil2dSym  = False
 
 #nlam
-bw   = 0.2
-nlam = 5
+bw   = 2*(wv_max-wv_min)/(wv_max+wv_min)
+nlam = 3
 
 do_fits = True
+
+lam_0 = 1
+lam_t = np.linspace(wv_min/wv,wv_max/wv,nlam)
+if nlam == 1:
+    lam_t = np.asarray([lam_0])
+
+print('bw={0:.2f}'.format(bw))
+print(lam_t)
+
 
 #%%
 """
@@ -109,7 +136,8 @@ params = coro.to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
                  slvSparse = slvSparse,
                  allLogToConsole = allLogToConsole,
                  MinIsland = MinIsland, FirstDerGlobalLim = FirstDerGlobalLim,
-                 Binarity = Binarity, BinarityReg = BinarityReg)
+                 Binarity = Binarity, BinarityReg = BinarityReg,
+                 lam_t = lam_t)
 
 #%%  
 """ 

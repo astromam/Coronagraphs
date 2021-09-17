@@ -1,0 +1,156 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Aug  1 15:09:33 2019
+
+@author: mndiaye
+"""
+
+#%%
+"""
+### Initilaization
+"""
+import numpy as np
+import pylab as pl
+import csv
+from pathlib import Path
+from astropy.io import fits
+#import vigan.ao as ao
+#from pyzelda.utils import aperture
+#import time
+import os
+
+#%%
+"""
+### Parameters
+"""
+### Dimensions for csv data file
+nParams = 5
+nPSD    = 120
+kPSD    = 1
+
+### Pupil dimension
+nPup = 384
+
+### OPD number
+nmap = 1000
+
+### Pupil name
+pupil_name = 'vlt'
+
+#%%
+"""
+### File reading paths
+"""
+fdir_psd_csv  = Path('../../../data/2D/turbulence/').resolve()
+fname_psd_csv = 'Obs-Sequence-Parameters.csv'
+fpath_psd_csv = fdir_psd_csv / fname_psd_csv
+
+#%%
+"""
+### File saving paths from the generated data
+"""
+### Save PSD temporal evolution
+fdir_opd = Path('../../../data/2D/AO_tests/').resolve()
+if not os.path.exists(fdir_opd):
+    os.makedirs(fdir_opd)
+
+fname_psd = 'residual_turbulence_psd_arr_nPup={0}.fits'.format(nPup)
+fpath_psd = fdir_opd / fname_psd 
+
+fname_opd = 'AOres_opd_nPup={0}_iPSD={1:04d}_nmap={2:04d}.fits'.format(nPup,iPSD,nmap)
+fpath_opd = fdir_opd / fname_opd 
+
+
+#%%
+"""
+### Read csv files from Alexis (adpated from Elodie Choquet's file)
+"""
+DATA = np.zeros((nPSD,nParams))
+# DATA[:,0] = zenith distance [deg]
+# DATA[:,1] = seeing ['']
+# DATA[:,2] = R0 [m]
+# DATA[:,3] = wind speed [m/s]
+# DATA[:,4] = wind direction [deg]
+cc = 0
+with open(fpath_psd_csv, 'r') as csvFile:
+   reader = csv.reader(csvFile)
+   for row in reader:
+       if cc>0:
+#           print(row[0],row[1],row[2],row[3],row[4])
+           DATA[cc-1]=row
+       cc = cc+1
+csvFile.close()
+
+#%%
+"""
+### Array of residual turbulence PSD
+"""
+residual_turbulence_psd_arr = np.zeros((kPSD, 2*nPup, 2*nPup))
+
+for iPSD in range(kPSD):    
+
+    """
+    ### Turbulence parameters
+    """
+    seeing   = DATA[iPSD,1]
+    L0       = 25
+    z        = [2.5, 10]#[  0,   4, 16]
+    Cn2      = [80, 20]#[ 55,  35, 10]
+    v        = [DATA[iPSD,3], 21.2]#[  8,  10, 15]
+    arg_v    = [DATA[iPSD,4], -23]#[  0, -45,  0]
+    mag      = 3.29
+    zenith   = DATA[iPSD,0]
+    azimuth  = 71
+    spaf     = 0.5
+    img_wave = 1.593e-6
+    seed     = 12345
+    
+    #%%
+    """
+    ### Read OPD maps from PSDs
+    """
+    fname_opd = 'AOres_opd_nPup={0}_iPSD={1:04d}_nmap={2:04d}.fits'.format(nPup,iPSD,nmap)
+    fpath_opd = fdir_opd / fname_opd 
+    residual_turbulence_opd_arr = fits.getdata(fpath_opd,)
+    
+#%%
+"""
+### Read 2D Pupil
+"""
+if True:
+    fdir0 = Path('../../../data/2D/pupils/').resolve()
+    if pupil_name == 'vlt':
+        fname_pup = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
+        fname_lys = 'SPHERE/sphere_stop_ST_ALC2.fits' 
+    else:
+        raise ValueError('pupil_name should be vlt instead of {0}'.format(pupil_name))
+    
+    fpath_pup = fdir0 / fname_pup
+    fpath_lys = fdir0 / fname_lys
+    Pupil2d    = fits.getdata(fpath_pup)
+
+#%%
+"""
+### compute OPD standard deviation (no pupil here) and Strehl ratio
+"""
+sigma_opd = np.empty((nmap))
+SR = np.empty((nmap))
+for imap in range(nmap):
+    opd = residual_turbulence_opd_arr[imap]
+    sigma_opd[imap] = np.std(opd)
+    SR[imap] = np.exp(-(2*np.pi*sigma_opd[imap]/img_wave)**2)
+
+
+print('mean sigma_opd: {0:.1f}\pm {1:.1f}nm'.format(np.mean(sigma_opd)*1e9, np.std(sigma_opd)*1e9)) 
+print('mean SR: {0:.3f}\pm {1:.3f}'.format(np.mean(SR), np.std(SR)))
+
+#%%
+"""
+### plot figures
+"""
+pl.figure(0)
+pl.clf()
+pl.title('Pupil: {0}'.format(pupil_name))
+pl.imshow(Pupil2d)
+pl.show()

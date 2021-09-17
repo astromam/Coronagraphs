@@ -25,7 +25,6 @@ import corono as coro
 import ctypes
 import multiprocessing
 
-
 #%%
 def array_to_numpy(shared_array, shape):
     '''

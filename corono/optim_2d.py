@@ -11,6 +11,7 @@ License: MIT license
 """
 
 #%% Initialization problem
+#from memory_profiler import profile
 import numpy as np
 import json
 import time
@@ -22,15 +23,17 @@ try:
     import stdgrb
 except ImportError:
     stdgrb = False
+    print('stdgrb is False')
 
 try:
     import gurobipy as gb
 except ImportError:
     gb = False
+    print('gb is False')    
 
 import scipy
 import scipy.optimize
-from .utils import update_params        
+from .utils import update_params, uniform_disk        
 from . import design, default
 
 def MemUse():
@@ -176,7 +179,67 @@ class ProblemMatrix(object):
 
         self.TR      = np.sum(self.Pupil_vec)
                 
-        self.Apod    = np.zeros((self.corono.nPup**2))        
+        self.Apod    = np.zeros((self.corono.nPup**2))
+
+#%%
+        Mask2d = uniform_disk(self.corono.nFPM, self.corono.nFPM/2., CtrBtwnPix=self.CtrBtwnPix)
+
+        if self.corono.Pupil2dSym == False:
+            self.Mask1d = np.reshape(Mask2d, (self.corono.nFPM**2))
+        else:
+            Mask2dquarter = np.zeros_like(Mask2d)
+            Mask2dquarter[self.corono.nFPM//2:, self.corono.nFPM//2:] = 1.
+            self.Mask1d = np.reshape(Mask2d*Mask2dquarter, (self.corono.nFPM**2))
+        
+        self.msk     = (self.Mask1d > 0.)
+        self.ccc     = np.arange(self.corono.nFPM**2)
+        self.idx_msk = list(self.ccc[self.msk])
+        self.nmm     = len(self.idx_msk)
+
+        self.MM       = self.Mask1d[self.idx_msk]
+
+        if self.CtrBtwnPix is True:
+            val = 1/2 
+        x2d,y2d = np.meshgrid(np.arange(self.corono.nPup)-self.corono.nPup//2+val, 
+                              np.arange(self.corono.nPup)-self.corono.nPup//2+val)
+        x2d /= self.corono.nPup
+        y2d /= self.corono.nPup 
+        
+        if self.CtrBtwnPix is True:
+            val = 1/2   
+        p2d,q2d  = np.meshgrid(np.arange(self.corono.nFPM)-self.corono.nFPM//2+val, 
+                               np.arange(self.corono.nFPM)-self.corono.nFPM//2+val)
+        p2d *= 2*self.rMask/self.corono.nFPM
+        q2d *= 2*self.rMask/self.corono.nFPM 
+        
+        if self.CtrBtwnPix is True:
+            val = 1/2   
+        u2d,v2d  = np.meshgrid(np.arange(self.corono.nImg2d)-self.corono.nImg2d//2+val, 
+                               np.arange(self.corono.nImg2d)-self.corono.nImg2d//2+val)
+        u2d *= self.corono.Fmax2d/self.corono.nImg2d
+        v2d *= self.corono.Fmax2d/self.corono.nImg2d 
+
+        x1d_tmp = x2d.ravel()
+        y1d_tmp = y2d.ravel()
+        
+        p1d_tmp = p2d.ravel()
+        q1d_tmp = q2d.ravel()
+        
+        u1d_tmp = u2d.ravel()
+        v1d_tmp = v2d.ravel()
+        
+        self.x1d = x1d_tmp[self.idx_pup]
+        self.y1d = y1d_tmp[self.idx_pup]
+        
+        self.p1d = p1d_tmp[self.idx_msk]
+        self.q1d = q1d_tmp[self.idx_msk]
+        
+        self.u1d = u1d_tmp[self.idx_dz]
+        self.v1d = v1d_tmp[self.idx_dz]
+ 
+        LyotStop1d = self.corono.LyotStop2d.ravel()
+        self.LL = LyotStop1d[self.idx_pup]
+       
 
 #%%
     def __contains__(self, item):
@@ -280,7 +343,8 @@ class ProblemMatrix(object):
         self.__init__(**params)
         f.close()              
             
-#%%        
+#%%       
+#    @profile
     def compute_response_matrices(self, corono=None):
         r"""
         Computes the response matrix for the coronagraph with and without 
@@ -306,35 +370,133 @@ class ProblemMatrix(object):
         """        
         if corono is None:
             pass
-        else:        
+        else:
             corono_field_re_t_tmp = np.empty((self.npp, self.corono.nlam, 
-                                               self.corono.nImg2d**2))
-            corono_field_im_t_tmp = np.empty((self.npp, self.corono.nlam, 
-                                               self.corono.nImg2d**2))
-    
+                                                   self.corono.nImg2d**2))
+
             Apod2d = np.zeros((self.corono.nPup, self.corono.nPup))
+
+
+            if self.ImPart is True:             
+                corono_field_im_t_tmp = np.empty((self.npp, self.corono.nlam, 
+                                                   self.corono.nImg2d**2))
     
-            for i, val in enumerate(self.idx_pup):
-                (i0,j0) = np.unravel_index(val, (self.corono.nPup, self.corono.nPup))
-                Apod2d[i0,j0] = 1            
-                corono_field_re_t_tmp[i], corono_field_im_t_tmp[i] = \
-                corono.compute_corono_field_2d_vec(Apod2d)
-                Apod2d[i0,j0] = 0 
+                for i, val in enumerate(self.idx_pup):
+                    (i0,j0) = np.unravel_index(val, (self.corono.nPup, self.corono.nPup))
+                    Apod2d[i0,j0] = 1            
+                    corono_field_re_t_tmp[i], corono_field_im_t_tmp[i] = \
+                    corono.compute_corono_field_2d_vec(Apod2d)
+                    Apod2d[i0,j0] = 0 
                     
-            corono_field_re_t = np.reshape(
-                    corono_field_re_t_tmp[:,:, self.idx_dz], 
-                    (self.npp, self.corono.nlam*self.ndz))
-                    
-            if self.ImPart is True:
+                corono_field_re_t = np.reshape(
+                        corono_field_re_t_tmp[:,:, self.idx_dz], 
+                        (self.npp, self.corono.nlam*self.ndz))
+                
+                corono_field_re_t_tmp = None
+                del corono_field_re_t_tmp
+            
                 corono_field_im_t = np.reshape(
                     corono_field_im_t_tmp[:,:, self.idx_dz], 
                     (self.npp, self.corono.nlam*self.ndz))
-                return np.concatenate((corono_field_re_t, corono_field_im_t), 
-                                                         axis=1)
-            else:
-                return corono_field_re_t
+                corono_field_re_t = np.concatenate((corono_field_re_t, 
+                                                    corono_field_im_t), axis=1)
+                
+                corono_field_im_t = None
+                del corono_field_im_t
+            
+                corono_field_im_t_tmp = None
+                del corono_field_im_t_tmp
+
+            else:    
+                for i, val in enumerate(self.idx_pup):
+                    (i0,j0) = np.unravel_index(val, (self.corono.nPup, self.corono.nPup))
+                    Apod2d[i0,j0] = 1            
+                    corono_field_re_t_tmp[i] = \
+                    corono.compute_corono_field_2d_real_vec(Apod2d)
+                    Apod2d[i0,j0] = 0 
+                    
+                corono_field_re_t = np.reshape(
+                        corono_field_re_t_tmp[:,:, self.idx_dz], 
+                        (self.npp, self.corono.nlam*self.ndz))
+                
+                corono_field_re_t_tmp = None
+                del corono_field_re_t_tmp
+
+            return corono_field_re_t
+
+    #%%
+    
+    def Q_direct(self,lam):   
+        if self.ImPart is True:
+            LFCD = np.exp(-2j*np.pi*(self.corono.lam0/lam)*(self.x1d[:, None]*self.u1d[None, :] + self.y1d[:, None]*self.v1d[None, :]))
+        else:
+            LFCD = np.cos(-2*np.pi*(self.corono.lam0/lam)*(self.x1d[:, None]*self.u1d[None, :] + self.y1d[:, None]*self.v1d[None, :]))
+        
+        LFCD *= (self.corono.lam0/lam)*self.corono.Fmax2d/(self.corono.nPup*self.corono.nImg2d)
+        LFCD *= self.LL[:,None]
+        return LFCD
+    
+    #%%
+    #@profile
+    def Q_corono(self, lam):
+        if self.ImPart is True:
+            FAB = np.exp(-2j*np.pi*(self.corono.lam0/lam)*(self.x1d[:, None]*self.p1d[None, :] + self.y1d[:, None]*self.q1d[None, :]))
+        else:
+            FAB = np.cos(-2*np.pi*(self.corono.lam0/lam)*(self.x1d[:, None]*self.p1d[None, :] + self.y1d[:, None]*self.q1d[None, :]))
+        
+        FAB *= (self.corono.lam0/lam)*2*self.corono.rMask/(self.corono.nPup*self.corono.nFPM)
+        
+        if self.ImPart is True:
+            MFBC = FAB.conjugate().T    
+        else:
+            MFBC = FAB.T
+        MFBC *= self.MM[:,None]
+        
+        LFCD = self.Q_direct(lam)
+        
+        Q  = - (FAB.dot(MFBC)).dot(LFCD)
+        Q += LFCD
+        
+        return Q
+
+
+#%%
+    def compute_response_matrices_new(self, corono=None):
+        r"""
+        Computes the response matrix for the coronagraph with and without 
+        the focal plane mask.
+        
+        Notes
+        -----        
+        corono_field_re_t_tmp, corono_field_im_t_tmp : array_like, array_like
+            Real and imaginary parts of the coronagraphic response matrix
+            for all the points in the pupil :math:`P_0` and at all the wavelengths
+
+        corono_field_re_t, corono_field_im_t : array_like, array_like
+            Real and imaginary parts of the coronagraphic response matrix
+            for all the points in the pupil :math:`P_0` and at all the wavelengths.
+            These arrays are sliced from corono_field_re_t_tmp, corono_field_im_t_tmp 
+            for the points inside the region of interest in the final image plane.
+
+        corono_field_t : array_like
+            Concatenation of the real and imaginary parts of the coronagraphic 
+            response matrix for all the points in the pupil :math:`P_0` and 
+            at all the wavelengths
+                
+        """        
+        if corono is None:
+            pass
+        else:
+            corono_field_re_t = np.empty((self.npp, self.nlam, self.ndz))
+            for i, lam in enumerate(self.corono.lam_t):
+                corono_field_re_t[:, i] = self.Q_corono(lam)
+                
+            return np.reshape(corono_field_re_t, (self.npp, self.nlam*self.ndz))
+
+
 
 #%%        
+#    @profile
     def solve_model(self):
         """
         Solves the optimization problem model for the model with the selected 
@@ -346,14 +508,12 @@ class ProblemMatrix(object):
             Apodizer solution :math:`\Phi` for the optimization problem.
         
         """
-
-        print('start - compute matrices')
-        MemUse()
+        #print('start - compute matrices')
+        #MemUse()
         self.compute_matrices()
 
-        print('start - solve model')
-        MemUse()
-
+        #print('start - solve model')
+        #MemUse()
         t0 = time.time()
 
         if stdgrb and self.solver == 'stdgrb':
@@ -380,10 +540,15 @@ class ProblemMatrix(object):
             self.compute_gurobi_model()
             
             self.print_log('solving problem with gurobipy package')
-            try:                
+            try:               
                 self.m.Params.Method       = self.slvMethod
                 self.m.Params.LogToConsole = self.slvLogToConsole
                 self.m.Params.Crossover    = self.slvCrossover
+                
+                
+                
+                print('preparing to save optimization problem')
+                print('ok')
                 
                 self.m.optimize()
     
@@ -407,9 +572,8 @@ class ProblemMatrix(object):
 
         t1 = time.time()
         self.print_log('solving time: {0:.2f}s\n'.format(t1-t0))
-
-        print('end')
-        MemUse()
+        #print('end')
+        #MemUse()
         
         return self.Apod                
 
@@ -540,6 +704,138 @@ class MaxTau(ProblemMatrix):
 
         
 #%%        
+#    @profile
+#    def compute_problem_matrices(self):
+#        r"""
+#        Computes the matrices for the optimization problem that consists in 
+#        maximizing the amplitude transmission of the apodizer :math:`\Phi` 
+#        for a set contrast :math:`C` in a given search area in the 
+#        coronagraphic image. In terms of matrices, the optimization problem 
+#        writes as
+#            
+#        .. math:: \max_{C} c^{T}.x,
+#            
+#        under the constraint :math:`A.x \leq b`.
+#                
+#        The variable :math:`x` represents the apodizer transmission 
+#        function :math:`\Phi`. The variables follow the notations of [1]_ and 
+#        [2]_.       
+#        
+#        Notes
+#        -----------        
+#        A0 : array_like
+#            Contrast constraint on the coronagraphic electric field 
+#            :math:`\Psi_D` that is represented the following equation:
+#                
+#            :math:`\Psi_D(\xi,\lambda)-10^{-C/2}\Psi_0(\xi,\lambda) \leq 0`. 
+#            
+#            :math:`\xi` and :math:`\lambda` denote the image plane coordinate 
+#            and wavelength. The term :math:`\Psi_0` represents the 
+#            coronagraphic electric field in the absence of focal plane mask 
+#            (FPM).
+#            
+#        A1 : array_like
+#            Contrast constraints on the coronagraphic electric field Psi_D
+#            that is represented the following equations:
+#                
+#            :math:`-\Psi_D(\xi,\lambda)-10^{-C/2}\Psi_0(\xi,\lambda) \leq 0`.
+#        
+#        Returns 
+#        ----------
+#        A, b, c: array_like, array_like, array_like
+#            The matrices for the optimization problem.
+#            A and b are concatenations of the matrices for the constraints that 
+#            are described above.
+#            
+#            The cost function c to maximize is the transmission of the apodizer 
+#            inside the pupil :math:`P_0`.
+#            
+#            .. math:: \max_{C}[\int_{P_0} \Phi(r)dr].
+#            
+#        References
+#        ----------
+#        .. [1] M. N'Diaye, L. Pueyo, and R. Soummer, "Apodized Pupil Lyot 
+#            Coronagraphs for Arbitrary Apertures. IV. Reduced Inner Working 
+#            Angle and Increased Robustness to Low-order Aberrations", ApJ 799, 
+#            2, 225 (2015).
+#            
+#            http://iopscience.iop.org/article/10.1088/0004-637X/799/2/225/meta.
+#            
+#        .. [2] M. N'Diaye, R. Soummer, L. Pueyo, A. Carlotti, C. Stark, 
+#            M. Perrin, "Apodized Pupil Lyot Coronagraphs for Arbitrary 
+#            Apertures. V. Hybrid Shaped Pupil Designs for Imaging Earth-like 
+#            planets with Future Space Observatories", ApJ 818, 2, 163 (2016). 
+#            
+#            http://iopscience.iop.org/article/10.3847/0004-637X/818/2/163/meta
+#            
+#        """                    
+#        # Compute constant term that includes contrast and normalization
+#        cst = (10.**(-self.cDarkHole/2.)/np.sqrt(2.))*self.corono.Fmax2d/(self.corono.nImg2d*self.corono.nPup)
+#
+#        # Compute contrast constraints on the coronagraphic electric field
+#        for k in range(self.ncorono):
+#            
+#            # Compute coronagraph response matrix
+#            t00 = time.time()
+#            self.print_log('computing corono response matrix for 2D problem')             
+#            corono_field_t = self.compute_response_matrices(self.corono_t[k])
+#            t11 = time.time()
+#            self.print_log('computing time (response matrices): {0:.2f}s\n'.format(t11-t00))
+#            
+#            LyotStop_vec   = self.LyotStop_vec_t[k]
+#            
+#            A0tmp  =  corono_field_t \
+#            - cst*self.Pupil_vec[self.idx_pup, None]*LyotStop_vec[self.idx_pup, None]           
+#            A1tmp  = -corono_field_t \
+#            - cst*self.Pupil_vec[self.idx_pup, None]*LyotStop_vec[self.idx_pup, None]
+#            
+#            # Add terms corresponding to the MinIsland auxiliary variables        
+#            AZ0vv = np.zeros((self.nvv, np.shape(A0tmp)[1]))
+#
+#            print(A0tmp.shape)
+#            print(A1tmp.shape)
+#            print(AZ0vv.shape)
+#            
+#            A0 = np.concatenate((A0tmp, AZ0vv))
+#            A1 = np.concatenate((A1tmp, AZ0vv))            
+#            
+#            if k == 0:
+#                self.A = np.concatenate((A0,A1), axis=1)
+#            else:
+#                self.A = np.concatenate((self.A, A0, A1), axis=1)
+#            
+#            print(A0.shape)
+#            print(A1.shape)
+#            print(self.A.shape)
+#            
+#            A0 = None
+#            A1 = None
+#            del A0
+#            del A1
+#            gc.collect()
+#         
+#        # Yield the A and b matrices for the optimization problem                               
+#        self.b = np.zeros((len(self.A.T)))
+#
+#        # Add apodizer normalization contraints for gurobi solvers
+#        if (stdgrb and self.solver == 'stdgrb') \
+#        or (gb and self.solver == 'gurobipy'):
+#            self.compute_problem_matrices_gurobi()
+#
+#        # Add apodizer minimal islands constraints    
+#        if self.MinIsland is True:
+#            self.compute_problem_matrices_MinIsland()
+#            
+#        # Compute the cost function
+#        self.c = np.concatenate((-self.Pupil_vec[self.idx_pup]/self.TR, 
+#                                 np.zeros(self.nvv)), axis=0)
+#        
+#        print(self.A.shape)
+#        
+#        # Return the A, b, and c matrices
+#        return self.A, self.b, self.c
+#%%
+#    @profile
     def compute_problem_matrices(self):
         r"""
         Computes the matrices for the optimization problem that consists in 
@@ -604,41 +900,36 @@ class MaxTau(ProblemMatrix):
             http://iopscience.iop.org/article/10.3847/0004-637X/818/2/163/meta
             
         """                    
+        # Compute intermediate variables for electric field constraints 
+        nI1 = 1 
+        if self.ImPart is True:
+            nI1 = 2
+
         # Compute constant term that includes contrast and normalization
         cst = (10.**(-self.cDarkHole/2.)/np.sqrt(2.))*self.corono.Fmax2d/(self.corono.nImg2d*self.corono.nPup)
 
+        self.A = np.zeros((self.npp+self.nvv, self.ncorono*2*nI1*self.nlam*self.ndz))
+
         # Compute contrast constraints on the coronagraphic electric field
         for k in range(self.ncorono):
-            
-            # Compute coronagraph response matrix
-            t00 = time.time()
-            self.print_log('computing corono response matrix for 2D problem')
-            print('start - compute response matrices')
-            MemUse()             
-            corono_field_t = self.compute_response_matrices(self.corono_t[k])
-            t11 = time.time()
-            self.print_log('computing time (response matrices): {0:.2f}s\n'.format(t11-t00))
-            
+
             LyotStop_vec   = self.LyotStop_vec_t[k]
             
-            A0tmp  =  corono_field_t \
-            - cst*self.Pupil_vec[self.idx_pup, None]*LyotStop_vec[self.idx_pup, None]           
-            A1tmp  = -corono_field_t \
-            - cst*self.Pupil_vec[self.idx_pup, None]*LyotStop_vec[self.idx_pup, None]
+            t0 = time.time()                                    
+            self.A[:self.npp, 2*k*nI1*self.nlam*self.ndz:(2*k+1)*nI1*self.nlam*self.ndz] = \
+            self.compute_response_matrices(self.corono_t[k])
+#            self.A[:self.npp, 2*k*nI1*self.nlam*self.ndz:(2*k+1)*nI1*self.nlam*self.ndz] = \
+#            self.compute_response_matrices_new(self.corono_t[k])
+            t1 = time.time()
+            print('response matrices: {0}'.format(self.A[:self.npp, 2*k*self.nlam*self.ndz:(2*k+1)*self.nlam*self.ndz].shape))
+            print('compute response matrices: {0:.5f}s'.format(t1-t0))
             
-            # Add terms corresponding to the MinIsland auxiliary variables        
-            AZ0vv = np.zeros((self.nvv, np.shape(A0tmp)[1]))
-            
-            A0 = np.concatenate((A0tmp, AZ0vv))
-            A1 = np.concatenate((A1tmp, AZ0vv))            
-            
-            if k == 0:
-                self.A = np.concatenate((A0,A1), axis=1)
-            else:
-                self.A = np.concatenate((self.A, A0, A1), axis=1)
-        print('end - compute response matrices')
-        MemUse()
-        
+            self.A[:self.npp, (2*k+1)*nI1*self.nlam*self.ndz:(2*k+2)*nI1*self.nlam*self.ndz] = \
+            -self.A[:self.npp, 2*k*nI1*self.nlam*self.ndz:(2*k+1)*nI1*self.nlam*self.ndz] 
+ 
+            self.A[:self.npp, 2*k*nI1*self.nlam*self.ndz:2*(k+1)*nI1*self.nlam*self.ndz] -= \
+            cst*self.Pupil_vec[self.idx_pup, None]*LyotStop_vec[self.idx_pup, None]
+                           
         # Yield the A and b matrices for the optimization problem                               
         self.b = np.zeros((len(self.A.T)))
 
@@ -654,6 +945,8 @@ class MaxTau(ProblemMatrix):
         # Compute the cost function
         self.c = np.concatenate((-self.Pupil_vec[self.idx_pup]/self.TR, 
                                  np.zeros(self.nvv)), axis=0)
+        
+#        print(self.A.shape)
         
         # Return the A, b, and c matrices
         return self.A, self.b, self.c
@@ -686,15 +979,20 @@ class MaxTau(ProblemMatrix):
             :math:`\Phi(r) \leq 1`.        
         
         """
-        print('start - compute gurobi matrices')
-        MemUse()
+        #print('start - compute gurobi matrices')
+        #MemUse()
         # Compute constraints on the apodizer transmission
         A2tmp  = -np.identity(self.npp)
+        #A2tmp = -scipy.sparse.identity(self.npp)
+        
         
         # Add terms corresponding to the MinIsland auxiliary variables        
         AZ0vv = np.zeros((self.nvv, self.npp))
+        #AZ0vv = scipy.sparse.csr_matrix((self.nvv, self.npp))
         
         A2 = np.concatenate((A2tmp, AZ0vv))
+        #A2 = scipy.sparse.vstack((A2tmp,AZ0vv))
+        #A2 = scipy.sparse.csr_matrix(A2)
         
         # Add constraints on the apodizer first derivative with 
         # auxiliary variables                        
@@ -704,13 +1002,28 @@ class MaxTau(ProblemMatrix):
         # Update the A, b, and c matrices
         if self.A is None:
             self.A = np.concatenate((A2, -A2), axis=1)
+            #self.A = scipy.sparse.hstack((self.A,A2,-A2))
+            #self.A = scipy.sparse.csr_matrix(self.A)            
         else:
-            self.A = np.concatenate((self.A, A2, -A2), axis=1)
+            	self.A = np.concatenate((self.A,A2,-A2), axis = 1)
+            #self.A = scipy.sparse.bsr_matrix(self.A)
+            	#self.A = scipy.sparse.hstack((self.A,A2,-A2))
+            	#self.A = scipy.sparse.csr_matrix(self.A)
+        
+        A2 = None
+        del A2
+        gc.collect()
         
         if self.b is None:
             self.b = np.concatenate((b2,  b3))
         else:
-            self.b = np.concatenate((self.b, b2,  b3))        
+            self.b = np.concatenate((self.b, b2,  b3)) 
+        
+        b2 = None
+        b3 = None
+        del b2
+        del b3
+        gc.collect()
         
 #%%
     def compute_problem_matrices_MinIsland(self):
@@ -873,6 +1186,11 @@ class MaxTau(ProblemMatrix):
             # Update model        
             self.m.update()
 
+            # Solve model
+#            print('save model')
+#            self.m.write('/Users/mndiaye/Desktop/model.rlp')
+            #MemUse()
+
         else:
             print('Warning: Set solver keyword to "gurobipy" to make model!')    
             
@@ -911,7 +1229,7 @@ class MaxContrast(ProblemMatrix):
             self.neps = self.ndz
 
         self.npp_bis = 0
-        self.idx_pup_bis = [0]
+        self.idx_pup_bis = [0]  
         self.nvv   = 0
         if self.MinIsland is True:
             self.idx_pup_bis = list(set().union(list(np.asarray(self.idx_pup)-1),
@@ -1154,7 +1472,8 @@ class MaxContrast(ProblemMatrix):
         if self.b is None:
             self.b = np.concatenate((b2,  b3))
         else:
-            self.b = np.concatenate((self.b, b2,  b3)) 
+            self.b = np.concatenate((self.b, b2,  b3))
+            
             
 #%%
     def compute_problem_matrices_MinIsland(self):
@@ -1318,7 +1637,7 @@ class MaxContrast(ProblemMatrix):
             
             # Update model
             self.m.update()
-
+            
         else:
             print('Warning: Set solver keyword to "gurobipy" to make model!')             
 
