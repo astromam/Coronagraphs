@@ -94,16 +94,38 @@ if __name__ == '__main__':
     """
     ### Parameters
     """
+    
     # Coronagraph type
     corono_name = 'APLC'
-    CtrBtwnPix  = True
-    CtrBtwnPix2 = False
-    Pupil2dSym  = False
 
-    # Spectral bandwidth
+    # Spectral bandwidth (m)
     wv        = 1.593e-6
     width     = 52e-9
 
+    # simulation configuration
+    kw_aberr     = True                      # include aberrations
+    kw_2nddate   = bool(eval(sys.argv[1]))   # first/second date
+    kw_skyobs    = False                     # internal/on-sky ZELDA map
+    kw_aftercorr = bool(eval(sys.argv[2]))   # generate data before/after NCPA compensation
+    kw_saxo      = False                     # use reconstructed SAXO phase screens
+    imap_saxo_i  = 0                         # SAXO first screen
+    imap_saxo_f  = int(30*1380)              # SAXO last screen
+
+    # added low-order static aberrations (nm rms)
+    defoc_ampl = -40
+    tip_ampl   = 0
+    tilt_ampl  = 0 
+    
+    # seeing for on-sky observations (as)
+    seeing = 0.7
+
+    #%% more or less fixed parameters
+
+    # corono simulation parameters
+    CtrBtwnPix  = True
+    CtrBtwnPix2 = False
+    Pupil2dSym  = False
+    
     # Telescope characteristics
     dAper     = 8
     Fratio    = 40
@@ -128,23 +150,6 @@ if __name__ == '__main__':
     # wavelength sampling
     nlam   = 5
     bw     = width/wv 
-
-    # simulation configuration   
-    kw_aberr     = True
-    kw_2nddate   = bool(eval(sys.argv[1]))
-    kw_skyobs    = False     # related to ZELDA map
-    kw_aftercorr = bool(eval(sys.argv[2]))
-    kw_saxo      = False
-    imap_saxo_i  = 0               # saxo first screen
-    imap_saxo_f  = int(30*1380)    # saxo last screen
-
-    # added low-order static aberrations
-    defoc_ampl = -40
-    tip_ampl   = 0
-    tilt_ampl  = 0 
-    
-    # seeing for on-sky observations
-    seeing = 0.7
     
     # multi-processing
     nproc = multiprocessing.cpu_count() // 2 - 1
