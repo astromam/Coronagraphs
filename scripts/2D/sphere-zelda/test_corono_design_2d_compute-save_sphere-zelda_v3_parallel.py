@@ -160,39 +160,43 @@ if __name__ == '__main__':
     if kw_aberr is False:
         str_aberr = 'wo_aberr'
         str_date  = '2018-04-01'
+        str_corr  = ''
+        str_saxo  = ''
+        nmap      = 1
+
         if kw_skyobs is True:
             str_obs   = 'sky'
         else:
             str_obs   = 'internal'
-        str_corr  = ''
-        str_saxo  = ''
-        str_saxoset = ''
-        nmap      = 1 
     else:
-        str_aberr = 'with_aberr'    
-        str_date  = '2018-04-01'
-        str_obs   = 'internal'
-        str_corr  = 'before_correction'
-        str_saxo  = ''
-        imap0     = 0
-        nmap      = 1
-        # beta_wfs  = 1/0.95
-        beta_wfs  = 1/0.80
-        str_saxo_tmp  = 'wo_saxo'
+        str_aberr = 'with_aberr'
+        
         if kw_2nddate is True:
             str_date = '2018-04-03'
+        else:
+            str_date = '2018-04-01'
+            
         if kw_skyobs is True:
             str_obs  = 'sky'
+            beta_wfs = 1 / 0.64
+        else:
+            str_obs  = 'internal'
+            beta_wfs = 1 / 0.80
+            
         if kw_aftercorr is True:
             str_corr = 'after_correction'
             imap0    = 3
-            # beta_wfs = 1/0.95
-            beta_wfs = 1/0.80
+        else:
+            str_corr = 'before_correction'
+            imap0    = 0
+            
         if kw_saxo is True:
             str_saxo = 'with_saxo'
             nmap     = nsaxomap*1
-            # beta_wfs = 1/0.64
-            beta_wfs = 1/0.64*1/0.8
+            beta_wfs = 1/0.64*1/0.8   # ??
+        else:
+            str_saxo = ''
+            nmap     = 1
 
     #%%
     # fdir = Path('~/GitHub/Coronagraphs/').expanduser()
@@ -299,7 +303,7 @@ if __name__ == '__main__':
 
     #%%
     Defo_mapnm2d = zernike.zernike1(4, npix=nPup, outside=0.)
-    Tipp_mapnm2d = zernike.zernike1(2, npix=nPup, outside=0.)
+    Tip_mapnm2d  = zernike.zernike1(2, npix=nPup, outside=0.)
     Tilt_mapnm2d = zernike.zernike1(3, npix=nPup, outside=0.)
 
     #%%
@@ -364,7 +368,7 @@ if __name__ == '__main__':
     # definition of the coronagraph class
     if kw_aberr is True:
         OPDmap2d0 = (beta_wfs*ZELDAmapnm3d[imap0]+Apod2d_OPDmapnm + defoc_ampl*Defo_mapnm2d +
-                    tip_ampl*Tipp_mapnm2d + tilt_ampl*Tilt_mapnm2d)*1e-9
+                    tip_ampl*Tip_mapnm2d + tilt_ampl*Tilt_mapnm2d)*1e-9
 
     t0 = time.time()
     if kw_aberr is True:
