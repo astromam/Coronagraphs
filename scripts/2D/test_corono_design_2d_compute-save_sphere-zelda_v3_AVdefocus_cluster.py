@@ -25,6 +25,7 @@ import corono as coro
 import ctypes
 import multiprocessing
 
+
 #%%
 def array_to_numpy(shared_array, shape):
     '''
@@ -94,7 +95,7 @@ if __name__ == '__main__':
     ### Parameters
     """
     # Coronagraph type
-    corono_name   = 'APLC'  # 'SP' or 'APLC' or DZPM
+    corono_name = 'APLC'
     CtrBtwnPix  = True
     CtrBtwnPix2 = False
     Pupil2dSym  = False
@@ -131,9 +132,9 @@ if __name__ == '__main__':
     # simulation configuration   
     kw_aberr     = True
     kw_2nddate   = bool(eval(sys.argv[1]))
-    kw_skyobs    = True     # related to ZELDA map
+    kw_skyobs    = False     # related to ZELDA map
     kw_aftercorr = bool(eval(sys.argv[2]))
-    kw_saxo      = True
+    kw_saxo      = False
     saxomap_i    = 0               # saxo first screen
     saxomap_f    = int(30*1380)    # saxo last screen
 
@@ -147,11 +148,10 @@ if __name__ == '__main__':
     nsaxomap  = saxomap_f - saxomap_i + 1
     nsaxomap  = nsaxomap - (nsaxomap % nproc)
 
-    ndefo = 21
-    defo_ampl_arr = [np.float(sys.argv[3])]
-    # defo_ampl_arr = -100 + 10.*np.arange(21)
-    tipp_ampl = 0
-    tilt_ampl = 0 
+    # added low-order static aberrations
+    defoc_ampl_arr = [-40]
+    tip_ampl       = 0
+    tilt_ampl      = 0 
 
     #%%
     """
@@ -195,8 +195,8 @@ if __name__ == '__main__':
             beta_wfs = 1/0.64*1/0.8
 
     #%%
-    fdir = Path('~/GitHub/Coronagraphs/').expanduser()
-    # fdir = Path('~/Work/GitHub/Coronagraphs/').expanduser()
+    # fdir = Path('~/GitHub/Coronagraphs/').expanduser()
+    fdir = Path('~/Work/GitHub/Coronagraphs/').expanduser()
     # fdir = Path('/Users/mndiaye/Dropbox/python/Coronagraphs/')
     fdir_pupils  = fdir / 'data' / '2D' / 'pupils' / 'SPHERE' 
     fdir_zelda   = fdir / 'data' / '2D' / 'ZELDA' / str_date / str_obs  
@@ -345,18 +345,18 @@ if __name__ == '__main__':
         corono0 = coro.design.APLC2d(**params)    
 
 
-    for i, defo_ampl in enumerate(defo_ampl_arr):
-        print('defo={0}nm rms'.format(defo_ampl))    
-        fname_direct_poly_img_f     = 'direct_poly_img_nmap={:05d}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_f.fits'.format(nmap, defo_ampl, tipp_ampl, tilt_ampl)
-        fname_corono_poly_img_f     = 'corono_poly_img_nmap={:05d}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_f.fits'.format(nmap, defo_ampl, tipp_ampl, tilt_ampl)
+    for i, defoc_ampl in enumerate(defoc_ampl_arr):
+        print('defo={0}nm rms'.format(defoc_ampl))    
+        fname_direct_poly_img_f     = 'direct_poly_img_nmap={:05d}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_f.fits'.format(nmap, defoc_ampl, tip_ampl, tilt_ampl)
+        fname_corono_poly_img_f     = 'corono_poly_img_nmap={:05d}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_f.fits'.format(nmap, defoc_ampl, tip_ampl, tilt_ampl)
         fpath_direct_poly_img_f     = fdir_results / fname_direct_poly_img_f
         fpath_corono_poly_img_f     = fdir_results / fname_corono_poly_img_f
 
         #%%
-        fname_direct_poly_prf_avg_f = 'direct_poly_prf_nmap={:05d}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_avg_f.fits'.format(nmap, defo_ampl, tipp_ampl, tilt_ampl)
-        fname_corono_poly_prf_avg_f = 'corono_poly_prf_nmap={:05d}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_avg_f.fits'.format(nmap, defo_ampl, tipp_ampl, tilt_ampl)
-        fname_direct_poly_prf_std_f = 'direct_poly_prf_nmap={:05d}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_std_f.fits'.format(nmap, defo_ampl, tipp_ampl, tilt_ampl)
-        fname_corono_poly_prf_std_f = 'corono_poly_prf_nmap={:05d}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_std_f.fits'.format(nmap, defo_ampl, tipp_ampl, tilt_ampl)
+        fname_direct_poly_prf_avg_f = 'direct_poly_prf_nmap={:05d}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_avg_f.fits'.format(nmap, defoc_ampl, tip_ampl, tilt_ampl)
+        fname_corono_poly_prf_avg_f = 'corono_poly_prf_nmap={:05d}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_avg_f.fits'.format(nmap, defoc_ampl, tip_ampl, tilt_ampl)
+        fname_direct_poly_prf_std_f = 'direct_poly_prf_nmap={:05d}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_std_f.fits'.format(nmap, defoc_ampl, tip_ampl, tilt_ampl)
+        fname_corono_poly_prf_std_f = 'corono_poly_prf_nmap={:05d}_defo={:.1f}_tip={:.1f}_tilt={:.1f}_std_f.fits'.format(nmap, defoc_ampl, tip_ampl, tilt_ampl)
         fpath_direct_poly_prf_avg_f = fdir_results / fname_direct_poly_prf_avg_f
         fpath_corono_poly_prf_avg_f = fdir_results / fname_corono_poly_prf_avg_f
         fpath_direct_poly_prf_std_f = fdir_results / fname_direct_poly_prf_std_f
@@ -365,10 +365,8 @@ if __name__ == '__main__':
         #%%
         # definition of the coronagraph class
         if kw_aberr is True:
-            OPDmap2d0 = (beta_wfs*ZELDAmapnm3d[imap0]+Apod2d_OPDmapnm \
-                        + defo_ampl*Defo_mapnm2d \
-                        + tipp_ampl*Tipp_mapnm2d \
-                        + tilt_ampl*Tilt_mapnm2d)*1e-9
+            OPDmap2d0 = (beta_wfs*ZELDAmapnm3d[imap0]+Apod2d_OPDmapnm + defoc_ampl*Defo_mapnm2d +
+                        tip_ampl*Tipp_mapnm2d + tilt_ampl*Tilt_mapnm2d)*1e-9
 
         t0 = time.time()
         if kw_aberr is True:
