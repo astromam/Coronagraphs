@@ -36,13 +36,13 @@ nPup= 1200
 do_fits = True
 
 pdiam, odiam = 7.92, 2.3  # tel. and obst. diameters (meters)
-thick = 0.              # adopted spider thickness (meters)
+thick = 0.25              # adopted spider thickness (meters)
 offset = 1.278            # spider intersection offset (meters)
 beta = 51.75              # spider angle beta
 
-kpdiam_t = [1.0]#np.linspace(0.9, 1.0, 11) # np.linspace(0.98, 1.0, 3)#
-kodiam_t = [1.0]#np.linspace(1.0, 2.0, 21) # np.linspace(1.0, 1.2, 5)#
-kthick_t = [0.0]#np.linspace(1.0, 2.0, 11) # np.linspace(1.0, 1.2, 3)#
+kpdiam_t = [0.95]#np.linspace(0.9, 1.0, 11) # np.linspace(0.98, 1.0, 3)#
+kodiam_t = [1.15]#np.linspace(1.0, 2.0, 21) # np.linspace(1.0, 1.2, 5)#
+kthick_t = [2.0]#np.linspace(1.0, 2.0, 11) # np.linspace(1.0, 1.2, 3)#
 
 pdiam2_t = np.asarray(kpdiam_t)*pdiam
 odiam2_t = np.asarray(kodiam_t)*odiam
