@@ -118,7 +118,7 @@ nlam = 5
 do_fits = True
 do_num_mask = True
 do_plot = True
-do_apod_spiders = True
+do_apod_spiders = False
 
 thick_apod = 0.
 str_apod_spiders = '_apodnospiders'
@@ -381,10 +381,10 @@ pl.imshow(LyotStop2d_opt)
 """ 
 EE_D2_t = np.reshape(EE_D_t, (npdiam, nodiam, nthick, nMask1))
 
-kpdiam0 = 0.92#0.92#0.91#0.92
-kodiam0 = 1.1#1.1#1.05#1.25
-kthick0 = 1.0#1.0#1.0
-rMask10 = 2.87#2.65#2.87#2.86#2.64
+kpdiam0 = 0.95#0.92#0.91#0.92
+kodiam0 = 1.15#1.1#1.05#1.25
+kthick0 = 2.0#1.0#1.0
+rMask10 = 2.65#2.65#2.87#2.86#2.64
 
 
 
@@ -392,6 +392,9 @@ EE_D20_t = EE_D2_t[kpdiam_t == kpdiam0, kodiam_t == kodiam0, :, :].reshape(nthic
 EE_D21_t = EE_D2_t[kpdiam_t == kpdiam0, :, kthick_t == kthick0, :].reshape(nodiam, nMask1)
 EE_D22_t = EE_D2_t[:, kodiam_t == kodiam0, kthick_t == kthick0, :].reshape(npdiam, nMask1)
 EE_D23_t = EE_D2_t[:, :, kthick_t == kthick0, np.abs(rMask1_t-rMask10) < 0.001].reshape(npdiam, nodiam)
+
+EE_D24_t = EE_D2_t[:, kodiam_t == kodiam0, :, np.abs(rMask1_t-rMask10) < 0.001].reshape(npdiam, nthick)
+EE_D25_t = EE_D2_t[kpdiam_t == kpdiam0,: , :, np.abs(rMask1_t-rMask10) < 0.001].reshape(nodiam, nthick)
 
 #%%
 """
@@ -412,29 +415,37 @@ rMask1_max = rMask1_t.max()
 Z20 = EE_D20_t
 extent20 = [kthick_min, kthick_max, rMask1_min, rMask1_max]
 Z20_xlabel = r'thick oversize factor'
-Z20_ylabel = r'Mask radius in $\lambda_0/D$'
+Z20_ylabel = r'Apod for mask radius in $\lambda_0/D$'
 Z20_text   = f'kpdiam = {kpdiam0:.2f}, kodiam = {kodiam0:.2f}'
 Z20_x, Z20_y = np.unravel_index(EE_D20_t.argmin(), EE_D20_t.shape)
 Z20_x = kthick_t[Z20_x]
 Z20_y = rMask1_t[Z20_y]
+Z20_x2 = kthick_t[kthick_t == kthick0]
+Z20_y2 = rMask1_t[np.abs(rMask1_t-rMask10) < 0.001]
+
 
 Z21 = EE_D21_t
 extent21 = [kodiam_min, kodiam_max, rMask1_min, rMask1_max]
 Z21_xlabel = r'odiam diameter oversize factor'
-Z21_ylabel = r'Mask radius in $\lambda_0/D$'
+Z21_ylabel = r'Apod for mask radius in $\lambda_0/D$'
 Z21_text   = f'kpdiam = {kpdiam0:.2f}, thick = {kthick0:.2f}'
 Z21_x, Z21_y = np.unravel_index(EE_D21_t.argmin(), EE_D21_t.shape)
 Z21_x = kodiam_t[Z21_x]
 Z21_y = rMask1_t[Z21_y]
+Z21_x2 = kodiam_t[kodiam_t == kodiam0]
+Z21_y2 = rMask1_t[np.abs(rMask1_t-rMask10) < 0.001]
+
 
 Z22 = EE_D22_t
 extent22 = [kpdiam_min, kpdiam_max, rMask1_min, rMask1_max]
 Z22_xlabel = r'pdiam oversize factor'
-Z22_ylabel = r'Mask radius in $\lambda_0/D$'
+Z22_ylabel = r'Apod for mask radius in $\lambda_0/D$'
 Z22_text   = f'kodiam = {kodiam0:.2f}, thick = {kthick0:.2f}'
 Z22_x, Z22_y = np.unravel_index(EE_D22_t.argmin(), EE_D22_t.shape)
 Z22_x = kpdiam_t[Z22_x]
 Z22_y = rMask1_t[Z22_y]
+Z22_x2 = kpdiam_t[kpdiam_t == kpdiam0]
+Z22_y2 = rMask1_t[np.abs(rMask1_t-rMask10) < 0.001]
 
 Z23 = EE_D23_t
 extent23 = [kpdiam_min, kpdiam_max, kodiam_min, kodiam_max]
@@ -444,6 +455,31 @@ Z23_text   = f'thick = {kthick0:.2f}, rMask = {rMask10:.2f} lam0/D'
 Z23_x, Z23_y = np.unravel_index(EE_D23_t.argmin(), EE_D23_t.shape)
 Z23_x = kpdiam_t[Z23_x]
 Z23_y = kodiam_t[Z23_y]
+Z23_x2 = kpdiam_t[kpdiam_t == kpdiam0]
+Z23_y2 = kodiam_t[kodiam_t == kodiam0]
+
+
+Z24 = EE_D24_t
+extent24 = [kpdiam_min, kpdiam_max, kthick_min, kthick_max]
+Z24_xlabel = r'pdiam oversize factor'
+Z24_ylabel = r'thick oversize factor'
+Z24_text   = f'kodiam = {kodiam0:.2f}, rMask = {rMask10:.2f} lam0/D'
+Z24_x, Z24_y = np.unravel_index(EE_D24_t.argmin(), EE_D24_t.shape)
+Z24_x = kpdiam_t[Z24_x]
+Z24_y = kthick_t[Z24_y]
+Z24_x2 = kpdiam_t[kpdiam_t == kpdiam0]
+Z24_y2 = kthick_t[kthick_t == kthick0]
+
+Z25 = EE_D25_t
+extent25 = [kodiam_min, kodiam_max, kthick_min, kthick_max]
+Z25_xlabel = r'odiam oversize factor'
+Z25_ylabel = r'thick oversize factor'
+Z25_text   = f'kpdiam = {kpdiam0:.2f}, rMask = {rMask10:.2f} lam0/D'
+Z25_x, Z25_y = np.unravel_index(EE_D25_t.argmin(), EE_D25_t.shape)
+Z25_x = kodiam_t[Z25_x]
+Z25_y = kthick_t[Z25_y]
+Z25_x2 = kodiam_t[kodiam_t == kodiam0]
+Z25_y2 = kthick_t[kthick_t == kthick0]
 
 #%%
 """
@@ -455,17 +491,20 @@ Z23_y = kodiam_t[Z23_y]
 # line width parameter
 lw0 = 2.5
 
-ZZ_t = [Z20, Z21, Z22, Z23]
-ZZ_x_t = [Z20_x, Z21_x, Z22_x, Z23_x]
-ZZ_y_t = [Z20_y, Z21_y, Z22_y, Z23_y]
+ZZ_t = [Z20, Z21, Z22, Z23, Z24, Z25]
+ZZ_x_t = [Z20_x, Z21_x, Z22_x, Z23_x, Z24_x, Z25_x]
+ZZ_y_t = [Z20_y, Z21_y, Z22_y, Z23_y, Z24_y, Z25_y]
 
-extentZZ = [extent20, extent21, extent22, extent23]
-ZZ_xlabel = [Z20_xlabel, Z21_xlabel, Z22_xlabel, Z23_xlabel]
-ZZ_ylabel = [Z20_ylabel, Z21_ylabel, Z22_ylabel, Z23_ylabel]
-ZZ_text = [Z20_text, Z21_text, Z22_text, Z23_text]
+ZZ_x2_t = [Z20_x2, Z21_x2, Z22_x2, Z23_x2, Z24_x2, Z25_x2]
+ZZ_y2_t = [Z20_y2, Z21_y2, Z22_y2, Z23_y2, Z24_y2, Z25_y2]
+
+extentZZ = [extent20, extent21, extent22, extent23, extent24, extent25]
+ZZ_xlabel = [Z20_xlabel, Z21_xlabel, Z22_xlabel, Z23_xlabel, Z24_xlabel, Z25_xlabel]
+ZZ_ylabel = [Z20_ylabel, Z21_ylabel, Z22_ylabel, Z23_ylabel, Z24_ylabel, Z25_ylabel]
+ZZ_text = [Z20_text, Z21_text, Z22_text, Z23_text, Z24_text, Z25_text]
 nZZ = len(ZZ_t)
 
-str_ZZ_t = ['thick_v_rMask', 'odiam_v_rMask', 'pdiam_v_rMask', 'pdiam_v_odiam']
+str_ZZ_t = ['thick_v_rMask', 'odiam_v_rMask', 'pdiam_v_rMask', 'pdiam_v_odiam', 'odiam_v_thick', 'pdiam_v_thick']
 
 for iZZ, ZZ in enumerate(ZZ_t):
 
@@ -498,17 +537,20 @@ for iZZ, ZZ in enumerate(ZZ_t):
     
     ax0.text(ZZ_x_t[iZZ], ZZ_y_t[iZZ], 'x', fontsize=ftsz, 
               horizontalalignment="center", color = "white")
+    ax0.text(ZZ_x2_t[iZZ], ZZ_y_t[iZZ], 'x', fontsize=ftsz, 
+              horizontalalignment="center", color = "blue")
     
     # ax0.axvline(x=rMask, ymin=-12, ymax =2, linewidth=lw0, color='r', linestyle='--')
     # ax0.axvline(x=rho0, ymin=-12, ymax =2, linewidth=lw0, color='b', linestyle='--')
     ax0.axvline(x=ZZ_x_t[iZZ], linewidth=lw0, color='w', linestyle='--')
+    ax0.axvline(x=ZZ_x2_t[iZZ], linewidth=lw0, color='b', linestyle='--')
     
     # ax0.axhline(y=1.0, xmin=0., xmax =lam0D_max, 
     #             linewidth=lw0, color='g', linestyle=':')
     # ax0.axhline(y=lam_opt_min, xmin=0., xmax =lam0D_max, 
     #             linewidth=lw0, color='k', linestyle=':')
-    ax0.axhline(y=ZZ_y_t[iZZ],
-                 linewidth=lw0, color='w', linestyle='--')
+    ax0.axhline(y=ZZ_y_t[iZZ],linewidth=lw0, color='w', linestyle='--')
+    ax0.axhline(y=ZZ_y2_t[iZZ],linewidth=lw0, color='b', linestyle='--')
 
 
     
