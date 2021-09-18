@@ -57,9 +57,9 @@ if True:
     offset = 1.278            # spider intersection offset (meters)
     beta = 51.75              # spider angle beta
     
-    pdiam2 = 0.98*7.92
-    odiam2 = 1.10*2.3#2.53#
-    thick2 = 1.4*0.25
+    pdiam2 = 0.95*pdiam
+    odiam2 = 1.15*odiam#2.53#
+    thick2 = 2.0*thick
     Fratio = 64
 
     kpdiam1 = pdiam/pdiam
@@ -78,7 +78,7 @@ if True:
     # mask radius in lam0/D units
     rMask_m = 453e-6/2
     # correpsonding mask size for the optimal prolate 
-    rMask1    = 2.65#2.64#rMask_m/(wv1*Fratio)  # mask size in lam1/D
+    rMask1  = 2.65#2.64#rMask_m/(wv1*Fratio)  # mask size in lam1/D
     
     # dark zone bounds (inner and outer edges) in lam0/D unit
     rho0 =  5.0
