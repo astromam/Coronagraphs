@@ -105,8 +105,12 @@ band = 'GPI_J'
 nlam = 5
 #nlam1 = 101
 
+do_EE_D = False
+do_EE_M = True
+do_EE_S = True
+
 do_fits = True
-do_num_mask = False
+do_num_mask = True
 do_apod_spiders = False
 
 thick_apod = 0.
@@ -251,6 +255,8 @@ else:
 """
 ### Computation of a numerical mask to compute contrast outside the spiders diffraction pattern
 """
+
+num_circ = coro.utils.uniform_disk(nImg2d, rMask_J*nImg2d/Fmax2d)
 num_mask = np.ones((nImg2d, nImg2d))
 str_num_mask = ''
 if do_num_mask:
@@ -265,9 +271,7 @@ if do_num_mask:
     xx2 = -np.sin(beta2)*xx1 + np.cos(beta2)*yy1
     xx3 = -np.sin(beta3)*xx1 + np.cos(beta3)*yy1
     
-    thick_diff = 6.4#32#(pdiam/thick2)*nImg2d/Fmax2d
-    
-    num_circ = coro.utils.uniform_disk(nImg2d, rMask_J*nImg2d/Fmax2d)
+    thick_diff = 6.4#32#(pdiam/thick2)*nImg2d/Fmax2d  
     
     num_mask[(xx2 <= thick_diff)*(xx2 >= -thick_diff)] = 0
     num_mask[(xx3 <= thick_diff)*(xx3 >= -thick_diff)] = 0
@@ -284,22 +288,38 @@ if do_num_mask:
 rr_D = coro.utils.radius_disk(nImg2d, nImg2d//2, CtrBtwnPix=True)
 rr_D *= Fmax2d
 ind_D = (rr_D <= rho1)*(rr_D >= rho0)*(num_mask == 1)
+ind_M = (num_circ == 1)
+ind_S = (num_mask == 0)*(num_circ == 0)
 
 area_D = np.zeros((nImg2d, nImg2d))
-area_D[ind_D] = 1.  
+area_D[ind_D] = 1. 
+
+area_M = np.zeros((nImg2d, nImg2d))
+area_M[ind_M] = 1.  
+
+area_S = np.zeros((nImg2d, nImg2d))
+area_S[ind_S] = 1.  
 
 pl.figure(70)
 pl.clf()
-pl.subplot(131)
+pl.subplot(151)
 pl.imshow(num_mask, cmap='inferno')
-pl.subplot(132)
+pl.subplot(152)
 pl.imshow(area_D, cmap='inferno')
-pl.subplot(133)
+pl.subplot(153)
 pl.imshow(rr_D, cmap='inferno')
-
+pl.subplot(154)
+pl.imshow(area_M, cmap='inferno')
+pl.subplot(155)
+pl.imshow(area_S, cmap='inferno')
 
 #%%
-EE_D_t = np.zeros((nIter, nMask1))
+if do_EE_D:
+    EE_D_t = np.zeros((nIter, nMask1))
+if do_EE_M:
+    EE_M_t = np.zeros((nIter, nMask1))
+if do_EE_S:
+    EE_S_t = np.zeros((nIter, nMask1))
 
 for ipdiam, kpdiam in enumerate(kpdiam_t):
     for iodiam, kodiam in enumerate(kodiam_t):
@@ -331,8 +351,12 @@ for ipdiam, kpdiam in enumerate(kpdiam_t):
                 Int_D0 = corono2.compute_direct_intensity_2d(Apod2d, poly=True)
                 Int_D  = corono2.compute_corono_intensity_2d(Apod2d, poly=True)
                 Int_D /= Int_D0.max()
-                #EE_D_t[iIter, iMask1] = np.sum(area_D*Int_D)
-                EE_D_t[iIter, iMask1] = np.mean(Int_D[ind_D])
+                if do_EE_D:
+                    EE_D_t[iIter, iMask1] = np.mean(Int_D[ind_D]) 
+                if do_EE_M:
+                    EE_M_t[iIter, iMask1] = np.mean(Int_D[ind_M]) 
+                if do_EE_S:
+                    EE_S_t[iIter, iMask1] = np.mean(Int_D[ind_S])
     
 
 #%%
@@ -342,8 +366,19 @@ for ipdiam, kpdiam in enumerate(kpdiam_t):
 fname_EE_D = f'pupilsbr_nPup{nPup}_EE_D_rho0{int(np.round(rho0*100)):03d}_rho1{int(np.round(rho1*100)):03d}' + str_num_mask + str_apod_spiders +'.fits'
 fpath_EE_D = fdir / fname_EE_D
 
-    
-if do_fits is True:
+if do_fits and do_EE_D:
     fits.writeto(fpath_EE_D, EE_D_t, overwrite=True)
+
+fname_EE_M = f'pupilsbr_nPup{nPup}_EE_M_rho0{int(np.round(rho0*100)):03d}_rho1{int(np.round(rho1*100)):03d}' + str_num_mask + str_apod_spiders +'.fits'
+fpath_EE_M = fdir / fname_EE_M
+       
+if do_fits and do_EE_M:
+    fits.writeto(fpath_EE_M, EE_M_t, overwrite=True)
+    
+fname_EE_S = f'pupilsbr_nPup{nPup}_EE_S_rho0{int(np.round(rho0*100)):03d}_rho1{int(np.round(rho1*100)):03d}' + str_num_mask + str_apod_spiders +'.fits'
+fpath_EE_S = fdir / fname_EE_S
+       
+if do_fits and do_EE_S:
+    fits.writeto(fpath_EE_S, EE_S_t, overwrite=True)
 
     
