@@ -327,7 +327,7 @@ if __name__ == '__main__':
     kwd_pla = True
     
     # Planet position properties
-    sep_mas_p   = 12.25*8  #5*pscale      # planet separation in mas
+    sep_mas_p   = 12.25*12  #5*pscale      # planet separation in mas
     theta_deg_p = 0  # planet position angle in degrees
     
     # observation parameters
@@ -345,6 +345,9 @@ if __name__ == '__main__':
 
     # Photometry
     kwd_sav_onlyphot = True
+    
+    # planet flux fudge factor
+    plnt_flux_fudge_factor = 1000
 
     #%%
     """
@@ -633,6 +636,8 @@ if __name__ == '__main__':
     str_noi = ''
     if kwd_noi:
         str_noi = '_noise'
+        
+    str_ff = f'_{plnt_flux_fudge_factor:03d}'
     
     # filepaths for the images
     fname_direct_mono_img_f     = 'dir' + str_common + '_img_f.fits'
@@ -657,8 +662,8 @@ if __name__ == '__main__':
     fpath_corono_mono_img_fp = fdir_res / fname_corono_mono_img_fp
     
     # filepath for the images with star and planet
-    fname_direct_cube = 'dir' + str_common + '_img_f' + str_offaxis + str_sphplus + str_noi + '.fits'
-    fname_corono_cube = 'cor' + str_common + '_img_f' + str_offaxis + str_sphplus + str_noi + '.fits'
+    fname_direct_cube = 'dir' + str_common + '_img_f' + str_offaxis + str_sphplus + str_noi + str_ff + '.fits'
+    fname_corono_cube = 'cor' + str_common + '_img_f' + str_offaxis + str_sphplus + str_noi + str_ff + '.fits'
     fpath_direct_cube = fdir_res / fname_direct_cube
     fpath_corono_cube = fdir_res / fname_corono_cube
 
@@ -861,7 +866,7 @@ if __name__ == '__main__':
     """
     
     star_phot = spectral_binning(wv_um_t, dwv_um_t, star_wave, star_phot)
-    plnt_phot = spectral_binning(wv_um_t, dwv_um_t, plnt_wave, plnt_phot)
+    plnt_phot = plnt_flux_fudge_factor*spectral_binning(wv_um_t, dwv_um_t, plnt_wave, plnt_phot)
     
     #tell_phot = transmission_spectral_binning(wv_um_t, dwv_um_t, tell_wave, tell_flux)
     
