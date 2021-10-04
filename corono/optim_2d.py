@@ -58,7 +58,7 @@ class ProblemMatrix(object):
     """
     default_params = default.get_default_params_2d_ProblemMatrix()
 
-    @profile
+#    @profile
     def __init__(self,corono=None, **kwargs):
         r"""
         __init__ : method
@@ -346,7 +346,7 @@ class ProblemMatrix(object):
         f.close()              
             
 #%%       
-    @profile
+#    @profile
     def compute_response_matrices(self, corono=None):
         r"""
         Computes the response matrix for the coronagraph with and without 
@@ -463,7 +463,7 @@ class ProblemMatrix(object):
 
 
 #%%
-    @profile
+#    @profile
     def compute_response_matrices_new(self, corono=None):
         r"""
         Computes the response matrix for the coronagraph with and without 
@@ -499,7 +499,7 @@ class ProblemMatrix(object):
 
 
 #%%        
-    @profile
+#    @profile
     def solve_model(self):
         """
         Solves the optimization problem model for the model with the selected 
@@ -641,7 +641,7 @@ class ProblemMatrix(object):
         return '{pupil_name}_'.format(**params) + fname_corono + fname_gen_optim.format(**params)
 
 #%%    
-    @profile
+#    @profile
     def compute_matrices(self):
         r"""
         Computes the matrices for the optimization problem.
@@ -695,7 +695,7 @@ class MaxTau(ProblemMatrix):
     """
     default_params = default.get_default_params_2d_MaxTauProblemMatrix()
 
-    @profile
+#    @profile
     def __init__(self, **kwargs):
         """
         Constructor for the Matrix problem with the coronagraph object
@@ -856,7 +856,7 @@ class MaxTau(ProblemMatrix):
 #        # Return the A, b, and c matrices
 #        return self.A, self.b, self.c
 #%%
-    @profile
+#    @profile
     def compute_problem_matrices(self):
         r"""
         Computes the matrices for the optimization problem that consists in 
@@ -973,7 +973,7 @@ class MaxTau(ProblemMatrix):
         return self.A, self.b, self.c
 
 #%%
-    @profile
+#    @profile
     def compute_problem_matrices_gurobi(self):
         r"""
         Computes constraints to range the amplitude transmission of the 
@@ -1048,7 +1048,7 @@ class MaxTau(ProblemMatrix):
         gc.collect()
         
 #%%
-    @profile
+#    @profile
     def compute_problem_matrices_MinIsland(self):
         r"""
         Computes matrices to add constraints that minimizes the islands in the
@@ -1170,7 +1170,7 @@ class MaxTau(ProblemMatrix):
         print('Warning: update_cDarkHole() method is outdated!!!')            
 
 #%%
-    @profile
+#    @profile
     def compute_gurobi_model(self):
         """
         Generates the gurobi solver model for the MaxTau problem.
@@ -1231,7 +1231,7 @@ class MaxContrast(ProblemMatrix):
     """
     default_params = default.get_default_params_2d_MaxContrastProblemMatrix()
     
-    @profile
+#    @profile
     def __init__(self, **kwargs):
         r"""
         Constructor for the MaxContrast problem with the coronagraph object
@@ -1272,7 +1272,7 @@ class MaxContrast(ProblemMatrix):
         self.nPsiD = self.nI1*self.corono.nlam*self.ndz
 
 #%%    
-    @profile
+#    @profile
     def compute_problem_matrices(self):
         r"""
         Computes the matrices for the optimization problem that consists in 
@@ -1493,7 +1493,7 @@ class MaxContrast(ProblemMatrix):
         return self.A, self.b, self.c
 
 #%%
-    @profile
+#    @profile
     def compute_problem_matrices_gurobi(self):
         r"""
         Computes constraints to range the amplitude transmission of the 
@@ -1550,7 +1550,7 @@ class MaxContrast(ProblemMatrix):
             
             
 #%%
-    @profile
+#    @profile
     def compute_problem_matrices_MinIsland(self):
         r"""
         Computes matrices to add constraints that minimizes the islands in the
@@ -1674,7 +1674,7 @@ class MaxContrast(ProblemMatrix):
         print('Warning: update_tau() method is outdated!!!') 
             
 #%%
-    @profile
+#    @profile
     def compute_gurobi_model(self):
         r"""
         Generates the gurobi solver model for the MaxContrast problem.
