@@ -95,7 +95,7 @@ def compute_corono_image(img_index, saxo_i, saxo_f):
     saxo_i = int(saxo_i)
     saxo_f = int(saxo_f)
     nmap = saxo_f - saxo_i + 1
-    for imap in tqdm.tqdm(range(nmap), desc="AO maps"):
+    for imap in range(nmap):#tqdm.tqdm(range(nmap), desc="AO maps"):
         OPDmap2d = OPDmap2d0 + SAXOmapnm3d[saxo_i+imap]*1e-9
         direct_mono_img_f += corono0.compute_direct_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d, poly=False)
         corono_mono_img_f += corono0.compute_corono_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d, poly=False)
@@ -571,7 +571,7 @@ if __name__ == '__main__':
                 SAXOmapnm3d_tmp *= saxofudge
             # rescale NCPA map
             SAXOmapnm3d = np.empty((nmap, nPup, nPup))
-            pbar_maps = tqdm.tqdm(range(nmap), desc="AO map rescaling")
+            pbar_maps = range(nmap)#tqdm.tqdm(range(nmap), desc="AO map rescaling")
             for i in pbar_maps:
                 SAXOmapnm3d[i] = imutils.scale(SAXOmapnm3d_tmp[i], 0, new_dim=(nPup,nPup), method='interp')
                 #pbar_maps.set_description(f'{i+1:05}/{nmap:05}: SAXO map scaling - before: {np.std(SAXOmapnm3d_tmp[i, pupil_tmp != 0]):6.2f} nm RMS, after: {np.std(np.asarray(SAXOmapnm3d)[i, pupil != 0]):6.2f} nm RMS')
@@ -729,7 +729,7 @@ if __name__ == '__main__':
     direct_mono_img_f /= nmap
     corono_mono_img_f /= nmap
 
-    pbar_lam = tqdm.tqdm(range(nlam), desc="wavelength", position=0)
+    pbar_lam = range(nlam)#tqdm.tqdm(range(nlam), desc="wavelength", position=0)
     for ilam in pbar_lam:
         # image normalization
         direct_peak_val[ilam] = direct_mono_img_f[ilam].max()
@@ -802,7 +802,7 @@ if __name__ == '__main__':
     direct_mono_img_fp /= nmap
     corono_mono_img_fp /= nmap
 
-    for ilam in tqdm.tqdm(range(nlam), desc="wavelength"):
+    for ilam in range(nlam):#tqdm.tqdm(range(nlam), desc="wavelength"):
         # image normalization
         direct_mono_img_fp[ilam] /= direct_peak_val[ilam]
         corono_mono_img_fp[ilam] /= direct_peak_val[ilam]
@@ -987,7 +987,7 @@ if __name__ == '__main__':
                           fpath_direct_cube, fpath_corono_cube]
         nlist = len(data_list)
         
-        for ilist in tqdm.tqdm(range(nlist), "file saving"):
+        for ilist in range(nlist):#tqdm.tqdm(range(nlist), "file saving"):
         # save in FITS format
             hdu_prim = fits.PrimaryHDU()
             hdu_img  = fits.ImageHDU(data_list[ilist])
