@@ -347,7 +347,7 @@ if __name__ == '__main__':
     kwd_sav_onlyphot = True
     
     # planet flux fudge factor
-    plnt_flux_fudge_factor = 1000
+    plnt_flux_fudge_factor = 100
 
     #%%
     """
