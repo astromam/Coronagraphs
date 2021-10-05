@@ -327,7 +327,7 @@ if __name__ == '__main__':
     kwd_pla = True
     
     # Planet position properties
-    sep_mas_p   = 12.25*12  #5*pscale      # planet separation in mas
+    sep_mas_p   = 12.25*16  #5*pscale      # planet separation in mas
     theta_deg_p = 0  # planet position angle in degrees
     
     # observation parameters
