@@ -722,8 +722,8 @@ if __name__ == '__main__':
             direct_mono_img_f += corono0.compute_direct_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d0, poly=False)
             corono_mono_img_f += corono0.compute_corono_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d0, poly=False)
     else:
-        direct_mono_img_f += corono0.compute_direct_intensity_2d_bis(Apod2d)
-        corono_mono_img_f += corono0.compute_corono_intensity_2d_bis(Apod2d)    
+        direct_mono_img_f += corono0.compute_direct_intensity_2d_bis(Apod2d, poly=False)
+        corono_mono_img_f += corono0.compute_corono_intensity_2d_bis(Apod2d, poly=False)    
 
     # computation of the averaged images
     direct_mono_img_f /= nmap
