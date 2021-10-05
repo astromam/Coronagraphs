@@ -340,7 +340,7 @@ if __name__ == '__main__':
     inst_transmission = 1
 
     # Noise
-    kwd_noi = True
+    kwd_noi = False
     std_ron = 1 # photo-electrons
 
     # Photometry
@@ -635,7 +635,7 @@ if __name__ == '__main__':
     str_sphplus = '_{}_{}dMSun_{}MJup_{}Myr'.format(star_SpT, int(round(star_mass*10)), int(round(plnt_mass)), int(round(star_age)))
     str_noi = ''
     if kwd_noi:
-        str_noi = '_noise'
+        str_noi = '_noi'
         
     str_ff = f'_{plnt_flux_fudge_factor:03d}'
     
