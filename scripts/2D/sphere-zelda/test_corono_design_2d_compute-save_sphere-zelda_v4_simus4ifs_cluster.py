@@ -950,21 +950,21 @@ if __name__ == '__main__':
         # total noise
         direct_cube = direct_Int_phn + direct_Int_ron
         corono_cube = corono_Int_phn + corono_Int_ron
-        
-        # apply stellar photometry
-        direct_cube *= u.dimensionless_unscaled
-        corono_cube *= u.dimensionless_unscaled
-        
-        # rounding of the values
-        direct_cube = np.rint(direct_cube.value).astype(int)
-        corono_cube = np.rint(corono_cube.value).astype(int)
-        
-        # clip negative values to zero
-        direct_cube = direct_cube.clip(min=0)
-        corono_cube = corono_cube.clip(min=0)
-        
+                
     else:
         _log.warning(' ==> no noise added!')
+
+    # apply stellar photometry
+    direct_cube *= u.dimensionless_unscaled
+    corono_cube *= u.dimensionless_unscaled
+    
+    # rounding of the values
+    direct_cube = np.rint(direct_cube.value).astype(int)
+    corono_cube = np.rint(corono_cube.value).astype(int)
+    
+    # clip negative values to zero
+    direct_cube = direct_cube.clip(min=0)
+    corono_cube = corono_cube.clip(min=0)
 
 
     #%% saving of the images
