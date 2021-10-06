@@ -333,14 +333,14 @@ if __name__ == '__main__':
     # observation parameters
     exposure  = 0      # exposure number in the sequence
     airmass   = 1.2    # airmass for exposure
-    DIT       = nsaxomap/1380      # sec
+    DIT       = 60#nsaxomap/1380      # sec
     
     # telescope and instrument transmission]
     tel_transmission = 1
     inst_transmission = 1
 
     # Noise
-    kwd_noi = False
+    kwd_noi = True
     std_ron = 1 # photo-electrons
 
     # Photometry
@@ -795,8 +795,8 @@ if __name__ == '__main__':
             direct_mono_img_fp += corono0.compute_direct_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d0+opd_p0, poly=False)
             corono_mono_img_fp += corono0.compute_corono_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d0+opd_p0, poly=False)
     else:
-        direct_mono_img_fp += corono0.compute_direct_intensity_2d_bis(Apod2d)
-        corono_mono_img_fp += corono0.compute_corono_intensity_2d_bis(Apod2d)    
+        direct_mono_img_fp += corono0.compute_direct_intensity_2d_bis(Apod2d, OPDmap2d=opd_p0,poly=False)
+        corono_mono_img_fp += corono0.compute_corono_intensity_2d_bis(Apod2d, OPDmap2d=opd_p0, poly=False)    
 
     # computation of the averaged images
     direct_mono_img_fp /= nmap
@@ -896,6 +896,9 @@ if __name__ == '__main__':
     """
     direct_cube = direct_mono_img_f_obs + direct_mono_img_fp_obs
     corono_cube = corono_mono_img_f_obs + corono_mono_img_fp_obs
+    
+    #direct_cube = direct_mono_img_fp_obs
+    #corono_cube = corono_mono_img_fp_obs
     
     #%%
     """
