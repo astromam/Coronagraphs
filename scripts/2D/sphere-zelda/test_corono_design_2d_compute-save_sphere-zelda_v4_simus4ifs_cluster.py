@@ -216,8 +216,8 @@ if __name__ == '__main__':
     star_SpT0_lst = ['A', 'F', 'K']
     new_lst = list(itertools.product(sci_case_lst, star_SpT0_lst))
 
-    sci_case    = new_lst[eval(sys.argv[1])][0] # 'young' or mature'
-    star_SpT0   = new_lst[eval(sys.argv[1])][1] # 'A', 'F', 'K'
+    sci_case    = sci_case_lst[eval(sys.argv[1])]#new_lst[eval(sys.argv[1])][0] # 'young' or mature'
+    star_SpT0   = star_SpT0_lst[eval(sys.argv[2])]#new_lst[eval(sys.argv[1])][1] # 'A', 'F', 'K'
     
     _log.info(f'{sci_case} system, {star_SpT0} star, {band} band')
     if sci_case == 'young':        
@@ -302,10 +302,10 @@ if __name__ == '__main__':
     kw_aftercorr = False
     kw_saxo      = True
     saxofudge    = 1 #60/120              # saxo amplitude errors fudge factor
-    # saxomap_i    = int(nmap_sub*(eval(sys.argv[1])))       # saxo first screen
-    # saxomap_f    = int(nmap_sub*(eval(sys.argv[1])+1)-1)     # saxo last screen
-    saxomap_i    = int(nmap_sub*(0))       # saxo first screen
-    saxomap_f    = int(nmap_sub*(0+1)-1)     # saxo last screen
+    saxomap_i    = int(nmap_sub*(eval(sys.argv[2])))       # saxo first screen
+    saxomap_f    = int(nmap_sub*(eval(sys.argv[2])+1)-1)     # saxo last screen
+    # saxomap_i    = int(nmap_sub*(0))       # saxo first screen
+    # saxomap_f    = int(nmap_sub*(0+1)-1)     # saxo last screen
     _log.info(f'saxomap_i: {saxomap_i}, saxomap_f {saxomap_f}')
     # seeing for on-sky observations [arcsec]
     seeing = 0.7
@@ -324,7 +324,7 @@ if __name__ == '__main__':
     do_sav = True 
     
     # case with planet for plots
-    kwd_pla = True
+    kwd_pla = False
     
     # Planet position properties
     sep_mas_p   = 12.25*16  #5*pscale      # planet separation in mas
@@ -333,14 +333,14 @@ if __name__ == '__main__':
     # observation parameters
     exposure  = 0      # exposure number in the sequence
     airmass   = 1.2    # airmass for exposure
-    DIT       = 60#nsaxomap/1380      # sec
+    DIT       = 60     #nsaxomap/1380      # sec
     
     # telescope and instrument transmission]
     tel_transmission = 1
     inst_transmission = 1
 
     # Noise
-    kwd_noi = True
+    kwd_noi = False
     std_ron = 1 # photo-electrons
 
     # Photometry
@@ -358,11 +358,11 @@ if __name__ == '__main__':
         wv0   = 1.593e-6
         width = 52e-9
     elif band == 'BB_H':
-        nlam  = 892
+        nlam  = 1785
         wv0   = 1625e-9
         width = 290e-9
     elif band == 'BB_J':
-        nlam  = 964
+        nlam  = 1928
         wv0   = 1245e-9
         width = 240e-9            
     else:
@@ -631,13 +631,21 @@ if __name__ == '__main__':
     """
 
     str_common = '_nmap{:05d}_i{:05d}_f{:05d}_band{}_nlam{:04d}'.format(nmap, saxomap_i, saxomap_f,band, nlam)
-    str_offaxis = '_sep{:04d}mas'.format(int(round(sep_mas_p)))
-    str_sphplus = '_{}_{}dMSun_{}MJup_{}Myr'.format(star_SpT, int(round(star_mass*10)), int(round(plnt_mass)), int(round(star_age)))
+    str_offaxis_fp = '_sep{:04d}mas'.format(int(round(sep_mas_p)))
+    str_offaxis = ''
+    if kwd_pla:
+        str_offaxis = str_offaxis_fp
+    
+    str_sphplus = '_{}_{}dMSun_{}Myr'.format(star_SpT, int(round(star_mass*10)), int(round(star_age)))   
+    if kwd_pla:
+        str_sphplus += '_{}MJup'.format(int(round(plnt_mass)))
     str_noi = ''
     if kwd_noi:
         str_noi = '_noi'
-        
-    str_ff = f'_{plnt_flux_fudge_factor:03d}'
+    
+    str_ff = ''
+    if kwd_pla:
+        str_ff = f'_{plnt_flux_fudge_factor:03d}'
     
     # filepaths for the images
     fname_direct_mono_img_f     = 'dir' + str_common + '_img_f.fits'
@@ -656,8 +664,8 @@ if __name__ == '__main__':
     fpath_corono_mono_prf_std_f = fdir_res / fname_corono_mono_prf_std_f
     
     # filepaths for the images for the off-axis planet
-    fname_direct_mono_img_fp = 'dir' + str_common + '_img_f' + str_offaxis + '.fits'
-    fname_corono_mono_img_fp = 'cor' + str_common + '_img_f' + str_offaxis + '.fits'
+    fname_direct_mono_img_fp = 'dir' + str_common + '_img_f' + str_offaxis_fp + '.fits'
+    fname_corono_mono_img_fp = 'cor' + str_common + '_img_f' + str_offaxis_fp + '.fits'
     fpath_direct_mono_img_fp = fdir_res / fname_direct_mono_img_fp
     fpath_corono_mono_img_fp = fdir_res / fname_corono_mono_img_fp
     
