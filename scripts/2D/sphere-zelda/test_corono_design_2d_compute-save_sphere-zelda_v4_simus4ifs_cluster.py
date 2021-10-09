@@ -302,8 +302,8 @@ if __name__ == '__main__':
     kw_aftercorr = False
     kw_saxo      = True
     saxofudge    = 1 #60/120              # saxo amplitude errors fudge factor
-    saxomap_i    = int(nmap_sub*(eval(sys.argv[2])))       # saxo first screen
-    saxomap_f    = int(nmap_sub*(eval(sys.argv[2])+1)-1)     # saxo last screen
+    saxomap_i    = int(nmap_sub*(eval(sys.argv[3])))       # saxo first screen
+    saxomap_f    = int(nmap_sub*(eval(sys.argv[3])+1)-1)     # saxo last screen
     # saxomap_i    = int(nmap_sub*(0))       # saxo first screen
     # saxomap_f    = int(nmap_sub*(0+1)-1)     # saxo last screen
     _log.info(f'saxomap_i: {saxomap_i}, saxomap_f {saxomap_f}')
@@ -753,67 +753,69 @@ if __name__ == '__main__':
 
     #%%
     # # definition of the coronagraph class
-    opd_p0 = wv0*(sep_loD_p/4)*(np.sin(theta_rad_p)*Tipp_mapnm2d + np.cos(theta_rad_p)*Tilt_mapnm2d)
-
-
-    t0 = time.time()
-    if kw_aberr:
-        if kw_saxo and kw_2nddate:
-
-            # create shared arrays
-            direct_mono_img_fp_cube_shape = (nproc, nlam, nImg2d, nImg2d)
-            direct_mono_img_fp_cube_data  = multiprocessing.RawArray(ctypes.c_double, int(np.prod(direct_mono_img_cube_shape)))
-            direct_mono_img_fp_cube_np    = array_to_numpy(direct_mono_img_fp_cube_data, direct_mono_img_fp_cube_shape)
-            
-            corono_mono_img_fp_cube_shape = (nproc, nlam, nImg2d, nImg2d)
-            corono_mono_img_fp_cube_data  = multiprocessing.RawArray(ctypes.c_double, int(np.prod(corono_mono_img_cube_shape)))
-            corono_mono_img_fp_cube_np    = array_to_numpy(corono_mono_img_fp_cube_data, corono_mono_img_fp_cube_shape)
-
-            # create thread pool
-            tpool = multiprocessing.Pool(processes=nproc, initializer=tpool_init,
-                                          initargs=(OPDmap2d0+opd_p0, SAXOmapnm3d, corono0, direct_mono_img_fp_cube_data, direct_mono_img_fp_cube_shape,
-                                                    corono_mono_img_fp_cube_data, corono_mono_img_fp_cube_shape))
-            # tpool_init(OPDmap2d0, SAXOmapnm3d, corono0, direct_mono_img_cube_data, direct_mono_img_cube_shape,
-            #            corono_mono_img_cube_data, corono_mono_img_cube_shape)
-
-            # create tasks
-            tasks = []
-            for image_index in range(nproc):
-                block = nmap / nproc
-                idx_i = image_index*block
-                idx_f = (image_index+1)*block-1
-                tasks.append(tpool.apply_async(compute_corono_image, args=(image_index, idx_i, idx_f)))
-                # compute_corono_image(image_index, idx_i, idx_f)
-                # stop
-
-            for idx, task in enumerate(tasks):
-                task.wait()
-
-            # close thread pool
-            tpool.close()
-            tpool.join()
-
-            direct_mono_img_fp_cube_np = array_to_numpy(direct_mono_img_fp_cube_data, direct_mono_img_fp_cube_shape)
-            corono_mono_img_fp_cube_np = array_to_numpy(corono_mono_img_fp_cube_data, corono_mono_img_fp_cube_shape)
-            
-            direct_mono_img_fp += direct_mono_img_fp_cube_np.sum(axis=0)
-            corono_mono_img_fp += corono_mono_img_fp_cube_np.sum(axis=0)
-
+    
+    if kwd_pla:
+        opd_p0 = wv0*(sep_loD_p/4)*(np.sin(theta_rad_p)*Tipp_mapnm2d + np.cos(theta_rad_p)*Tilt_mapnm2d)
+    
+    
+        t0 = time.time()
+        if kw_aberr:
+            if kw_saxo and kw_2nddate:
+    
+                # create shared arrays
+                direct_mono_img_fp_cube_shape = (nproc, nlam, nImg2d, nImg2d)
+                direct_mono_img_fp_cube_data  = multiprocessing.RawArray(ctypes.c_double, int(np.prod(direct_mono_img_cube_shape)))
+                direct_mono_img_fp_cube_np    = array_to_numpy(direct_mono_img_fp_cube_data, direct_mono_img_fp_cube_shape)
+                
+                corono_mono_img_fp_cube_shape = (nproc, nlam, nImg2d, nImg2d)
+                corono_mono_img_fp_cube_data  = multiprocessing.RawArray(ctypes.c_double, int(np.prod(corono_mono_img_cube_shape)))
+                corono_mono_img_fp_cube_np    = array_to_numpy(corono_mono_img_fp_cube_data, corono_mono_img_fp_cube_shape)
+    
+                # create thread pool
+                tpool = multiprocessing.Pool(processes=nproc, initializer=tpool_init,
+                                              initargs=(OPDmap2d0+opd_p0, SAXOmapnm3d, corono0, direct_mono_img_fp_cube_data, direct_mono_img_fp_cube_shape,
+                                                        corono_mono_img_fp_cube_data, corono_mono_img_fp_cube_shape))
+                # tpool_init(OPDmap2d0, SAXOmapnm3d, corono0, direct_mono_img_cube_data, direct_mono_img_cube_shape,
+                #            corono_mono_img_cube_data, corono_mono_img_cube_shape)
+    
+                # create tasks
+                tasks = []
+                for image_index in range(nproc):
+                    block = nmap / nproc
+                    idx_i = image_index*block
+                    idx_f = (image_index+1)*block-1
+                    tasks.append(tpool.apply_async(compute_corono_image, args=(image_index, idx_i, idx_f)))
+                    # compute_corono_image(image_index, idx_i, idx_f)
+                    # stop
+    
+                for idx, task in enumerate(tasks):
+                    task.wait()
+    
+                # close thread pool
+                tpool.close()
+                tpool.join()
+    
+                direct_mono_img_fp_cube_np = array_to_numpy(direct_mono_img_fp_cube_data, direct_mono_img_fp_cube_shape)
+                corono_mono_img_fp_cube_np = array_to_numpy(corono_mono_img_fp_cube_data, corono_mono_img_fp_cube_shape)
+                
+                direct_mono_img_fp += direct_mono_img_fp_cube_np.sum(axis=0)
+                corono_mono_img_fp += corono_mono_img_fp_cube_np.sum(axis=0)
+    
+            else:
+                direct_mono_img_fp += corono0.compute_direct_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d0+opd_p0, poly=False)
+                corono_mono_img_fp += corono0.compute_corono_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d0+opd_p0, poly=False)
         else:
-            direct_mono_img_fp += corono0.compute_direct_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d0+opd_p0, poly=False)
-            corono_mono_img_fp += corono0.compute_corono_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d0+opd_p0, poly=False)
-    else:
-        direct_mono_img_fp += corono0.compute_direct_intensity_2d_bis(Apod2d, OPDmap2d=opd_p0,poly=False)
-        corono_mono_img_fp += corono0.compute_corono_intensity_2d_bis(Apod2d, OPDmap2d=opd_p0, poly=False)    
-
-    # computation of the averaged images
-    direct_mono_img_fp /= nmap
-    corono_mono_img_fp /= nmap
-
-    for ilam in range(nlam):#tqdm.tqdm(range(nlam), desc="wavelength"):
-        # image normalization
-        direct_mono_img_fp[ilam] /= direct_peak_val[ilam]
-        corono_mono_img_fp[ilam] /= direct_peak_val[ilam]
+            direct_mono_img_fp += corono0.compute_direct_intensity_2d_bis(Apod2d, OPDmap2d=opd_p0,poly=False)
+            corono_mono_img_fp += corono0.compute_corono_intensity_2d_bis(Apod2d, OPDmap2d=opd_p0, poly=False)    
+    
+        # computation of the averaged images
+        direct_mono_img_fp /= nmap
+        corono_mono_img_fp /= nmap
+    
+        for ilam in range(nlam):#tqdm.tqdm(range(nlam), desc="wavelength"):
+            # image normalization
+            direct_mono_img_fp[ilam] /= direct_peak_val[ilam]
+            corono_mono_img_fp[ilam] /= direct_peak_val[ilam]
 
     #%%
     """
@@ -827,14 +829,16 @@ if __name__ == '__main__':
     ### Photometry and spectra for the star, the planet and the telluric lines 
     """
     star_spec = fits.getdata(fpath_spectra_star)
-    plnt_spec = fits.getdata(fpath_spectra_plnt)
+    if kwd_pla:
+        plnt_spec = fits.getdata(fpath_spectra_plnt)
     tell_spec = fits.getdata(fpath_spectra_tell)
     
     star_wave = star_spec[0]
     star_flux = star_spec[1]
     
-    plnt_wave = plnt_spec[0]
-    plnt_flux = plnt_spec[1]
+    if kwd_pla:
+        plnt_wave = plnt_spec[0]
+        plnt_flux = plnt_spec[1]
     
     tell_wave = tell_spec[0]
     tell_flux = tell_spec[1]
@@ -850,10 +854,10 @@ if __name__ == '__main__':
     star_phot = star_flux.to('ph s**-1 m**-2 micron**-1', equivalencies=u.spectral_density(star_wave))
     
     #%%
-    
-    plnt_wave *= u.um
-    plnt_flux *= u.W / u.m**2 / u.um
-    plnt_phot = plnt_flux.to('ph s**-1 m**-2 micron**-1', equivalencies=u.spectral_density(plnt_wave))
+    if kwd_pla:
+        plnt_wave *= u.um
+        plnt_flux *= u.W / u.m**2 / u.um
+        plnt_phot = plnt_flux.to('ph s**-1 m**-2 micron**-1', equivalencies=u.spectral_density(plnt_wave))
     
     #%%
     tell_wave *= u.um
@@ -874,7 +878,8 @@ if __name__ == '__main__':
     """
     
     star_phot = spectral_binning(wv_um_t, dwv_um_t, star_wave, star_phot)
-    plnt_phot = plnt_flux_fudge_factor*spectral_binning(wv_um_t, dwv_um_t, plnt_wave, plnt_phot)
+    if kwd_pla:
+        plnt_phot = plnt_flux_fudge_factor*spectral_binning(wv_um_t, dwv_um_t, plnt_wave, plnt_phot)
     
     #tell_phot = transmission_spectral_binning(wv_um_t, dwv_um_t, tell_wave, tell_flux)
     
@@ -892,21 +897,23 @@ if __name__ == '__main__':
     """
     ### apply planetary photometry
     """
-    direct_mono_img_fp_obs = direct_mono_img_fp * u.dimensionless_unscaled 
-    direct_mono_img_fp_obs *= plnt_phot[:, None, None]
-    
-    corono_mono_img_fp_obs = corono_mono_img_fp * u.dimensionless_unscaled 
-    corono_mono_img_fp_obs *= plnt_phot[:, None, None]
+    if kwd_pla:
+        direct_mono_img_fp_obs = direct_mono_img_fp * u.dimensionless_unscaled 
+        direct_mono_img_fp_obs *= plnt_phot[:, None, None]
+        
+        corono_mono_img_fp_obs = corono_mono_img_fp * u.dimensionless_unscaled 
+        corono_mono_img_fp_obs *= plnt_phot[:, None, None]
     
     #%%
     """
     ### add stellar and planetary signal
     """
-    direct_cube = direct_mono_img_f_obs + direct_mono_img_fp_obs
-    corono_cube = corono_mono_img_f_obs + corono_mono_img_fp_obs
-    
-    #direct_cube = direct_mono_img_fp_obs
-    #corono_cube = corono_mono_img_fp_obs
+    if kwd_pla:    
+        direct_cube = direct_mono_img_f_obs + direct_mono_img_fp_obs
+        corono_cube = corono_mono_img_f_obs + corono_mono_img_fp_obs
+    else:
+        direct_cube = direct_mono_img_f_obs
+        corono_cube = corono_mono_img_f_obs
     
     #%%
     """
