@@ -50,15 +50,22 @@ if True:
     nFPM = 50
     Fmax2d = 50
     nImg2d = 500
+    do_margin = True
+
+    str_margin=''
+    if do_margin:
+        str_margin = '_v2'
 
     # telescope parameters
-    pdiam, odiam = 7.92, 2.3  # tel. and obst. diameters (meters)
+    pdiam, odiam = 7.92, 2.3 # tel. and obst. diameters (meters)
+    if do_margin:
+        pdiam, odiam = 7.92*0.99, 2.3+7.92*0.01 # tel. and obst. diameters (meters)thick = 0.25              # adopted spider thickness (meters)
     thick = 0.25              # adopted spider thickness (meters)
     offset = 1.278            # spider intersection offset (meters)
     beta = 51.75              # spider angle beta
     
-    pdiam2 = 0.95*pdiam
-    odiam2 = 1.15*odiam#2.53#
+    pdiam2 = 0.96*pdiam
+    odiam2 = 1.112*odiam#2.53#
     thick2 = 2.0*thick
     Fratio = 64
 
@@ -78,7 +85,7 @@ if True:
     # mask radius in lam0/D units
     rMask_m = 453e-6/2
     # correpsonding mask size for the optimal prolate 
-    rMask1  = 2.65#2.64#rMask_m/(wv1*Fratio)  # mask size in lam1/D
+    rMask1  = 2.64#2.64#rMask_m/(wv1*Fratio)  # mask size in lam1/D
     
     # dark zone bounds (inner and outer edges) in lam0/D unit
     rho0 =  5.0
@@ -101,7 +108,7 @@ if True:
     # bw   = 0.1
     nlam = 1
 
-    do_EDA  = True
+    do_EDA  = False
     
     do_fits = False
     do_plot = True
@@ -216,9 +223,9 @@ if True:
         raise ValueError('Unknown user {0}'.format(user))
 
     if pupil_name == 'sbr':
-        fname_pup = f'pupilsbr_nPup{nPup}_kpdiam{int(np.round(kpdiam1*100)):03d}_kodiam{int(np.round(kodiam1*100)):03d}_kthick{int(np.round(kthick1*100)):03d}.fits' 
+        fname_pup = f'pupilsbr_nPup{nPup}_kpdiam{int(np.round(kpdiam1*100)):03d}_kodiam{int(np.round(kodiam1*100)):03d}_kthick{int(np.round(kthick1*100)):03d}{str_margin}.fits' 
 #        fname_lys = f'pupil=sbr_nPup={nPup}_odiam={int(odiam2*100)}_thick={int(thick2*100):03d}.fits'
-        fname_lys = f'pupilsbr_nPup{nPup}_kpdiam{int(np.round(kpdiam2*100)):03d}_kodiam{int(np.round(kodiam2*100)):03d}_kthick{int(np.round(kthick2*100)):03d}.fits' 
+        fname_lys = f'pupilsbr_nPup{nPup}_kpdiam{int(np.round(kpdiam2*100)):03d}_kodiam{int(np.round(kodiam2*100)):03d}_kthick{int(np.round(kthick2*100)):03d}{str_margin}.fits' 
     else:
         raise NameError(f'{pupil_name}: unknown pupil name')
     
@@ -271,7 +278,7 @@ else:
 Read files
 """
 #fname_apod = f'pupilsbr_nPup{nPup}_pdiam{int(np.round(pdiam*100))}_odiam{int(np.round(odiam*100))}_thick{int(np.round(thick*100)):03d}_Apod_rMask{int(np.round(rMask1*100)):03d}.fits'
-fname_apod = f'pupilsbr_nPup{nPup}_pdiam{int(np.round(pdiam*100))}_odiam{int(np.round(odiam*100))}_thick{int(np.round(thick_apod*100)):03d}_Apod_rMask{int(np.round(rMask1*100)):03d}' + str_EDA + '.fits'
+fname_apod = f'pupilsbr_nPup{nPup}_pdiam{int(np.round(pdiam*100))}_odiam{int(np.round(odiam*100))}_thick{int(np.round(thick_apod*100)):03d}_Apod_rMask{int(np.round(rMask1*100)):03d}' + str_EDA + f'{str_margin}.fits'
 fpath_apod= fdir / fname_apod
 
 Apod_pyth = fits.getdata(fpath_apod,)
@@ -285,7 +292,7 @@ Plot display of the apodizers
 # pl.imshow(corono0.Pupil2d, cmap = cm.Greys_r)
 # pl.title('Pupil transmission')
 
-fname = f'pupilsbr_nPup{nPup}_pdiam{int(np.round(pdiam*100))}_odiam{int(np.round(odiam*100))}_thick{int(np.round(thick*100)):03d}_Apod_rMask{int(np.round(rMask1*100)):03d}' + str_EDA + '.pdf'
+fname = f'pupilsbr_nPup{nPup}_pdiam{int(np.round(pdiam*100))}_odiam{int(np.round(odiam*100))}_thick{int(np.round(thick*100)):03d}_Apod_rMask{int(np.round(rMask1*100)):03d}' + str_EDA + f'{str_margin}.pdf'
 fpath = fdir_pdf / fname
 
 pl.figure(5, (12,4))
@@ -468,7 +475,7 @@ poly_corono_prf_std_H, rad_corono_H = imutils.profile(poly_corono_image1_H, type
 """
 Display direct and coronagraphic images
 """
-fname = fname_gen + '_direct_image_gbsx' + str_EDA + '.pdf'
+fname = fname_gen + '_direct_image_gbsx' + str_EDA + f'{str_margin}.pdf'
 fpath = fdir_pdf / fname
 
 pl.figure(10)
@@ -483,7 +490,7 @@ nband = len(bands)
 vmin0 = -8
 vmax0 = -3
 
-fname = fname_gen + '_apodized_image_gbsx' + str_EDA + '.pdf'
+fname = fname_gen + '_apodized_image_gbsx' + str_EDA + f'{str_margin}.pdf'
 fpath = fdir_pdf / fname
 
 f1 = pl.figure(11, (16, 4.5))
@@ -557,7 +564,7 @@ rMask_arr = [corono0_z.rMask, corono0_Y.rMask, corono0_J.rMask, corono0_H.rMask]
 
 for iband in range(nband):
     
-    fname = fname_gen + f'_intensity_profiles_{bands[iband]}_gbsx' + str_EDA + '.pdf'
+    fname = fname_gen + f'_intensity_profiles_{bands[iband]}_gbsx' + str_EDA + f'{str_margin}.pdf'
     fpath = fdir_pdf / fname
     pl.figure(21+iband)
     pl.clf()
@@ -690,7 +697,7 @@ for i in range(nlam_ter):
 colors_shifts = pl.cm.rainbow(np.linspace(0,1,2))
 ls_shifts = ["-", "--"]
 
-fname_bw_plot = 'corono_poly_bw_sensitivity_plot_nPup={0}_gbsx'.format(nPup) + str_EDA + '.pdf'
+fname_bw_plot = 'corono_poly_bw_sensitivity_plot_nPup={0}_gbsx'.format(nPup) + str_EDA + f'{str_margin}.pdf'
 fpath_bw_plot = fdir_pdf / fname_bw_plot
 
 plot_lines = []
@@ -771,7 +778,7 @@ lam_opt_min = lam0 - 0.5*bw#corono0.lam_t.min()
 lam_opt_max = lam0 + 0.5*bw#corono0.lam_t.max()
 
 #%%
-fname_image_plane_f_disp = 'corono_poly_bw_sensitivity_contour_nPup={0}_gbsx'.format(nPup) + str_EDA + '.pdf'
+fname_image_plane_f_disp = 'corono_poly_bw_sensitivity_contour_nPup={0}_gbsx'.format(nPup) + str_EDA + f'{str_margin}.pdf'
 fpath_image_plane_f_disp = fdir_pdf / fname_image_plane_f_disp
 
 # line width parameter

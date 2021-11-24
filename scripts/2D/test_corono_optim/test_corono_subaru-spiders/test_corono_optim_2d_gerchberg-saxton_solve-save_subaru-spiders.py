@@ -26,6 +26,8 @@ syst = sys.platform
 
 import matplotlib.pyplot as pl
 
+import tqdm
+
 #%% parameters
 """
 Parameters
@@ -51,12 +53,26 @@ nPup = 200
 nFPM = 50
 Fmax2d = 16#22.5
 nImg2d = 4*Fmax2d#45
+do_margin = True
+
+str_margin=''
+if do_margin:
+    str_margin = '_v2'
 
 # telescope parameters
-pdiam, odiam = 7.92, 2.3  # tel. and obst. diameters (meters)
-thick = 0.25              # adopted spider thickness (meters)
+pdiam, odiam = 7.92, 2.3 # tel. and obst. diameters (meters)
+if do_margin:
+    pdiam, odiam = 7.92*0.99, 2.3+7.92*0.01 # tel. and obst. diameters (meters)thick = 0.25              # adopted spider thickness (meters)
+thick = 0.25
 offset = 1.278            # spider intersection offset (meters)
 beta = 51.75              # spider angle beta
+
+kpdiam0 = pdiam/(7.92)
+kodiam0 = odiam/(2.3)
+if do_margin:
+    kpdiam0 = pdiam/(7.92*0.99)
+    kodiam0 = odiam/(2.3+7.92*0.01)
+kthick0 = thick/0.25
 
 kpdiam_t = np.linspace(0.9, 1.0, 11)
 kodiam_t = np.linspace(1.0, 2.0, 21)
@@ -105,7 +121,7 @@ band = 'GPI_J'
 nlam = 5
 #nlam1 = 101
 
-do_EE_D = False
+do_EE_D = True
 do_EE_M = True
 do_EE_S = True
 
@@ -201,8 +217,10 @@ else:
     raise ValueError('Unknown user {0}'.format(user))
 
 if pupil_name == 'sbr':
-    fname_pup = f'pupil=sbr_nPup={nPup}_odiam={int(odiam*100)}_thick={int(thick*100):03d}.fits'
-    fname_lys = f'pupil=sbr_nPup={nPup}_odiam={int(odiam*100)}_thick={int(thick*100):03d}.fits'
+    # fname_pup = f'pupil=sbr_nPup={nPup}_odiam={int(odiam*100)}_thick={int(thick*100):03d}.fits'
+    # fname_lys = f'pupil=sbr_nPup={nPup}_odiam={int(odiam*100)}_thick={int(thick*100):03d}.fits'
+    fname_pup = f'pupilsbr_nPup{nPup}_kpdiam{int(np.round(kpdiam0*100)):03d}_kodiam{int(np.round(kodiam0*100)):03d}_kthick{int(np.round(kthick0*100)):03d}{str_margin}.fits' 
+    fname_lys = f'pupilsbr_nPup{nPup}_kpdiam{int(np.round(kpdiam0*100)):03d}_kodiam{int(np.round(kodiam0*100)):03d}_kthick{int(np.round(kthick0*100)):03d}{str_margin}.fits' 
 else:
     raise NameError(f'{pupil_name}: unknown pupil name')
 
@@ -321,18 +339,19 @@ if do_EE_M:
 if do_EE_S:
     EE_S_t = np.zeros((nIter, nMask1))
 
-for ipdiam, kpdiam in enumerate(kpdiam_t):
-    for iodiam, kodiam in enumerate(kodiam_t):
-        for ithick, kthick in enumerate(kthick_t):
+for ipdiam, kpdiam in tqdm.tqdm(enumerate(kpdiam_t), desc='pdiam loop'):
+    for iodiam, kodiam in tqdm.tqdm(enumerate(kodiam_t), desc='odiam loop'):
+        for ithick, kthick in tqdm.tqdm(enumerate(kthick_t), desc='thick loop'):
             
             iIter = ithick+ iodiam*nthick + ipdiam*nthick*nodiam
-            print(f'iIter: {iIter+1:04d}/{nIter:04d}')
+            #if (iIter % 10) == 0:
+            #    print(f'iIter: {iIter+1:04d}/{nIter:04d}')
             
             pdiam2 = pdiam2_t[ipdiam]
             odiam2 = odiam2_t[iodiam]
             thick2 = thick2_t[ithick]
             
-            fname_lys = f'pupilsbr_nPup{nPup}_kpdiam{int(np.round(kpdiam*100)):03d}_kodiam{int(np.round(kodiam*100)):03d}_kthick{int(np.round(kthick*100)):03d}.fits' 
+            fname_lys = f'pupilsbr_nPup{nPup}_kpdiam{int(np.round(kpdiam*100)):03d}_kodiam{int(np.round(kodiam*100)):03d}_kthick{int(np.round(kthick*100)):03d}{str_margin}.fits' 
             fpath_lys = fdir / fname_lys
             LyotStop2d = fits.getdata(fpath_lys)
 
@@ -344,7 +363,7 @@ for ipdiam, kpdiam in enumerate(kpdiam_t):
             
             for iMask1, rMask1 in enumerate(rMask1_t):
                 
-                fname_apo = f'pupilsbr_nPup{nPup}_pdiam{int(np.round(pdiam*100))}_odiam{int(np.round(odiam*100))}_thick{int(np.round(thick_apod*100)):03d}_Apod_rMask{int(np.round(rMask1*100)):03d}.fits'
+                fname_apo = f'pupilsbr_nPup{nPup}_pdiam{int(np.round(pdiam*100))}_odiam{int(np.round(odiam*100))}_thick{int(np.round(thick_apod*100)):03d}_Apod_rMask{int(np.round(rMask1*100)):03d}{str_margin}.fits'
                 fpath_apo = fdir / fname_apo
                 Apod2d = fits.getdata(fpath_apo)
                 
@@ -363,19 +382,19 @@ for ipdiam, kpdiam in enumerate(kpdiam_t):
 """
 ### EE vs rMask
 """    
-fname_EE_D = f'pupilsbr_nPup{nPup}_EE_D_rho0{int(np.round(rho0*100)):03d}_rho1{int(np.round(rho1*100)):03d}' + str_num_mask + str_apod_spiders +'.fits'
+fname_EE_D = f'pupilsbr_nPup{nPup}_EE_D_rho0{int(np.round(rho0*100)):03d}_rho1{int(np.round(rho1*100)):03d}' + str_num_mask + str_apod_spiders + f'{str_margin}.fits'
 fpath_EE_D = fdir / fname_EE_D
 
 if do_fits and do_EE_D:
     fits.writeto(fpath_EE_D, EE_D_t, overwrite=True)
 
-fname_EE_M = f'pupilsbr_nPup{nPup}_EE_M_rho0{int(np.round(rho0*100)):03d}_rho1{int(np.round(rho1*100)):03d}' + str_num_mask + str_apod_spiders +'.fits'
+fname_EE_M = f'pupilsbr_nPup{nPup}_EE_M_rho0{int(np.round(rho0*100)):03d}_rho1{int(np.round(rho1*100)):03d}' + str_num_mask + str_apod_spiders + f'{str_margin}.fits'
 fpath_EE_M = fdir / fname_EE_M
        
 if do_fits and do_EE_M:
     fits.writeto(fpath_EE_M, EE_M_t, overwrite=True)
     
-fname_EE_S = f'pupilsbr_nPup{nPup}_EE_S_rho0{int(np.round(rho0*100)):03d}_rho1{int(np.round(rho1*100)):03d}' + str_num_mask + str_apod_spiders +'.fits'
+fname_EE_S = f'pupilsbr_nPup{nPup}_EE_S_rho0{int(np.round(rho0*100)):03d}_rho1{int(np.round(rho1*100)):03d}' + str_num_mask + str_apod_spiders + f'{str_margin}.fits'
 fpath_EE_S = fdir / fname_EE_S
        
 if do_fits and do_EE_S:

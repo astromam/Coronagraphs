@@ -32,17 +32,25 @@ syst = sys.platform
 """
 ### Parameters
 """
-nPup= 1200
-do_fits = True
+nPup= 200
+do_fits = False
 
-pdiam, odiam = 7.92, 2.3  # tel. and obst. diameters (meters)
+do_margin = True
+
+str_margin=''
+if do_margin:
+    str_margin = '_v2'
+
+pdiam, odiam = 7.92, 2.3 # tel. and obst. diameters (meters)
+if do_margin:
+    pdiam, odiam = 7.92*0.99, 2.3+7.92*0.01 # tel. and obst. diameters (meters)
 thick = 0.25              # adopted spider thickness (meters)
 offset = 1.278            # spider intersection offset (meters)
 beta = 51.75              # spider angle beta
 
-kpdiam_t = [0.95]#np.linspace(0.9, 1.0, 11) # np.linspace(0.98, 1.0, 3)#
-kodiam_t = [1.15]#np.linspace(1.0, 2.0, 21) # np.linspace(1.0, 1.2, 5)#
-kthick_t = [2.0]#np.linspace(1.0, 2.0, 11) # np.linspace(1.0, 1.2, 3)#
+kpdiam_t = [0.96]#np.linspace(0.9, 1.0, 11) # np.linspace(0.98, 1.0, 3) #
+kodiam_t = [1.112]#np.linspace(1.0, 2.0, 21) # np.linspace(1.0, 1.2, 5)  #
+kthick_t = [2.0]#np.linspace(1.0, 2.0, 11) # np.linspace(1.0, 1.2, 3)  #
 
 pdiam2_t = np.asarray(kpdiam_t)*pdiam
 odiam2_t = np.asarray(kodiam_t)*odiam
@@ -54,7 +62,7 @@ nthick = len(kthick_t)
 
 nIter = npdiam*nodiam*nthick
 
-kwd_spiders = [True]
+kwd_spiders = [False,True]
 if thick <= 0.:
     kwd_spiders = False
 
@@ -98,7 +106,7 @@ for ipdiam, kpdiam in enumerate(kpdiam_t):
                 outer_pupil = coro.utils.uniform_disk(nPup, (nPup/2)*kpdiam, CtrBtwnPix=True)
                 pupil = pupil*outer_pupil           
             
-            fname = f'pupilsbr_nPup{nPup}_kpdiam{int(np.round(kpdiam*100)):03d}_kodiam{int(np.round(kodiam*100)):03d}_kthick{int(np.round(kthick*100)):03d}.fits' 
+            fname = f'pupilsbr_nPup{nPup}_kpdiam{int(np.round(kpdiam*100)):03d}_kodiam{int(np.round(kodiam*100)):03d}_kthick{int(np.round(kthick*100)):03d}{str_margin}.fits' 
             fpath = fdir / fname
             
             if do_fits:

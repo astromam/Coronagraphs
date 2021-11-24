@@ -70,7 +70,7 @@ kw_aftercorr = False
 kw_saxo      = True
 saxofudge    = 1. #80/120.
 saxomap_i    = 0    # saxo first screen
-saxomap_f    = 3 # saxo last screen
+saxomap_f    = 0 # saxo last screen
 
 # seeing for on-sky observations
 seeing = 0.7
@@ -90,7 +90,7 @@ tilt_ampl = 0
 do_sav = True 
 
 # case with planet for plots
-kwd_pla = True
+kwd_pla = False
 
 # Planet position properties
 sep_mas_p   = 12.25*8  #5*pscale      # planet separation in mas
@@ -106,15 +106,19 @@ tel_transmission = 1
 inst_transmission = 1
 
 # Noise
-kwd_noi = True
+kwd_noi = False
 std_ron = 1 # photo-electrons
 
 # Photometry
-kwd_sav_onlyphot = True
+kwd_sav_onlyphot = False
+
+# planet flux fudge factor
+plnt_flux_fudge_factor = 1000
+
 
 # stellar parameters
-star_SpT    = 'A0'
-star_mass   = 2.2
+star_SpT    = 'F4'
+star_mass   = 1.5
 star_age    = 20
 star_dist   = 50 
 #star_magH = 4.0
@@ -130,13 +134,13 @@ plnt_wv_res = 1000
 """
 ### Spectral parameters
 """
-band = 'H2'
+band = 'BB_H'
 if band == 'H2':
     nlam = 11
     wv0   = 1.593e-6
     width = 52e-9
 elif band == 'BB_H':
-    nlam  = 11
+    nlam  = 1
     wv0   = 1625e-9 #1.593e-6
     width = 290e-9  #52e-9        
 else:
@@ -153,6 +157,9 @@ wv_R   = 0
 if nlam > 1:
     dwv_t  = np.asarray([wv_t[1]-wv_t[0]]*nlam)
     # spectral resolution
+    wv_R      = wv0/dwv_t[0]
+else:
+    dwv_t[0] = 1e-9
     wv_R      = wv0/dwv_t[0]
 
 # compute spatial frequencies in the final image plane
@@ -456,11 +463,22 @@ corono0  = coro.design.APLC2d(**params)
 ### Filepaths for the results
 """          
 str_common = '_nmap{:05d}_i{:05d}_f{:05d}_band{}_nlam{:04d}'.format(nmap, saxomap_i, saxomap_f,band, nlam)
-str_offaxis = '_sep{:04d}mas'.format(int(round(sep_mas_p)))
+str_offaxis_fp = '_sep{:04d}mas'.format(int(round(sep_mas_p)))
 str_sphplus = '_{}_{}dMSun_{}MJup_{}Myr'.format(star_SpT, int(round(star_mass*10)), int(round(plnt_mass)), int(round(star_age)))
+str_offaxis = ''
+if kwd_pla:
+    str_offaxis = str_offaxis_fp
+
+str_sphplus = '_{}_{}dMSun_{}Myr'.format(star_SpT, int(round(star_mass*10)), int(round(star_age)))   
+if kwd_pla:
+    str_sphplus += '_{}MJup'.format(int(round(plnt_mass)))
 str_noi = ''
 if kwd_noi:
-    str_noi = '_noise'
+    str_noi = '_noi'
+
+str_ff = ''
+if kwd_pla:
+    str_ff = f'_{plnt_flux_fudge_factor:03d}'
 
 # filepaths for the images
 fname_direct_mono_img_f     = 'dir' + str_common + '_img_f.fits'
@@ -538,32 +556,33 @@ for ilam in range(nlam):
 """
 ### Image generation for the off-axis companion
 """
-# Generation of a tip and tilt mode
-opd_p0 = wv0*(sep_loD_p/4)*(np.sin(theta_rad_p)*Tipp_mapnm2d + np.cos(theta_rad_p)*Tilt_mapnm2d)
-
-for imap in range(nmap):
-    t0 = time.time()
-    OPDmap2d = None
-    if kw_aberr:           
-        if kw_saxo and kw_2nddate:
-            OPDmap2d = OPDmap2d0 + SAXOmapnm3d[saxomap_i+imap]*1e-9 + opd_p0
-        else:
-            OPDmap2d = OPDmap2d0*1. + opd_p0
-    direct_mono_img_fp += corono0.compute_direct_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d, poly=False)
-    corono_mono_img_fp += corono0.compute_corono_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d, poly=False)                
-
-    t1 = time.time()
-    if (imap+1) % 10 == 0: 
-        print('map {1}/{2}, computation time: {0:.2f}s'.format(t1-t0, imap+1, nmap))
-
-# computation of the averaged images
-direct_mono_img_fp /= nmap
-corono_mono_img_fp /= nmap
-
-for ilam in range(nlam):
-    # image normalization
-    direct_mono_img_fp[ilam] /= direct_peak_val[ilam]
-    corono_mono_img_fp[ilam] /= direct_peak_val[ilam]
+if kwd_pla:
+    # Generation of a tip and tilt mode
+    opd_p0 = wv0*(sep_loD_p/4)*(np.sin(theta_rad_p)*Tipp_mapnm2d + np.cos(theta_rad_p)*Tilt_mapnm2d)
+    
+    for imap in range(nmap):
+        t0 = time.time()
+        OPDmap2d = None
+        if kw_aberr:           
+            if kw_saxo and kw_2nddate:
+                OPDmap2d = OPDmap2d0 + SAXOmapnm3d[saxomap_i+imap]*1e-9 + opd_p0
+            else:
+                OPDmap2d = OPDmap2d0*1. + opd_p0
+        direct_mono_img_fp += corono0.compute_direct_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d, poly=False)
+        corono_mono_img_fp += corono0.compute_corono_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d, poly=False)                
+    
+        t1 = time.time()
+        if (imap+1) % 10 == 0: 
+            print('map {1}/{2}, computation time: {0:.2f}s'.format(t1-t0, imap+1, nmap))
+    
+    # computation of the averaged images
+    direct_mono_img_fp /= nmap
+    corono_mono_img_fp /= nmap
+    
+    for ilam in range(nlam):
+        # image normalization
+        direct_mono_img_fp[ilam] /= direct_peak_val[ilam]
+        corono_mono_img_fp[ilam] /= direct_peak_val[ilam]
 
 #%%
 """
@@ -577,14 +596,16 @@ DIT      *= u.s
 ### Photometry and spectra for the star, the planet and the telluric lines 
 """
 star_spec = fits.getdata(fpath_spectra_star)
-plnt_spec = fits.getdata(fpath_spectra_plnt)
+if kwd_pla:
+    plnt_spec = fits.getdata(fpath_spectra_plnt)
 tell_spec = fits.getdata(fpath_spectra_tell)
 
 star_wave = star_spec[0]
 star_flux = star_spec[1]
 
-plnt_wave = plnt_spec[0]
-plnt_flux = plnt_spec[1]
+if kwd_pla:
+    plnt_wave = plnt_spec[0]
+    plnt_flux = plnt_spec[1]
 
 tell_wave = tell_spec[0]
 tell_flux = tell_spec[1]
@@ -597,7 +618,8 @@ tell_flux = tell_spec[1]
 plt.figure(0)
 plt.clf()
 plt.plot(star_wave, np.log10(star_flux))
-plt.plot(plnt_wave, np.log10(plnt_flux))
+if kwd_pla:
+    plt.plot(plnt_wave, np.log10(plnt_flux))
 plt.show()
 
 
@@ -608,10 +630,10 @@ star_flux *= u.W / u.m**2 / u.um
 star_phot = star_flux.to('ph s**-1 m**-2 micron**-1', equivalencies=u.spectral_density(star_wave))
 
 #%%
-
-plnt_wave *= u.um
-plnt_flux *= u.W / u.m**2 / u.um
-plnt_phot = plnt_flux.to('ph s**-1 m**-2 micron**-1', equivalencies=u.spectral_density(plnt_wave))
+if kwd_pla:
+    plnt_wave *= u.um
+    plnt_flux *= u.W / u.m**2 / u.um
+    plnt_phot = plnt_flux.to('ph s**-1 m**-2 micron**-1', equivalencies=u.spectral_density(plnt_wave))
 
 #%%
 tell_wave *= u.um
@@ -632,7 +654,8 @@ dwv_um_t *= u.um
 """
 
 star_phot = spectral_binning(wv_um_t, dwv_um_t, star_wave, star_phot)
-plnt_phot = spectral_binning(wv_um_t, dwv_um_t, plnt_wave, plnt_phot)
+if kwd_pla:
+    plnt_phot = spectral_binning(wv_um_t, dwv_um_t, plnt_wave, plnt_phot)
 
 #tell_phot = transmission_spectral_binning(wv_um_t, dwv_um_t, tell_wave, tell_flux)
 
@@ -650,18 +673,25 @@ corono_mono_img_f_obs *= star_phot[:, None, None]
 """
 ### apply planetary photometry
 """
-direct_mono_img_fp_obs = direct_mono_img_fp * u.dimensionless_unscaled 
-direct_mono_img_fp_obs *= plnt_phot[:, None, None]
-
-corono_mono_img_fp_obs = corono_mono_img_fp * u.dimensionless_unscaled 
-corono_mono_img_fp_obs *= plnt_phot[:, None, None]
+if kwd_pla:
+    direct_mono_img_fp_obs = direct_mono_img_fp * u.dimensionless_unscaled 
+    direct_mono_img_fp_obs *= plnt_phot[:, None, None]
+    
+    corono_mono_img_fp_obs = corono_mono_img_fp * u.dimensionless_unscaled 
+    corono_mono_img_fp_obs *= plnt_phot[:, None, None]
 
 #%%
 """
 ### add stellar and planetary signal
 """
-direct_cube = direct_mono_img_f_obs + direct_mono_img_fp_obs
-corono_cube = corono_mono_img_f_obs + corono_mono_img_fp_obs
+if kwd_pla:
+    direct_cube = direct_mono_img_f_obs + direct_mono_img_fp_obs
+    corono_cube = corono_mono_img_f_obs + corono_mono_img_fp_obs
+else:
+    direct_cube = direct_mono_img_f_obs
+    corono_cube = corono_mono_img_f_obs
+
+
 
 #%%
 """
@@ -672,6 +702,8 @@ fname_sky = fdir_sky / f'skytable_airmass={airmass:.2f}.fits'
 
 wave_min_nm = int(round(wv_t[0] *1e9))
 wave_max_nm = int(round(wv_t[-1]*1e9))
+if nlam < 2:
+    wave_max_nm = int(round((wv_t[-1]+dwv_t[0])*1e9))
 wdelta_nm   = dwv_t[0]*1e9
 
 # if fname_sky.exists():
@@ -691,13 +723,17 @@ sky_trsm = sky['trans']
 
 #wave_min = wv_t[0] *u.m
 #wave_max = wv_t[-1] *u.m
+
 #%%
 #ii = (wave_min <= sky_wave) & (sky_wave <= wave_max)
 #sky_wave = sky_wave[ii]
 #sky_trsm = sky_trsm[ii]
-
-direct_cube *= sky_trsm[:, None, None]
-corono_cube *= sky_trsm[:, None, None]
+if nlam >2:
+    direct_cube *= sky_trsm[:, None, None]
+    corono_cube *= sky_trsm[:, None, None]
+else:
+    direct_cube *= sky_trsm[0, None, None]
+    corono_cube *= sky_trsm[0, None, None]
 
 #%%
 """
@@ -724,13 +760,14 @@ if kwd_noi:
     # total noise
     direct_cube = direct_Int_phn + direct_Int_ron
     corono_cube = corono_Int_phn + corono_Int_ron
-    
-    # apply stellar photometry
-    direct_cube *= u.dimensionless_unscaled
-    corono_cube *= u.dimensionless_unscaled
+
 else:
     _log.warning(' ==> no noise added!')
- 
+    
+# apply stellar photometry
+direct_cube *= u.dimensionless_unscaled
+corono_cube *= u.dimensionless_unscaled
+
 
 #%% saving of the images
 """
@@ -785,4 +822,131 @@ if do_sav:
         hdu = fits.HDUList([hdu_prim, hdu_img, hdu_wave])
     
         hdu.writeto(fpath_list[ilist], overwrite=True)   
-            
+        
+
+#%%
+"""
+### tests
+"""
+
+
+field_A    = Apod2d*corono0.Pupil2d
+if OPDmap2d is not None:
+    phasor_t  = 2.*np.pi*OPDmap2d[None, :, :]/(corono0.wv*corono0.lam_t[:, None,None])             
+    field_A   = Apod2d*corono0.Pupil2d*(1j*np.sin(phasor_t)+np.cos(phasor_t))
+
+if corono0.Ampmap2d is not None:
+    field_A   *= corono0.Ampmap2d
+
+field_Dtmp = np.zeros((corono0.nlam,corono0.nImg2d,corono0.nImg2d), 
+                          dtype=corono0.dtype0)
+ 
+field_L    = field_A*corono0.LyotStop2d
+for i in range(corono0.nlam):
+    if OPDmap2d is not None:
+        field_L   = field_A[i]*corono0.LyotStop2d                
+    if corono0.ImPart is True:
+        print('ImPart is true')
+        field_Dtmp[i] = coro.utils.sft(field_L, corono0.nImg2d, corono0.mD_t[i], 
+                  CtrBtwnPix=corono0.CtrBtwnPix2)
+    else:
+        field_Dtmp[i] = coro.utils.sft_even(field_L, corono0.nImg2d, corono0.mD_t[i], 
+                  CtrBtwnPix=corono0.CtrBtwnPix2) 
+                        
+Int_D0 = np.abs(field_Dtmp)**2 
+    
+#%%
+
+
+field_A    = Apod2d*corono0.Pupil2d
+if OPDmap2d is not None:
+    phasor_t   = 2.*np.pi*OPDmap2d[None, :, :]/(corono0.wv*corono0.lam_t[:, None,None])             
+    field_A    = Apod2d*corono0.Pupil2d*(1j*np.sin(phasor_t)+np.cos(phasor_t))
+
+if corono0.Ampmap2d is not None:
+    field_A *= corono0.Ampmap2d
+    
+field_Dtmp = np.zeros((corono0.nlam,corono0.nImg2d,corono0.nImg2d), 
+                          dtype=corono0.dtype0)
+
+
+for i in range(corono0.nlam):
+    if OPDmap2d is None:
+        field = field_A
+    else:
+        field = field_A[i]                
+    if corono0.ImPart is True:
+        print('ImPart is true')
+        field_B       = corono0.mask2d*coro.utils.sft(field, corono0.nFPM, corono0.mB_t[i], 
+                                        CtrBtwnPix=corono0.CtrBtwnPix)
+        field_C       = field - coro.utils.isft(field_B, corono0.nPup, corono0.mB_t[i], 
+                                       CtrBtwnPix=corono0.CtrBtwnPix)
+        field_L       = field_C*corono0.LyotStop2d
+        field_Dtmp[i] = coro.utils.sft(field_L, corono0.nImg2d, corono0.mD_t[i], 
+                  CtrBtwnPix=corono0.CtrBtwnPix2)
+        
+    else:
+        field_B       = corono0.mask2d*coro.utils.sft_even(field, corono0.nFPM, corono0.mB_t[i], 
+                                        CtrBtwnPix=corono0.CtrBtwnPix)
+        field_C       = field - coro.utils.isft_even(field_B, corono0.nPup, corono0.mB_t[i], 
+                                       CtrBtwnPix=corono0.CtrBtwnPix)
+        field_L       = field_C*corono0.LyotStop2d
+        field_Dtmp[i] = coro.utils.sft_even(field_L, corono0.nImg2d, corono0.mD_t[i], 
+                  CtrBtwnPix=corono0.CtrBtwnPix2)
+
+#%%                           
+Int_D = np.abs(field_Dtmp)**2 
+Int_C = np.abs(field_C)**2
+Int_L = np.abs(field_L)**2
+
+#%%
+plt.figure(31)
+plt.clf()
+plt.subplot(121)
+plt.imshow(Int_C)
+plt.title('before LS')
+plt.subplot(122)
+plt.imshow(Int_L)
+plt.title('after LS')
+  
+#%%
+Int_pk = 1/np.max(Int_D0)
+Int_D *= Int_pk
+Int_D0 *= Int_pk 
+
+#%%
+vmin0 = -6
+vmax0 = 0
+
+
+plt.figure(21, figsize=(10,6))
+plt.clf()
+plt.subplot(2,5,1)
+plt.imshow(Pupil2d)
+plt.title('VLT Pupil')
+plt.subplot(2,5,2)
+plt.imshow(Ampmap2d)
+plt.title('Amplitude errors')
+plt.subplot(2,5,3)
+plt.imshow(Apod2d)
+plt.title('Apodizer')
+plt.subplot(2,5,4)
+plt.imshow(OPDmap2d)
+plt.title('OPD (Z/0.6 + SAXO[0])')
+plt.subplot(2,5,5)
+plt.imshow(np.log10(Int_D0[0]), vmin=vmin0, vmax=vmax0)
+plt.title(r'$\log$Int$_0$')
+plt.subplot(2,5,6)
+plt.imshow(Int_C**0.25)
+plt.title(r'Int$^{0.25}$ before LS')
+plt.subplot(2,5,7)
+plt.imshow(LyotStop2d)
+plt.title('Lyot stop')
+plt.subplot(2,5,8)
+plt.imshow(Int_L**0.25)
+plt.title(r'Int$^{0.25}$ after LS')
+plt.subplot(2,5,10)
+plt.imshow(np.log10(Int_D[0]), vmin=vmin0, vmax=vmax0)
+plt.title(r'$\log$Int')
+
+

@@ -62,12 +62,26 @@ def compute_argmin(str_area, vmin0, vmax0):
     nFPM = 50
     Fmax2d = 16#22.5
     nImg2d = 4*Fmax2d#45
+    do_margin = True
+
+    str_margin=''
+    if do_margin:
+        str_margin = '_v2'
     
     # telescope parameters
-    pdiam, odiam = 7.92, 2.3  # tel. and obst. diameters (meters)
+    pdiam, odiam = 7.92, 2.3 # tel. and obst. diameters (meters)
+    if do_margin:
+        pdiam, odiam = 7.92*0.99, 2.3+7.92*0.01 # tel. and obst. diameters (meters)thick = 0.25              # adopted spider thickness (meters)
     thick = 0.25              # adopted spider thickness (meters)
     offset = 1.278            # spider intersection offset (meters)
     beta = 51.75              # spider angle beta
+
+    kpdiam0 = pdiam/(7.92)
+    kodiam0 = odiam/(2.3)
+    if do_margin:
+        kpdiam0 = pdiam/(7.92*0.99)
+        kodiam0 = odiam/(2.3+7.92*0.01)
+    kthick0 = thick/0.25
     
     kpdiam_t = np.linspace(0.9, 1.0, 11)
     kodiam_t = np.linspace(1.0, 2.0, 21)
@@ -211,8 +225,10 @@ def compute_argmin(str_area, vmin0, vmax0):
         raise ValueError('Unknown user {0}'.format(user))
     
     if pupil_name == 'sbr':
-        fname_pup = f'pupil=sbr_nPup={nPup}_odiam={int(odiam*100)}_thick={int(thick*100):03d}.fits'
-        fname_lys = f'pupil=sbr_nPup={nPup}_odiam={int(odiam*100)}_thick={int(thick*100):03d}.fits'
+#        fname_pup = f'pupil=sbr_nPup={nPup}_odiam={int(odiam*100)}_thick={int(thick*100):03d}{str_margin}.fits'
+#        fname_lys = f'pupil=sbr_nPup={nPup}_odiam={int(odiam*100)}_thick={int(thick*100):03d}{str_margin}.fits'
+        fname_pup = f'pupilsbr_nPup{nPup}_kpdiam{int(np.round(kpdiam0*100)):03d}_kodiam{int(np.round(kodiam0*100)):03d}_kthick{int(np.round(kthick0*100)):03d}{str_margin}.fits' 
+        fname_lys = f'pupilsbr_nPup{nPup}_kpdiam{int(np.round(kpdiam0*100)):03d}_kodiam{int(np.round(kodiam0*100)):03d}_kthick{int(np.round(kthick0*100)):03d}{str_margin}.fits' 
     else:
         raise NameError(f'{pupil_name}: unknown pupil name')
     
@@ -310,7 +326,7 @@ def compute_argmin(str_area, vmin0, vmax0):
     #%%
     EE_D_t = np.zeros((nIter, nMask1))
     
-    fname_EE_D = f'pupilsbr_nPup{nPup}_EE_{str_area}_rho0{int(np.round(rho0*100)):03d}_rho1{int(np.round(rho1*100)):03d}' + str_num_mask + str_apod_spiders +'.fits'
+    fname_EE_D = f'pupilsbr_nPup{nPup}_EE_{str_area}_rho0{int(np.round(rho0*100)):03d}_rho1{int(np.round(rho1*100)):03d}' + str_num_mask + str_apod_spiders + f'{str_margin}.fits'
     fpath_EE_D = fdir / fname_EE_D
     
     EE_D_t = fits.getdata(fpath_EE_D)
@@ -323,7 +339,6 @@ def compute_argmin(str_area, vmin0, vmax0):
     iIter, iMask1 = np.unravel_index(EE_D_t.argmin(), EE_D_t.shape)
     print(f'iIter: {iIter:04d}, iMask1: {iMask1:03d}')
     
-    #ipdiam, iodiam, ithick = np.unravel_index(iIter, (npdiam, nodiam, nthick))
     ipdiam, iodiam, ithick = np.unravel_index(iIter, (npdiam, nodiam, nthick))
     print(f'ipdiam: {ipdiam}, iodiam: {iodiam}, ithick: {ithick}')
     print(f'pdiam: {kpdiam_t[ipdiam]}, odiam: {kodiam_t[iodiam]}, ithick: {kthick_t[ithick]}')
@@ -354,11 +369,11 @@ def compute_argmin(str_area, vmin0, vmax0):
     """
     ### Read optimal apodizer file
     """
-    fname_apo = f'pupilsbr_nPup{nPup}_pdiam{int(np.round(pdiam*100))}_odiam{int(np.round(odiam*100))}_thick{int(np.round(thick_apod*100)):03d}_Apod_rMask{int(np.round(rMask1*100)):03d}.fits'
+    fname_apo = f'pupilsbr_nPup{nPup}_pdiam{int(np.round(pdiam*100))}_odiam{int(np.round(odiam*100))}_thick{int(np.round(thick_apod*100)):03d}_Apod_rMask{int(np.round(rMask1*100)):03d}{str_margin}.fits'
     fpath_apo = fdir / fname_apo
     Apod2d = fits.getdata(fpath_apo)
     
-    fname_lys_opt = f'pupilsbr_nPup{nPup}_kpdiam{int(np.round(kpdiam_t[ipdiam]*100)):03d}_kodiam{int(np.round(kodiam_t[iodiam]*100)):03d}_kthick{int(np.round(kthick_t[ithick]*100)):03d}.fits' 
+    fname_lys_opt = f'pupilsbr_nPup{nPup}_kpdiam{int(np.round(kpdiam_t[ipdiam]*100)):03d}_kodiam{int(np.round(kodiam_t[iodiam]*100)):03d}_kthick{int(np.round(kthick_t[ithick]*100)):03d}{str_margin}.fits' 
     fpath_lys_opt = fdir / fname_lys_opt
     LyotStop2d_opt = fits.getdata(fpath_lys_opt)
     
@@ -382,12 +397,11 @@ def compute_argmin(str_area, vmin0, vmax0):
     """ 
     EE_D2_t = np.reshape(EE_D_t, (npdiam, nodiam, nthick, nMask1))
     
-    kpdiam0 = 0.95#0.92#0.91#0.92
-    kodiam0 = 1.15#1.1#1.05#1.25
-    kthick0 = 2.0#1.0#1.0
-    rMask10 = 2.65#2.65#2.87#2.86#2.64
-    
-    
+    kpdiam0 = 0.96 #0.92#0.91#0.92
+    kodiam0 = 1.10 #1.1#1.05#1.25
+    kthick0 = 2.0  #1.0#1.0
+    rMask10 = 2.64 #2.65#2.87#2.86#2.64
+        
     
     EE_D20_t = EE_D2_t[kpdiam_t == kpdiam0, kodiam_t == kodiam0, :, :].reshape(nthick, nMask1)
     EE_D21_t = EE_D2_t[kpdiam_t == kpdiam0, :, kthick_t == kthick0, :].reshape(nodiam, nMask1)
@@ -505,11 +519,11 @@ def compute_argmin(str_area, vmin0, vmax0):
     ZZ_text = [Z20_text, Z21_text, Z22_text, Z23_text, Z24_text, Z25_text]
     nZZ = len(ZZ_t)
     
-    str_ZZ_t = ['thick_v_rMask', 'odiam_v_rMask', 'pdiam_v_rMask', 'pdiam_v_odiam', 'odiam_v_thick', 'pdiam_v_thick']
+    str_ZZ_t = ['thick_v_rMask', 'odiam_v_rMask', 'pdiam_v_rMask', 'pdiam_v_odiam', 'pdiam_v_thick', 'odiam_v_thick']
     
     for iZZ, ZZ in enumerate(ZZ_t):
     
-        fname_image_plane_f_disp = 'corono_poly_bw_sensitivity_contour_nPup={0}_gbsx_'.format(nPup) + str_ZZ_t[iZZ] + str_num_mask + str_apod_spiders + '_area' + str_area + '.pdf'
+        fname_image_plane_f_disp = 'corono_poly_bw_sensitivity_contour_nPup={0}_gbsx_'.format(nPup) + str_ZZ_t[iZZ] + str_num_mask + str_apod_spiders + '_area' + str_area + f'{str_margin}.pdf'
         fpath_image_plane_f_disp = fdir_pdf / fname_image_plane_f_disp
         
     
@@ -538,7 +552,7 @@ def compute_argmin(str_area, vmin0, vmax0):
         
         ax0.text(ZZ_x_t[iZZ], ZZ_y_t[iZZ], 'x', fontsize=ftsz, 
                   horizontalalignment="center", color = "white")
-        ax0.text(ZZ_x2_t[iZZ], ZZ_y_t[iZZ], 'x', fontsize=ftsz, 
+        ax0.text(ZZ_x2_t[iZZ], ZZ_y2_t[iZZ], 'x', fontsize=ftsz, 
                   horizontalalignment="center", color = "blue")
         
         # ax0.axvline(x=rMask, ymin=-12, ymax =2, linewidth=lw0, color='r', linestyle='--')
@@ -580,15 +594,16 @@ def compute_argmin(str_area, vmin0, vmax0):
         cbar.ax.set_ylabel('1$\sigma$ intensity in log scale', rotation=270, labelpad = 16)
         if do_plot is True:
             pl.savefig(str(fpath_image_plane_f_disp), transparent=True)
+            print(fpath_image_plane_f_disp)
         pl.tight_layout()
     pl.show()
 
 #%%
 if __name__ == '__main__':
-    str_area_t = ['M']#['D', 'M', 'S']
+    str_area_t = ['D', 'M', 'S'] #['M']#
 
-    vmin_t = [-4]#[-7, -5, -7]    
-    vmax_t = [-3]#[-3, 0, -3]
+    vmin_t = [-7, -4, -7] #[-4]   
+    vmax_t = [-3, -3, -3] #[-3]
 
     for i, str_area in enumerate(str_area_t):
         compute_argmin(str_area, vmin_t[i], vmax_t[i])

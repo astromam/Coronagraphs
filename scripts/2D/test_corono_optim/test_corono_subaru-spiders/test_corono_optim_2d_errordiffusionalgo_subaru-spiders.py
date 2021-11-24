@@ -50,16 +50,24 @@ if True:
     nFPM = 50
     Fmax2d = 50
     nImg2d = 500
+    do_margin = True
+
+    str_margin=''
+    if do_margin:
+        str_margin = '_v2'
 
     # telescope parameters
-    pdiam, odiam = 7.92, 2.3  # tel. and obst. diameters (meters)
-    thick = 0.              # adopted spider thickness (meters)
+    pdiam, odiam = 7.92, 2.3 # tel. and obst. diameters (meters)
+    if do_margin:
+        pdiam, odiam = 7.92*0.99, 2.3+7.92*0.01 # tel. and obst. diameters (meters)thick = 0.25              # adopted spider thickness (meters)
+    thick = 0.25              # adopted spider thickness (meters)
     offset = 1.278            # spider intersection offset (meters)
     beta = 51.75              # spider angle beta
-    
-    pdiam2 = 0.98*7.92
-    odiam2 = 1.1*2.3#2.53#
-    thick2 = 1.4*0.25
+     
+    pdiam2, odiam2 = 0.95*7.92, 1.15*2.3
+    if do_margin:
+        pdiam2, odiam2 = 0.95*(7.92*0.99), 1.15*(2.3+7.92*0.01) # tel. and obst. diameters (meters)thick = 0.25              # adopted spider thickness (meters)
+    thick2 = 2.0*0.25
     Fratio = 64
 
     kpdiam1 = 1.0#pdiam/pdiam
@@ -80,7 +88,7 @@ if True:
     # mask radius in lam0/D units
     rMask_m = 453e-6/2 
     # correpsonding mask size for the optimal prolate 
-    rMask1  = 2.65#2.64#rMask_m/(wv1*Fratio)  # mask size in lam1/D
+    rMask1  = 2.64#2.64#rMask_m/(wv1*Fratio)  # mask size in lam1/D
     
     # dark zone bounds (inner and outer edges) in lam0/D unit
     rho0 =  5.0
@@ -217,9 +225,9 @@ if True:
         raise ValueError('Unknown user {0}'.format(user))
 
     if pupil_name == 'sbr':
-        fname_pup = f'pupilsbr_nPup{nPup}_kpdiam{int(np.round(kpdiam1*100)):03d}_kodiam{int(np.round(kodiam1*100)):03d}_kthick{int(np.round(kthick1*100)):03d}.fits' 
+        fname_pup = f'pupilsbr_nPup{nPup}_kpdiam{int(np.round(kpdiam1*100)):03d}_kodiam{int(np.round(kodiam1*100)):03d}_kthick{int(np.round(kthick1*100)):03d}{str_margin}.fits' 
 #        fname_lys = f'pupil=sbr_nPup={nPup}_odiam={int(odiam2*100)}_thick={int(thick2*100):03d}.fits'
-        fname_lys = f'pupilsbr_nPup{nPup}_kpdiam{int(np.round(kpdiam2*100)):03d}_kodiam{int(np.round(kodiam2*100)):03d}_kthick{int(np.round(kthick2*100)):03d}.fits' 
+        fname_lys = f'pupilsbr_nPup{nPup}_kpdiam{int(np.round(kpdiam2*100)):03d}_kodiam{int(np.round(kodiam2*100)):03d}_kthick{int(np.round(kthick2*100)):03d}{str_margin}.fits' 
     else:
         raise NameError(f'{pupil_name}: unknown pupil name')
     
@@ -248,8 +256,8 @@ params = coro.to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
 Read files
 """
 #fname_apod = f'pupilsbr_nPup{nPup}_pdiam{int(np.round(pdiam*100))}_odiam{int(np.round(odiam*100))}_thick{int(np.round(thick*100)):03d}_Apod_rMask{int(np.round(rMask1*100)):03d}.fits'
-fname_apod = f'pupilsbr_nPup{nPup}_pdiam{int(np.round(pdiam*100))}_odiam{int(np.round(odiam*100))}_thick{int(np.round(thick_apod*100)):03d}_Apod_rMask{int(np.round(rMask1*100)):03d}.fits'
-fname_apod_EDA = f'pupilsbr_nPup{nPup}_pdiam{int(np.round(pdiam*100))}_odiam{int(np.round(odiam*100))}_thick{int(np.round(thick_apod*100)):03d}_Apod_rMask{int(np.round(rMask1*100)):03d}_EDA.fits'
+fname_apod = f'pupilsbr_nPup{nPup}_pdiam{int(np.round(pdiam*100))}_odiam{int(np.round(odiam*100))}_thick{int(np.round(thick_apod*100)):03d}_Apod_rMask{int(np.round(rMask1*100)):03d}{str_margin}.fits'
+fname_apod_EDA = f'pupilsbr_nPup{nPup}_pdiam{int(np.round(pdiam*100))}_odiam{int(np.round(odiam*100))}_thick{int(np.round(thick_apod*100)):03d}_Apod_rMask{int(np.round(rMask1*100)):03d}_EDA{str_margin}.fits'
 
 fpath_apod= fdir / fname_apod
 fpath_apod_EDA = fdir / fname_apod_EDA
