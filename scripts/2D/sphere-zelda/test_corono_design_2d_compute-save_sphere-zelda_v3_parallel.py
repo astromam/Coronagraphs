@@ -1,0 +1,456 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Oct 17 16:20:52 2018
+
+Authors: Mamadou N'Diaye <mamadou.ndiaye@oca.eu>, Arthur Vigan <arthur.vigan@lam.fr>
+
+License: MIT license
+
+"""
+
+#%% Initialization
+"""
+### Initialization
+"""
+
+import sys
+import numpy as np
+import os
+import time
+from pyzelda.utils import aperture, imutils, zernike
+from pathlib import Path
+from astropy.io import fits
+import corono as coro
+import ctypes
+import multiprocessing
+
+
+#%%
+def array_to_numpy(shared_array, shape):
+    '''
+    Map a raw memory array to a numpy array
+    '''
+    if shared_array is None:
+        return None
+
+    numpy_array = np.frombuffer(shared_array, dtype=np.float64)
+    if shape is not None:
+        numpy_array.shape = shape
+
+    return numpy_array
+
+
+def tpool_init(OPDmap2d0_i, SAXOmapnm3d_i, corono0_i,
+               direct_poly_img_cube_i, direct_poly_img_cube_shape_i, corono_poly_img_cube_i, corono_poly_img_cube_shape_i):
+    '''
+    Thread pool initialization
+    '''
+    global OPDmap2d0, SAXOmapnm3d, corono0, direct_poly_img_cube, direct_poly_img_cube_shape, corono_poly_img_cube, corono_poly_img_cube_shape
+
+    OPDmap2d0   = OPDmap2d0_i
+    SAXOmapnm3d = SAXOmapnm3d_i
+    corono0     = corono0_i
+    direct_poly_img_cube       = direct_poly_img_cube_i
+    direct_poly_img_cube_shape = direct_poly_img_cube_shape_i
+    corono_poly_img_cube       = corono_poly_img_cube_i
+    corono_poly_img_cube_shape = corono_poly_img_cube_shape_i
+
+    
+def compute_corono_image(img_index, saxo_i, saxo_f):
+    '''
+    Compute a series of coronagraphic images
+    '''
+    global OPDmap2d0, SAXOmapnm3d, corono0, direct_poly_img_cube, direct_poly_img_cube_shape, corono_poly_img_cube, corono_poly_img_cube_shape
+
+    # shared arrays
+    direct_poly_img_cube_np = array_to_numpy(direct_poly_img_cube, direct_poly_img_cube_shape)
+    corono_poly_img_cube_np = array_to_numpy(corono_poly_img_cube, corono_poly_img_cube_shape)
+    
+    # create temporary images
+    direct_poly_img_f = np.zeros((nImg2d, nImg2d))
+    corono_poly_img_f = np.zeros((nImg2d, nImg2d))
+
+    # loop on phase screens
+    saxo_i = int(saxo_i)
+    saxo_f = int(saxo_f)
+    nmap = saxo_f - saxo_i + 1
+    for imap in range(nmap):
+        OPDmap2d = OPDmap2d0 + SAXOmapnm3d[saxo_i+imap]*1e-9
+        direct_poly_img_f += corono0.compute_direct_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d)
+        corono_poly_img_f += corono0.compute_corono_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d)
+
+        t_mean = (time.time()-t0) / (imap+1)
+        if (imap+1) % 10 == 0:
+            print('map {1}/{2}, average computation time: {0:.2f}s'.format(t_mean, imap+1, nmap))
+
+    # save result in shared arrays
+    direct_poly_img_cube_np[img_index] = direct_poly_img_f
+    corono_poly_img_cube_np[img_index] = corono_poly_img_f
+
+
+if __name__ == '__main__':
+    """
+    ### Parameters
+    """
+    
+    # Coronagraph type
+    corono_name = 'APLC'
+
+    # Spectral bandwidth (m)
+    wv    = 1.593e-6
+    width = 52e-9
+
+    # simulation configuration
+    kw_aberr     = True                    # include aberrations
+    kw_2nddate   = False                   # first/second date
+    kw_skyobs    = False                    # internal/on-sky ZELDA map
+    kw_aftercorr = True                    # generate data before/after NCPA compensation
+    kw_saxo      = False                   # use reconstructed SAXO phase screens
+    imap_saxo_i  = 0                       # SAXO first screen
+    imap_saxo_f  = int(2*1380)             # SAXO last screen
+
+    # added low-order static aberrations (nm rms)
+    defoc_ampl = -40
+    tip_ampl   = 0
+    tilt_ampl  = 0 
+    
+    # seeing of on-sky observations (as)
+    seeing = 0.8
+
+    #%% more or less fixed parameters
+
+    # corono simulation parameters
+    CtrBtwnPix  = True
+    CtrBtwnPix2 = False
+    Pupil2dSym  = False
+    
+    # Telescope characteristics
+    dAper     = 8
+    Fratio    = 40
+
+    # Focal-plane mask 
+    mas2rad   = np.pi/(180.*3600)    # Conversion factor from mas to rads
+    rMask_m   = 287e-6/2.            # mask size in m
+    rMask     = rMask_m/(wv*Fratio)  # mask size in lam0/D
+    rMask_mas = 1000.*rMask * (wv/dAper)/mas2rad
+    print(f'Mask radius: {rMask_mas:.2f} mas at {wv*1e6:.3f}um')
+
+    # sampling
+    pixel  = 12.25  # IRDIS pixel sampling [mas/pix]
+    nPup   = 384    # pupil
+    nFPM   = 200    # focal plane mask
+    nImg2d = 350    # final image plane 
+
+    # compute spatial frequencies in the final image plane
+    loD    = wv/dAper*180/np.pi*3600*1000/pixel
+    Fmax2d = nImg2d/loD    # spatial frequencies in the final image plane
+    
+    # wavelength sampling
+    nlam   = 5
+    bw     = width/wv 
+    
+    # multi-processing
+    nproc = multiprocessing.cpu_count() // 2 - 1
+    
+    # make sure we have a number of phase screens multiple of the number of CPUs
+    nsaxomap = imap_saxo_f - imap_saxo_i + 1
+    nsaxomap = nsaxomap - (nsaxomap % nproc)
+
+    #%%
+    """
+    ### Directories
+    """    
+    if kw_aberr is False:
+        str_aberr = 'wo_aberr'
+        str_date  = '2018-04-01'
+        str_corr  = ''
+        str_saxo  = ''
+        nmap      = 1
+
+        if kw_skyobs is True:
+            str_obs = 'sky'
+        else:
+            str_obs = 'internal'
+    else:
+        str_aberr = 'with_aberr'
+        
+        if kw_2nddate is True:
+            str_date = '2018-04-03'
+        else:
+            str_date = '2018-04-01'
+            
+        if kw_skyobs is True:
+            str_obs  = 'sky'
+            beta_wfs = 1 / 0.64
+        else:
+            str_obs  = 'internal'
+            beta_wfs = 1 / 0.80
+            
+        if kw_aftercorr is True:
+            str_corr   = 'after_correction'
+            imap_zelda = 3
+        else:
+            str_corr = 'before_correction'
+            imap_zelda = 0
+            
+        if kw_saxo is True:
+            str_saxo = 'with_saxo'
+            nmap     = nsaxomap
+            beta_wfs = 1 / 0.64 * 1 / 0.8   # ??
+        else:
+            str_saxo = ''
+            nmap     = 1
+
+    #%%
+    # fdir = Path('~/GitHub/Coronagraphs/').expanduser()
+    fdir = Path('~/Work/GitHub/Coronagraphs/').expanduser()
+    # fdir = Path('/Users/mndiaye/Dropbox/python/Coronagraphs/')
+    fdir_pupils  = fdir / 'data' / '2D' / 'pupils' / 'SPHERE'
+    fdir_zelda   = fdir / 'data' / '2D' / 'ZELDA' / str_date / str_obs
+    fdir_saxo    = fdir / 'data' / '2D' / 'ZELDA' / str_date
+
+    if kw_aberr is True:
+        fdir_results = fdir / 'results' / '2D' / 'data' / 'SPHERE' / str_aberr / str_date / str_obs / str_saxo / str_corr  
+    else:
+        fdir_results = fdir / 'results' / '2D' / 'data' / 'SPHERE' / str_aberr / str_obs / str_saxo / str_corr  
+
+    if not os.path.exists(fdir_results):
+        os.makedirs(fdir_results)
+
+    #%%
+    """
+    ### Filenames for the sources
+    """
+    fname_Apod2d     = 'SPHERE_APO1_field_transmission_map.fits'
+    fname_Apod2d_OPDmapnm = 'apo_substrate_D1.fits'
+    fname_Ampmap2d   = 'sphere_pupil_clear_BH_field.fits'
+    fname_LyotStop2d = 'sphere_stop_ST_ALC2.fits'
+
+    if kw_aberr is True:
+        if kw_skyobs is True:
+            fname_Ampmap2d   = '2018-04-01_night_sphere_pupil_clear_sky_FeII_field.fits'
+            fname_ZELDAmapnm3d = '2018-04-01_night_ncpa_loop_700modes_5_ncpa_loop_opd.fits'
+            if kw_2nddate is True:
+                fname_Ampmap2d   = '2018-04-03_night_sphere_pupil_clear_sky_FeII_field.fits'
+                fname_ZELDAmapnm3d = '2018-04-03_night_ncpa_loop_sky_2_ncpa_loop_opd.fits'
+        else:
+            fname_Ampmap2d   = 'sphere_pupil_clear_BH_field.fits'
+            fname_ZELDAmapnm3d = '2018-04-01_ncpa_loop_700modes_2_ncpa_loop_opd.fits'        
+            if kw_2nddate is True:
+                fname_ZELDAmapnm3d = '2018-04-03_ncpa_loop_700modes_ncpa_loop_opd.fits'
+
+        if kw_saxo is True:
+            fname_SAXOmapnm3d = f'2018-04-04T00:41:34-saxo_residual_turbulence_time=02.0sec_seeing={seeing:.1f}as_tiptilt=1_gains=0_fitting=1_alias=1.fits'
+    
+    #%% Filepaths for the file sources
+    fpath_Apod2d          = fdir_pupils / fname_Apod2d
+    fpath_Apod2d_OPDmapnm = fdir_pupils / fname_Apod2d_OPDmapnm
+    fpath_Ampmap2d        = fdir_zelda / fname_Ampmap2d
+
+    if kw_aberr is True:
+        fpath_ZELDAmapnm3d = fdir_zelda  / fname_ZELDAmapnm3d   
+        if kw_saxo is True:
+            fpath_SAXOmapnm3d = fdir_saxo / fname_SAXOmapnm3d
+
+    fpath_LyotStop2d = fdir_pupils / fname_LyotStop2d    
+    
+    #%% 
+    """
+    ### File reading
+    """
+    # Pupil
+    if kw_skyobs is True:
+        Pupil2d = aperture.vlt_pupil(nPup, nPup, dead_actuator_diameter=0)
+    else:
+        Pupil2d = aperture.disc(nPup, nPup/2)
+
+    #%% Apodization
+    Apod2d = fits.getdata(fpath_Apod2d)
+
+    #%% APodization OPD map
+    Apod2d_OPDmapnm = fits.getdata(fpath_Apod2d_OPDmapnm)
+    Apod2d_OPDmapnm[np.isnan(Apod2d_OPDmapnm)] = 0
+
+    #%% Amplitude errors
+    #if kw_aberr is True:
+    Ampmap2d = fits.getdata(fpath_Ampmap2d)
+
+    #%% Phase errors
+    if kw_aberr is True:
+        ZELDAmapnm3d = fits.getdata(fpath_ZELDAmapnm3d)
+
+        if kw_saxo is True:
+            # SAXO pupils
+            pupil_tmp = aperture.sphere_saxo_pupil()
+            pupil = np.round(imutils.scale(pupil_tmp, 0, new_dim=(nPup, nPup), method='interp'))
+
+            # read SAXO phase residuals
+            SAXOmapnm3d_tmp = fits.getdata(fpath_SAXOmapnm3d)
+
+            # select only phase screens that will be actually used
+            SAXOmapnm3d_tmp = SAXOmapnm3d_tmp[imap_saxo_i:imap_saxo_f]
+
+            # rescale NCPA map
+            print('Rescaling SPARTA phase screens')
+            SAXOmapnm3d = np.empty((nmap, nPup, nPup))
+            for i in range(nmap):
+                SAXOmapnm3d[i] = imutils.scale(SAXOmapnm3d_tmp[i], 0, new_dim=(nPup, nPup), method='interp')
+                if (i+1) % 1000 == 0:
+                    print(f'{i+1:05}/{nmap:05}: SAXO map before scaling: {np.std(SAXOmapnm3d_tmp[i, pupil_tmp != 0]):.2f} nm RMS, after: {np.std(np.asarray(SAXOmapnm3d)[i, pupil != 0]):.2f} nm RMS')
+
+            del SAXOmapnm3d_tmp
+            
+    #%% Lyot Stop
+    LyotStop2d = fits.getdata(fpath_LyotStop2d)
+
+    #%% static low-order aberrations
+    Defo_mapnm2d = zernike.zernike1(4, npix=nPup, outside=0.)
+    Tip_mapnm2d  = zernike.zernike1(2, npix=nPup, outside=0.)
+    Tilt_mapnm2d = zernike.zernike1(3, npix=nPup, outside=0.)
+
+    #%%
+    """
+    ### Image generation
+    """
+    
+    #%% array initialization
+    # define the averaged image
+    direct_poly_img_f = np.zeros((nImg2d, nImg2d))
+    corono_poly_img_f = np.zeros((nImg2d, nImg2d))
+
+    # define the averaged and standard deviation profiles of the images
+    direct_poly_prf_avg_f = np.zeros((nImg2d//2))
+    corono_poly_prf_avg_f = np.zeros((nImg2d//2))
+    direct_poly_prf_std_f = np.zeros((nImg2d//2))
+    corono_poly_prf_std_f = np.zeros((nImg2d//2))
+
+    #%% definition of the coronagraph class parameters
+    if corono_name != 'APLC':
+        raise NameError('Check the name of the coronagraph!')
+
+    params = coro.to_dict(nPup=nPup, nImg2d=nImg2d, Fmax2d=Fmax2d, nFPM=nFPM,
+                          rMask=rMask,
+                          Pupil2dSym=Pupil2dSym, 
+                          Pupil2d=Pupil2d, LyotStop2d=LyotStop2d, 
+                          CtrBtwnPix=CtrBtwnPix,
+                          CtrBtwnPix2=CtrBtwnPix2, 
+                          nlam=nlam, bw=bw, wv=wv,
+                          OPDmap2d=None, Ampmap2d=None,
+                          OPDmap2d_post=None)
+
+    #%%
+    """
+    ### Filepaths for the file results
+    """
+    if kw_aberr is True:
+        params  = coro.update_params(params, OPDmap2d=None,
+                                      Ampmap2d=Ampmap2d, LyotStop2d=LyotStop2d)
+        corono0  = coro.design.APLC2d(**params)
+    else:
+        params  = coro.update_params(params, OPDmap2d=None, 
+                                     Ampmap2d=Ampmap2d, LyotStop2d=LyotStop2d)
+        corono0 = coro.design.APLC2d(**params)    
+
+
+    fname_direct_poly_img_f     = f'direct_poly_img_nmap={nmap:05d}_defo={defoc_ampl:.1f}_tip={tip_ampl:.1f}_tilt={tilt_ampl:.1f}_f.fits'
+    fname_corono_poly_img_f     = f'corono_poly_img_nmap={nmap:05d}_defo={defoc_ampl:.1f}_tip={tip_ampl:.1f}_tilt={tilt_ampl:.1f}_f.fits'
+    fpath_direct_poly_img_f     = fdir_results / fname_direct_poly_img_f
+    fpath_corono_poly_img_f     = fdir_results / fname_corono_poly_img_f
+
+    #%%
+    fname_direct_poly_prf_avg_f = f'direct_poly_prf_nmap={nmap:05d}_defo={defoc_ampl:.1f}_tip={tip_ampl:.1f}_tilt={tilt_ampl:.1f}_avg_f.fits'
+    fname_corono_poly_prf_avg_f = f'corono_poly_prf_nmap={nmap:05d}_defo={defoc_ampl:.1f}_tip={tip_ampl:.1f}_tilt={tilt_ampl:.1f}_avg_f.fits'
+    fname_direct_poly_prf_std_f = f'direct_poly_prf_nmap={nmap:05d}_defo={defoc_ampl:.1f}_tip={tip_ampl:.1f}_tilt={tilt_ampl:.1f}_std_f.fits'
+    fname_corono_poly_prf_std_f = f'corono_poly_prf_nmap={nmap:05d}_defo={defoc_ampl:.1f}_tip={tip_ampl:.1f}_tilt={tilt_ampl:.1f}_std_f.fits'
+    fpath_direct_poly_prf_avg_f = fdir_results / fname_direct_poly_prf_avg_f
+    fpath_corono_poly_prf_avg_f = fdir_results / fname_corono_poly_prf_avg_f
+    fpath_direct_poly_prf_std_f = fdir_results / fname_direct_poly_prf_std_f
+    fpath_corono_poly_prf_std_f = fdir_results / fname_corono_poly_prf_std_f
+
+    #%%
+    # definition of the coronagraph class
+    if kw_aberr is True:
+        OPDmap2d0 = (beta_wfs*ZELDAmapnm3d[imap_zelda] + Apod2d_OPDmapnm + defoc_ampl*Defo_mapnm2d +
+                     tip_ampl*Tip_mapnm2d + tilt_ampl*Tilt_mapnm2d)*1e-9
+
+    t0 = time.time()
+    if kw_aberr is True:
+        if kw_saxo is True:
+            # create shared arrays
+            direct_poly_img_cube_shape = (nproc, nImg2d, nImg2d)
+            direct_poly_img_cube_data  = multiprocessing.RawArray(ctypes.c_double, int(np.prod(direct_poly_img_cube_shape)))
+            direct_poly_img_cube_np    = array_to_numpy(direct_poly_img_cube_data, direct_poly_img_cube_shape)
+
+            corono_poly_img_cube_shape = (nproc, nImg2d, nImg2d)
+            corono_poly_img_cube_data  = multiprocessing.RawArray(ctypes.c_double, int(np.prod(corono_poly_img_cube_shape)))
+            corono_poly_img_cube_np    = array_to_numpy(corono_poly_img_cube_data, corono_poly_img_cube_shape)
+
+            # create thread pool
+            print('Create thread pool')
+            tpool = multiprocessing.Pool(processes=nproc, initializer=tpool_init,
+                                         initargs=(OPDmap2d0, SAXOmapnm3d, corono0, direct_poly_img_cube_data, direct_poly_img_cube_shape,
+                                                   corono_poly_img_cube_data, corono_poly_img_cube_shape))
+            # tpool_init(OPDmap2d0, SAXOmapnm3d, corono0, direct_poly_img_cube_data, direct_poly_img_cube_shape,
+            #            corono_poly_img_cube_data, corono_poly_img_cube_shape)
+
+            # create tasks
+            print('Create tasks')
+            tasks = []
+            for image_index in range(nproc):
+                block = nmap / nproc
+                idx_i = image_index*block
+                idx_f = (image_index+1)*block-1
+                tasks.append(tpool.apply_async(compute_corono_image, args=(image_index, idx_i, idx_f)))
+                # compute_corono_image(image_index, idx_i, idx_f)
+                # stop
+
+            for idx, task in enumerate(tasks):
+                task.wait()
+
+            # close thread pool
+            tpool.close()
+            tpool.join()
+
+            direct_poly_img_cube_np = array_to_numpy(direct_poly_img_cube_data, direct_poly_img_cube_shape)
+            corono_poly_img_cube_np = array_to_numpy(corono_poly_img_cube_data, corono_poly_img_cube_shape)
+
+            direct_poly_img_f += direct_poly_img_cube_np.sum(axis=0)
+            corono_poly_img_f += corono_poly_img_cube_np.sum(axis=0)
+
+        else:
+            direct_poly_img_f += corono0.compute_direct_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d0)
+            corono_poly_img_f += corono0.compute_corono_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d0)
+    else:
+        direct_poly_img_f += corono0.compute_direct_intensity_2d_bis(Apod2d)
+        corono_poly_img_f += corono0.compute_corono_intensity_2d_bis(Apod2d)    
+
+    # computation of the averaged images
+    direct_poly_img_f /= nmap
+    corono_poly_img_f /= nmap
+
+    # image normalization
+    direct_peak_val = direct_poly_img_f.max()
+    direct_poly_img_f /= direct_peak_val
+    corono_poly_img_f /= direct_peak_val
+
+    # computation of the averaged and standard deviation profiles of the images   
+    direct_poly_prf_avg_f, rad_direct = imutils.profile(direct_poly_img_f, type='mean')
+    corono_poly_prf_avg_f, rad_corono = imutils.profile(corono_poly_img_f, type='mean')
+    direct_poly_prf_std_f, rad_direct = imutils.profile(direct_poly_img_f, type='std')
+    corono_poly_prf_std_f, rad_corono = imutils.profile(corono_poly_img_f, type='std')
+
+    #%% saving of the images
+    """
+    ### File saving
+    """
+    fits.writeto(fpath_direct_poly_img_f, direct_poly_img_f, overwrite=True)
+    fits.writeto(fpath_corono_poly_img_f, corono_poly_img_f, overwrite=True)
+
+    fits.writeto(fpath_direct_poly_prf_avg_f, direct_poly_prf_avg_f, overwrite=True)
+    fits.writeto(fpath_corono_poly_prf_avg_f, corono_poly_prf_avg_f, overwrite=True)
+    fits.writeto(fpath_direct_poly_prf_std_f, direct_poly_prf_std_f, overwrite=True)
+    fits.writeto(fpath_corono_poly_prf_std_f, corono_poly_prf_std_f, overwrite=True)
+        
+    print(fname_corono_poly_prf_std_f)
+    print('Done!')
