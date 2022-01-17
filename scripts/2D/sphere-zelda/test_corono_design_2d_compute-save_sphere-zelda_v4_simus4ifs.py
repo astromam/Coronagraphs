@@ -82,9 +82,6 @@ else:
     raise NameError('initial saxo map (saxomap_i={0}) must be smaller than final saxo map (saxomap_f={1})!'.format(saxomap_i, saxomap_f))
 
 ndefo = 21
-defo_ampl = 0.#-100 + 10.*np.arange(ndefo)
-tipp_ampl = 0
-tilt_ampl = 0 
 
 # save multi-spectral images
 do_sav = False 
@@ -190,38 +187,20 @@ pla_dDEC  = sep_mas_p*np.sin(theta_rad_p)      # delta in DEC, in mas
 """
 ### Directories
 """    
-if kw_aberr is False:
-    str_aberr = 'wo_aberr'
-    str_date  = ''
-    str_obs   = 'internal'
-    if kw_skyobs:
-        str_obs   = 'sky'
-    str_corr  = ''
-    str_saxo  = ''
-    str_saxoset= ''
-    nmap      = 1 
-else:
-    str_aberr = 'with_aberr'    
-    str_date  = '2018-04-01'
-    str_obs   = 'internal'
-    str_corr  = 'before_correction'
-    str_saxo  = ''
-    imap0     = 0
-    nmap      = 1
-    beta_wfs  = 1./0.90
-    str_saxo_tmp  = 'wo_saxo'
-    if kw_2nddate:
-        str_date = '2018-04-03'
-    if kw_skyobs:
-        str_obs  = 'sky'
-    if kw_aftercorr:
-        str_corr = 'after_correction'
-        imap0    = 3
-        beta_wfs = 1./0.95
-    if kw_saxo and kw_2nddate:
-        str_saxo = 'with_saxo'
-        nmap     = nsaxomap*1
-        beta_wfs = 1./0.6
+str_aberr = 'with_aberr'    
+str_date  = '2018-04-01'
+str_obs   = 'internal'
+str_corr  = 'before_correction'
+str_saxo  = ''
+imap0     = 0
+nmap      = 1
+beta_wfs  = 1./0.90
+str_saxo_tmp  = 'wo_saxo'
+str_date = '2018-04-03'
+str_obs  = 'sky'
+str_saxo = 'with_saxo'
+nmap     = nsaxomap*1
+beta_wfs = 1./0.6
 
 #%%
 #fdir = Path('../../').resolve()
@@ -232,10 +211,7 @@ fdir_saxo    = fdir / 'data' / '2D' / 'ZELDA' / '2018-04-03'
 fdir_spectra = fdir / 'data' / '2D' / 'package_simu_spectra'
 fdir_sky     = fdir / 'data' / '2D' / 'skytable'
 
-if kw_aberr:
-    fdir_res = fdir / 'results' / '2D' / 'data' / 'SPHERE' / str_aberr / str_date / str_obs / str_saxo / str_corr  
-else:
-    fdir_res = fdir / 'results' / '2D' / 'data' / 'SPHERE' / str_aberr / str_obs / str_saxo / str_corr  
+fdir_res = fdir / 'results' / '2D' / 'data' / 'SPHERE' / str_aberr / str_date / str_obs / str_saxo / str_corr  
 
 if not os.path.exists(fdir_res):
     os.makedirs(fdir_res)
@@ -244,26 +220,12 @@ if not os.path.exists(fdir_res):
 """
 ### Filenames for the sources
 """
-fname_Apod2d     = 'SPHERE_APO1_field_transmission_map.fits'
+fname_Apod2d          = 'SPHERE_APO1_field_transmission_map.fits'
 fname_Apod2d_OPDmapnm = 'apo_substrate_D1.fits'
-fname_Ampmap2d   = 'sphere_pupil_clear_BH_field.fits'
-fname_LyotStop2d = 'sphere_stop_ST_ALC2.fits'
-
-if kw_aberr is True:
-    if kw_skyobs is True:
-        fname_Ampmap2d   = '2018-04-01_night_sphere_pupil_clear_sky_FeII_field.fits'
-        fname_ZELDAmapnm3d = '2018-04-01_night_ncpa_loop_700modes_5_ncpa_loop_opd.fits'
-        if kw_2nddate is True:
-            fname_Ampmap2d   = '2018-04-03_night_sphere_pupil_clear_sky_FeII_field.fits'
-            fname_ZELDAmapnm3d = '2018-04-03_night_ncpa_loop_sky_2_ncpa_loop_opd.fits'
-    else:
-        fname_Ampmap2d   = 'sphere_pupil_clear_BH_field.fits'
-        fname_ZELDAmapnm3d = '2018-04-01_ncpa_loop_700modes_2_ncpa_loop_opd.fits'        
-        if kw_2nddate is True:
-            fname_ZELDAmapnm3d = '2018-04-03_ncpa_loop_700modes_ncpa_loop_opd.fits'
-    
-    if kw_saxo and kw_2nddate:    
-        fname_SAXOmapnm3d = '2018-04-04T00-41-34-saxo_residual_turbulence_time=30.0sec_seeing={:.1f}as_tiptilt=1_gains=0_fitting=1_alias=1.fits'.format(seeing)
+fname_Ampmap2d        = '2018-04-03_night_sphere_pupil_clear_sky_FeII_field.fits'
+fname_SAXOmapnm3d     = '2018-04-04T00-41-34-saxo_residual_turbulence_time=30.0sec_seeing={:.1f}as_tiptilt=1_gains=0_fitting=1_alias=1.fits'.format(seeing)
+fname_ZELDAmapnm3d    = '2018-04-03_night_ncpa_loop_sky_2_ncpa_loop_opd.fits'
+fname_LyotStop2d      = 'sphere_stop_ST_ALC2.fits'
 
 #%%
 """
@@ -272,13 +234,9 @@ if kw_aberr is True:
 fpath_Apod2d          = fdir_pupils / fname_Apod2d
 fpath_Apod2d_OPDmapnm = fdir_pupils / fname_Apod2d_OPDmapnm
 fpath_Ampmap2d        = fdir_zelda / fname_Ampmap2d
-
-if kw_aberr:
-    fpath_ZELDAmapnm3d = fdir_zelda  / fname_ZELDAmapnm3d   
-    if kw_saxo and kw_2nddate:
-        fpath_SAXOmapnm3d = fdir_saxo / fname_SAXOmapnm3d
-    
-fpath_LyotStop2d = fdir_pupils / fname_LyotStop2d    
+fpath_SAXOmapnm3d     = fdir_saxo / fname_SAXOmapnm3d
+fpath_ZELDAmapnm3d    = fdir_zelda  / fname_ZELDAmapnm3d   
+fpath_LyotStop2d      = fdir_pupils / fname_LyotStop2d    
   
 #%%
 """
@@ -378,52 +336,39 @@ def spectral_binning(wave, dwave, obj_wave, obj_phot):
 """
 ### File reading
 """
-# Pupil
-if kw_skyobs:
-    Pupil2d = aperture.vlt_pupil(nPup, nPup, dead_actuator_diameter=0)
-else:
-    Pupil2d = aperture.disc(nPup, nPup/2)
+### Pupil
+Pupil2d = aperture.vlt_pupil(nPup, nPup, dead_actuator_diameter=0)
     
-#%% Apodization
+### Apodization
 Apod2d = fits.getdata(fpath_Apod2d)
 
-#%% APodization OPD map
+### Apodization OPD map
 Apod2d_OPDmapnm = fits.getdata(fpath_Apod2d_OPDmapnm)
 Apod2d_OPDmapnm[np.isnan(Apod2d_OPDmapnm)] = 0
 
-#%% Amplitude errors
-Ampmap2d = None
-if kw_aberr:
-    Ampmap2d = fits.getdata(fpath_Ampmap2d)
+### Amplitude errors
+Ampmap2d = fits.getdata(fpath_Ampmap2d)
 
-#%% Phase errors
-if kw_aberr:
-    ZELDAmapnm3d = fits.getdata(fpath_ZELDAmapnm3d)
+### Phase errors
+ZELDAmapnm3d    = fits.getdata(fpath_ZELDAmapnm3d)
+SAXOmapnm3d_tmp = fits.getdata(fpath_SAXOmapnm3d)
 
-    if kw_saxo and kw_2nddate:
-        SAXOmapnm3d_tmp = fits.getdata(fpath_SAXOmapnm3d)
-        if saxofudge != 1.:
-            SAXOmapnm3d_tmp *= saxofudge 
-        nsaxo_all = len(SAXOmapnm3d_tmp)        
-        pupil_tmp = aperture.sphere_saxo_pupil()
-        pupil = np.round(imutils.scale(pupil_tmp, 0, new_dim=(nPup,nPup), method='interp'))
+if saxofudge != 1.:
+    SAXOmapnm3d_tmp *= saxofudge 
+nsaxo_all = len(SAXOmapnm3d_tmp)        
+pupil_tmp = aperture.sphere_saxo_pupil()
+pupil     = np.round(imutils.scale(pupil_tmp, 0, new_dim=(nPup,nPup), method='interp'))
 
-        # rescale NCPA map
-        SAXOmapnm3d = np.empty((nmap, nPup, nPup))
-        for i in range(nmap):
-            SAXOmapnm3d[i] = imutils.scale(SAXOmapnm3d_tmp[i+saxomap_i], 0, new_dim=(nPup,nPup), method='interp')
-            print('{0:05}/{1:05}: SAXO map before scaling: {2:6.2f} nm RMS, after: {3:6.2f} nm RMS'.format(i+1, nmap, np.std(SAXOmapnm3d_tmp[i, pupil_tmp != 0]), np.std(np.asarray(SAXOmapnm3d)[i, pupil != 0])))
+# rescale SAXO map
+SAXOmapnm3d = np.empty((nmap, nPup, nPup))
+for i in range(nmap):
+    SAXOmapnm3d[i] = imutils.scale(SAXOmapnm3d_tmp[i+saxomap_i], 0, new_dim=(nPup,nPup), method='interp')
+    print('{0:05}/{1:05}: SAXO map before scaling: {2:6.2f} nm RMS, after: {3:6.2f} nm RMS'.format(i+1, nmap, np.std(SAXOmapnm3d_tmp[i, pupil_tmp != 0]), np.std(np.asarray(SAXOmapnm3d)[i, pupil != 0])))
 
-        del SAXOmapnm3d_tmp
+del SAXOmapnm3d_tmp
         
-
-#%% Lyot Stop
+### Lyot Stop
 LyotStop2d = fits.getdata(fpath_LyotStop2d)
-
-#%%
-Defo_mapnm2d = zernike.zernike1(4, npix=nPup, outside=0.)
-Tipp_mapnm2d = zernike.zernike1(2, npix=nPup, outside=0.)
-Tilt_mapnm2d = zernike.zernike1(3, npix=nPup, outside=0.)
 
 #%%
 """
@@ -519,21 +464,12 @@ fpath_corono_cube = fdir_res / fname_corono_cube
 ### Image generation
 """
 # definition of the coronagraph class
-if kw_aberr:
-    OPDmap2d0 = (beta_wfs*ZELDAmapnm3d[imap0]+Apod2d_OPDmapnm\
-                +defo_ampl*Defo_mapnm2d\
-                +tipp_ampl*Tipp_mapnm2d\
-                +tilt_ampl*Tilt_mapnm2d)*1e-9
+OPDmap2d0 = (beta_wfs*ZELDAmapnm3d[imap0]+Apod2d_OPDmapnm)*1e-9
 
 
 for imap in range(nmap):
     t0 = time.time()
-    OPDmap2d = None
-    if kw_aberr:           
-        if kw_saxo and kw_2nddate:
-            OPDmap2d = OPDmap2d0 + SAXOmapnm3d[saxomap_i+imap]*1e-9
-        else:
-            OPDmap2d = OPDmap2d0*1.
+    OPDmap2d = OPDmap2d0 + SAXOmapnm3d[saxomap_i+imap]*1e-9
     direct_mono_img_f += corono0.compute_direct_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d, poly=False)
     corono_mono_img_f += corono0.compute_corono_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d, poly=False)                
 
@@ -562,17 +498,14 @@ for ilam in range(nlam):
 ### Image generation for the off-axis companion
 """
 if kwd_pla:
+    Tipp_mapnm2d = zernike.zernike1(2, npix=nPup, outside=0.)
+    Tilt_mapnm2d = zernike.zernike1(3, npix=nPup, outside=0.)    
     # Generation of a tip and tilt mode
     opd_p0 = wv0*(sep_loD_p/4)*(np.sin(theta_rad_p)*Tipp_mapnm2d + np.cos(theta_rad_p)*Tilt_mapnm2d)
     
     for imap in range(nmap):
         t0 = time.time()
-        OPDmap2d = None
-        if kw_aberr:           
-            if kw_saxo and kw_2nddate:
-                OPDmap2d = OPDmap2d0 + SAXOmapnm3d[saxomap_i+imap]*1e-9 + opd_p0
-            else:
-                OPDmap2d = OPDmap2d0*1. + opd_p0
+        OPDmap2d = OPDmap2d0 + SAXOmapnm3d[saxomap_i+imap]*1e-9 + opd_p0
         direct_mono_img_fp += corono0.compute_direct_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d, poly=False)
         corono_mono_img_fp += corono0.compute_corono_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d, poly=False)                
     
