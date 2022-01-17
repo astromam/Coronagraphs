@@ -58,7 +58,7 @@ class ProblemMatrix(object):
     """
     default_params = default.get_default_params_2d_ProblemMatrix()
 
-    @profile
+#    @profile
     def __init__(self,corono=None, **kwargs):
         r"""
         __init__ : method
@@ -346,7 +346,7 @@ class ProblemMatrix(object):
         f.close()              
             
 #%%       
-    @profile
+#    @profile
     def compute_response_matrices(self, corono=None):
         r"""
         Computes the response matrix for the coronagraph with and without 
@@ -463,7 +463,7 @@ class ProblemMatrix(object):
 
 
 #%%
-    @profile
+#    @profile
     def compute_response_matrices_new(self, corono=None):
         r"""
         Computes the response matrix for the coronagraph with and without 
@@ -499,7 +499,7 @@ class ProblemMatrix(object):
 
 
 #%%        
-    @profile
+#    @profile
     def solve_model(self):
         """
         Solves the optimization problem model for the model with the selected 
@@ -518,6 +518,22 @@ class ProblemMatrix(object):
         #print('start - solve model')
         #MemUse()
         t0 = time.time()
+
+        print(f'dimensions A: {np.shape(self.A)}')
+
+        print(f'A axis-0: {self.npp+self.neps+self.nvv}')        
+        print(f'A axis-1: {self.nlam*self.ndz*self.ncorono*2+self.ndz+1+2*self.npp}')
+
+        print(f'dimensions b: {np.shape(self.b)}')
+        print(f'dimensions c: {np.shape(self.c)}')
+        
+        print(f'nlam: {self.nlam}')
+        print(f'ndz: {self.ndz}')
+        print(f'ncorono: {self.ncorono}')
+        print(f'npp: {self.npp}')
+        print(f'neps: {self.neps}')
+        print(f'nvv: {self.nvv}')
+               
 
         if stdgrb and self.solver == 'stdgrb':
             self.print_log('solving problem with stdgrb package')
@@ -625,7 +641,7 @@ class ProblemMatrix(object):
         return '{pupil_name}_'.format(**params) + fname_corono + fname_gen_optim.format(**params)
 
 #%%    
-    @profile
+#    @profile
     def compute_matrices(self):
         r"""
         Computes the matrices for the optimization problem.
@@ -679,7 +695,7 @@ class MaxTau(ProblemMatrix):
     """
     default_params = default.get_default_params_2d_MaxTauProblemMatrix()
 
-    @profile
+#    @profile
     def __init__(self, **kwargs):
         """
         Constructor for the Matrix problem with the coronagraph object
@@ -840,7 +856,7 @@ class MaxTau(ProblemMatrix):
 #        # Return the A, b, and c matrices
 #        return self.A, self.b, self.c
 #%%
-    @profile
+#    @profile
     def compute_problem_matrices(self):
         r"""
         Computes the matrices for the optimization problem that consists in 
@@ -957,7 +973,7 @@ class MaxTau(ProblemMatrix):
         return self.A, self.b, self.c
 
 #%%
-    @profile
+#    @profile
     def compute_problem_matrices_gurobi(self):
         r"""
         Computes constraints to range the amplitude transmission of the 
@@ -1032,7 +1048,7 @@ class MaxTau(ProblemMatrix):
         gc.collect()
         
 #%%
-    @profile
+#    @profile
     def compute_problem_matrices_MinIsland(self):
         r"""
         Computes matrices to add constraints that minimizes the islands in the
@@ -1154,7 +1170,7 @@ class MaxTau(ProblemMatrix):
         print('Warning: update_cDarkHole() method is outdated!!!')            
 
 #%%
-    @profile
+#    @profile
     def compute_gurobi_model(self):
         """
         Generates the gurobi solver model for the MaxTau problem.
@@ -1215,7 +1231,7 @@ class MaxContrast(ProblemMatrix):
     """
     default_params = default.get_default_params_2d_MaxContrastProblemMatrix()
     
-    @profile
+#    @profile
     def __init__(self, **kwargs):
         r"""
         Constructor for the MaxContrast problem with the coronagraph object
@@ -1248,9 +1264,15 @@ class MaxContrast(ProblemMatrix):
             self.nvv         = 4*self.npp_bis
             
         self.N0 = np.zeros((self.neps, self.npp))
+        
+        self.nI1 = 1 
+        if self.ImPart is True:
+            self.nI1 = 2
+        
+        self.nPsiD = self.nI1*self.corono.nlam*self.ndz
 
 #%%    
-    @profile
+#    @profile
     def compute_problem_matrices(self):
         r"""
         Computes the matrices for the optimization problem that consists in 
@@ -1357,70 +1379,102 @@ class MaxContrast(ProblemMatrix):
                                 
         """           
         # Compute intermediate variables for electric field constraints 
-        nI1 = 1 
-        if self.ImPart is True:
-            nI1 = 2
+
+
+        
+        self.A = np.empty((self.npp+self.neps+self.nvv,
+                           self.nPsiD*self.ncorono*2+self.ndz+1+self.npp*2))
+        self.b = np.empty((self.nPsiD*self.ncorono*2+self.ndz+1+self.npp*2))
 
         if self.Lnorm == 'Linf':
             I0 = np.ones(self.ndz)
             I0 = I0[None,:]
-            I1 = np.ones(nI1*self.corono.nlam*self.ndz)
+            I1 = np.ones(self.nI1*self.corono.nlam*self.ndz)
             I1 = I1[None,:]
             c1 = [1]
         else:
             I0 = np.identity(self.ndz)
-            I1 = np.hstack([I0 for k in range(nI1*self.corono.nlam)])
+            I1 = np.hstack([I0 for k in range(self.nI1*self.corono.nlam)])
             c1 = np.array(self.rad2d)
 
-        Z0 = np.zeros(self.neps)
+        # Z0 = np.zeros(self.neps)
 
+
+        
 
         for k in range(self.ncorono):
             # Compute coronagraph response matrix
             t00 = time.time()
             self.print_log('computing corono response matrix for 2D problem')             
-            corono_field_t = self.compute_response_matrices(self.corono_t[k])
+            # corono_field_t = self.compute_response_matrices(self.corono_t[k])
+            self.A[0:self.npp,k*self.nPsiD:(k+1)*self.nPsiD] = \
+                self.compute_response_matrices(self.corono_t[k])
             t11 = time.time()
             self.print_log('computing time (response matrices): {0:.2f}s\n'.format(t11-t00))
-        
+            
             # Compute constraints on the coronagraphic electric field
-            A0tmp  = np.concatenate(( corono_field_t, -I1), axis=0)
-            A1tmp  = np.concatenate((-corono_field_t, -I1), axis=0)
+            self.A[self.npp:self.npp+self.neps,k*self.nPsiD:(k+1)*self.nPsiD] = -I1
+            #A0tmp  = np.concatenate(( corono_field_t, -I1), axis=0)
+            #A1tmp  = np.concatenate((-corono_field_t, -I1), axis=0)
 
             # Add terms corresponding to the MinIaland auxiliary variables        
-            AZ0vv = np.zeros((self.nvv,  np.shape(A0tmp)[1]))
-
-            A0tmp = np.concatenate((A0tmp, AZ0vv))
-            A1tmp = np.concatenate((A1tmp, AZ0vv))
+            self.A[self.npp+self.neps:self.npp+self.neps+self.nvv,:2*self.ncorono*self.nPsiD] = 0
+            #AZ0vv = np.zeros((self.nvv,  np.shape(A0tmp)[1]))
+            #A0tmp = np.concatenate((A0tmp, AZ0vv))
+            #A1tmp = np.concatenate((A1tmp, AZ0vv))
 
             # Compute b term corresponding to A0 and A1
-            b01 = np.zeros((2*len(corono_field_t.T)))
+            #b01 = np.zeros((2*len(corono_field_t.T)))
 
             #  Yield the A and b matrices for the optimization problem
-            if k == 0:
-                self.A = np.concatenate((A0tmp,A1tmp), axis=1)
-                self.b = b01*1
-            else:
-                self.A = np.concatenate((self.A, A0tmp, A1tmp), axis=1)
-                self.b = np.concatenate((self.b, b01,))
+            #if k == 0:
+            #    self.A = np.concatenate((A0tmp,A1tmp), axis=1)
+            #    self.b = b01*1
+            #else:
+            #    self.A = np.concatenate((self.A, A0tmp, A1tmp), axis=1)
+            #    self.b = np.concatenate((self.b, b01,))
+
+
+        self.A[0:self.npp,self.ncorono*self.nPsiD:2*self.ncorono*self.nPsiD] = \
+                -self.A[0:self.npp,:self.ncorono*self.nPsiD]
+        self.A[self.npp:self.npp+self.neps,self.ncorono*self.nPsiD:2*self.ncorono*self.nPsiD] = \
+                self.A[self.npp:self.npp+self.neps,:self.ncorono*self.nPsiD]
+        
+        self.b[:2*self.ncorono*self.nPsiD] = 0
+
+        # Add terms corresponding to the MinIaland auxiliary variables        
+        self.A[self.npp+self.neps:self.npp+self.neps+self.nvv,:2*self.ncorono*self.nPsiD] = 0                
+                
 
         # Compute constraint on the auxiliary variable epsilon
-        A20  = np.concatenate((np.zeros((self.npp, self.ndz)), 
-                               -I0,
-                               np.zeros((self.nvv, self.ndz))), axis=0)
+        #A20  = np.concatenate((np.zeros((self.npp, self.ndz)), 
+        #                       -I0,
+        #                       np.zeros((self.nvv, self.ndz))), axis=0)
+
+        self.A[0:self.npp,2*self.ncorono*self.nPsiD:2*self.ncorono*self.nPsiD+self.ndz] = 0
+        self.A[self.npp:self.npp+self.neps,2*self.ncorono*self.nPsiD:2*self.ncorono*self.nPsiD+self.ndz] = -I0
+        self.A[self.npp+self.neps:self.npp+self.neps+self.nvv,2*self.ncorono*self.nPsiD:2*self.ncorono*self.nPsiD+self.ndz] = 0
+        
 
         # Compute constraint on the integral of the apodizer transmission
-        A21  = np.concatenate((-self.Pupil_vec[self.idx_pup]/self.TR, 
-                               Z0,
-                               np.zeros((self.nvv))), axis=0)
+        self.A[0:self.npp,2*self.ncorono*self.nPsiD+self.ndz] = -self.Pupil_vec[self.idx_pup]/self.TR
+        self.A[self.npp:self.npp+self.neps,2*self.ncorono*self.nPsiD+self.ndz:2*self.ncorono*self.nPsiD+self.ndz+1] = 0
+        self.A[self.npp+self.neps:self.npp+self.neps+self.nvv,2*self.ncorono*self.nPsiD+self.ndz:2*self.ncorono*self.nPsiD+self.ndz+1] = 0
+        
+        #A21  = np.concatenate((-self.Pupil_vec[self.idx_pup]/self.TR, 
+        #                       Z0,
+        #                       np.zeros((self.nvv))), axis=0)
         
         # Compute b terms corresponding to A4 and A5
-        b20  = np.zeros(self.ndz)
-        b21  = [-self.tau]
+        self.b[2*self.ncorono*self.nPsiD:2*self.ncorono*self.nPsiD+self.ndz] = 0
+        self.b[2*self.ncorono*self.nPsiD+self.ndz:2*self.ncorono*self.nPsiD+self.ndz+1] = -self.tau
+        
+        #b20  = np.zeros(self.ndz)
+        #b21  = [-self.tau]
         
         #  Yield the A and b matrices for the optimization problem       
-        self.A = np.concatenate((self.A, A20,A21[:,None]), axis=1)
-        self.b = np.concatenate((self.b, b20,b21))
+        #self.A = np.concatenate((self.A, A20,A21[:,None]), axis=1)
+        #self.b = np.concatenate((self.b, b20,b21))
 
         # Add apodizer normalization contraints for gurobi solvers
         if (stdgrb and self.solver == 'stdgrb')\
@@ -1439,7 +1493,7 @@ class MaxContrast(ProblemMatrix):
         return self.A, self.b, self.c
 
 #%%
-    @profile
+#    @profile
     def compute_problem_matrices_gurobi(self):
         r"""
         Computes constraints to range the amplitude transmission of the 
@@ -1464,30 +1518,39 @@ class MaxContrast(ProblemMatrix):
         
         """
         # Compute constraints on the apodizer transmission
-        A2tmp  = np.concatenate((-np.identity(self.npp), self.N0), axis=0)
+        #A2tmp  = np.concatenate((-np.identity(self.npp), self.N0), axis=0)
+        self.A[0:self.npp,2*self.ncorono*self.nPsiD+self.ndz+1:2*self.ncorono*self.nPsiD+self.ndz+1+self.npp] = -np.identity(self.npp)
+        self.A[self.npp:self.npp+self.neps,2*self.ncorono*self.nPsiD+self.ndz+1:2*self.ncorono*self.nPsiD+self.ndz+1+self.npp] = self.N0
 
         # Add terms corresponding to the MinIsland auxiliary variables        
-        AZ0vv = np.zeros((self.nvv, self.npp))
+        #AZ0vv = np.zeros((self.nvv, self.npp))
+        self.A[self.npp+self.neps:self.npp+self.neps+self.nvv,2*self.ncorono*self.nPsiD+self.ndz+1:2*self.ncorono*self.nPsiD+self.ndz+1+self.npp] = 0
+        self.A[:,2*self.ncorono*self.nPsiD+self.ndz+1+self.npp:2*self.ncorono*self.nPsiD+self.ndz+1+self.npp*2] = \
+            - self.A[:,2*self.ncorono*self.nPsiD+self.ndz+1:2*self.ncorono*self.nPsiD+self.ndz+1+self.npp]
 
-        A2 = np.concatenate((A2tmp, AZ0vv))
+        # A2 = np.concatenate((A2tmp, AZ0vv))
 
-        b2  = np.zeros(self.npp)
-        b3  = np.ones(self.npp)
+        # b2  = np.zeros(self.npp)
+        #b3  = np.ones(self.npp)
+        self.b[2*self.ncorono*self.nPsiD+self.ndz+1:2*self.ncorono*self.nPsiD+self.ndz+1+self.npp] = 0
+        self.b[2*self.ncorono*self.nPsiD+self.ndz+1+self.npp:2*self.ncorono*self.nPsiD+self.ndz+1+self.npp*2] = 1
+
         
         # Update the A, b, and c matrices
-        if self.A is None:
-            self.A = np.concatenate((A2, -A2), axis=1)
-        else:
-            self.A = np.concatenate((self.A, A2, -A2), axis=1)
+        #if self.A is None:
+        #    self.A = np.concatenate((A2, -A2), axis=1)
+        #else:
+        #    self.A = np.concatenate((self.A, A2, -A2), axis=1)
+            
         
-        if self.b is None:
-            self.b = np.concatenate((b2,  b3))
-        else:
-            self.b = np.concatenate((self.b, b2,  b3))
+        #if self.b is None:
+        #    self.b = np.concatenate((b2,  b3))
+        #else:
+        #    self.b = np.concatenate((self.b, b2,  b3))
             
             
 #%%
-    @profile
+#    @profile
     def compute_problem_matrices_MinIsland(self):
         r"""
         Computes matrices to add constraints that minimizes the islands in the
@@ -1611,7 +1674,7 @@ class MaxContrast(ProblemMatrix):
         print('Warning: update_tau() method is outdated!!!') 
             
 #%%
-    @profile
+#    @profile
     def compute_gurobi_model(self):
         r"""
         Generates the gurobi solver model for the MaxContrast problem.

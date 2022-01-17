@@ -19,7 +19,7 @@ from pathlib import Path
 from astropy.io import fits
 
 import xaosim
-
+import corono as coro
 import os
 import pwd
 import sys
@@ -35,54 +35,40 @@ syst = sys.platform
 nPup= 200
 do_fits = False
 
-pdiam, odiam = 7.92, 2.3  # tel. and obst. diameters (meters)
+do_margin = True
+
+str_margin=''
+if do_margin:
+    str_margin = '_v2'
+
+pdiam, odiam = 7.92, 2.3 # tel. and obst. diameters (meters)
+if do_margin:
+    pdiam, odiam = 7.92*0.99, 2.3+7.92*0.01 # tel. and obst. diameters (meters)
 thick = 0.25              # adopted spider thickness (meters)
 offset = 1.278            # spider intersection offset (meters)
 beta = 51.75              # spider angle beta
 
+kpdiam_t = [0.96]#np.linspace(0.9, 1.0, 11) # np.linspace(0.98, 1.0, 3) #
+kodiam_t = [1.112]#np.linspace(1.0, 2.0, 21) # np.linspace(1.0, 1.2, 5)  #
+kthick_t = [2.0]#np.linspace(1.0, 2.0, 11) # np.linspace(1.0, 1.2, 3)  #
 
-fac = 2.0
+pdiam2_t = np.asarray(kpdiam_t)*pdiam
+odiam2_t = np.asarray(kodiam_t)*odiam
+thick2_t = np.asarray(kthick_t)*thick 
 
-odiam2 = fac*odiam
-thick2 = fac*thick
+npdiam = len(kpdiam_t)
+nodiam = len(kodiam_t)
+nthick = len(kthick_t)
 
+nIter = npdiam*nodiam*nthick
 
-
-#%%
-"""
-### generation of a VLT like pupil
-"""
-#pupil = aperture.vlt_pupil(nPup, nPup, dead_actuator_diameter=0.)
-pupil_sbr = xaosim.pupil.subaru(nPup, nPup, nPup/2, between_pix=True)
-
-
-pupil = xaosim.pupil.four_spider_mask(nPup, nPup, nPup/2, pdiam, odiam=odiam2,
-                        beta=beta, thick=thick2, offset=offset,
-                        spiders=True,
-                        between_pix=True)
-
-pupil_diff = pupil*1 - pupil_sbr*1
+kwd_spiders = [False,True]
+if thick <= 0.:
+    kwd_spiders = False
 
 #%%
 """
-### display vlt-like pupil
-"""
-pl.figure(0)
-pl.clf()
-pl.subplot(131)
-pl.imshow(pupil)
-
-pl.subplot(132)
-pl.imshow(pupil_sbr)
-
-pl.subplot(133)
-pl.imshow(pupil_diff)
-
-pl.show()
-
-#%%
-"""
-save pupil
+### Directories
 """
 #fdir = Path('/Users/mndiaye/Dropbox/python/Coronagraphs/data/2D/pupils').resolve()
 if user == 'mndiaye':
@@ -96,9 +82,59 @@ else:
     raise ValueError('Unknown user {0}'.format(user))
 
 
+#%%
+"""
+### generation of a VLT like pupil
+"""
+for ipdiam, kpdiam in enumerate(kpdiam_t):
+    for iodiam, kodiam in enumerate(kodiam_t):
+        for ithick, kthick in enumerate(kthick_t):
+            
+            iIter = ithick+ iodiam*nthick + ipdiam*nthick*nodiam
+            print(f'iIter: {iIter+1:04d}/{nIter:04d}')
+            
+            pdiam2 = pdiam2_t[ipdiam]
+            odiam2 = odiam2_t[iodiam]
+            thick2 = thick2_t[ithick]            
+            
+            pupil = xaosim.pupil.four_spider_mask(nPup, nPup, nPup/2, 
+                                                  pdiam=pdiam, odiam=odiam2,
+                                                  beta=beta, thick=thick2, offset=offset,
+                                                  spiders=kwd_spiders,between_pix=True)
 
-fname = f'pupil=sbr_nPup={nPup}_odiam={int(odiam2*100)}_thick={int(thick2*100):03d}.fits' 
-fpath = fdir / fname
+            if kpdiam != 1.0:
+                outer_pupil = coro.utils.uniform_disk(nPup, (nPup/2)*kpdiam, CtrBtwnPix=True)
+                pupil = pupil*outer_pupil           
+            
+            fname = f'pupilsbr_nPup{nPup}_kpdiam{int(np.round(kpdiam*100)):03d}_kodiam{int(np.round(kodiam*100)):03d}_kthick{int(np.round(kthick*100)):03d}{str_margin}.fits' 
+            fpath = fdir / fname
+            
+            if do_fits:
+                fits.writeto(fpath, pupil*1, overwrite=True)
 
-if do_fits:
-    fits.writeto(fpath, pupil*1, overwrite=True)
+#%%
+"""
+### display vlt-like pupil
+"""
+#pupil_sbr = xaosim.pupil.subaru(nPup, nPup, nPup/2, between_pix=True)
+#pupil_diff = pupil*1 - pupil_sbr*1
+
+# pl.figure(0)
+# pl.clf()
+# pl.subplot(131)
+# pl.imshow(pupil)
+
+# pl.subplot(132)
+# pl.imshow(pupil_sbr)
+
+# pl.subplot(133)
+# pl.imshow(pupil_diff)
+
+# pl.show()
+
+# a = coro.utils.uniform_disk(nPup, (nPup/2)*kpdiam, CtrBtwnPix=True)
+
+# pl.figure(0)
+# pl.clf()
+# pl.imshow(a*pupil)
+

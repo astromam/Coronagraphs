@@ -95,7 +95,7 @@ def compute_corono_image(img_index, saxo_i, saxo_f):
     saxo_i = int(saxo_i)
     saxo_f = int(saxo_f)
     nmap = saxo_f - saxo_i + 1
-    for imap in tqdm.tqdm(range(nmap), desc="AO maps"):
+    for imap in range(nmap):#tqdm.tqdm(range(nmap), desc="AO maps"):
         OPDmap2d = OPDmap2d0 + SAXOmapnm3d[saxo_i+imap]*1e-9
         direct_mono_img_f += corono0.compute_direct_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d, poly=False)
         corono_mono_img_f += corono0.compute_corono_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d, poly=False)
@@ -204,7 +204,7 @@ if __name__ == '__main__':
     ### Science case
     """
     # spectral band
-    band = 'H2' # 'BB_J', 'BB_H', 'H2' filters
+    band = 'BB_J' # 'BB_J', 'BB_H', 'H2' filters
 
     # science case
     sci_case    = 'mature' # 'young' or mature'
@@ -216,8 +216,8 @@ if __name__ == '__main__':
     star_SpT0_lst = ['A', 'F', 'K']
     new_lst = list(itertools.product(sci_case_lst, star_SpT0_lst))
 
-    sci_case    = new_lst[eval(sys.argv[1])][0] # 'young' or mature'
-    star_SpT0   = new_lst[eval(sys.argv[1])][1] # 'A', 'F', 'K'
+    sci_case    = sci_case_lst[eval(sys.argv[1])]#new_lst[eval(sys.argv[1])][0] # 'young' or mature'
+    star_SpT0   = star_SpT0_lst[eval(sys.argv[2])]#new_lst[eval(sys.argv[1])][1] # 'A', 'F', 'K'
     
     _log.info(f'{sci_case} system, {star_SpT0} star, {band} band')
     if sci_case == 'young':        
@@ -302,10 +302,10 @@ if __name__ == '__main__':
     kw_aftercorr = False
     kw_saxo      = True
     saxofudge    = 1 #60/120              # saxo amplitude errors fudge factor
-    # saxomap_i    = int(nmap_sub*(eval(sys.argv[1])))       # saxo first screen
-    # saxomap_f    = int(nmap_sub*(eval(sys.argv[1])+1)-1)     # saxo last screen
-    saxomap_i    = int(nmap_sub*(0))       # saxo first screen
-    saxomap_f    = int(nmap_sub*(0+1)-1)     # saxo last screen
+    saxomap_i    = int(nmap_sub*(eval(sys.argv[3])))       # saxo first screen
+    saxomap_f    = int(nmap_sub*(eval(sys.argv[3])+1)-1)     # saxo last screen
+    # saxomap_i    = int(nmap_sub*(0))       # saxo first screen
+    # saxomap_f    = int(nmap_sub*(0+1)-1)     # saxo last screen
     _log.info(f'saxomap_i: {saxomap_i}, saxomap_f {saxomap_f}')
     # seeing for on-sky observations [arcsec]
     seeing = 0.7
@@ -324,27 +324,30 @@ if __name__ == '__main__':
     do_sav = True 
     
     # case with planet for plots
-    kwd_pla = True
+    kwd_pla = False
     
     # Planet position properties
-    sep_mas_p   = 12.25*8  #5*pscale      # planet separation in mas
+    sep_mas_p   = 12.25*16  #5*pscale      # planet separation in mas
     theta_deg_p = 0  # planet position angle in degrees
     
     # observation parameters
     exposure  = 0      # exposure number in the sequence
     airmass   = 1.2    # airmass for exposure
-    DIT       = nsaxomap/1380      # sec
+    DIT       = 60     #nsaxomap/1380      # sec
     
     # telescope and instrument transmission]
     tel_transmission = 1
     inst_transmission = 1
 
     # Noise
-    kwd_noi = True
+    kwd_noi = False
     std_ron = 1 # photo-electrons
 
     # Photometry
     kwd_sav_onlyphot = True
+    
+    # planet flux fudge factor
+    plnt_flux_fudge_factor = 1000
 
     #%%
     """
@@ -355,11 +358,11 @@ if __name__ == '__main__':
         wv0   = 1.593e-6
         width = 52e-9
     elif band == 'BB_H':
-        nlam  = 892
+        nlam  = 1785
         wv0   = 1625e-9
         width = 290e-9
     elif band == 'BB_J':
-        nlam  = 964
+        nlam  = 1928
         wv0   = 1245e-9
         width = 240e-9            
     else:
@@ -568,7 +571,7 @@ if __name__ == '__main__':
                 SAXOmapnm3d_tmp *= saxofudge
             # rescale NCPA map
             SAXOmapnm3d = np.empty((nmap, nPup, nPup))
-            pbar_maps = tqdm.tqdm(range(nmap), desc="AO map rescaling")
+            pbar_maps = range(nmap)#tqdm.tqdm(range(nmap), desc="AO map rescaling")
             for i in pbar_maps:
                 SAXOmapnm3d[i] = imutils.scale(SAXOmapnm3d_tmp[i], 0, new_dim=(nPup,nPup), method='interp')
                 #pbar_maps.set_description(f'{i+1:05}/{nmap:05}: SAXO map scaling - before: {np.std(SAXOmapnm3d_tmp[i, pupil_tmp != 0]):6.2f} nm RMS, after: {np.std(np.asarray(SAXOmapnm3d)[i, pupil != 0]):6.2f} nm RMS')
@@ -628,11 +631,21 @@ if __name__ == '__main__':
     """
 
     str_common = '_nmap{:05d}_i{:05d}_f{:05d}_band{}_nlam{:04d}'.format(nmap, saxomap_i, saxomap_f,band, nlam)
-    str_offaxis = '_sep{:04d}mas'.format(int(round(sep_mas_p)))
-    str_sphplus = '_{}_{}dMSun_{}MJup_{}Myr'.format(star_SpT, int(round(star_mass*10)), int(round(plnt_mass)), int(round(star_age)))
+    str_offaxis_fp = '_sep{:04d}mas'.format(int(round(sep_mas_p)))
+    str_offaxis = ''
+    if kwd_pla:
+        str_offaxis = str_offaxis_fp
+    
+    str_sphplus = '_{}_{}dMSun_{}Myr'.format(star_SpT, int(round(star_mass*10)), int(round(star_age)))   
+    if kwd_pla:
+        str_sphplus += '_{}MJup'.format(int(round(plnt_mass)))
     str_noi = ''
     if kwd_noi:
-        str_noi = '_noise'
+        str_noi = '_noi'
+    
+    str_ff = ''
+    if kwd_pla:
+        str_ff = f'_{plnt_flux_fudge_factor:03d}'
     
     # filepaths for the images
     fname_direct_mono_img_f     = 'dir' + str_common + '_img_f.fits'
@@ -651,14 +664,14 @@ if __name__ == '__main__':
     fpath_corono_mono_prf_std_f = fdir_res / fname_corono_mono_prf_std_f
     
     # filepaths for the images for the off-axis planet
-    fname_direct_mono_img_fp = 'dir' + str_common + '_img_f' + str_offaxis + '.fits'
-    fname_corono_mono_img_fp = 'cor' + str_common + '_img_f' + str_offaxis + '.fits'
+    fname_direct_mono_img_fp = 'dir' + str_common + '_img_f' + str_offaxis_fp + '.fits'
+    fname_corono_mono_img_fp = 'cor' + str_common + '_img_f' + str_offaxis_fp + '.fits'
     fpath_direct_mono_img_fp = fdir_res / fname_direct_mono_img_fp
     fpath_corono_mono_img_fp = fdir_res / fname_corono_mono_img_fp
     
     # filepath for the images with star and planet
-    fname_direct_cube = 'dir' + str_common + '_img_f' + str_offaxis + str_sphplus + str_noi + '.fits'
-    fname_corono_cube = 'cor' + str_common + '_img_f' + str_offaxis + str_sphplus + str_noi + '.fits'
+    fname_direct_cube = 'dir' + str_common + '_img_f' + str_offaxis + str_sphplus + str_noi + str_ff + '.fits'
+    fname_corono_cube = 'cor' + str_common + '_img_f' + str_offaxis + str_sphplus + str_noi + str_ff + '.fits'
     fpath_direct_cube = fdir_res / fname_direct_cube
     fpath_corono_cube = fdir_res / fname_corono_cube
 
@@ -717,14 +730,14 @@ if __name__ == '__main__':
             direct_mono_img_f += corono0.compute_direct_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d0, poly=False)
             corono_mono_img_f += corono0.compute_corono_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d0, poly=False)
     else:
-        direct_mono_img_f += corono0.compute_direct_intensity_2d_bis(Apod2d)
-        corono_mono_img_f += corono0.compute_corono_intensity_2d_bis(Apod2d)    
+        direct_mono_img_f += corono0.compute_direct_intensity_2d_bis(Apod2d, poly=False)
+        corono_mono_img_f += corono0.compute_corono_intensity_2d_bis(Apod2d, poly=False)    
 
     # computation of the averaged images
     direct_mono_img_f /= nmap
     corono_mono_img_f /= nmap
 
-    pbar_lam = tqdm.tqdm(range(nlam), desc="wavelength", position=0)
+    pbar_lam = range(nlam)#tqdm.tqdm(range(nlam), desc="wavelength", position=0)
     for ilam in pbar_lam:
         # image normalization
         direct_peak_val[ilam] = direct_mono_img_f[ilam].max()
@@ -740,67 +753,69 @@ if __name__ == '__main__':
 
     #%%
     # # definition of the coronagraph class
-    opd_p0 = wv0*(sep_loD_p/4)*(np.sin(theta_rad_p)*Tipp_mapnm2d + np.cos(theta_rad_p)*Tilt_mapnm2d)
-
-
-    t0 = time.time()
-    if kw_aberr:
-        if kw_saxo and kw_2nddate:
-
-            # create shared arrays
-            direct_mono_img_fp_cube_shape = (nproc, nlam, nImg2d, nImg2d)
-            direct_mono_img_fp_cube_data  = multiprocessing.RawArray(ctypes.c_double, int(np.prod(direct_mono_img_cube_shape)))
-            direct_mono_img_fp_cube_np    = array_to_numpy(direct_mono_img_fp_cube_data, direct_mono_img_fp_cube_shape)
-            
-            corono_mono_img_fp_cube_shape = (nproc, nlam, nImg2d, nImg2d)
-            corono_mono_img_fp_cube_data  = multiprocessing.RawArray(ctypes.c_double, int(np.prod(corono_mono_img_cube_shape)))
-            corono_mono_img_fp_cube_np    = array_to_numpy(corono_mono_img_fp_cube_data, corono_mono_img_fp_cube_shape)
-
-            # create thread pool
-            tpool = multiprocessing.Pool(processes=nproc, initializer=tpool_init,
-                                          initargs=(OPDmap2d0+opd_p0, SAXOmapnm3d, corono0, direct_mono_img_fp_cube_data, direct_mono_img_fp_cube_shape,
-                                                    corono_mono_img_fp_cube_data, corono_mono_img_fp_cube_shape))
-            # tpool_init(OPDmap2d0, SAXOmapnm3d, corono0, direct_mono_img_cube_data, direct_mono_img_cube_shape,
-            #            corono_mono_img_cube_data, corono_mono_img_cube_shape)
-
-            # create tasks
-            tasks = []
-            for image_index in range(nproc):
-                block = nmap / nproc
-                idx_i = image_index*block
-                idx_f = (image_index+1)*block-1
-                tasks.append(tpool.apply_async(compute_corono_image, args=(image_index, idx_i, idx_f)))
-                # compute_corono_image(image_index, idx_i, idx_f)
-                # stop
-
-            for idx, task in enumerate(tasks):
-                task.wait()
-
-            # close thread pool
-            tpool.close()
-            tpool.join()
-
-            direct_mono_img_fp_cube_np = array_to_numpy(direct_mono_img_fp_cube_data, direct_mono_img_fp_cube_shape)
-            corono_mono_img_fp_cube_np = array_to_numpy(corono_mono_img_fp_cube_data, corono_mono_img_fp_cube_shape)
-            
-            direct_mono_img_fp += direct_mono_img_fp_cube_np.sum(axis=0)
-            corono_mono_img_fp += corono_mono_img_fp_cube_np.sum(axis=0)
-
+    
+    if kwd_pla:
+        opd_p0 = wv0*(sep_loD_p/4)*(np.sin(theta_rad_p)*Tipp_mapnm2d + np.cos(theta_rad_p)*Tilt_mapnm2d)
+    
+    
+        t0 = time.time()
+        if kw_aberr:
+            if kw_saxo and kw_2nddate:
+    
+                # create shared arrays
+                direct_mono_img_fp_cube_shape = (nproc, nlam, nImg2d, nImg2d)
+                direct_mono_img_fp_cube_data  = multiprocessing.RawArray(ctypes.c_double, int(np.prod(direct_mono_img_cube_shape)))
+                direct_mono_img_fp_cube_np    = array_to_numpy(direct_mono_img_fp_cube_data, direct_mono_img_fp_cube_shape)
+                
+                corono_mono_img_fp_cube_shape = (nproc, nlam, nImg2d, nImg2d)
+                corono_mono_img_fp_cube_data  = multiprocessing.RawArray(ctypes.c_double, int(np.prod(corono_mono_img_cube_shape)))
+                corono_mono_img_fp_cube_np    = array_to_numpy(corono_mono_img_fp_cube_data, corono_mono_img_fp_cube_shape)
+    
+                # create thread pool
+                tpool = multiprocessing.Pool(processes=nproc, initializer=tpool_init,
+                                              initargs=(OPDmap2d0+opd_p0, SAXOmapnm3d, corono0, direct_mono_img_fp_cube_data, direct_mono_img_fp_cube_shape,
+                                                        corono_mono_img_fp_cube_data, corono_mono_img_fp_cube_shape))
+                # tpool_init(OPDmap2d0, SAXOmapnm3d, corono0, direct_mono_img_cube_data, direct_mono_img_cube_shape,
+                #            corono_mono_img_cube_data, corono_mono_img_cube_shape)
+    
+                # create tasks
+                tasks = []
+                for image_index in range(nproc):
+                    block = nmap / nproc
+                    idx_i = image_index*block
+                    idx_f = (image_index+1)*block-1
+                    tasks.append(tpool.apply_async(compute_corono_image, args=(image_index, idx_i, idx_f)))
+                    # compute_corono_image(image_index, idx_i, idx_f)
+                    # stop
+    
+                for idx, task in enumerate(tasks):
+                    task.wait()
+    
+                # close thread pool
+                tpool.close()
+                tpool.join()
+    
+                direct_mono_img_fp_cube_np = array_to_numpy(direct_mono_img_fp_cube_data, direct_mono_img_fp_cube_shape)
+                corono_mono_img_fp_cube_np = array_to_numpy(corono_mono_img_fp_cube_data, corono_mono_img_fp_cube_shape)
+                
+                direct_mono_img_fp += direct_mono_img_fp_cube_np.sum(axis=0)
+                corono_mono_img_fp += corono_mono_img_fp_cube_np.sum(axis=0)
+    
+            else:
+                direct_mono_img_fp += corono0.compute_direct_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d0+opd_p0, poly=False)
+                corono_mono_img_fp += corono0.compute_corono_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d0+opd_p0, poly=False)
         else:
-            direct_mono_img_fp += corono0.compute_direct_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d0+opd_p0, poly=False)
-            corono_mono_img_fp += corono0.compute_corono_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d0+opd_p0, poly=False)
-    else:
-        direct_mono_img_fp += corono0.compute_direct_intensity_2d_bis(Apod2d)
-        corono_mono_img_fp += corono0.compute_corono_intensity_2d_bis(Apod2d)    
-
-    # computation of the averaged images
-    direct_mono_img_fp /= nmap
-    corono_mono_img_fp /= nmap
-
-    for ilam in tqdm.tqdm(range(nlam), desc="wavelength"):
-        # image normalization
-        direct_mono_img_fp[ilam] /= direct_peak_val[ilam]
-        corono_mono_img_fp[ilam] /= direct_peak_val[ilam]
+            direct_mono_img_fp += corono0.compute_direct_intensity_2d_bis(Apod2d, OPDmap2d=opd_p0,poly=False)
+            corono_mono_img_fp += corono0.compute_corono_intensity_2d_bis(Apod2d, OPDmap2d=opd_p0, poly=False)    
+    
+        # computation of the averaged images
+        direct_mono_img_fp /= nmap
+        corono_mono_img_fp /= nmap
+    
+        for ilam in range(nlam):#tqdm.tqdm(range(nlam), desc="wavelength"):
+            # image normalization
+            direct_mono_img_fp[ilam] /= direct_peak_val[ilam]
+            corono_mono_img_fp[ilam] /= direct_peak_val[ilam]
 
     #%%
     """
@@ -814,14 +829,16 @@ if __name__ == '__main__':
     ### Photometry and spectra for the star, the planet and the telluric lines 
     """
     star_spec = fits.getdata(fpath_spectra_star)
-    plnt_spec = fits.getdata(fpath_spectra_plnt)
+    if kwd_pla:
+        plnt_spec = fits.getdata(fpath_spectra_plnt)
     tell_spec = fits.getdata(fpath_spectra_tell)
     
     star_wave = star_spec[0]
     star_flux = star_spec[1]
     
-    plnt_wave = plnt_spec[0]
-    plnt_flux = plnt_spec[1]
+    if kwd_pla:
+        plnt_wave = plnt_spec[0]
+        plnt_flux = plnt_spec[1]
     
     tell_wave = tell_spec[0]
     tell_flux = tell_spec[1]
@@ -837,10 +854,10 @@ if __name__ == '__main__':
     star_phot = star_flux.to('ph s**-1 m**-2 micron**-1', equivalencies=u.spectral_density(star_wave))
     
     #%%
-    
-    plnt_wave *= u.um
-    plnt_flux *= u.W / u.m**2 / u.um
-    plnt_phot = plnt_flux.to('ph s**-1 m**-2 micron**-1', equivalencies=u.spectral_density(plnt_wave))
+    if kwd_pla:
+        plnt_wave *= u.um
+        plnt_flux *= u.W / u.m**2 / u.um
+        plnt_phot = plnt_flux.to('ph s**-1 m**-2 micron**-1', equivalencies=u.spectral_density(plnt_wave))
     
     #%%
     tell_wave *= u.um
@@ -861,7 +878,8 @@ if __name__ == '__main__':
     """
     
     star_phot = spectral_binning(wv_um_t, dwv_um_t, star_wave, star_phot)
-    plnt_phot = spectral_binning(wv_um_t, dwv_um_t, plnt_wave, plnt_phot)
+    if kwd_pla:
+        plnt_phot = plnt_flux_fudge_factor*spectral_binning(wv_um_t, dwv_um_t, plnt_wave, plnt_phot)
     
     #tell_phot = transmission_spectral_binning(wv_um_t, dwv_um_t, tell_wave, tell_flux)
     
@@ -879,18 +897,23 @@ if __name__ == '__main__':
     """
     ### apply planetary photometry
     """
-    direct_mono_img_fp_obs = direct_mono_img_fp * u.dimensionless_unscaled 
-    direct_mono_img_fp_obs *= plnt_phot[:, None, None]
-    
-    corono_mono_img_fp_obs = corono_mono_img_fp * u.dimensionless_unscaled 
-    corono_mono_img_fp_obs *= plnt_phot[:, None, None]
+    if kwd_pla:
+        direct_mono_img_fp_obs = direct_mono_img_fp * u.dimensionless_unscaled 
+        direct_mono_img_fp_obs *= plnt_phot[:, None, None]
+        
+        corono_mono_img_fp_obs = corono_mono_img_fp * u.dimensionless_unscaled 
+        corono_mono_img_fp_obs *= plnt_phot[:, None, None]
     
     #%%
     """
     ### add stellar and planetary signal
     """
-    direct_cube = direct_mono_img_f_obs + direct_mono_img_fp_obs
-    corono_cube = corono_mono_img_f_obs + corono_mono_img_fp_obs
+    if kwd_pla:    
+        direct_cube = direct_mono_img_f_obs + direct_mono_img_fp_obs
+        corono_cube = corono_mono_img_f_obs + corono_mono_img_fp_obs
+    else:
+        direct_cube = direct_mono_img_f_obs
+        corono_cube = corono_mono_img_f_obs
     
     #%%
     """
@@ -945,21 +968,21 @@ if __name__ == '__main__':
         # total noise
         direct_cube = direct_Int_phn + direct_Int_ron
         corono_cube = corono_Int_phn + corono_Int_ron
-        
-        # apply stellar photometry
-        direct_cube *= u.dimensionless_unscaled
-        corono_cube *= u.dimensionless_unscaled
-        
-        # rounding of the values
-        direct_cube = np.rint(direct_cube.value).astype(int)
-        corono_cube = np.rint(corono_cube.value).astype(int)
-        
-        # clip negative values to zero
-        direct_cube = direct_cube.clip(min=0)
-        corono_cube = corono_cube.clip(min=0)
-        
+                
     else:
         _log.warning(' ==> no noise added!')
+
+    # apply stellar photometry
+    direct_cube *= u.dimensionless_unscaled
+    corono_cube *= u.dimensionless_unscaled
+    
+    # rounding of the values
+    direct_cube = np.rint(direct_cube.value).astype(int)
+    corono_cube = np.rint(corono_cube.value).astype(int)
+    
+    # clip negative values to zero
+    direct_cube = direct_cube.clip(min=0)
+    corono_cube = corono_cube.clip(min=0)
 
 
     #%% saving of the images
@@ -982,7 +1005,7 @@ if __name__ == '__main__':
                           fpath_direct_cube, fpath_corono_cube]
         nlist = len(data_list)
         
-        for ilist in tqdm.tqdm(range(nlist), "file saving"):
+        for ilist in range(nlist):#tqdm.tqdm(range(nlist), "file saving"):
         # save in FITS format
             hdu_prim = fits.PrimaryHDU()
             hdu_img  = fits.ImageHDU(data_list[ilist])
