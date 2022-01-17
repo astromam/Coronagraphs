@@ -58,9 +58,10 @@ rad2mas   = 1/mas2rad
 rMask_m   = 287e-6/2.         # mask size in m
 
 # spatial sampling
-nPup   = 384   # pupil
+nPup0  = 384   # pupil
+nPup   = 240   # pupil
 nFPM   = 200   # focal plane mask
-nImg2d = 50   # final image plane 
+nImg2d = 50    # final image plane 
 
 # simulation configuration   
 saxofudge    = 1. #80/120.
@@ -226,7 +227,7 @@ fpath_Apod2d          = fdir_dat / fname_Apod2d
 fpath_Apod2d_OPDmapnm = fdir_dat / fname_Apod2d_OPDmapnm
 fpath_Ampmap2d        = fdir_dat / fname_Ampmap2d
 fpath_SAXOmapnm3d     = fdir_dat / fname_SAXOmapnm3d
-fpath_ZELDAmapnm3d    = fdir_dat  / fname_ZELDAmapnm3d   
+fpath_ZELDAmapnm3d    = fdir_dat / fname_ZELDAmapnm3d   
 fpath_LyotStop2d      = fdir_dat / fname_LyotStop2d    
   
 #%%
@@ -331,36 +332,29 @@ def spectral_binning(wave, dwave, obj_wave, obj_phot):
 Pupil2d = aperture.vlt_pupil(nPup, nPup, dead_actuator_diameter=0)
     
 ### Apodization
-Apod2d = fits.getdata(fpath_Apod2d)
+Apod2d_tmp = fits.getdata(fpath_Apod2d)
+Apod2d = imutils.scale(Apod2d_tmp, 0, new_dim=(nPup,nPup), method='interp')
 
 ### Apodization OPD map
-Apod2d_OPDmapnm = fits.getdata(fpath_Apod2d_OPDmapnm)
-Apod2d_OPDmapnm[np.isnan(Apod2d_OPDmapnm)] = 0
+Apod2d_OPDmapnm_tmp = fits.getdata(fpath_Apod2d_OPDmapnm)
+Apod2d_OPDmapnm_tmp[np.isnan(Apod2d_OPDmapnm_tmp)] = 0
+Apod2d_OPDmapnm = imutils.scale(Apod2d_OPDmapnm_tmp, 0, new_dim=(nPup,nPup), method='interp')
 
 ### Amplitude errors
-Ampmap2d = fits.getdata(fpath_Ampmap2d)
+Ampmap2d_tmp = fits.getdata(fpath_Ampmap2d)
+Ampmap2d     = imutils.scale(Ampmap2d_tmp, 0, new_dim=(nPup,nPup), method='interp')
 
 ### Phase errors
-ZELDAmapnm3d    = fits.getdata(fpath_ZELDAmapnm3d)
-SAXOmapnm3d_tmp = fits.getdata(fpath_SAXOmapnm3d)
+ZELDAmapnm3d_tmp = fits.getdata(fpath_ZELDAmapnm3d)[imap0]
+ZELDAmapnm3d     = imutils.scale(ZELDAmapnm3d_tmp, 0, new_dim=(nPup,nPup), method='interp')
 
-if saxofudge != 1.:
-    SAXOmapnm3d_tmp *= saxofudge 
-nsaxo_all = len(SAXOmapnm3d_tmp) 
-print(np.shape(SAXOmapnm3d_tmp))       
-pupil_tmp = aperture.sphere_saxo_pupil()
-pupil     = np.round(imutils.scale(pupil_tmp, 0, new_dim=(nPup,nPup), method='interp'))
-
-# rescale SAXO map
+### SAXO maps
 SAXOmapnm3d = np.empty((nmap, nPup, nPup))
-for i in range(nmap):
-    SAXOmapnm3d[i] = imutils.scale(SAXOmapnm3d_tmp[i+saxomap_i], 0, new_dim=(nPup,nPup), method='interp')
-    print('{0:05}/{1:05}: SAXO map before scaling: {2:6.2f} nm RMS, after: {3:6.2f} nm RMS'.format(i+1, nmap, np.std(SAXOmapnm3d_tmp[i, pupil_tmp != 0]), np.std(np.asarray(SAXOmapnm3d)[i, pupil != 0])))
-
-del SAXOmapnm3d_tmp
+SAXOmapnm3d = fits.getdata(fpath_SAXOmapnm3d)[:nmap,:,:]
         
 ### Lyot Stop
-LyotStop2d = fits.getdata(fpath_LyotStop2d)
+LyotStop2d_tmp = fits.getdata(fpath_LyotStop2d)
+LyotStop2d     = imutils.scale(LyotStop2d_tmp, 0, new_dim=(nPup,nPup), method='interp')
 
 #%%
 """
@@ -456,7 +450,7 @@ fpath_corono_cube = fdir_res / fname_corono_cube
 ### Image generation
 """
 # definition of the coronagraph class
-OPDmap2d0 = (beta_wfs*ZELDAmapnm3d[imap0]+Apod2d_OPDmapnm)*1e-9
+OPDmap2d0 = (beta_wfs*ZELDAmapnm3d+Apod2d_OPDmapnm)*1e-9
 
 
 for imap in range(nmap):
