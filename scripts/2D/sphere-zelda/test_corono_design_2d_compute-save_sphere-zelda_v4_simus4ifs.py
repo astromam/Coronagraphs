@@ -39,7 +39,7 @@ _log = logging.getLogger(__name__)
 ### Parameters
 """
 # Coronagraph type
-corono_name   = 'APLC' # 'SP' or 'APLC' or DZPM
+corono_name = 'APLC' # 'SP' or 'APLC' or DZPM
 CtrBtwnPix  = True
 CtrBtwnPix2 = False
 Pupil2dSym  = False
@@ -63,11 +63,6 @@ nFPM   = 200   # focal plane mask
 nImg2d = 50   # final image plane 
 
 # simulation configuration   
-kw_aberr     = True
-kw_2nddate   = True    
-kw_skyobs    = True
-kw_aftercorr = False
-kw_saxo      = True
 saxofudge    = 1. #80/120.
 saxomap_i    = 0    # saxo first screen
 saxomap_f    = 0 # saxo last screen
@@ -111,7 +106,6 @@ kwd_sav_onlyphot = False
 
 # planet flux fudge factor
 plnt_flux_fudge_factor = 1000
-
 
 # stellar parameters
 star_SpT    = 'F4'
@@ -355,7 +349,8 @@ SAXOmapnm3d_tmp = fits.getdata(fpath_SAXOmapnm3d)
 
 if saxofudge != 1.:
     SAXOmapnm3d_tmp *= saxofudge 
-nsaxo_all = len(SAXOmapnm3d_tmp)        
+nsaxo_all = len(SAXOmapnm3d_tmp) 
+print(np.shape(SAXOmapnm3d_tmp))       
 pupil_tmp = aperture.sphere_saxo_pupil()
 pupil     = np.round(imutils.scale(pupil_tmp, 0, new_dim=(nPup,nPup), method='interp'))
 
