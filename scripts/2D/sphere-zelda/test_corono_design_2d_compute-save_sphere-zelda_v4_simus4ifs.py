@@ -199,14 +199,11 @@ beta_wfs = 1./0.6
 #%%
 #fdir = Path('../../').resolve()
 fdir = Path('/Users/mndiaye/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs').resolve()
-fdir_pupils  = fdir / 'data' / '2D' / 'pupils' / 'SPHERE' 
-fdir_zelda   = fdir / 'data' / '2D' / 'ZELDA' / str_date / str_obs  
-fdir_saxo    = fdir / 'data' / '2D' / 'ZELDA' / '2018-04-03'
+fdir_dat = fdir / 'data' / '2D' / 'medres_sim' 
 fdir_spectra = fdir / 'data' / '2D' / 'package_simu_spectra'
 fdir_sky     = fdir / 'data' / '2D' / 'skytable'
 
 fdir_res = fdir / 'results' / '2D' / 'data' / 'SPHERE' / str_aberr / str_date / str_obs / str_saxo / str_corr  
-
 if not os.path.exists(fdir_res):
     os.makedirs(fdir_res)
 
@@ -217,7 +214,7 @@ if not os.path.exists(fdir_res):
 fname_Apod2d          = 'SPHERE_APO1_field_transmission_map.fits'
 fname_Apod2d_OPDmapnm = 'apo_substrate_D1.fits'
 fname_Ampmap2d        = '2018-04-03_night_sphere_pupil_clear_sky_FeII_field.fits'
-fname_SAXOmapnm3d     = '2018-04-04T00-41-34-saxo_residual_turbulence_time=30.0sec_seeing={:.1f}as_tiptilt=1_gains=0_fitting=1_alias=1.fits'.format(seeing)
+fname_SAXOmapnm3d     = '2018-04-04T00-41-34-saxo_residual_turbulence_time30.0sec_seeing{:.1f}as_tiptilt1_gains0_fitting1_alias1.fits'.format(seeing)
 fname_ZELDAmapnm3d    = '2018-04-03_night_ncpa_loop_sky_2_ncpa_loop_opd.fits'
 fname_LyotStop2d      = 'sphere_stop_ST_ALC2.fits'
 
@@ -225,12 +222,12 @@ fname_LyotStop2d      = 'sphere_stop_ST_ALC2.fits'
 """
 ### Filepaths for the file sources
 """
-fpath_Apod2d          = fdir_pupils / fname_Apod2d
-fpath_Apod2d_OPDmapnm = fdir_pupils / fname_Apod2d_OPDmapnm
-fpath_Ampmap2d        = fdir_zelda / fname_Ampmap2d
-fpath_SAXOmapnm3d     = fdir_saxo / fname_SAXOmapnm3d
-fpath_ZELDAmapnm3d    = fdir_zelda  / fname_ZELDAmapnm3d   
-fpath_LyotStop2d      = fdir_pupils / fname_LyotStop2d    
+fpath_Apod2d          = fdir_dat / fname_Apod2d
+fpath_Apod2d_OPDmapnm = fdir_dat / fname_Apod2d_OPDmapnm
+fpath_Ampmap2d        = fdir_dat / fname_Ampmap2d
+fpath_SAXOmapnm3d     = fdir_dat / fname_SAXOmapnm3d
+fpath_ZELDAmapnm3d    = fdir_dat  / fname_ZELDAmapnm3d   
+fpath_LyotStop2d      = fdir_dat / fname_LyotStop2d    
   
 #%%
 """
