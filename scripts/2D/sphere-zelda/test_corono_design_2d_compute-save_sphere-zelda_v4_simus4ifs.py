@@ -58,7 +58,6 @@ rad2mas   = 1/mas2rad
 rMask_m   = 287e-6/2.         # mask size in m
 
 # spatial sampling
-nPup0  = 384   # pupil
 nPup   = 240   # pupil
 nFPM   = 200   # focal plane mask
 nImg2d = 50    # final image plane 
@@ -66,7 +65,7 @@ nImg2d = 50    # final image plane
 # simulation configuration   
 saxofudge    = 1. #80/120.
 saxomap_i    = 0    # saxo first screen
-saxomap_f    = 0 # saxo last screen
+saxomap_f    = 680 # saxo last screen
 
 # seeing for on-sky observations
 seeing = 0.7
@@ -121,6 +120,8 @@ plnt_mass   = 1
 plnt_age    = 20
 plnt_dist   = 50
 plnt_wv_res = 1000
+
+t0_sim = time.time()
     
 #%%
 """
@@ -746,7 +747,10 @@ if do_sav:
         hdu = fits.HDUList([hdu_prim, hdu_img, hdu_wave])
     
         hdu.writeto(fpath_list[ilist], overwrite=True)   
-        
+
+
+t1_sim = time.time() 
+print('full computation time: {0:.2f}s'.format(t1_sim-t0_sim))       
 
 #%%
 """
