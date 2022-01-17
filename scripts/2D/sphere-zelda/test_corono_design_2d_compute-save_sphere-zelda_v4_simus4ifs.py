@@ -87,7 +87,7 @@ tipp_ampl = 0
 tilt_ampl = 0 
 
 # save multi-spectral images
-do_sav = True 
+do_sav = False 
 
 # case with planet for plots
 kwd_pla = False
@@ -142,7 +142,11 @@ if band == 'H2':
 elif band == 'BB_H':
     nlam  = 1
     wv0   = 1625e-9 #1.593e-6
-    width = 290e-9  #52e-9        
+    width = 290e-9  #52e-9
+elif band == 'BB_J':
+    nlam  = 1928
+    wv0   = 1245e-9
+    width = 240e-9          
 else:
     raise ValueError(f'Unknown {band} band')
 
@@ -169,6 +173,7 @@ nFre2d = nImg2d/loD    # spatial frequencies in the final image plane
 
 # Focal plane mask 
 rMask     = rMask_m/(wv0*Fratio)  # mask size in lam0/D
+print(f'Mask radius: {rMask:.3f}lam0/D at {wv0*1e6:.3f}um')
 rMask_mas = rMask * (wv0/dAper)/mas2rad
 print('Mask radius: {0:.2f} mas at {1:.3f}um'.format(rMask_mas, wv0*1e6))
 
