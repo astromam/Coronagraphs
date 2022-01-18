@@ -65,7 +65,7 @@ nImg2d = 50    # final image plane
 # simulation configuration   
 saxofudge    = 1. #80/120.
 saxomap_i    = 0    # saxo first screen
-saxomap_f    = 680 # saxo last screen
+saxomap_f    = 1379 # saxo last screen
 
 # seeing for on-sky observations
 seeing = 0.7
