@@ -204,7 +204,7 @@ if __name__ == '__main__':
     ### Science case
     """
     # spectral band
-    band = 'BB_J' # 'BB_J', 'BB_H', 'H2' filters
+    band = 'H2' # 'BB_J', 'BB_H', 'H2' filters
 
     # science case
     sci_case    = 'mature' # 'young' or mature'
@@ -290,7 +290,7 @@ if __name__ == '__main__':
     # sampling
     nPup   = 384   # pupil
     nFPM   = 200   # focal plane mask
-    nImg2d = 50   # final image plane 
+    nImg2d = 84   # final image plane 
 
     # compute spatial frequencies in the final image plane
     pixel  = 12.25 # IRDIS pixel sampling [mas/pix]    
