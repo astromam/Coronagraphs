@@ -29,13 +29,13 @@ import ctypes
 import multiprocessing
 import psutil
 import itertools
-import tqdm
+#import tqdm
 
 import logging
 import scipy.interpolate as interpolate
 import astropy.units as u
 from vigan.astro import skycalc
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 # logging
 logging.basicConfig(format='[%(asctime)s - %(process)6s - %(levelname)-8s] %(message)s', level='INFO')
