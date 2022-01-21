@@ -60,7 +60,7 @@ rMask_m   = 287e-6/2.         # mask size in m
 # spatial sampling
 nPup   = 240   # pupil
 nFPM   = 200   # focal plane mask
-nImg2d = 50    # final image plane 
+nImg2d = 84    # final image plane 
 
 # simulation configuration   
 saxofudge    = 1. #80/120.
@@ -461,8 +461,8 @@ for imap in range(nmap):
     corono_mono_img_f += corono0.compute_corono_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d, poly=False)                
 
     t1 = time.time()
-    if (imap+1) % 10 == 0: 
-        print('map {1}/{2}, computation time: {0:.2f}s'.format(t1-t0, imap+1, nmap))
+    if (imap+1) % 100 == 0: 
+        print(f'map {imap+1}/{nmap}, computation time: {t1-t0:.2f}s')
 
 # computation of the averaged images
 direct_mono_img_f /= nmap
@@ -497,8 +497,8 @@ if kwd_pla:
         corono_mono_img_fp += corono0.compute_corono_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d, poly=False)                
     
         t1 = time.time()
-        if (imap+1) % 10 == 0: 
-            print('map {1}/{2}, computation time: {0:.2f}s'.format(t1-t0, imap+1, nmap))
+        if (imap+1) % 100 == 0: 
+            print(f'map {imap+1}/{nmap}, computation time: {t1-t0:.2f}s')
     
     # computation of the averaged images
     direct_mono_img_fp /= nmap
