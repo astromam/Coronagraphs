@@ -102,7 +102,7 @@ fdir_saxo   = fdir / 'data' / '2D' / 'ZELDA' / '2018-04-03'
 fname_Apod2d          = 'SPHERE_APO1_field_transmission_map.fits'
 fname_Apod2d_OPDmapnm = 'apo_substrate_D1.fits'
 fname_Ampmap2d        = '2018-04-03_night_sphere_pupil_clear_sky_FeII_field.fits'
-fname_SAXOmapnm3d     = '2018-04-04T00-41-34-saxo_residual_turbulence_time30.0sec_seeing{:.1f}as_tiptilt1_gains0_fitting1_alias1.fits'.format(seeing)
+fname_SAXOmapnm3d     = f'2018-04-04T00-41-34-saxo_residual_turbulence_time=30.0sec_seeing={seeing:.1f}as_tiptilt=1_gains=0_fitting=1_alias=1.fits'
 fname_ZELDAmapnm3d    = '2018-04-03_night_ncpa_loop_sky_2_ncpa_loop_opd.fits'
 fname_LyotStop2d      = 'sphere_stop_ST_ALC2.fits'
 
