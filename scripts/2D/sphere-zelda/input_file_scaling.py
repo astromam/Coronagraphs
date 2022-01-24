@@ -47,7 +47,7 @@ else:
     raise NameError('initial saxo map (saxomap_i={0}) must be smaller than final saxo map (saxomap_f={1})!'.format(saxomap_i, saxomap_f))
 
 do_sav = True
-do_disp = True
+do_disp = False
 
 #%%
 """
@@ -186,11 +186,12 @@ ZELDAmapnm3d     = imutils.scale(ZELDAmapnm3d_tmp, 0, new_dim=(nPup,nPup), metho
 ### SAXO maps
 SAXOmapnm3d = np.empty((nmap, nPup, nPup))
 t0 = time.time()
-SAXOmapnm3d_tmp = fits.getdata(fpath_SAXOmapnm3d)[:nmap,:,:]
+SAXOmapnm3d_tmp = fits.getdata(fpath_SAXOmapnm3d)#[:nmap,:,:]
+nmpa = np.shape(SAXOmapnm3d_tmp)[0]
 for imap in range(nmap): 
     SAXOmapnm3d[imap] = imutils.scale(SAXOmapnm3d_tmp[imap], 0, new_dim=(nPup,nPup), method='interp')
 t1 = time.time()
-print(f'scaling time for nmap={nmap}: {t1-t0:.2f}')
+print(f'scaling time for nmap={nmap}: {t1-t0:.2f}s')
         
 ### Lyot Stop
 LyotStop2d_tmp = fits.getdata(fpath_LyotStop2d)
@@ -204,8 +205,7 @@ LyotStop2d     = imutils.scale(LyotStop2d_tmp, 0, new_dim=(nPup,nPup), method='i
 
 if do_sav:
     fits.writeto(fpath2_Apod2d, Apod2d, overwrite=True)
-    fits.writeto(fpath2_Apod2d_OPDmapnm, Apod2d_OPDmapnm, overwrite=True)
-    
+    fits.writeto(fpath2_Apod2d_OPDmapnm, Apod2d_OPDmapnm, overwrite=True)    
     fits.writeto(fpath2_Ampmap2d, Ampmap2d, overwrite=True)
     fits.writeto(fpath2_ZELDAmapnm3d, ZELDAmapnm3d, overwrite=True)
     fits.writeto(fpath2_SAXOmapnm3d, SAXOmapnm3d, overwrite=True)
