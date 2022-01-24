@@ -58,14 +58,14 @@ rad2mas   = 1/mas2rad
 rMask_m   = 287e-6/2.         # mask size in m
 
 # spatial sampling
-nPup   = 240   # pupil
+nPup   = 100   # pupil
 nFPM   = 200   # focal plane mask
 nImg2d = 84    # final image plane 
 
 # simulation configuration   
 saxofudge    = 1. #80/120.
 saxomap_i    = 0    # saxo first screen
-saxomap_f    = 1379 # saxo last screen
+saxomap_f    = 0 # saxo last screen
 
 # seeing for on-sky observations
 seeing = 0.7
@@ -133,7 +133,7 @@ if band == 'H2':
     wv0   = 1.593e-6
     width = 52e-9
 elif band == 'BB_H':
-    nlam  = 1
+    nlam  = 1785
     wv0   = 1625e-9 #1.593e-6
     width = 290e-9  #52e-9
 elif band == 'BB_J':
@@ -213,12 +213,12 @@ if not os.path.exists(fdir_res):
 """
 ### Filenames for the sources
 """
-fname_Apod2d          = 'SPHERE_APO1_field_transmission_map.fits'
-fname_Apod2d_OPDmapnm = 'apo_substrate_D1.fits'
-fname_Ampmap2d        = '2018-04-03_night_sphere_pupil_clear_sky_FeII_field.fits'
-fname_SAXOmapnm3d     = '2018-04-04T00-41-34-saxo_residual_turbulence_time30.0sec_seeing{:.1f}as_tiptilt1_gains0_fitting1_alias1.fits'.format(seeing)
-fname_ZELDAmapnm3d    = '2018-04-03_night_ncpa_loop_sky_2_ncpa_loop_opd.fits'
-fname_LyotStop2d      = 'sphere_stop_ST_ALC2.fits'
+fname_Apod2d          = f'SPHERE_APO1_field_transmission_map_nPup{nPup:04d}.fits'
+fname_Apod2d_OPDmapnm = f'apo_substrate_D1_nPup{nPup:04d}.fits'
+fname_Ampmap2d        = f'2018-04-03_night_sphere_pupil_clear_sky_FeII_field_nPup{nPup:04d}.fits'
+fname_SAXOmapnm3d     = f'2018-04-04T00-41-34-saxo_residual_turbulence_time30.0sec_seeing{seeing:.1f}as_tiptilt1_gains0_fitting1_alias1_nPup{nPup:04d}.fits'
+fname_ZELDAmapnm3d    = f'2018-04-03_night_ncpa_loop_sky_2_ncpa_loop_opd_nPup{nPup:04d}.fits'
+fname_LyotStop2d      = f'sphere_stop_ST_ALC2_nPup{nPup:04d}.fits'
 
 #%%
 """
@@ -333,29 +333,23 @@ def spectral_binning(wave, dwave, obj_wave, obj_phot):
 Pupil2d = aperture.vlt_pupil(nPup, nPup, dead_actuator_diameter=0)
     
 ### Apodization
-Apod2d_tmp = fits.getdata(fpath_Apod2d)
-Apod2d = imutils.scale(Apod2d_tmp, 0, new_dim=(nPup,nPup), method='interp')
+Apod2d = fits.getdata(fpath_Apod2d)
 
 ### Apodization OPD map
-Apod2d_OPDmapnm_tmp = fits.getdata(fpath_Apod2d_OPDmapnm)
-Apod2d_OPDmapnm_tmp[np.isnan(Apod2d_OPDmapnm_tmp)] = 0
-Apod2d_OPDmapnm = imutils.scale(Apod2d_OPDmapnm_tmp, 0, new_dim=(nPup,nPup), method='interp')
+Apod2d_OPDmapnm = fits.getdata(fpath_Apod2d_OPDmapnm)
 
 ### Amplitude errors
-Ampmap2d_tmp = fits.getdata(fpath_Ampmap2d)
-Ampmap2d     = imutils.scale(Ampmap2d_tmp, 0, new_dim=(nPup,nPup), method='interp')
+Ampmap2d = fits.getdata(fpath_Ampmap2d)
 
 ### Phase errors
-ZELDAmapnm3d_tmp = fits.getdata(fpath_ZELDAmapnm3d)[imap0]
-ZELDAmapnm3d     = imutils.scale(ZELDAmapnm3d_tmp, 0, new_dim=(nPup,nPup), method='interp')
+ZELDAmapnm3d = fits.getdata(fpath_ZELDAmapnm3d)
 
 ### SAXO maps
 SAXOmapnm3d = np.empty((nmap, nPup, nPup))
 SAXOmapnm3d = fits.getdata(fpath_SAXOmapnm3d)[:nmap,:,:]
         
 ### Lyot Stop
-LyotStop2d_tmp = fits.getdata(fpath_LyotStop2d)
-LyotStop2d     = imutils.scale(LyotStop2d_tmp, 0, new_dim=(nPup,nPup), method='interp')
+LyotStop2d = fits.getdata(fpath_LyotStop2d)
 
 #%%
 """
@@ -462,7 +456,7 @@ for imap in range(nmap):
 
     t1 = time.time()
     if (imap+1) % 100 == 0: 
-        print(f'map {imap+1}/{nmap}, computation time: {t1-t0:.2f}s')
+        print(f'map {imap+1}/{nmap}, computation time: {t1-t0:.3f}s')
 
 # computation of the averaged images
 direct_mono_img_f /= nmap
@@ -774,7 +768,7 @@ for i in range(corono0.nlam):
     if OPDmap2d is not None:
         field_L   = field_A[i]*corono0.LyotStop2d                
     if corono0.ImPart is True:
-        print('ImPart is true')
+        #print('ImPart is true')
         field_Dtmp[i] = coro.utils.sft(field_L, corono0.nImg2d, corono0.mD_t[i], 
                   CtrBtwnPix=corono0.CtrBtwnPix2)
     else:
@@ -804,7 +798,7 @@ for i in range(corono0.nlam):
     else:
         field = field_A[i]                
     if corono0.ImPart is True:
-        print('ImPart is true')
+        #print('ImPart is true')
         field_B       = corono0.mask2d*coro.utils.sft(field, corono0.nFPM, corono0.mB_t[i], 
                                         CtrBtwnPix=corono0.CtrBtwnPix)
         field_C       = field - coro.utils.isft(field_B, corono0.nPup, corono0.mB_t[i], 
