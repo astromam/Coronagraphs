@@ -187,7 +187,7 @@ ZELDAmapnm3d     = imutils.scale(ZELDAmapnm3d_tmp, 0, new_dim=(nPup,nPup), metho
 SAXOmapnm3d = np.empty((nmap, nPup, nPup))
 t0 = time.time()
 SAXOmapnm3d_tmp = fits.getdata(fpath_SAXOmapnm3d)#[:nmap,:,:]
-nmpa = np.shape(SAXOmapnm3d_tmp)[0]
+nmap = np.shape(SAXOmapnm3d_tmp)[0]
 for imap in range(nmap): 
     SAXOmapnm3d[imap] = imutils.scale(SAXOmapnm3d_tmp[imap], 0, new_dim=(nPup,nPup), method='interp')
 t1 = time.time()
