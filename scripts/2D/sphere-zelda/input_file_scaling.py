@@ -35,7 +35,7 @@ nPup   = 100   # pupil
 # simulation configuration   
 saxofudge    = 1. #80/120.
 saxomap_i    = 0    # saxo first screen
-saxomap_f    = 1379 # saxo last screen
+saxomap_f    = 1379 # saxo last screen (max phase screen 41403)
 
 # seeing for on-sky observations
 seeing = 0.7
@@ -134,7 +134,7 @@ fpath_LyotStop2d      = fdir_pupils / fname_LyotStop2d
 """
 fname2_Apod2d          = f'SPHERE_APO1_field_transmission_map_nPup{nPup:04d}.fits'
 fname2_Apod2d_OPDmapnm = f'apo_substrate_D1_nPup{nPup:04d}.fits'
-fname2_Ampmap2d        = f'2018-04-03_night_sphere_pupil_clear_sky_FeII_field._nPup{nPup:04d}.fits'
+fname2_Ampmap2d        = f'2018-04-03_night_sphere_pupil_clear_sky_FeII_field_nPup{nPup:04d}.fits'
 fname2_SAXOmapnm3d     = f'2018-04-04T00-41-34-saxo_residual_turbulence_time30.0sec_seeing{seeing:.1f}as_tiptilt1_gains0_fitting1_alias1_nPup{nPup:04d}.fits'
 fname2_ZELDAmapnm3d    = f'2018-04-03_night_ncpa_loop_sky_2_ncpa_loop_opd_nPup{nPup:04d}.fits'
 fname2_LyotStop2d      = f'sphere_stop_ST_ALC2_nPup{nPup:04d}.fits'
@@ -185,8 +185,8 @@ ZELDAmapnm3d     = imutils.scale(ZELDAmapnm3d_tmp, 0, new_dim=(nPup,nPup), metho
 
 ### SAXO maps
 t0 = time.time()
-SAXOmapnm3d_tmp = fits.getdata(fpath_SAXOmapnm3d)#[:nmap,:,:]
-nmap = np.shape(SAXOmapnm3d_tmp)[0]
+SAXOmapnm3d_tmp = fits.getdata(fpath_SAXOmapnm3d)[:nmap,:,:]
+#nmap = np.shape(SAXOmapnm3d_tmp)[0]
 SAXOmapnm3d = np.empty((nmap, nPup, nPup))
 for imap in range(nmap): 
     SAXOmapnm3d[imap] = imutils.scale(SAXOmapnm3d_tmp[imap], 0, new_dim=(nPup,nPup), method='interp')
@@ -208,7 +208,7 @@ if do_sav:
     fits.writeto(fpath2_Apod2d_OPDmapnm, Apod2d_OPDmapnm, overwrite=True)    
     fits.writeto(fpath2_Ampmap2d, Ampmap2d, overwrite=True)
     fits.writeto(fpath2_ZELDAmapnm3d, ZELDAmapnm3d, overwrite=True)
-    fits.writeto(fpath2_SAXOmapnm3d, SAXOmapnm3d, overwrite=True)
+#    fits.writeto(fpath2_SAXOmapnm3d, SAXOmapnm3d, overwrite=True)
     fits.writeto(fpath2_LyotStop2d, LyotStop2d, overwrite=True)
 
 #%%
