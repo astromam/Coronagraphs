@@ -288,7 +288,7 @@ if __name__ == '__main__':
     rMask_m   = 287e-6/2.         # mask size in m
 
     # sampling
-    nPup   = 384   # pupil
+    nPup   = 100   # pupil
     nFPM   = 200   # focal plane mask
     nImg2d = 84   # final image plane 
 
@@ -321,7 +321,7 @@ if __name__ == '__main__':
     tilt_ampl = 0 
 
     # save multi-spectral images
-    do_sav = True 
+    do_sav = False 
     
     # case with planet for plots
     kwd_pla = False
@@ -380,7 +380,7 @@ if __name__ == '__main__':
     if nlam > 1:
         dwv_t  = np.asarray([wv_t[1]-wv_t[0]]*nlam)
         # spectral resolution
-        wv_R      = wv0/dwv_t[0]
+        wv_R   = wv0/dwv_t[0]
     
     # compute spatial frequencies in the final image plane
     pixel  = 12.25 # IRDIS pixel sampling [mas/pix]
@@ -406,39 +406,56 @@ if __name__ == '__main__':
     """
     ### Directories
     """    
-    if kw_aberr is False:
-        str_aberr = 'wo_aberr'
-        str_date  = ''
-        if kw_skyobs:
-            str_obs   = 'sky'
-        else:
-            str_obs   = 'internal'
-        str_corr  = ''
-        str_saxo  = ''
-        str_saxoset= ''
-        nmap      = 1 
-    else:
-        str_aberr = 'with_aberr'    
-        str_date  = '2018-04-01'
-        str_obs   = 'internal'
-        str_corr  = 'before_correction'
-        str_saxo  = ''
-        imap0     = 0
-        nmap      = 1
-        beta_wfs  = 1./0.90
-        str_saxo_tmp  = 'wo_saxo'
-        if kw_2nddate:
-            str_date = '2018-04-03'
-        if kw_skyobs:
-            str_obs  = 'sky'
-        if kw_aftercorr:
-            str_corr = 'after_correction'
-            imap0    = 3
-            beta_wfs = 1/0.95
-        if kw_saxo and kw_2nddate:
-            str_saxo = 'with_saxo'
-            nmap     = nsaxomap*1
-            beta_wfs = 1/0.6
+    # if kw_aberr is False:
+    #     str_aberr = 'wo_aberr'
+    #     str_date  = ''
+    #     if kw_skyobs:
+    #         str_obs   = 'sky'
+    #     else:
+    #         str_obs   = 'internal'
+    #     str_corr  = ''
+    #     str_saxo  = ''
+    #     str_saxoset= ''
+    #     nmap      = 1 
+    # else:
+    #     str_aberr = 'with_aberr'    
+    #     str_date  = '2018-04-01'
+    #     str_obs   = 'internal'
+    #     str_corr  = 'before_correction'
+    #     str_saxo  = ''
+    #     imap0     = 0
+    #     nmap      = 1
+    #     beta_wfs  = 1./0.90
+    #     str_saxo_tmp  = 'wo_saxo'
+    #     if kw_2nddate:
+    #         str_date = '2018-04-03'
+    #     if kw_skyobs:
+    #         str_obs  = 'sky'
+    #     if kw_aftercorr:
+    #         str_corr = 'after_correction'
+    #         imap0    = 3
+    #         beta_wfs = 1/0.95
+    #     if kw_saxo and kw_2nddate:
+    #         str_saxo = 'with_saxo'
+    #         nmap     = nsaxomap*1
+    #         beta_wfs = 1/0.6
+    
+    str_aberr = 'with_aberr'    
+    str_date  = '2018-04-01'
+    str_obs   = 'internal'
+    str_corr  = 'before_correction'
+    str_saxo  = ''
+    imap0     = 0
+    nmap      = 1
+    beta_wfs  = 1./0.90
+    str_saxo_tmp  = 'wo_saxo'
+    str_date = '2018-04-03'
+    str_obs  = 'sky'
+    str_saxo = 'with_saxo'
+    nmap     = nsaxomap*1
+    beta_wfs = 1./0.6   
+    
+    
 
     #%%
 #    fdir = Path('~/data/ZELDA/CoroSimulations/').expanduser()
@@ -446,17 +463,26 @@ if __name__ == '__main__':
 
     
 
-    fdir_pupils  = fdir / 'data' / '2D' / 'pupils' / 'SPHERE' 
-    fdir_zelda   = fdir / 'data' / '2D' / 'ZELDA' / str_date / str_obs  
-    fdir_saxo    = fdir / 'data' / '2D' / 'ZELDA' / '2018-04-03'
+    # fdir_pupils  = fdir / 'data' / '2D' / 'pupils' / 'SPHERE' 
+    # fdir_zelda   = fdir / 'data' / '2D' / 'ZELDA' / str_date / str_obs  
+    # fdir_saxo    = fdir / 'data' / '2D' / 'ZELDA' / '2018-04-03'
+    # fdir_spectra = fdir / 'data' / '2D' / 'package_simu_spectra'
+    # fdir_sky     = fdir / 'data' / '2D' / 'skytable'
+
+    # if kw_aberr:
+    #     fdir_res = fdir / 'results' / '2D' / 'data' / 'SPHERE' / str_aberr / str_date / str_obs / str_saxo / str_corr  
+    # else:
+    #     fdir_res = fdir / 'results' / '2D' / 'data' / 'SPHERE' / str_aberr / str_obs / str_saxo / str_corr  
+
+    # if not os.path.exists(fdir_res):
+    #     os.makedirs(fdir_res)
+    
+
+    fdir_dat = fdir / 'data' / '2D' / 'medres_sim' 
     fdir_spectra = fdir / 'data' / '2D' / 'package_simu_spectra'
     fdir_sky     = fdir / 'data' / '2D' / 'skytable'
 
-    if kw_aberr:
-        fdir_res = fdir / 'results' / '2D' / 'data' / 'SPHERE' / str_aberr / str_date / str_obs / str_saxo / str_corr  
-    else:
-        fdir_res = fdir / 'results' / '2D' / 'data' / 'SPHERE' / str_aberr / str_obs / str_saxo / str_corr  
-
+    fdir_res = fdir / 'results' / '2D' / 'data' / 'SPHERE' / str_aberr / str_date / str_obs / str_saxo / str_corr  
     if not os.path.exists(fdir_res):
         os.makedirs(fdir_res)
 
@@ -464,41 +490,55 @@ if __name__ == '__main__':
     """
     ### Filenames for the sources
     """
-    fname_Apod2d     = 'SPHERE_APO1_field_transmission_map.fits'
-    fname_Apod2d_OPDmapnm = 'apo_substrate_D1.fits'
-    fname_Ampmap2d   = 'sphere_pupil_clear_BH_field.fits'
-    fname_LyotStop2d = 'sphere_stop_ST_ALC2.fits'
+    # fname_Apod2d     = 'SPHERE_APO1_field_transmission_map.fits'
+    # fname_Apod2d_OPDmapnm = 'apo_substrate_D1.fits'
+    # fname_Ampmap2d   = 'sphere_pupil_clear_BH_field.fits'
+    # fname_LyotStop2d = 'sphere_stop_ST_ALC2.fits'
 
-    if kw_aberr is True:
-        if kw_skyobs is True:
-            fname_Ampmap2d   = '2018-04-01_night_sphere_pupil_clear_sky_FeII_field.fits'
-            fname_ZELDAmapnm3d = '2018-04-01_night_ncpa_loop_700modes_5_ncpa_loop_opd.fits'
-            if kw_2nddate is True:
-                fname_Ampmap2d   = '2018-04-03_night_sphere_pupil_clear_sky_FeII_field.fits'
-                fname_ZELDAmapnm3d = '2018-04-03_night_ncpa_loop_sky_2_ncpa_loop_opd.fits'
-        else:
-            fname_Ampmap2d   = 'sphere_pupil_clear_BH_field.fits'
-            fname_ZELDAmapnm3d = '2018-04-01_ncpa_loop_700modes_2_ncpa_loop_opd.fits'        
-            if kw_2nddate is True:
-                fname_ZELDAmapnm3d = '2018-04-03_ncpa_loop_700modes_ncpa_loop_opd.fits'
+    # if kw_aberr is True:
+    #     if kw_skyobs is True:
+    #         fname_Ampmap2d   = '2018-04-01_night_sphere_pupil_clear_sky_FeII_field.fits'
+    #         fname_ZELDAmapnm3d = '2018-04-01_night_ncpa_loop_700modes_5_ncpa_loop_opd.fits'
+    #         if kw_2nddate is True:
+    #             fname_Ampmap2d   = '2018-04-03_night_sphere_pupil_clear_sky_FeII_field.fits'
+    #             fname_ZELDAmapnm3d = '2018-04-03_night_ncpa_loop_sky_2_ncpa_loop_opd.fits'
+    #     else:
+    #         fname_Ampmap2d   = 'sphere_pupil_clear_BH_field.fits'
+    #         fname_ZELDAmapnm3d = '2018-04-01_ncpa_loop_700modes_2_ncpa_loop_opd.fits'        
+    #         if kw_2nddate is True:
+    #             fname_ZELDAmapnm3d = '2018-04-03_ncpa_loop_700modes_ncpa_loop_opd.fits'
 
-        if kw_saxo and kw_2nddate:
-            fname_SAXOmapnm3d = '2018-04-04T00-41-34-saxo_residual_turbulence_time=30.0sec_seeing={:.1f}as_tiptilt=1_gains=0_fitting=1_alias=1.fits'.format(seeing)
+    #     if kw_saxo and kw_2nddate:
+    #         fname_SAXOmapnm3d = '2018-04-04T00-41-34-saxo_residual_turbulence_time=30.0sec_seeing={:.1f}as_tiptilt=1_gains=0_fitting=1_alias=1.fits'.format(seeing)
+
+    fname_Apod2d          = f'SPHERE_APO1_field_transmission_map_nPup{nPup:04d}.fits'
+    fname_Apod2d_OPDmapnm = f'apo_substrate_D1_nPup{nPup:04d}.fits'
+    fname_Ampmap2d        = f'2018-04-03_night_sphere_pupil_clear_sky_FeII_field_nPup{nPup:04d}.fits'
+    fname_SAXOmapnm3d     = f'2018-04-04T00-41-34-saxo_residual_turbulence_time30.0sec_seeing{seeing:.1f}as_tiptilt1_gains0_fitting1_alias1_nPup{nPup:04d}.fits'
+    fname_ZELDAmapnm3d    = f'2018-04-03_night_ncpa_loop_sky_2_ncpa_loop_opd_nPup{nPup:04d}.fits'
+    fname_LyotStop2d      = f'sphere_stop_ST_ALC2_nPup{nPup:04d}.fits'
 
     #%% 
     """
     ###Filepaths for the file sources
     """
-    fpath_Apod2d          = fdir_pupils / fname_Apod2d
-    fpath_Apod2d_OPDmapnm = fdir_pupils / fname_Apod2d_OPDmapnm
-    fpath_Ampmap2d        = fdir_zelda / fname_Ampmap2d
+    # fpath_Apod2d          = fdir_pupils / fname_Apod2d
+    # fpath_Apod2d_OPDmapnm = fdir_pupils / fname_Apod2d_OPDmapnm
+    # fpath_Ampmap2d        = fdir_zelda / fname_Ampmap2d
 
-    if kw_aberr:
-        fpath_ZELDAmapnm3d = fdir_zelda  / fname_ZELDAmapnm3d   
-        if kw_saxo and kw_2nddate:
-            fpath_SAXOmapnm3d = fdir_saxo / fname_SAXOmapnm3d
+    # if kw_aberr:
+    #     fpath_ZELDAmapnm3d = fdir_zelda  / fname_ZELDAmapnm3d   
+    #     if kw_saxo and kw_2nddate:
+    #         fpath_SAXOmapnm3d = fdir_saxo / fname_SAXOmapnm3d
 
-    fpath_LyotStop2d = fdir_pupils / fname_LyotStop2d    
+    # fpath_LyotStop2d = fdir_pupils / fname_LyotStop2d   
+    
+    fpath_Apod2d          = fdir_dat / fname_Apod2d
+    fpath_Apod2d_OPDmapnm = fdir_dat / fname_Apod2d_OPDmapnm
+    fpath_Ampmap2d        = fdir_dat / fname_Ampmap2d
+    fpath_SAXOmapnm3d     = fdir_dat / fname_SAXOmapnm3d
+    fpath_ZELDAmapnm3d    = fdir_dat / fname_ZELDAmapnm3d   
+    fpath_LyotStop2d      = fdir_dat / fname_LyotStop2d      
 
     #%%
     """
@@ -536,10 +576,7 @@ if __name__ == '__main__':
     ### File reading
     """
     # Pupil
-    if kw_skyobs:
-        Pupil2d = aperture.vlt_pupil(nPup, nPup, dead_actuator_diameter=0)
-    else:
-        Pupil2d = aperture.disc(nPup, nPup/2)
+    Pupil2d = aperture.vlt_pupil(nPup, nPup, dead_actuator_diameter=0)
 
     #%% Apodization
     Apod2d = fits.getdata(fpath_Apod2d)
@@ -549,42 +586,17 @@ if __name__ == '__main__':
     Apod2d_OPDmapnm[np.isnan(Apod2d_OPDmapnm)] = 0
 
     #%% Amplitude errors
-    Ampmap2d = None
-    if kw_aberr:
-        Ampmap2d = fits.getdata(fpath_Ampmap2d)
+    Ampmap2d = fits.getdata(fpath_Ampmap2d)
 
     #%% Phase errors
-    if kw_aberr:
-        ZELDAmapnm3d = fits.getdata(fpath_ZELDAmapnm3d)
-
-        if kw_saxo and kw_2nddate:
-            # SAXO pupils
-            pupil_tmp = aperture.sphere_saxo_pupil()
-            pupil = np.round(imutils.scale(pupil_tmp, 0, new_dim=(nPup,nPup), method='interp'))
-
-            # read SAXO phase residuals
-            SAXOmapnm3d_tmp = fits.getdata(fpath_SAXOmapnm3d)
-            # select only phase screens that will be actually used
-            SAXOmapnm3d_tmp = SAXOmapnm3d_tmp[saxomap_i:saxomap_f+1]
-            # apply SAXO performance fudge factor
-            if saxofudge != 1:
-                SAXOmapnm3d_tmp *= saxofudge
-            # rescale NCPA map
-            SAXOmapnm3d = np.empty((nmap, nPup, nPup))
-            pbar_maps = range(nmap)#tqdm.tqdm(range(nmap), desc="AO map rescaling")
-            for i in pbar_maps:
-                SAXOmapnm3d[i] = imutils.scale(SAXOmapnm3d_tmp[i], 0, new_dim=(nPup,nPup), method='interp')
-                #pbar_maps.set_description(f'{i+1:05}/{nmap:05}: SAXO map scaling - before: {np.std(SAXOmapnm3d_tmp[i, pupil_tmp != 0]):6.2f} nm RMS, after: {np.std(np.asarray(SAXOmapnm3d)[i, pupil != 0]):6.2f} nm RMS')
-
-            del SAXOmapnm3d_tmp
+    ZELDAmapnm3d = fits.getdata(fpath_ZELDAmapnm3d)
+    
+    #%% SAXO maps
+    SAXOmapnm3d = np.empty((nmap, nPup, nPup))
+    SAXOmapnm3d = fits.getdata(fpath_SAXOmapnm3d)[:nmap,:,:]
             
     #%% Lyot Stop
     LyotStop2d = fits.getdata(fpath_LyotStop2d)
-
-    #%%
-    Defo_mapnm2d = zernike.zernike1(4, npix=nPup, outside=0.)
-    Tipp_mapnm2d = zernike.zernike1(2, npix=nPup, outside=0.)
-    Tilt_mapnm2d = zernike.zernike1(3, npix=nPup, outside=0.)
 
     #%%
     """
@@ -677,62 +689,49 @@ if __name__ == '__main__':
 
     #%%
     # definition of the coronagraph class
-    if kw_aberr:
-        OPDmap2d0 = (beta_wfs*ZELDAmapnm3d[imap0]+Apod2d_OPDmapnm\
-                    +defo_ampl*Defo_mapnm2d\
-                    +tipp_ampl*Tipp_mapnm2d\
-                    +tilt_ampl*Tilt_mapnm2d)*1e-9
+    OPDmap2d0 = (beta_wfs*ZELDAmapnm3d+Apod2d_OPDmapnm)*1e-9
 
     t0 = time.time()
-    if kw_aberr:
-        if kw_saxo and kw_2nddate:
 
-            # create shared arrays
-            direct_mono_img_cube_shape = (nproc, nlam, nImg2d, nImg2d)
-            direct_mono_img_cube_data  = multiprocessing.RawArray(ctypes.c_double, int(np.prod(direct_mono_img_cube_shape)))
-            direct_mono_img_cube_np    = array_to_numpy(direct_mono_img_cube_data, direct_mono_img_cube_shape)
-            
-            corono_mono_img_cube_shape = (nproc, nlam, nImg2d, nImg2d)
-            corono_mono_img_cube_data  = multiprocessing.RawArray(ctypes.c_double, int(np.prod(corono_mono_img_cube_shape)))
-            corono_mono_img_cube_np    = array_to_numpy(corono_mono_img_cube_data, corono_mono_img_cube_shape)
+    # create shared arrays
+    direct_mono_img_cube_shape = (nproc, nlam, nImg2d, nImg2d)
+    direct_mono_img_cube_data  = multiprocessing.RawArray(ctypes.c_double, int(np.prod(direct_mono_img_cube_shape)))
+    direct_mono_img_cube_np    = array_to_numpy(direct_mono_img_cube_data, direct_mono_img_cube_shape)
+    
+    corono_mono_img_cube_shape = (nproc, nlam, nImg2d, nImg2d)
+    corono_mono_img_cube_data  = multiprocessing.RawArray(ctypes.c_double, int(np.prod(corono_mono_img_cube_shape)))
+    corono_mono_img_cube_np    = array_to_numpy(corono_mono_img_cube_data, corono_mono_img_cube_shape)
 
-            # create thread pool
-            tpool = multiprocessing.Pool(processes=nproc, initializer=tpool_init,
-                                         initargs=(OPDmap2d0, SAXOmapnm3d, corono0, direct_mono_img_cube_data, direct_mono_img_cube_shape,
-                                                   corono_mono_img_cube_data, corono_mono_img_cube_shape))
-            # tpool_init(OPDmap2d0, SAXOmapnm3d, corono0, direct_mono_img_cube_data, direct_mono_img_cube_shape,
-            #            corono_mono_img_cube_data, corono_mono_img_cube_shape)
+    # create thread pool
+    tpool = multiprocessing.Pool(processes=nproc, initializer=tpool_init,
+                                 initargs=(OPDmap2d0, SAXOmapnm3d, corono0, direct_mono_img_cube_data, direct_mono_img_cube_shape,
+                                           corono_mono_img_cube_data, corono_mono_img_cube_shape))
+    # tpool_init(OPDmap2d0, SAXOmapnm3d, corono0, direct_mono_img_cube_data, direct_mono_img_cube_shape,
+    #            corono_mono_img_cube_data, corono_mono_img_cube_shape)
 
-            # create tasks
-            tasks = []
-            for image_index in range(nproc):
-                block = nmap / nproc
-                idx_i = image_index*block
-                idx_f = (image_index+1)*block-1
-                tasks.append(tpool.apply_async(compute_corono_image, args=(image_index, idx_i, idx_f)))
-                # compute_corono_image(image_index, idx_i, idx_f)
-                # stop
+    # create tasks
+    tasks = []
+    for image_index in range(nproc):
+        block = nmap / nproc
+        idx_i = image_index*block
+        idx_f = (image_index+1)*block-1
+        tasks.append(tpool.apply_async(compute_corono_image, args=(image_index, idx_i, idx_f)))
+        # compute_corono_image(image_index, idx_i, idx_f)
+        # stop
 
-            for idx, task in enumerate(tasks):
-                task.wait()
+    for idx, task in enumerate(tasks):
+        task.wait()
 
-            # close thread pool
-            tpool.close()
-            tpool.join()
+    # close thread pool
+    tpool.close()
+    tpool.join()
 
-            direct_mono_img_cube_np = array_to_numpy(direct_mono_img_cube_data, direct_mono_img_cube_shape)
-            corono_mono_img_cube_np = array_to_numpy(corono_mono_img_cube_data, corono_mono_img_cube_shape)
-            
-            direct_mono_img_f += direct_mono_img_cube_np.sum(axis=0)
-            corono_mono_img_f += corono_mono_img_cube_np.sum(axis=0)
-
-        else:
-            direct_mono_img_f += corono0.compute_direct_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d0, poly=False)
-            corono_mono_img_f += corono0.compute_corono_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d0, poly=False)
-    else:
-        direct_mono_img_f += corono0.compute_direct_intensity_2d_bis(Apod2d, poly=False)
-        corono_mono_img_f += corono0.compute_corono_intensity_2d_bis(Apod2d, poly=False)    
-
+    direct_mono_img_cube_np = array_to_numpy(direct_mono_img_cube_data, direct_mono_img_cube_shape)
+    corono_mono_img_cube_np = array_to_numpy(corono_mono_img_cube_data, corono_mono_img_cube_shape)
+    
+    direct_mono_img_f += direct_mono_img_cube_np.sum(axis=0)
+    corono_mono_img_f += corono_mono_img_cube_np.sum(axis=0)
+   
     # computation of the averaged images
     direct_mono_img_f /= nmap
     corono_mono_img_f /= nmap
@@ -755,58 +754,52 @@ if __name__ == '__main__':
     # # definition of the coronagraph class
     
     if kwd_pla:
+        Tipp_mapnm2d = zernike.zernike1(2, npix=nPup, outside=0.)
+        Tilt_mapnm2d = zernike.zernike1(3, npix=nPup, outside=0.) 
         opd_p0 = wv0*(sep_loD_p/4)*(np.sin(theta_rad_p)*Tipp_mapnm2d + np.cos(theta_rad_p)*Tilt_mapnm2d)
     
     
         t0 = time.time()
-        if kw_aberr:
-            if kw_saxo and kw_2nddate:
+
+        # create shared arrays
+        direct_mono_img_fp_cube_shape = (nproc, nlam, nImg2d, nImg2d)
+        direct_mono_img_fp_cube_data  = multiprocessing.RawArray(ctypes.c_double, int(np.prod(direct_mono_img_cube_shape)))
+        direct_mono_img_fp_cube_np    = array_to_numpy(direct_mono_img_fp_cube_data, direct_mono_img_fp_cube_shape)
+        
+        corono_mono_img_fp_cube_shape = (nproc, nlam, nImg2d, nImg2d)
+        corono_mono_img_fp_cube_data  = multiprocessing.RawArray(ctypes.c_double, int(np.prod(corono_mono_img_cube_shape)))
+        corono_mono_img_fp_cube_np    = array_to_numpy(corono_mono_img_fp_cube_data, corono_mono_img_fp_cube_shape)
+
+        # create thread pool
+        tpool = multiprocessing.Pool(processes=nproc, initializer=tpool_init,
+                                      initargs=(OPDmap2d0+opd_p0, SAXOmapnm3d, corono0, direct_mono_img_fp_cube_data, direct_mono_img_fp_cube_shape,
+                                                corono_mono_img_fp_cube_data, corono_mono_img_fp_cube_shape))
+        # tpool_init(OPDmap2d0, SAXOmapnm3d, corono0, direct_mono_img_cube_data, direct_mono_img_cube_shape,
+        #            corono_mono_img_cube_data, corono_mono_img_cube_shape)
+
+        # create tasks
+        tasks = []
+        for image_index in range(nproc):
+            block = nmap / nproc
+            idx_i = image_index*block
+            idx_f = (image_index+1)*block-1
+            tasks.append(tpool.apply_async(compute_corono_image, args=(image_index, idx_i, idx_f)))
+            # compute_corono_image(image_index, idx_i, idx_f)
+            # stop
+
+        for idx, task in enumerate(tasks):
+            task.wait()
+
+        # close thread pool
+        tpool.close()
+        tpool.join()
+
+        direct_mono_img_fp_cube_np = array_to_numpy(direct_mono_img_fp_cube_data, direct_mono_img_fp_cube_shape)
+        corono_mono_img_fp_cube_np = array_to_numpy(corono_mono_img_fp_cube_data, corono_mono_img_fp_cube_shape)
+        
+        direct_mono_img_fp += direct_mono_img_fp_cube_np.sum(axis=0)
+        corono_mono_img_fp += corono_mono_img_fp_cube_np.sum(axis=0)
     
-                # create shared arrays
-                direct_mono_img_fp_cube_shape = (nproc, nlam, nImg2d, nImg2d)
-                direct_mono_img_fp_cube_data  = multiprocessing.RawArray(ctypes.c_double, int(np.prod(direct_mono_img_cube_shape)))
-                direct_mono_img_fp_cube_np    = array_to_numpy(direct_mono_img_fp_cube_data, direct_mono_img_fp_cube_shape)
-                
-                corono_mono_img_fp_cube_shape = (nproc, nlam, nImg2d, nImg2d)
-                corono_mono_img_fp_cube_data  = multiprocessing.RawArray(ctypes.c_double, int(np.prod(corono_mono_img_cube_shape)))
-                corono_mono_img_fp_cube_np    = array_to_numpy(corono_mono_img_fp_cube_data, corono_mono_img_fp_cube_shape)
-    
-                # create thread pool
-                tpool = multiprocessing.Pool(processes=nproc, initializer=tpool_init,
-                                              initargs=(OPDmap2d0+opd_p0, SAXOmapnm3d, corono0, direct_mono_img_fp_cube_data, direct_mono_img_fp_cube_shape,
-                                                        corono_mono_img_fp_cube_data, corono_mono_img_fp_cube_shape))
-                # tpool_init(OPDmap2d0, SAXOmapnm3d, corono0, direct_mono_img_cube_data, direct_mono_img_cube_shape,
-                #            corono_mono_img_cube_data, corono_mono_img_cube_shape)
-    
-                # create tasks
-                tasks = []
-                for image_index in range(nproc):
-                    block = nmap / nproc
-                    idx_i = image_index*block
-                    idx_f = (image_index+1)*block-1
-                    tasks.append(tpool.apply_async(compute_corono_image, args=(image_index, idx_i, idx_f)))
-                    # compute_corono_image(image_index, idx_i, idx_f)
-                    # stop
-    
-                for idx, task in enumerate(tasks):
-                    task.wait()
-    
-                # close thread pool
-                tpool.close()
-                tpool.join()
-    
-                direct_mono_img_fp_cube_np = array_to_numpy(direct_mono_img_fp_cube_data, direct_mono_img_fp_cube_shape)
-                corono_mono_img_fp_cube_np = array_to_numpy(corono_mono_img_fp_cube_data, corono_mono_img_fp_cube_shape)
-                
-                direct_mono_img_fp += direct_mono_img_fp_cube_np.sum(axis=0)
-                corono_mono_img_fp += corono_mono_img_fp_cube_np.sum(axis=0)
-    
-            else:
-                direct_mono_img_fp += corono0.compute_direct_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d0+opd_p0, poly=False)
-                corono_mono_img_fp += corono0.compute_corono_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d0+opd_p0, poly=False)
-        else:
-            direct_mono_img_fp += corono0.compute_direct_intensity_2d_bis(Apod2d, OPDmap2d=opd_p0,poly=False)
-            corono_mono_img_fp += corono0.compute_corono_intensity_2d_bis(Apod2d, OPDmap2d=opd_p0, poly=False)    
     
         # computation of the averaged images
         direct_mono_img_fp /= nmap
