@@ -33,6 +33,70 @@ import matplotlib.pyplot as plt
 logging.basicConfig(format='[%(asctime)s - %(process)6s - %(levelname)-8s] %(message)s', level='INFO')
 _log = logging.getLogger(__name__)
 
+#%%
+"""
+### Spectral binning function
+"""
+def spectral_binning(wave, dwave, obj_wave, obj_phot):
+    '''
+    Spectral binning of a spectrum on an irregular wavelength grid
+
+    The function expects arrays with units but ultimately works with
+    unitless arrays to avoid some conversion issues and to speed 
+    things up
+
+    Parameters
+    ----------
+    wave : array
+        Wavelength array, in micron
+
+    dwave : array
+        Wavelength bins array, in micron
+
+    obj_wave : array
+        Wavelength array that needs binning, in micron
+
+    obj_phot : array
+        Photon array that needs binning, in phot/s/m^2/micron
+
+    Returns
+    -------
+    obj_phot_bin : array
+        Binned photon array, in phot/s/m^2
+    '''
+
+    # work with unitless variables
+    wave_ul     = wave.to('micron').value
+    dwave_ul    = dwave.to('micron').value
+    obj_wave_ul = obj_wave.to('micron').value
+    obj_phot_ul = obj_phot.to('ph s**-1 m**-2 micron**-1').value
+
+    # spectral bins bounds
+    wave_min_ul = wave_ul
+    wave_max_ul = np.append(wave_ul[1:], wave_ul[-1]+dwave_ul[-1])
+
+    # combined wavelength vector
+    obj_wave_new_ul  = np.unique(np.append(obj_wave_ul, [wave_min_ul, wave_max_ul]))
+    obj_dwave_new_ul = np.diff(obj_wave_new_ul)
+    obj_wave_new_ul  = obj_wave_new_ul[:-1]
+
+    # interpolate Flambda values on new combined wavelength vector
+    interp_phot  = interpolate.interp1d(obj_wave_ul, obj_phot_ul)
+    obj_phot_new_ul = interp_phot(obj_wave_new_ul)        # ph/s/m2/micron
+
+    # integrated in individual bins
+    obj_phot_int_ul = obj_phot_new_ul * obj_dwave_new_ul  # ph/s/m2
+
+    # sum in final bins
+    obj_phot_bin_ul = np.zeros(len(wave))
+    for idx, (wmin, wmax) in enumerate(zip(wave_min_ul, wave_max_ul)):
+        ii = np.where((wmin <= obj_wave_new_ul) & (obj_wave_new_ul < wmax))
+        obj_phot_bin_ul[idx] = obj_phot_int_ul[ii].sum()
+
+    # reapply units
+    return obj_phot_bin_ul * u.ph * u.s**-1 * u.m**-2
+
+
 
 #%% APLC2d tests
 """
@@ -127,7 +191,7 @@ t0_sim = time.time()
 """
 ### Spectral parameters
 """
-band = 'BB_H'
+band = 'H2'
 if band == 'H2':
     nlam = 11
     wv0   = 1.593e-6
@@ -261,68 +325,6 @@ fpath_spectra_star = fdir_spectra / fname_spectra_star
 fpath_spectra_plnt = fdir_spectra / fname_spectra_plnt
 fpath_spectra_tell = fdir_spectra / fname_spectra_tell
 
-#%%
-"""
-### Spectral binning function
-"""
-def spectral_binning(wave, dwave, obj_wave, obj_phot):
-    '''
-    Spectral binning of a spectrum on an irregular wavelength grid
-
-    The function expects arrays with units but ultimately works with
-    unitless arrays to avoid some conversion issues and to speed 
-    things up
-
-    Parameters
-    ----------
-    wave : array
-        Wavelength array, in micron
-
-    dwave : array
-        Wavelength bins array, in micron
-
-    obj_wave : array
-        Wavelength array that needs binning, in micron
-
-    obj_phot : array
-        Photon array that needs binning, in phot/s/m^2/micron
-
-    Returns
-    -------
-    obj_phot_bin : array
-        Binned photon array, in phot/s/m^2
-    '''
-
-    # work with unitless variables
-    wave_ul     = wave.to('micron').value
-    dwave_ul    = dwave.to('micron').value
-    obj_wave_ul = obj_wave.to('micron').value
-    obj_phot_ul = obj_phot.to('ph s**-1 m**-2 micron**-1').value
-
-    # spectral bins bounds
-    wave_min_ul = wave_ul
-    wave_max_ul = np.append(wave_ul[1:], wave_ul[-1]+dwave_ul[-1])
-
-    # combined wavelength vector
-    obj_wave_new_ul  = np.unique(np.append(obj_wave_ul, [wave_min_ul, wave_max_ul]))
-    obj_dwave_new_ul = np.diff(obj_wave_new_ul)
-    obj_wave_new_ul  = obj_wave_new_ul[:-1]
-
-    # interpolate Flambda values on new combined wavelength vector
-    interp_phot  = interpolate.interp1d(obj_wave_ul, obj_phot_ul)
-    obj_phot_new_ul = interp_phot(obj_wave_new_ul)        # ph/s/m2/micron
-
-    # integrated in individual bins
-    obj_phot_int_ul = obj_phot_new_ul * obj_dwave_new_ul  # ph/s/m2
-
-    # sum in final bins
-    obj_phot_bin_ul = np.zeros(len(wave))
-    for idx, (wmin, wmax) in enumerate(zip(wave_min_ul, wave_max_ul)):
-        ii = np.where((wmin <= obj_wave_new_ul) & (obj_wave_new_ul < wmax))
-        obj_phot_bin_ul[idx] = obj_phot_int_ul[ii].sum()
-
-    # reapply units
-    return obj_phot_bin_ul * u.ph * u.s**-1 * u.m**-2
 
   
 #%% 
