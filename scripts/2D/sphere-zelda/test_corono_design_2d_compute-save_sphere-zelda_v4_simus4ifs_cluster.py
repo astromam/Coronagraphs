@@ -204,7 +204,7 @@ if __name__ == '__main__':
     ### Science case
     """
     # spectral band
-    band = 'H2' # 'BB_J', 'BB_H', 'H2' filters
+    band = 'BB_J' # 'BB_J', 'BB_H', 'H2' filters
 
     # science case
     sci_case    = 'mature' # 'young' or mature'
@@ -321,7 +321,7 @@ if __name__ == '__main__':
     tilt_ampl = 0 
 
     # save multi-spectral images
-    do_sav = False 
+    do_sav = True 
     
     # case with planet for plots
     kwd_pla = False
