@@ -27,6 +27,7 @@ from astropy.io import fits
 import corono as coro
 import ctypes
 import multiprocessing
+multiprocessing.set_start_method('fork') # on py38, default is 'spawn' instead of 'fork'
 import psutil
 import itertools
 #import tqdm
@@ -192,7 +193,7 @@ if __name__ == '__main__':
     # multi-processing (to adjust with respect to the available proc, 10 and 20 cores in fdr and x40)   
     if sim_case == 'test':
         nproc    = multiprocessing.cpu_count()//2  #15
-        nmap_sub = 4                    # number of saxo maps for a single node 
+        nmap_sub = 690                    # number of saxo maps for a single node 
     elif sim_case == 'server':
         nproc    = 15 #multiprocessing.cpu_count()//2  #15
         nmap_sub = 690                    # number of saxo maps for a single node
@@ -204,7 +205,7 @@ if __name__ == '__main__':
     ### Science case
     """
     # spectral band
-    band = 'BB_J' # 'BB_J', 'BB_H', 'H2' filters
+    band = 'H2' # 'BB_J', 'BB_H', 'H2' filters
 
     # science case
     sci_case    = 'mature' # 'young' or mature'
