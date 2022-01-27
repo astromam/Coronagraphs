@@ -583,7 +583,7 @@ if __name__ == '__main__':
 
     #%% APodization OPD map
     Apod2d_OPDmapnm = fits.getdata(fpath_Apod2d_OPDmapnm)
-    Apod2d_OPDmapnm[np.isnan(Apod2d_OPDmapnm)] = 0
+    # Apod2d_OPDmapnm[np.isnan(Apod2d_OPDmapnm)] = 0
 
     #%% Amplitude errors
     Ampmap2d = fits.getdata(fpath_Ampmap2d)
