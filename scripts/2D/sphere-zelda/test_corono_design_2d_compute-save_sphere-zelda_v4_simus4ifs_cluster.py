@@ -291,10 +291,10 @@ if __name__ == '__main__':
     # sampling
     nPup   = 100   # pupil
     nFPM   = 200   # focal plane mask
-    nImg2d = 84   # final image plane 
+    nImg2d = 70   # final image plane 
 
     # compute spatial frequencies in the final image plane
-    pixel  = 12.25 # IRDIS pixel sampling [mas/pix]    
+    pixel  = 14.5 # IRDIS pixel sampling [mas/pix]    
 
     # simulation configuration   
     kw_aberr     = True
@@ -328,7 +328,7 @@ if __name__ == '__main__':
     kwd_pla = False
     
     # Planet position properties
-    sep_mas_p   = 12.25*16  #5*pscale      # planet separation in mas
+    sep_mas_p   = 14.5*16  #5*pscale      # planet separation in mas
     theta_deg_p = 0  # planet position angle in degrees
     
     # observation parameters
