@@ -124,7 +124,7 @@ rMask_m   = 287e-6/2.         # mask size in m
 # spatial sampling
 nPup   = 100   # pupil
 nFPM   = 200   # focal plane mask
-nImg2d = 70    # final image plane 
+nImg2d = 64    # final image plane 
 
 # simulation configuration   
 saxofudge    = 1. #80/120.
@@ -149,7 +149,7 @@ do_sav = False
 kwd_pla = False
 
 # Planet position properties
-sep_mas_p   = 14.5*8  #5*pscale      # planet separation in mas
+sep_mas_p   = 16*8  #5*pscale      # planet separation in mas
 theta_deg_p = 0  # planet position angle in degrees
 
 # observation parameters
@@ -224,7 +224,7 @@ else:
     wv_R      = wv0/dwv_t[0]
 
 # compute spatial frequencies in the final image plane
-pixel  = 14.5 # IRDIS pixel sampling [mas/pix]
+pixel  = 16 # IRDIS pixel sampling [mas/pix]
 loD    = wv0/dAper*180/np.pi*3600*1000/pixel
 nFre2d = nImg2d/loD    # spatial frequencies in the final image plane
 
