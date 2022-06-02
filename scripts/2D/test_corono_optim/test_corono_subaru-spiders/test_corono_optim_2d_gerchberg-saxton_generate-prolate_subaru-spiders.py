@@ -29,7 +29,7 @@ Parameters
 """
 # Telescope name
 corono_name  = 'APLC' # 'SP' or 'APLC'
-pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
+pupil_name   = 'tmt' # 'vlt' or 'sbr' or 'lvr'
 problem_name = 'MaxTau' # 'MaxTau' # ,'MaxContrastLinf' # 'MaxContrastL1' #
 solver       = 'stdgrb' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
 slvLogToConsole = 1
@@ -44,7 +44,7 @@ FirstDerGlobalLim = 100.
 BinarityReg       = 0.1
 
 #nPup = corono0.params['nPup']
-nPup = 200
+nPup = 1920 #200
 nFPM = 50
 Fmax2d = 45#22.5
 nImg2d = 90#45
@@ -157,8 +157,8 @@ wv_t   = wv0*lam_t
 rMask     = rMask_m/(wv0*Fratio)  # mask size in lam0/D
 rMask_mas = rMask * (wv0/pdiam)/mas2rad
 
-rMask1min = 2.64 #np.round(rMask_m/((wv0_H+width_H/2)*Fratio), decimals=2) #2.65
-rMask1max = 2.64 #np.round(rMask_m/((wv0_z-width_z/2)*Fratio), decimals=2) #2.65
+rMask1min = rMask*1 #2.64 #np.round(rMask_m/((wv0_H+width_H/2)*Fratio), decimals=2) #2.65
+rMask1max = rMask*1 #2.64 #np.round(rMask_m/((wv0_z-width_z/2)*Fratio), decimals=2) #2.65
 
 nMask1 = int(np.round((rMask1max-rMask1min)*100))+1
 
@@ -180,15 +180,22 @@ else:
     raise ValueError('Unknown user {0}'.format(user))
 
 if pupil_name == 'sbr':
+    folder_tel = ''
     fname_pup = f'pupilsbr_nPup{nPup}_kpdiam{int(np.round(kpdiam0*100)):03d}_kodiam{int(np.round(kodiam0*100)):03d}_kthick{int(np.round(kthick0*100)):03d}{str_margin}.fits' 
     fname_lys = f'pupilsbr_nPup{nPup}_kpdiam{int(np.round(kpdiam0*100)):03d}_kodiam{int(np.round(kodiam0*100)):03d}_kthick{int(np.round(kthick0*100)):03d}{str_margin}.fits' 
-else:
+elif pupil_name == 'tmt':
+    folder_tel = 'tmt'
+    fname_pup = f'TMT_Pupil_Amplitude_MACOS_Logical_With_Obscuration_nArr{nPup:04d}_nPup{nPup:04d}.fits'
+    fname_lys = f'TMT_Pupil_Amplitude_MACOS_Logical_With_Obscuration_nArr{nPup:04d}_nPup{nPup:04d}.fits'
+else:    
     raise NameError(f'{pupil_name}: unknown pupil name')
 
-fpath_pup = fdir / fname_pup
-fpath_lys = fdir / fname_lys
+fpath_pup = fdir / folder_tel / fname_pup
+fpath_lys = fdir / folder_tel / fname_lys
 Pupil2d    = fits.getdata(fpath_pup)
 LyotStop2d = fits.getdata(fpath_lys)
+
+nPup = np.shape(Pupil2d)[0]
 
 Input = Pupil2d*1
 
@@ -221,7 +228,7 @@ else:
 
 #%%
 EE_C_t = np.zeros((nMask1))
-nIt = 100
+nIt = 10
 
 for iMask1, rMask1 in enumerate(rMask1_t):
     params1    = coro.update_params(params, rMask=rMask1, nlam=1) 
@@ -249,9 +256,15 @@ for iMask1, rMask1 in enumerate(rMask1_t):
             EE_C_t[iMask1] = EE_C[iIt]
             break
         iIt += 1 
+
+    if pupil_name == 'sbr':
+        fname_apod = f'pupilsbr_nPup{nPup}_pdiam{int(np.round(pdiam*100))}_odiam{int(np.round(odiam*100))}_thick{int(np.round(thick*100)):03d}_Apod_rMask{int(np.round(rMask1*100)):03d}{str_margin}.fits'
+    elif pupil_name == 'tmt':
+        fname_apod = 'TMT_Pupil_Amplitude_MACOS_Logical_With_Obscuration_nArr1920_nPup1920_apod.fits'
+    else:    
+        raise NameError(f'{pupil_name}: unknown pupil name')
             
-    fname = f'pupilsbr_nPup{nPup}_pdiam{int(np.round(pdiam*100))}_odiam{int(np.round(odiam*100))}_thick{int(np.round(thick*100)):03d}_Apod_rMask{int(np.round(rMask1*100)):03d}{str_margin}.fits'
-    fpath = fdir / fname
+    fpath_apod = fdir / folder_tel / fname_apod
     
     if do_fits is True:
-         fits.writeto(fpath, Apod2d, overwrite=True)
+         fits.writeto(fpath_apod, Apod2d, overwrite=True)

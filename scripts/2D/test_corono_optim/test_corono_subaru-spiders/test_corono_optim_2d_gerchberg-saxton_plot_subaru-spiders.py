@@ -38,7 +38,7 @@ test_gurobi = False
 if True:
     # Telescope name
     corono_name  = 'APLC' # 'SP' or 'APLC'
-    pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
+    pupil_name   = 'tmt' # 'vlt' or 'sbr' or 'lvr'
     problem_name = 'MaxTau' # 'MaxContrastL1' #'MaxTau' # , 'MaxContrastLinf' # #  
     solver       = 'stdgrb' # 'stdgrb' #  'gurobipy', 'scipy.linprog'
     
@@ -46,7 +46,7 @@ if True:
     FirstDerGlobalLim = 1.
     
     #nPup = corono0.params['nPup']
-    nPup = 200
+    nPup = 1920 #200
     nFPM = 50
     Fmax2d = 50
     nImg2d = 500
@@ -205,6 +205,9 @@ rMask_mas = rMask * (wv0/pdiam)/mas2rad
 
 
 wv1 = rMask_m/(rMask1*Fratio)
+if pupil_name == 'tmt':
+    wv1 = rMask_m/(rMask*Fratio)
+    rMask1 = rMask*1.
 
 #%%
 """
@@ -222,20 +225,31 @@ if True:
     else:
         raise ValueError('Unknown user {0}'.format(user))
 
+
     if pupil_name == 'sbr':
+        folder_tel = ''
         fname_pup = f'pupilsbr_nPup{nPup}_kpdiam{int(np.round(kpdiam1*100)):03d}_kodiam{int(np.round(kodiam1*100)):03d}_kthick{int(np.round(kthick1*100)):03d}{str_margin}.fits' 
-#        fname_lys = f'pupil=sbr_nPup={nPup}_odiam={int(odiam2*100)}_thick={int(thick2*100):03d}.fits'
-        fname_lys = f'pupilsbr_nPup{nPup}_kpdiam{int(np.round(kpdiam2*100)):03d}_kodiam{int(np.round(kodiam2*100)):03d}_kthick{int(np.round(kthick2*100)):03d}{str_margin}.fits' 
-    else:
+        fname_lys = f'pupilsbr_nPup{nPup}_kpdiam{int(np.round(kpdiam1*100)):03d}_kodiam{int(np.round(kodiam2*100)):03d}_kthick{int(np.round(kthick2*100)):03d}{str_margin}.fits' 
+    elif pupil_name == 'tmt':
+        folder_tel = 'tmt'
+        fname_pup = f'TMT_Pupil_Amplitude_MACOS_Logical_With_Obscuration_nArr{nPup:04d}_nPup{nPup:04d}.fits'
+        fname_lys = f'TMT_Pupil_Amplitude_MACOS_Logical_With_Obscuration_nArr{nPup:04d}_nPup{nPup:04d}.fits'
+    else:    
         raise NameError(f'{pupil_name}: unknown pupil name')
+
+
     
-    fpath_pup = fdir / fname_pup
-    fpath_lys = fdir / fname_lys
+    fpath_pup = fdir / folder_tel / fname_pup
+    fpath_lys = fdir / folder_tel / fname_lys
     Pupil2d    = fits.getdata(fpath_pup)
     LyotStop2d = fits.getdata(fpath_lys)
     
+    nPup = np.shape(Pupil2d)[0]
+    
     if solver != 'gurobipy' and solver != 'stdgrb':
         solver = 'scipy'
+
+
 
 params = coro.to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
                  rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau, 
@@ -278,8 +292,18 @@ else:
 Read files
 """
 #fname_apod = f'pupilsbr_nPup{nPup}_pdiam{int(np.round(pdiam*100))}_odiam{int(np.round(odiam*100))}_thick{int(np.round(thick*100)):03d}_Apod_rMask{int(np.round(rMask1*100)):03d}.fits'
-fname_apod = f'pupilsbr_nPup{nPup}_pdiam{int(np.round(pdiam*100))}_odiam{int(np.round(odiam*100))}_thick{int(np.round(thick_apod*100)):03d}_Apod_rMask{int(np.round(rMask1*100)):03d}' + str_EDA + f'{str_margin}.fits'
-fpath_apod= fdir / fname_apod
+#fname_apod = f'pupilsbr_nPup{nPup}_pdiam{int(np.round(pdiam*100))}_odiam{int(np.round(odiam*100))}_thick{int(np.round(thick_apod*100)):03d}_Apod_rMask{int(np.round(rMask1*100)):03d}' + str_EDA + f'{str_margin}.fits'
+
+
+
+if pupil_name == 'sbr':
+    fname_apod = f'pupilsbr_nPup{nPup}_pdiam{int(np.round(pdiam*100))}_odiam{int(np.round(odiam*100))}_thick{int(np.round(thick_apod*100)):03d}_Apod_rMask{int(np.round(rMask1*100)):03d}' + str_EDA + f'{str_margin}.fits'
+elif pupil_name == 'tmt':
+    fname_apod = f'TMT_Pupil_Amplitude_MACOS_Logical_With_Obscuration_nArr{nPup:04d}_nPup{nPup:04d}_apod.fits'
+else:    
+    raise NameError(f'{pupil_name}: unknown pupil name')
+
+fpath_apod= fdir / folder_tel / fname_apod
 
 Apod_pyth = fits.getdata(fpath_apod,)
 
@@ -390,20 +414,41 @@ if do_num_mask:
     if nImg2dbis %2 == 0:
         val = 1/2
     
-    xx1, yy1  = np.meshgrid(np.arange(nImg2dbis)-nImg2dbis//2, np.arange(nImg2dbis)-nImg2dbis//2)
+    xx0, yy0  = np.meshgrid(np.arange(nImg2dbis)-nImg2dbis//2, np.arange(nImg2dbis)-nImg2dbis//2)
     
-    beta2 = (beta+90)*np.pi/180
-    beta3 = (-beta+90)*np.pi/180
-    xx2 = -np.sin(beta2)*xx1 + np.cos(beta2)*yy1
-    xx3 = -np.sin(beta3)*xx1 + np.cos(beta3)*yy1
+    if pupil_name == 'sbr':
+        beta2 = (beta+90)*np.pi/180
+        beta3 = (-beta+90)*np.pi/180
+        xx2 = -np.sin(beta2)*xx0 + np.cos(beta2)*yy0
+        xx3 = -np.sin(beta3)*xx0 + np.cos(beta3)*yy0
+        
+        thick_diff = 32#(pdiam/thick2)*nImg2dbis/Fmax2dbis
+        
+        num_circ = coro.utils.uniform_disk(nImg2dbis, rMask_J*nImg2dbis/Fmax2dbis)
+        
+        num_mask[(xx2 <= thick_diff)*(xx2 >= -thick_diff)] = 0
+        num_mask[(xx3 <= thick_diff)*(xx3 >= -thick_diff)] = 0
+        num_mask[num_circ == 1] = 0
+        
+    elif pupil_name == 'tmt':
+        beta1 = 0.
+        beta2 = (60)*np.pi/180
+        beta3 = (-60)*np.pi/180
+        xx1 = -np.sin(beta1)*xx0 + np.cos(beta1)*yy0
+        xx2 = -np.sin(beta2)*xx0 + np.cos(beta2)*yy0
+        xx3 = -np.sin(beta3)*xx0 + np.cos(beta3)*yy0
+        
+        thick_diff = 24#(pdiam/thick2)*nImg2dbis/Fmax2dbis
+        
+        num_circ = coro.utils.uniform_disk(nImg2dbis, rMask_J*nImg2dbis/Fmax2dbis)
+
+        num_mask[(xx1 <= thick_diff)*(xx1 >= -thick_diff)] = 0        
+        num_mask[(xx2 <= thick_diff)*(xx2 >= -thick_diff)] = 0
+        num_mask[(xx3 <= thick_diff)*(xx3 >= -thick_diff)] = 0
+        num_mask[num_circ == 1] = 0
     
-    thick_diff = 32#(pdiam/thick2)*nImg2dbis/Fmax2dbis
-    
-    num_circ = coro.utils.uniform_disk(nImg2dbis, rMask_J*nImg2dbis/Fmax2dbis)
-    
-    num_mask[(xx2 <= thick_diff)*(xx2 >= -thick_diff)] = 0
-    num_mask[(xx3 <= thick_diff)*(xx3 >= -thick_diff)] = 0
-    num_mask[num_circ == 1] = 0
+    else:
+        raise NameError(f'{pupil_name}: unknown pupil name')
     
     
     pl.figure(70)
@@ -411,9 +456,9 @@ if do_num_mask:
     pl.subplot(131)
     pl.imshow(num_mask, cmap='inferno')
     pl.subplot(132)
-    pl.imshow(np.log10(poly_corono_image1_H), cmap='inferno')
+    pl.imshow(np.log10(poly_corono_image1_z), cmap='inferno')
     pl.subplot(133)
-    pl.imshow(num_mask*np.log10(poly_corono_image1_H), cmap='inferno')
+    pl.imshow(num_mask*np.log10(poly_corono_image1_z), cmap='inferno')
 
 
 #%%

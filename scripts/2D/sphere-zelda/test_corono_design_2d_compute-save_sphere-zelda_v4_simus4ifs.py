@@ -224,7 +224,7 @@ else:
     wv_R      = wv0/dwv_t[0]
 
 # compute spatial frequencies in the final image plane
-pixel  = 16 # IRDIS pixel sampling [mas/pix]
+pixel  = 16. # IRDIS pixel sampling [mas/pix]
 loD    = wv0/dAper*180/np.pi*3600*1000/pixel
 nFre2d = nImg2d/loD    # spatial frequencies in the final image plane
 
