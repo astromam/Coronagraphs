@@ -19,7 +19,8 @@ from matplotlib import cm
 from astropy.io import fits
 import corono as coro
 
-from scipy.misc import imresize
+#from scipy.misc import imresize
+import cv2
 
 #%% parameters
 """
@@ -74,14 +75,14 @@ nlambis = 11
 Fmax2dbis = 60
 nImg2dbis = 600
 
-do_plot = True    
+do_plot = False    
 
 #%%
 """
 File reading for Pupil and Lyot stop
 """
 if True:
-    fdir = Path('../../data/2D/pupils/').resolve()
+    fdir = Path('/Users/mndiaye/Library/CloudStorage/OneDrive-UniversitéNiceSophiaAntipolis/data/Coronagraphs/data/2D/pupils/').resolve()
     if pupil_name == 'lvr':
         fname_pup = 'ATLAST_Aperture_nPup={0}.fits'.format(nPup,)
         fname_lys = 'ATLAST_LyotStop_nPup={0}.fits'.format(nPup,)
@@ -96,7 +97,8 @@ if True:
     fpath_lys = fdir / fname_lys
     Pupil2d    = fits.getdata(fpath_pup)
     LyotStop2dtmp = fits.getdata(fpath_lys)
-    LyotStop2d = imresize(LyotStop2dtmp, (nPup, nPup))
+    #LyotStop2d = imresize(LyotStop2dtmp, (nPup, nPup))
+    LyotStop2d = cv2.resize(LyotStop2dtmp, (nPup,nPup))
     
     if solver != 'gurobipy' and solver != 'stdgrb':
         solver = 'scipy'
@@ -118,9 +120,9 @@ params = coro.to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
 """
 Working directories
 """
-fdir = Path('../../results/2D/dat_pyth').resolve() / pupil_name
+fdir = Path('/Users/mndiaye/Library/CloudStorage/OneDrive-UniversitéNiceSophiaAntipolis/data/Coronagraphs/results/2D/dat_pyth').resolve() / pupil_name
 
-fdir_pdf = Path('../../results/2D/plots/').resolve()
+fdir_pdf = Path('/Users/mndiaye/Library/CloudStorage/OneDrive-UniversitéNiceSophiaAntipolis/data/Coronagraphs/results/2D/plots/').resolve()
 if not os.path.exists(fdir_pdf):
     os.makedirs(fdir_pdf)
 
@@ -490,6 +492,60 @@ cbar.ax.set_ylabel('corono image', rotation=270, labelpad = 10)
 #        pl.savefig(str(fpath_image_plane_disp), transparent=True)
 pl.tight_layout()
 pl.show()
+
+#%%
+"""
+### Display the images in the mosaic shape
+"""
+
+if ncorono == 25:
+    img_mosaic = np.zeros((5*nImg2dbis,5*nImg2dbis))
+    for  i in range(5):
+        for j in range(5):
+            img_mosaic[i*nImg2dbis:(i+1)*nImg2dbis,j*nImg2dbis:(j+1)*nImg2dbis] = corono_poly_img_aberr_t[i*5+j]
+            
+img_mosaic /= direct_poly_img_f.max()
+    
+#%%
+
+fname_mosaic_plot = 'corono_poly_lyotstop_sensitivity_mosaic_plot.pdf'
+fpath_mosaic_plot = fdir_pdf / fname_mosaic_plot
+
+ticks0 = [nImg2dbis//2 + i*nImg2dbis for i in range(5)]
+xticklabels0 = ['-1.0', '-0.5', '0.0', '0.5', '1.0']
+xcoords = [i*nImg2dbis for i in range(5)]
+
+if ncorono == 25:
+    f3 = pl.figure(32, figsize=(10,10))
+    pl.clf()
+    ax1 = f3.add_subplot(111)
+    im = ax1.imshow(np.log10(img_mosaic), cmap ="inferno", vmin=-7, vmax=-3)
+    pl.xlabel('Lyot stop shift in pupil diameter [%](x-axis)')
+    pl.ylabel('Lyot stop shift in pupil diameter [%](y-axis)')
+    
+    ax1.set_xticks(ticks0)
+    ax1.set_xticklabels(xticklabels0) #, fontdict=font_dict)
+
+    ax1.set_yticks(ticks0)
+    ax1.set_yticklabels(xticklabels0) #, fontdict=font_dict)
+    
+    for xc in xcoords:
+        pl.axvline(x=xc, color='k')
+        pl.axhline(y=xc, color='k')        
+
+    f3.subplots_adjust(bottom=0.1, top=0.9, left=0.1, right=0.8,
+                    wspace=0.02, hspace=0.02)
+    
+    f3.subplots_adjust(right=0.85)
+    cbar_ax = f3.add_axes([0.85, 0.15, 0.05, 0.7])
+    cbar    = f3.colorbar(im, cax=cbar_ax)
+    cbar.ax.set_ylabel('Image intensity in log scale', rotation=270, labelpad = 10)
+    pl.tight_layout()
+    pl.show()     
+
+    if do_plot is True:
+        pl.savefig(str(fpath_mosaic_plot), transparent=True)
+
 
 #%%
 
