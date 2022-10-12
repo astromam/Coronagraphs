@@ -438,6 +438,7 @@ rester = (mydist <= septer +0.5)*(mydist >= septer -0.5)
 pl.figure(3)
 pl.clf()
 pl.imshow(resbis)
+pl.title(f'Angular resolution at {sepbis}$\lambda$/D')
 
 #%%
 direct_poly_img_aberr_t = [] 
@@ -460,7 +461,7 @@ corono_poly_img_aberr_t = np.asarray(corono_poly_img_aberr_t)
 pl.figure(1)
 pl.clf()
 pl.imshow(rester)
-
+pl.title(f'Angular resolution at {septer}$\lambda$/D')
 
 #%%
 corono_poly_avg_resbis_aberr_t = []
