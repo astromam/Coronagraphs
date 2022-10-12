@@ -155,7 +155,7 @@ theta_deg_p = 0  # planet position angle in degrees
 # observation parameters
 exposure  = 0      # exposure number in the sequence
 airmass   = 1.2    # airmass for exposure
-DIT       = nsaxomap/1380.      # sec
+DIT       = 60     # nsaxomap1380.      # sec
 
 # telescope and instrument transmission]
 tel_transmission = 1
@@ -348,7 +348,7 @@ ZELDAmapnm3d = fits.getdata(fpath_ZELDAmapnm3d)
 
 ### SAXO maps
 SAXOmapnm3d = np.empty((nmap, nPup, nPup))
-SAXOmapnm3d = fits.getdata(fpath_SAXOmapnm3d)[:nmap,:,:]
+SAXOmapnm3d = fits.getdata(fpath_SAXOmapnm3d)[saxomap_i:saxomap_i+nmap,:,:]
         
 ### Lyot Stop
 LyotStop2d = fits.getdata(fpath_LyotStop2d)
@@ -452,7 +452,7 @@ OPDmap2d0 = (beta_wfs*ZELDAmapnm3d+Apod2d_OPDmapnm)*1e-9
 
 for imap in range(nmap):
     t0 = time.time()
-    OPDmap2d = OPDmap2d0 + SAXOmapnm3d[saxomap_i+imap]*1e-9
+    OPDmap2d = OPDmap2d0 + SAXOmapnm3d[imap]*1e-9
     direct_mono_img_f += corono0.compute_direct_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d, poly=False)
     corono_mono_img_f += corono0.compute_corono_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d, poly=False)                
 
@@ -488,7 +488,7 @@ if kwd_pla:
     
     for imap in range(nmap):
         t0 = time.time()
-        OPDmap2d = OPDmap2d0 + SAXOmapnm3d[saxomap_i+imap]*1e-9 + opd_p0
+        OPDmap2d = OPDmap2d0 + SAXOmapnm3d[imap]*1e-9 + opd_p0
         direct_mono_img_fp += corono0.compute_direct_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d, poly=False)
         corono_mono_img_fp += corono0.compute_corono_intensity_2d_bis(Apod2d, OPDmap2d=OPDmap2d, poly=False)                
     

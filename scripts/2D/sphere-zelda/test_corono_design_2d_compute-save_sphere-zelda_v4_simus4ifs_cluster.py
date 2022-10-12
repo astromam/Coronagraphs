@@ -594,7 +594,7 @@ if __name__ == '__main__':
     
     #%% SAXO maps
     SAXOmapnm3d = np.empty((nmap, nPup, nPup))
-    SAXOmapnm3d = fits.getdata(fpath_SAXOmapnm3d)[:nmap,:,:]
+    SAXOmapnm3d = fits.getdata(fpath_SAXOmapnm3d)[saxomap_i:saxomap_i+nmap,:,:]
             
     #%% Lyot Stop
     LyotStop2d = fits.getdata(fpath_LyotStop2d)
