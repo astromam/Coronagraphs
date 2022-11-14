@@ -210,7 +210,7 @@ if __name__ == '__main__':
     # science case
     sci_case    = 'mature' # 'young' or mature'
     star_SpT0   = 'A' # 'A', 'F', 'K'
-    star_wv_res = 5000
+    star_wv_res = 1000
     plnt_wv_res = star_wv_res
 
     sci_case_lst  = ['young', 'mature']
@@ -359,13 +359,13 @@ if __name__ == '__main__':
         wv0   = 1.593e-6
         width = 52e-9
     elif band == 'BB_H':
-        nlam  = 1785
+        nlam  = 357 # 1785
         wv0   = 1625e-9
         width = 290e-9
     elif band == 'BB_J':
-        nlam  = 1928
+        nlam  = 386 # 1928
         wv0   = 1245e-9
-        width = 240e-9            
+        width = 240e-9           
     else:
         raise ValueError(f'Unknown {band} band') 
     _log.info(f'number of wavelengths: {nlam}')

@@ -128,8 +128,8 @@ nImg2d = 64    # final image plane
 
 # simulation configuration   
 saxofudge    = 1. #80/120.
-saxomap_i    = 0    # saxo first screen
-saxomap_f    = 0 # saxo last screen
+saxomap_i    = 10  # saxo first screen
+saxomap_f    = 11  # saxo last screen
 
 # seeing for on-sky observations
 seeing = 0.7
@@ -143,7 +143,7 @@ else:
 ndefo = 21
 
 # save multi-spectral images
-do_sav = False 
+do_sav = True 
 
 # case with planet for plots
 kwd_pla = False
@@ -197,13 +197,13 @@ if band == 'H2':
     wv0   = 1.593e-6
     width = 52e-9
 elif band == 'BB_H':
-    nlam  = 1785
+    nlam  = 357 #1785
     wv0   = 1625e-9 #1.593e-6
     width = 290e-9  #52e-9
 elif band == 'BB_J':
-    nlam  = 1928
+    nlam  = 386 #1928
     wv0   = 1245e-9
-    width = 240e-9          
+    width = 240e-9           
 else:
     raise ValueError(f'Unknown {band} band')
 
