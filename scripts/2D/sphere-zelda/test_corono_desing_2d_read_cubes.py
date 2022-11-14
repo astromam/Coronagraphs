@@ -25,14 +25,16 @@ fdir = Path('/Users/mndiaye/Library/CloudStorage/OneDrive-UniversitéNiceSophia
 # fname1 = 'dir_nmap00690_i00000_f00689_bandBB_J_nlam1928_img_f_F4_15dMSun_20Myr.fits'
 # fname2 = 'dir_nmap00690_i00690_f01379_bandBB_J_nlam1928_img_f_F4_15dMSun_20Myr.fits'
 
-# fname1 = 'cor_nmap00690_i00000_f00689_bandBB_J_nlam1928_img_f_F4_15dMSun_20Myr.fits'
-# fname2 = 'cor_nmap00690_i00690_f01379_bandBB_J_nlam1928_img_f_F4_15dMSun_20Myr.fits'
+fname1 = 'cor_nmap00690_i00000_f00689_bandBB_J_nlam1928_img_f_F4_15dMSun_20Myr.fits'
+fname2 = 'cor_nmap00690_i00690_f01379_bandBB_J_nlam1928_img_f_F4_15dMSun_20Myr.fits'
+
+fname2 = 'cor_nmap00690_i06210_f06899_bandBB_J_nlam1928_img_f_F4_15dMSun_20Myr.fits'
 
 # fname1 = 'dir_nmap00690_i00000_f00689_bandBB_H_nlam1785_img_f_F4_15dMSun_20Myr.fits'
 # fname2 = 'dir_nmap00690_i00690_f01379_bandBB_H_nlam1785_img_f_F4_15dMSun_20Myr.fits'
 
-fname1 = 'cor_nmap00690_i00000_f00689_bandBB_H_nlam1785_img_f_F4_15dMSun_20Myr.fits'
-fname2 = 'cor_nmap00690_i00690_f01379_bandBB_H_nlam1785_img_f_F4_15dMSun_20Myr.fits'
+#fname1 = 'cor_nmap00690_i00000_f00689_bandBB_H_nlam1785_img_f_F4_15dMSun_20Myr.fits'
+#fname2 = 'cor_nmap00690_i00690_f01379_bandBB_H_nlam1785_img_f_F4_15dMSun_20Myr.fits'
 
 
 fpath1 = fdir / fname1
