@@ -177,7 +177,7 @@ star_mass   = 1.5
 star_age    = 20
 star_dist   = 50 
 #star_magH = 4.0
-star_band   = 'H'
+star_band   = 'J'
 star_wv_res = 1000
 
 plnt_mass   = 1
@@ -191,7 +191,7 @@ t0_sim = time.time()
 """
 ### Spectral parameters
 """
-band = 'H2'
+band = 'BB_J'
 if band == 'H2':
     nlam = 11
     wv0   = 1.593e-6
