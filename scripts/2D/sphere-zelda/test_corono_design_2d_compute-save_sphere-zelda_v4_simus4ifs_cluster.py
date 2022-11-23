@@ -355,15 +355,19 @@ if __name__ == '__main__':
     ### Spectral parameters
     """
     if band == 'H2':
-        nlam  = 11
+        nlam = 11
         wv0   = 1.593e-6
         width = 52e-9
     elif band == 'BB_H':
-        nlam  = 357 # 1785
-        wv0   = 1625e-9
-        width = 290e-9
+        nlam  = 357
+        if star_wv_res == 5000:
+            nlam  = 1785
+        wv0   = 1625e-9 #1.593e-6
+        width = 290e-9  #52e-9
     elif band == 'BB_J':
-        nlam  = 386 # 1928
+        nlam  = 386
+        if star_wv_res == 5000:
+            nlam = 1928
         wv0   = 1245e-9
         width = 240e-9           
     else:
