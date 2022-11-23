@@ -171,37 +171,88 @@ kwd_sav_onlyphot = False
 # planet flux fudge factor
 plnt_flux_fudge_factor = 1000
 
-# stellar parameters
-star_SpT    = 'F4'
-star_mass   = 1.5
-star_age    = 20
-star_dist   = 50 
-#star_magH = 4.0
-star_band   = 'J'
-star_wv_res = 1000
-
-plnt_mass   = 1
-plnt_age    = 20
-plnt_dist   = 50
-plnt_wv_res = 1000
-
 t0_sim = time.time()
+
+#%%
+"""
+### Science case
+"""
+# spectral band
+band = 'BB_J' # 'BB_J', 'BB_H', 'H2' filters
+
+# science case
+star_wv_res = 5000 # 5000
+plnt_wv_res = star_wv_res
+
+sci_case_lst  = ['young', 'mature']
+star_SpT0_lst = ['A', 'F', 'K']
+
+sci_case   = sci_case_lst[0]#new_lst[eval(sys.argv[1])][0] # 'young' or mature'
+star_SpT0  = star_SpT0_lst[1]#new_lst[eval(sys.argv[1])][1] # 'A', 'F', 'K'
+
+_log.info(f'{sci_case} system, {star_SpT0} star, {band} band')
+if sci_case == 'young':        
+    if star_SpT0 == 'A':
+        star_SpT = 'A0'
+        star_mass   = 2.2
+    elif star_SpT0 == 'F':
+        star_SpT = 'F4'
+        star_mass   = 1.5
+    elif star_SpT0 == 'K':
+        star_SpT = 'K5'
+        star_mass   = 1.0
+    else:
+        raise ValueError(f'unknown {star_SpT0}')
+    star_age    = 20
+    star_dist   = 50         
+    plnt_mass   = 1
+elif sci_case == 'mature':
+    if star_SpT0 == 'A':
+        star_SpT = 'A4'
+        star_mass   = 2.2
+    elif star_SpT0 == 'F':
+        star_SpT = 'F3'
+        star_mass   = 1.5
+    elif star_SpT0 == 'K':
+        star_SpT = 'K0'
+        star_mass   = 1.0
+    else:
+        raise ValueError(f'unknown {star_SpT0}')
+    star_age    = 500
+    star_dist   = 20 
+    plnt_mass   = 5        
+else:
+    raise ValueError(f'unknown {sci_case}')
+        
+if band == 'BB_H' or band == 'H2':       
+    star_band = 'H'
+elif band == 'BB_J':
+    star_band = 'J'
+else:
+    raise ValueError(f'unknown {band} band')
+    
+plnt_age    = star_age
+plnt_dist   = star_dist
+
     
 #%%
 """
 ### Spectral parameters
 """
-band = 'BB_J'
 if band == 'H2':
     nlam = 11
     wv0   = 1.593e-6
     width = 52e-9
 elif band == 'BB_H':
-    nlam  = 357 #1785
+    nlam  = 357
+    if star_wv_res == 5000:
+        nlam  = 1785
     wv0   = 1625e-9 #1.593e-6
     width = 290e-9  #52e-9
 elif band == 'BB_J':
-    nlam  = 386 #1928
+    nlam  = 386
+    if star_wv_res == 5000:
+        nlam = 1928
     wv0   = 1245e-9
     width = 240e-9           
 else:
