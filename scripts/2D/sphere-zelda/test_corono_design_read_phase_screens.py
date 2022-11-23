@@ -193,6 +193,9 @@ plnt_dist   = 50
 plnt_wv_res = 1000
 
 t0_sim = time.time()
+
+# reduction of the SAXO aberrations to produce SAXO+ aberrations
+saxoplus_factor = 0.5
     
 #%%
 """
@@ -365,143 +368,125 @@ LyotStop2d = fits.getdata(fpath_LyotStop2d)
 ### Array initialization
 """
 # define the averaged image
-direct_mono_img_f = np.zeros((nlam, nImg2d, nImg2d))
-corono_mono_img_f = np.zeros((nlam, nImg2d, nImg2d))
-direct_peak_val   = np.zeros((nlam))
-
-# define the averaged and standard deviation profiles of the images
-direct_mono_prf_avg_f = np.zeros((nlam, nImg2d//2))
-corono_mono_prf_avg_f = np.zeros((nlam, nImg2d//2))
-direct_mono_prf_std_f = np.zeros((nlam, nImg2d//2))
-corono_mono_prf_std_f = np.zeros((nlam, nImg2d//2))
-
-# define the averaged image for the planet
-direct_mono_img_fp = np.zeros((nlam, nImg2d, nImg2d))
-corono_mono_img_fp = np.zeros((nlam, nImg2d, nImg2d))
-
-#%% 
-"""
-### Definition of the coronagraph class parameters
-"""
-if corono_name != 'APLC':
-    raise NameError('Check the name of the coronagraph!')
-
-params = coro.to_dict(nPup=nPup, nImg2d=nImg2d, Fmax2d = nFre2d, nFPM = nFPM,
-                 rMask = rMask,
-                 Pupil2dSym = Pupil2dSym, 
-                 Pupil2d = Pupil2d, LyotStop2d = LyotStop2d, 
-                 CtrBtwnPix=CtrBtwnPix,
-                 CtrBtwnPix2 = CtrBtwnPix2, 
-                 nlam=nlam, bw = bw, wv =wv0,
-                 OPDmap2d = None, Ampmap2d = Ampmap2d,
-                 OPDmap2d_post = None)
-
-corono0  = coro.design.APLC2d(**params)
+fname_SAXOmapnm3dplus     = f'2018-04-04T00-41-34-saxo_residual_turbulence_time30.0sec_seeing{seeing:.1f}as_tiptilt1_gains0_fitting1_alias1_nPup{nPup:04d}_reduction{int(np.round(saxoplus_factor*100)):03d}.fits'
+fpath_SAXOmapnm3dplus     = fdir_dat / fname_SAXOmapnm3dplus
 
 #%%
 """
-### Filepaths for the results
-"""          
-str_common = '_nmap{:05d}_i{:05d}_f{:05d}_band{}_nlam{:04d}'.format(nmap, saxomap_i, saxomap_f,band, nlam)
-str_offaxis_fp = '_sep{:04d}mas'.format(int(round(sep_mas_p)))
-str_sphplus = '_{}_{}dMSun_{}MJup_{}Myr'.format(star_SpT, int(round(star_mass*10)), int(round(plnt_mass)), int(round(star_age)))
-str_offaxis = ''
-if kwd_pla:
-    str_offaxis = str_offaxis_fp
+### Generate SAXO AO phase screens with a factor of 2 reduction 
+"""
 
-str_sphplus = '_{}_{}dMSun_{}Myr'.format(star_SpT, int(round(star_mass*10)), int(round(star_age)))   
-if kwd_pla:
-    str_sphplus += '_{}MJup'.format(int(round(plnt_mass)))
-str_noi = ''
-if kwd_noi:
-    str_noi = '_noi'
-
-str_ff = ''
-if kwd_pla:
-    str_ff = f'_{plnt_flux_fudge_factor:03d}'
-
-# filepaths for the images
-fname_direct_mono_img_f     = 'dir' + str_common + '_img_f.fits'
-fname_corono_mono_img_f     = 'cor' + str_common + '_img_f.fits'
-fpath_direct_mono_img_f     = fdir_res / fname_direct_mono_img_f
-fpath_corono_mono_img_f     = fdir_res / fname_corono_mono_img_f
-
-# filepaths for the profiles
-fname_direct_mono_prf_avg_f = 'dir' + str_common + '_prf_avg_f.fits'
-fname_corono_mono_prf_avg_f = 'cor' + str_common + '_prf_avg_f.fits'
-fname_direct_mono_prf_std_f = 'dir' + str_common + '_prf_std_f.fits'
-fname_corono_mono_prf_std_f = 'cor' + str_common + '_prf_std_f.fits'
-fpath_direct_mono_prf_avg_f = fdir_res / fname_direct_mono_prf_avg_f
-fpath_corono_mono_prf_avg_f = fdir_res / fname_corono_mono_prf_avg_f
-fpath_direct_mono_prf_std_f = fdir_res / fname_direct_mono_prf_std_f
-fpath_corono_mono_prf_std_f = fdir_res / fname_corono_mono_prf_std_f
-
-# filepaths for the images for the off-axis planet
-fname_direct_mono_img_fp = 'dir' + str_common + '_img_f' + str_offaxis + '.fits'
-fname_corono_mono_img_fp = 'cor' + str_common + '_img_f' + str_offaxis + '.fits'
-fpath_direct_mono_img_fp = fdir_res / fname_direct_mono_img_fp
-fpath_corono_mono_img_fp = fdir_res / fname_corono_mono_img_fp
-
-# filepath for the images with star and planet
-fname_direct_cube = 'dir' + str_common + '_img_f' + str_offaxis + str_sphplus + str_noi + '.fits'
-fname_corono_cube = 'cor' + str_common + '_img_f' + str_offaxis + str_sphplus + str_noi + '.fits'
-fpath_direct_cube = fdir_res / fname_direct_cube
-fpath_corono_cube = fdir_res / fname_corono_cube
-
+SAXOmapnm3dplus = np.zeros((nmap, nPup, nPup))
+SAXOmapnm3dplus = SAXOmapnm3d*saxoplus_factor
 
 #%%
 """
-### Image generation
+### Save SAXO AO phase screens 
+"""
+fits.writeto(fpath_SAXOmapnm3dplus, SAXOmapnm3dplus)
+
+#%%
+"""
+### Strehl ratio computation for SAXO
 """
 # # definition of SR table
-# SR1_t = np.zeros((nmap))
-# SR2_t = np.zeros((nmap))
+SR1_t = np.zeros((nmap))
+SR2_t = np.zeros((nmap))
+SR1plus_t = np.zeros((nmap))
+SR2plus_t = np.zeros((nmap))
 
-# # set of points inside the pupil
-# ind_Pupil2d = Pupil2d != 0
 
-# # definition of the coronagraph class
-# OPDmap2d0 = (beta_wfs*ZELDAmapnm3d+Apod2d_OPDmapnm)*1e-9
+# set of points inside the pupil
+ind_Pupil2d = Pupil2d != 0
 
-# OPDmap2d = OPDmap2d0 + SAXOmapnm3d*1e-9
+# definition of the coronagraph class
+OPDmap2d0 = (beta_wfs*ZELDAmapnm3d+Apod2d_OPDmapnm)*1e-9
 
-# for imap in range(nmap):
-#     t0 = time.time()
-#     SR1_t[imap] = np.exp(-(2*np.pi*1e-9*np.std(SAXOmapnm3d[imap, ind_Pupil2d])/wv0)**2)
-#     SR2_t[imap] = np.exp(-(2*np.pi*np.std(OPDmap2d[imap, ind_Pupil2d])/wv0)**2)
-#     t1 = time.time()
-#     if (imap+1) % 100 == 0: 
-#         print(f'map {imap+1}/{nmap}, computation time: {t1-t0:.3f}s')
+OPDmap2d = OPDmap2d0 + SAXOmapnm3d*1e-9
+OPDmap2dplus = OPDmap2d0 + SAXOmapnm3dplus*1e-9
+
+
+for imap in range(nmap):
+    t0 = time.time()
+    SR1_t[imap] = np.exp(-(2*np.pi*1e-9*np.std(SAXOmapnm3d[imap, ind_Pupil2d])/wv0)**2)
+    SR2_t[imap] = np.exp(-(2*np.pi*np.std(OPDmap2d[imap, ind_Pupil2d])/wv0)**2)
+    SR1plus_t[imap] = np.exp(-(2*np.pi*1e-9*np.std(SAXOmapnm3dplus[imap, ind_Pupil2d])/wv0)**2)
+    SR2plus_t[imap] = np.exp(-(2*np.pi*np.std(OPDmap2dplus[imap, ind_Pupil2d])/wv0)**2)
+    t1 = time.time()
+    if (imap+1) % 100 == 0: 
+        print(f'map {imap+1}/{nmap}, computation time: {t1-t0:.3f}s')
+
+#%%
+# computation of the statistics of the improved AO phase screens
+RMS_SAXOmapnm3d = [np.std(SAXOmapnm3d[i, ind_Pupil2d]) for i in range(nmap)]
+
+mean_SAXOmapnm3d = np.mean(RMS_SAXOmapnm3d)
+std_SAXOmapnm3d = np.std(RMS_SAXOmapnm3d)
+
+# computation of the statistics of the improved AO phase screens + ZELDA maps and apodizer phase errors
+RMS_OPDmap2d = [np.std(OPDmap2d[i, ind_Pupil2d]) for i in range(nmap)]
+
+mean_OPDmap2d = np.mean(RMS_OPDmap2d)
+std_OPDmap2d = np.std(RMS_OPDmap2d)
+
+print(f'OPD_SAXO = {mean_SAXOmapnm3d:.3f} +/- {std_SAXOmapnm3d:.3f}nm RMS at lambda={wv0*1e6:.3f}um')
+print(f'OPD_all = {mean_OPDmap2d*1e9:.3f} +/- {std_OPDmap2d*1e9:.3f}nm RMS at lambda={wv0*1e6:.3f}um')
         
-        
-# SR1_mean = np.mean(SR1_t)
-# SR1_std = np.std(SR1_t)
-# SR2_mean = np.mean(SR2_t)
-# SR2_std = np.std(SR2_t)
+# computation of the statistics of the improved AO phase screens
+RMS_SAXOmapnm3dplus = [np.std(SAXOmapnm3dplus[i, ind_Pupil2d]) for i in range(nmap)]
 
-# print(f'SR1 = {SR1_mean:.3f} +/- {SR1_std:.3f} at lambda={wv0*1e6:.3f}um')
-# print(f'SR2 = {SR2_mean:.3f} +/- {SR2_std:.3f} at lambda={wv0*1e6:.3f}um')
+mean_SAXOmapnm3dplus = np.mean(RMS_SAXOmapnm3dplus)
+std_SAXOmapnm3dplus = np.std(RMS_SAXOmapnm3dplus)
+
+# computation of the statistics of the improved AO phase screens + ZELDA maps and apodizer phase errors
+RMS_OPDmap2dplus = [np.std(OPDmap2dplus[i, ind_Pupil2d]) for i in range(nmap)]
+
+mean_OPDmap2dplus = np.mean(RMS_OPDmap2dplus)
+std_OPDmap2dplus = np.std(RMS_OPDmap2dplus)
+
+print(f'OPD_SAXOplus = {mean_SAXOmapnm3dplus:.3f} +/- {std_SAXOmapnm3dplus:.3f}nm RMS at lambda={wv0*1e6:.3f}um')
+print(f'OPD_allplus = {mean_OPDmap2dplus*1e9:.3f} +/- {std_OPDmap2dplus*1e9:.3f}nm RMS at lambda={wv0*1e6:.3f}um')
+
+
+#%%
+# computation of the SR mean and standard deviation with just AO residuals
+SR1_mean = np.mean(SR1_t)
+SR1_std = np.std(SR1_t)
+
+# computation of the SR mean and standard deviation with AO residuals, ZELDA maps and apodizer phase errors
+SR2_mean = np.mean(SR2_t)
+SR2_std = np.std(SR2_t)
+
+print(f'SR1 = {SR1_mean:.3f} +/- {SR1_std:.3f} at lambda={wv0*1e6:.3f}um')
+print(f'SR2 = {SR2_mean:.3f} +/- {SR2_std:.3f} at lambda={wv0*1e6:.3f}um')
+
+
+# computation of the SR mean and standard deviation with just AO residuals
+SR1plus_mean = np.mean(SR1plus_t)
+SR1plus_std = np.std(SR1plus_t)
+
+# computation of the SR mean and standard deviation with AO residuals, ZELDA maps and apodizer phase errors
+SR2plus_mean = np.mean(SR2plus_t)
+SR2plus_std = np.std(SR2plus_t)
+
+print(f'SR1plus = {SR1plus_mean:.3f} +/- {SR1plus_std:.3f} at lambda={wv0*1e6:.3f}um')
+print(f'SR2plus = {SR2plus_mean:.3f} +/- {SR2plus_std:.3f} at lambda={wv0*1e6:.3f}um')
 
 #%%
 """
 ### Apodizer throughput
 """
-
 EE_Apod = np.sum((Apod2d*Pupil2d)**2)/np.sum(Pupil2d**2)
-
 EE_Coro = np.sum((Apod2d*Pupil2d*LyotStop2d)**2)/np.sum(Pupil2d**2)
 
 print(f'Apodizer throughput = {EE_Apod*100:.2f}%')
 print(f'Coronagraph throughput = {EE_Coro*100:.2f}%')
 
 #%%
-plt.figure(0)
-plt.clf()
-plt.imshow(Pupil2d)
-
-
-#%%
-
+"""
+Check apodizer throughput with array size of 384
+"""
+#%
 fname_Apod2d_bis          = f'SPHERE_APO1_field_transmission_map.fits'
 fname_LyotStop2d_bis      = f'sphere_stop_ST_ALC2.fits'
 
@@ -513,8 +498,21 @@ Apod2d_bis = fits.getdata(fpath_Apod2d_bis)
 LyotStop2d_bis = fits.getdata(fpath_LyotStop2d_bis)
 
 EE_Apod_bis = np.sum((Apod2d_bis*Pupil2d_bis)**2)/np.sum(Pupil2d_bis**2)
-
 EE_Coro_bis = np.sum((Apod2d_bis*Pupil2d_bis*LyotStop2d_bis)**2)/np.sum(Pupil2d_bis**2)
 
 print(f'Apodizer throughput 384 = {EE_Apod_bis*100:.2f}%')
 print(f'Coronagraph throughput 384 = {EE_Coro_bis*100:.2f}%')
+
+#%%
+"""
+### Plot figure
+"""
+plt.figure(0, (12, 4.5))
+plt.clf()
+plt.subplot(131)
+plt.imshow(Pupil2d)
+plt.subplot(132)
+plt.imshow(Apod2d)
+plt.subplot(133)
+plt.imshow(LyotStop2d)
+
