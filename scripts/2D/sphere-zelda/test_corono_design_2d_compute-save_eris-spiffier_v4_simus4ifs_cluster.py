@@ -899,7 +899,6 @@ if __name__ == '__main__':
     #     direct_cube = direct_mono_img_f_obs
     #     corono_cube = corono_mono_img_f_obs
 
-    direct_cube = direct_mono_img_f
     
     #%%
     """
@@ -982,13 +981,9 @@ if __name__ == '__main__':
             fpath_list = []
         else:
             data_list = [direct_mono_img_f,direct_mono_prf_avg_f,
-                         direct_mono_prf_std_f,
-                         direct_mono_img_fp,
-                         direct_cube]
+                         direct_mono_prf_std_f]
             fpath_list = [fpath_direct_mono_img_f,fpath_direct_mono_prf_avg_f,
-                          fpath_direct_mono_prf_std_f,
-                          fpath_direct_mono_img_fp,
-                          fpath_direct_cube]
+                          fpath_direct_mono_prf_std_f]
         nlist = len(data_list)
         
         print(fpath_direct_mono_img_f)
