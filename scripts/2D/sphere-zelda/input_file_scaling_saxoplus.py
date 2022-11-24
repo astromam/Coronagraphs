@@ -151,7 +151,7 @@ for iexp in range(nexp):
         SAXOplusmapnm3d = np.empty((nmap, nPup, nPup))
         for imap in range(nmap): 
             SAXOplusmapnm3d_tmp[imap, ind_Pupil2d] -= np.mean(SAXOplusmapnm3d_tmp[imap, ind_Pupil2d]) 
-            SAXOplusmapnm3d[imap] = imutils.scale(SAXOplusmapnm3d_tmp[imap], 0, new_dim=(nPup,nPup), method='interp')
+            SAXOplusmapnm3d[imap] = imutils.scale(SAXOplusmapnm3d_tmp[imap], 0, new_dim=(nPup,nPup), method='interp')*1e3
         t1 = time.time()
         print(f'scaling time for nmap={nmap}: {t1-t0:.2f}s')
         
