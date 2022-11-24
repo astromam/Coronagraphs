@@ -150,7 +150,7 @@ else:
 ndefo = 21
 
 # save multi-spectral images
-do_sav = True 
+do_sav = False 
 
 # case with planet for plots
 kwd_pla = False
@@ -383,7 +383,8 @@ SAXOmapnm3dplus = SAXOmapnm3d*saxoplus_factor
 """
 ### Save SAXO AO phase screens 
 """
-fits.writeto(fpath_SAXOmapnm3dplus, SAXOmapnm3dplus, overwrite=True)
+if do_sav: 
+    fits.writeto(fpath_SAXOmapnm3dplus, SAXOmapnm3dplus, overwrite=True)
 
 #%%
 """
@@ -395,15 +396,17 @@ SR2_t = np.zeros((nmap))
 SR1plus_t = np.zeros((nmap))
 SR2plus_t = np.zeros((nmap))
 
+wv0 = 1.660e-6
 
 # set of points inside the pupil
 ind_Pupil2d = Pupil2d != 0
 
 # definition of the coronagraph class
 OPDmap2d0 = (beta_wfs*ZELDAmapnm3d+Apod2d_OPDmapnm)*1e-9
+OPDmap2d0plus = saxoplus_factor*(beta_wfs*ZELDAmapnm3d)*1e-9
 
 OPDmap2d = OPDmap2d0 + SAXOmapnm3d*1e-9
-OPDmap2dplus = OPDmap2d0 + SAXOmapnm3dplus*1e-9
+OPDmap2dplus = OPDmap2d0plus + SAXOmapnm3dplus*1e-9
 
 
 for imap in range(nmap):
