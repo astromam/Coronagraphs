@@ -193,7 +193,7 @@ if __name__ == '__main__':
     # multi-processing (to adjust with respect to the available proc, 10 and 20 cores in fdr and x40)   
     if sim_case == 'test':
         nproc    = multiprocessing.cpu_count()//2  #15
-        nmap_sub = 690                    # number of saxo maps for a single node 
+        nmap_sub = 4#690                    # number of saxo maps for a single node 
     elif sim_case == 'server':
         nproc    = 15 #multiprocessing.cpu_count()//2  #15
         nmap_sub = 690                    # number of saxo maps for a single node
@@ -205,11 +205,9 @@ if __name__ == '__main__':
     ### Science case
     """
     # spectral band
-    band = 'BB_J' # 'BB_J', 'BB_H', 'H2' filters
+    band = 'BB_H' # 'BB_J', 'BB_H', 'H2' filters
 
     # science case
-    sci_case    = 'mature' # 'young' or mature'
-    star_SpT0   = 'A' # 'A', 'F', 'K'
     star_wv_res = 1000
     plnt_wv_res = star_wv_res
 
