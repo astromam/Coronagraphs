@@ -194,8 +194,8 @@ plnt_wv_res = 1000
 
 t0_sim = time.time()
 
-# reduction of the SAXO aberrations to produce SAXO+ aberrations
-saxoplus_factor = 0.5
+# reduction or amplification of the SAXO aberrations to produce SAXO+ aberrations
+saxoplus_factor = 141./90.
     
 #%%
 """
@@ -368,7 +368,7 @@ LyotStop2d = fits.getdata(fpath_LyotStop2d)
 ### Array initialization
 """
 # define the averaged image
-fname_SAXOmapnm3dplus     = f'2018-04-04T00-41-34-saxo_residual_turbulence_time30.0sec_seeing{seeing:.1f}as_tiptilt1_gains0_fitting1_alias1_nPup{nPup:04d}_reduction{int(np.round(saxoplus_factor*100)):03d}.fits'
+fname_SAXOmapnm3dplus     = f'2018-04-04T00-41-34-saxo_residual_turbulence_time30.0sec_seeing{seeing:.1f}as_tiptilt1_gains0_fitting1_alias1_nPup{nPup:04d}_k{int(np.round(saxoplus_factor*100)):03d}.fits'
 fpath_SAXOmapnm3dplus     = fdir_dat / fname_SAXOmapnm3dplus
 
 #%%
@@ -383,7 +383,7 @@ SAXOmapnm3dplus = SAXOmapnm3d*saxoplus_factor
 """
 ### Save SAXO AO phase screens 
 """
-fits.writeto(fpath_SAXOmapnm3dplus, SAXOmapnm3dplus)
+fits.writeto(fpath_SAXOmapnm3dplus, SAXOmapnm3dplus, overwrite=True)
 
 #%%
 """
