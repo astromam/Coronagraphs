@@ -21,7 +21,8 @@ import matplotlib.pyplot as plt
 """
 
 #fdir = Path('/Users/mndiaye/Library/CloudStorage/OneDrive-UniversitéNiceSophiaAntipolis/data/Coronagraphs/results/2D/data/SPHERE/with_aberr/2018-04-03/sky/with_saxo/before_correction/res_rescale_maps2').resolve()
-fdir = Path('/Users/mndiaye/Library/CloudStorage/OneDrive-UniversitéNiceSophiaAntipolis/data/Coronagraphs/results/2D/data/SPHERE/with_aberr/2018-04-03/sky/with_saxo/before_correction/eris-spiffier').resolve()
+#fdir = Path('/Users/mndiaye/Library/CloudStorage/OneDrive-UniversitéNiceSophiaAntipolis/data/Coronagraphs/results/2D/data/SPHERE/with_aberr/2018-04-03/sky/with_saxo/before_correction/eris-spiffier').resolve()
+fdir = Path('/Users/mndiaye/Library/CloudStorage/OneDrive-UniversitéNiceSophiaAntipolis/data/Coronagraphs/results/2D/data/SPHERE/with_aberr/2018-04-03/sky/with_saxo/before_correction/saxoplus').resolve()
 
 
 # fname1 = 'dir_nmap00690_i00000_f00689_bandBB_J_nlam1928_img_f_F4_15dMSun_20Myr.fits'
@@ -38,8 +39,11 @@ fname2 = 'dir_nmap00690_i10350_f11039_bandBB_H_nlam0357_img_f_F4_15dMSun_20Myr.f
 #fname1 = 'cor_nmap00690_i00000_f00689_bandBB_H_nlam1785_img_f_F4_15dMSun_20Myr.fits'
 #fname2 = 'cor_nmap00690_i00690_f01379_bandBB_H_nlam1785_img_f_F4_15dMSun_20Myr.fits'
 
-fname1 = 'dir_nmap00690_i00000_f00689_bandES_H_nlam2000_img_f_ES.fits'
-fname2 = 'dir_nmap00690_i10350_f11039_bandES_H_nlam2000_img_f_ES.fits'
+#fname1 = 'dir_nmap00690_i00000_f00689_bandES_H_nlam2000_img_f_ES.fits'
+#fname2 = 'dir_nmap00690_i10350_f11039_bandES_H_nlam2000_img_f_ES.fits'
+
+fname1 = 'cor_nmap00750_i00000_f00749_bandSP_H_nlam0200_img_f.fits'
+fname2 = 'cor_nmap00750_i00750_f01499_bandSP_H_nlam0200_img_f.fits'
 
 
 fpath1 = fdir / fname1
@@ -54,10 +58,10 @@ cube2 = fits.getdata(fpath2)
 
 cube_diff = cube2 - cube1 
 
-print(f'Max difference: {np.max(cube_diff):.2f}')
+print(f'Max difference: {np.max(np.abs(cube_diff))}')
 
 #%%
-ilam0 = 2000-1
+ilam0 = 0
 
 plt.figure(0)
 plt.clf()

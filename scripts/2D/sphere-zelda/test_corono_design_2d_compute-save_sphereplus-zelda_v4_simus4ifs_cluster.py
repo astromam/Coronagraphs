@@ -670,30 +670,30 @@ if __name__ == '__main__':
         str_ff = f'_{plnt_flux_fudge_factor:03d}'
     
     # filepaths for the images
-    fname_direct_mono_img_f     = 'dir' + str_common + '_img_f.fits'
-    fname_corono_mono_img_f     = 'cor' + str_common + '_img_f.fits'
+    fname_direct_mono_img_f     = 'dir' + str_common + '_img_f_SP.fits'
+    fname_corono_mono_img_f     = 'cor' + str_common + '_img_f_SP.fits'
     fpath_direct_mono_img_f     = fdir_res / fname_direct_mono_img_f
     fpath_corono_mono_img_f     = fdir_res / fname_corono_mono_img_f
     
     # filepaths for the profiles
-    fname_direct_mono_prf_avg_f = 'dir' + str_common + '_prf_avg_f.fits'
-    fname_corono_mono_prf_avg_f = 'cor' + str_common + '_prf_avg_f.fits'
-    fname_direct_mono_prf_std_f = 'dir' + str_common + '_prf_std_f.fits'
-    fname_corono_mono_prf_std_f = 'cor' + str_common + '_prf_std_f.fits'
+    fname_direct_mono_prf_avg_f = 'dir' + str_common + '_prf_avg_f_SP.fits'
+    fname_corono_mono_prf_avg_f = 'cor' + str_common + '_prf_avg_f_SP.fits'
+    fname_direct_mono_prf_std_f = 'dir' + str_common + '_prf_std_f_SP.fits'
+    fname_corono_mono_prf_std_f = 'cor' + str_common + '_prf_std_f_SP.fits'
     fpath_direct_mono_prf_avg_f = fdir_res / fname_direct_mono_prf_avg_f
     fpath_corono_mono_prf_avg_f = fdir_res / fname_corono_mono_prf_avg_f
     fpath_direct_mono_prf_std_f = fdir_res / fname_direct_mono_prf_std_f
     fpath_corono_mono_prf_std_f = fdir_res / fname_corono_mono_prf_std_f
     
     # filepaths for the images for the off-axis planet
-    fname_direct_mono_img_fp = 'dir' + str_common + '_img_f' + str_offaxis_fp + '.fits'
-    fname_corono_mono_img_fp = 'cor' + str_common + '_img_f' + str_offaxis_fp + '.fits'
+    fname_direct_mono_img_fp = 'dir' + str_common + '_img_f' + str_offaxis_fp + '_SP.fits'
+    fname_corono_mono_img_fp = 'cor' + str_common + '_img_f' + str_offaxis_fp + '_SP.fits'
     fpath_direct_mono_img_fp = fdir_res / fname_direct_mono_img_fp
     fpath_corono_mono_img_fp = fdir_res / fname_corono_mono_img_fp
     
     # filepath for the images with star and planet
-    fname_direct_cube = 'dir' + str_common + '_img_f' + str_offaxis + str_sphplus + str_noi + str_ff + '.fits'
-    fname_corono_cube = 'cor' + str_common + '_img_f' + str_offaxis + str_sphplus + str_noi + str_ff + '.fits'
+    fname_direct_cube = 'dir' + str_common + '_img_f' + str_offaxis + str_sphplus + str_noi + str_ff + '_SP.fits'
+    fname_corono_cube = 'cor' + str_common + '_img_f' + str_offaxis + str_sphplus + str_noi + str_ff + '_SP.fits'
     fpath_direct_cube = fdir_res / fname_direct_cube
     fpath_corono_cube = fdir_res / fname_corono_cube
 
