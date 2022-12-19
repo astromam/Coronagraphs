@@ -35,7 +35,7 @@ if True:
     corono_name  = 'APLC' # 'SP' or 'APLC'
     pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
     problem_name = 'MaxContrastLinf' # 'MaxContrastL1' #'MaxTau' # , 'MaxContrastLinf' # #  
-    solver       = 'stdgrb' # 'stdgrb' #  'gurobipy', 'scipy.linprog'
+    solver       = 'gurobipy' # 'stdgrb' #  'gurobipy', 'scipy.linprog'
     
     MinIsland   = False
     FirstDerGlobalLim = 1.
