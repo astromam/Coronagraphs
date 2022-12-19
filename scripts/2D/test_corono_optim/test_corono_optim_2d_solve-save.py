@@ -79,7 +79,7 @@ do_fits = True
 """
 File reading for Pupil and Lyot stop
 """
-fdir = Path('../../data/2D/pupils/').resolve()
+fdir = Path('../../../data/2D/pupils/').resolve()
 #fdir = Path('/Users/mndiaye/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs/data/2D/pupils/').resolve()
 # if user == 'mndiaye':
 #     if syst == 'darwin':
@@ -178,7 +178,7 @@ if Pupil2dSym == True:
 """
 Save apodizer
 """
-fdir = Path('../../results/2D/dat_pyth').resolve() / pupil_name
+fdir = Path('../../../results/2D/dat_pyth').resolve() / pupil_name
 #fdir = Path('/Users/mndiaye/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
 if not os.path.exists(fdir):
     os.makedirs(fdir)
