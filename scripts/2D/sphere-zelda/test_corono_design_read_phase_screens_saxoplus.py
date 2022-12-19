@@ -1,10 +1,4 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Nov 21 22:51:22 2022
 
-@author: mndiaye
-"""
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
@@ -136,7 +130,7 @@ nImg2d = 64    # final image plane
 # simulation configuration   
 saxofudge    = 1. #80/120.
 saxomap_i    = 0  # saxo first screen
-saxomap_f    = 41399  # saxo last screen
+saxomap_f    = 5999  # saxo last screen
 
 # seeing for on-sky observations
 seeing = 0.7
@@ -195,7 +189,7 @@ plnt_wv_res = 1000
 t0_sim = time.time()
 
 # reduction or amplification of the SAXO aberrations to produce SAXO+ aberrations
-saxoplus_factor = 141./90.
+saxoplus_factor = 62./90.
     
 #%%
 """
@@ -290,7 +284,7 @@ if not os.path.exists(fdir_res):
 fname_Apod2d          = f'SPHERE_APO1_field_transmission_map_nPup{nPup:04d}.fits'
 fname_Apod2d_OPDmapnm = f'apo_substrate_D1_nPup{nPup:04d}.fits'
 fname_Ampmap2d        = f'2018-04-03_night_sphere_pupil_clear_sky_FeII_field_nPup{nPup:04d}.fits'
-fname_SAXOmapnm3d     = f'2018-04-04T00-41-34-saxo_residual_turbulence_time30.0sec_seeing{seeing:.1f}as_tiptilt1_gains0_fitting1_alias1_nPup{nPup:04d}.fits'
+fname_SAXOmapnm3d     = f'saxoplus_screen06000_nPup{nPup:04d}.fits'
 fname_ZELDAmapnm3d    = f'2018-04-03_night_ncpa_loop_sky_2_ncpa_loop_opd_nPup{nPup:04d}.fits'
 fname_LyotStop2d      = f'sphere_stop_ST_ALC2_nPup{nPup:04d}.fits'
 
@@ -357,62 +351,32 @@ Ampmap2d = fits.getdata(fpath_Ampmap2d)
 ZELDAmapnm3d = fits.getdata(fpath_ZELDAmapnm3d)
 
 ### SAXO maps
-SAXOmapnm3d = np.empty((nmap, nPup, nPup))
-SAXOmapnm3d = fits.getdata(fpath_SAXOmapnm3d)[saxomap_i:saxomap_i+nmap,:,:]
+SAXOmapnm3dplus = np.empty((nmap, nPup, nPup))
+SAXOmapnm3dplus = fits.getdata(fpath_SAXOmapnm3d)[saxomap_i:saxomap_i+nmap,:,:]
         
 ### Lyot Stop
 LyotStop2d = fits.getdata(fpath_LyotStop2d)
 
 #%%
 """
-### Array initialization
-"""
-# define the averaged image
-fname_SAXOmapnm3dplus     = f'2018-04-04T00-41-34-saxo_residual_turbulence_time30.0sec_seeing{seeing:.1f}as_tiptilt1_gains0_fitting1_alias1_nPup{nPup:04d}_k{int(np.round(saxoplus_factor*100)):03d}.fits'
-fpath_SAXOmapnm3dplus     = fdir_dat / fname_SAXOmapnm3dplus
-
-#%%
-"""
-### Generate SAXO AO phase screens with a factor of 2 reduction 
-"""
-
-SAXOmapnm3dplus = np.zeros((nmap, nPup, nPup))
-SAXOmapnm3dplus = SAXOmapnm3d*saxoplus_factor
-
-#%%
-"""
-### Save SAXO AO phase screens 
-"""
-if do_sav: 
-    fits.writeto(fpath_SAXOmapnm3dplus, SAXOmapnm3dplus, overwrite=True)
-
-#%%
-"""
 ### Strehl ratio computation for SAXO
 """
 # # definition of SR table
-SR1_t = np.zeros((nmap))
-SR2_t = np.zeros((nmap))
 SR1plus_t = np.zeros((nmap))
 SR2plus_t = np.zeros((nmap))
 
-wv0 = 1.650e-6
+wv0 = 1.580e-6
 
 # set of points inside the pupil
 ind_Pupil2d = Pupil2d != 0
 
 # definition of the coronagraph class
-OPDmap2d0 = (beta_wfs*ZELDAmapnm3d+Apod2d_OPDmapnm)*1e-9
 OPDmap2d0plus = saxoplus_factor*(beta_wfs*ZELDAmapnm3d)*1e-9
-
-OPDmap2d = OPDmap2d0 + SAXOmapnm3d*1e-9
 OPDmap2dplus = OPDmap2d0plus + SAXOmapnm3dplus*1e-9
 
 
 for imap in range(nmap):
     t0 = time.time()
-    SR1_t[imap] = np.exp(-(2*np.pi*1e-9*np.std(SAXOmapnm3d[imap, ind_Pupil2d])/wv0)**2)
-    SR2_t[imap] = np.exp(-(2*np.pi*np.std(OPDmap2d[imap, ind_Pupil2d])/wv0)**2)
     SR1plus_t[imap] = np.exp(-(2*np.pi*1e-9*np.std(SAXOmapnm3dplus[imap, ind_Pupil2d])/wv0)**2)
     SR2plus_t[imap] = np.exp(-(2*np.pi*np.std(OPDmap2dplus[imap, ind_Pupil2d])/wv0)**2)
     t1 = time.time()
@@ -420,22 +384,7 @@ for imap in range(nmap):
         print(f'map {imap+1}/{nmap}, computation time: {t1-t0:.3f}s')
 
 #%%
-# computation of the statistics of the improved AO phase screens
-RMS_SAXOmapnm3d = [np.std(SAXOmapnm3d[i, ind_Pupil2d]) for i in range(nmap)]
-
-mean_SAXOmapnm3d = np.mean(RMS_SAXOmapnm3d)
-std_SAXOmapnm3d = np.std(RMS_SAXOmapnm3d)
-
-# computation of the statistics of the improved AO phase screens + ZELDA maps and apodizer phase errors
-RMS_OPDmap2d = [np.std(OPDmap2d[i, ind_Pupil2d]) for i in range(nmap)]
-
-mean_OPDmap2d = np.mean(RMS_OPDmap2d)
-std_OPDmap2d = np.std(RMS_OPDmap2d)
-
-print(f'OPD_SAXO = {mean_SAXOmapnm3d:.3f} +/- {std_SAXOmapnm3d:.3f}nm RMS at lambda={wv0*1e6:.3f}um')
-print(f'OPD_all = {mean_OPDmap2d*1e9:.3f} +/- {std_OPDmap2d*1e9:.3f}nm RMS at lambda={wv0*1e6:.3f}um')
-        
-# computation of the statistics of the improved AO phase screens
+        # computation of the statistics of the improved AO phase screens
 RMS_SAXOmapnm3dplus = [np.std(SAXOmapnm3dplus[i, ind_Pupil2d]) for i in range(nmap)]
 
 mean_SAXOmapnm3dplus = np.mean(RMS_SAXOmapnm3dplus)
@@ -453,18 +402,6 @@ print(f'OPD_allplus = {mean_OPDmap2dplus*1e9:.3f} +/- {std_OPDmap2dplus*1e9:.3f}
 
 #%%
 # computation of the SR mean and standard deviation with just AO residuals
-SR1_mean = np.mean(SR1_t)
-SR1_std = np.std(SR1_t)
-
-# computation of the SR mean and standard deviation with AO residuals, ZELDA maps and apodizer phase errors
-SR2_mean = np.mean(SR2_t)
-SR2_std = np.std(SR2_t)
-
-print(f'SR1 = {SR1_mean:.3f} +/- {SR1_std:.3f} at lambda={wv0*1e6:.3f}um')
-print(f'SR2 = {SR2_mean:.3f} +/- {SR2_std:.3f} at lambda={wv0*1e6:.3f}um')
-
-
-# computation of the SR mean and standard deviation with just AO residuals
 SR1plus_mean = np.mean(SR1plus_t)
 SR1plus_std = np.std(SR1plus_t)
 
@@ -474,10 +411,6 @@ SR2plus_std = np.std(SR2plus_t)
 
 print(f'SR1plus = {SR1plus_mean:.3f} +/- {SR1plus_std:.3f} at lambda={wv0*1e6:.3f}um')
 print(f'SR2plus = {SR2plus_mean:.3f} +/- {SR2plus_std:.3f} at lambda={wv0*1e6:.3f}um')
-
-#%%
-RMS_OPDmap2d0 = np.std(OPDmap2d0[ind_Pupil2d])
-print(f'RMS_OPDmap2d0 = {RMS_OPDmap2d0*1e9}nm RMS')
 
 #%%
 """

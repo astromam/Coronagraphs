@@ -42,8 +42,8 @@ fname2 = 'dir_nmap00690_i10350_f11039_bandBB_H_nlam0357_img_f_F4_15dMSun_20Myr.f
 #fname1 = 'dir_nmap00690_i00000_f00689_bandES_H_nlam2000_img_f_ES.fits'
 #fname2 = 'dir_nmap00690_i10350_f11039_bandES_H_nlam2000_img_f_ES.fits'
 
-fname1 = 'cor_nmap00750_i00000_f00749_bandSP_H_nlam0200_img_f.fits'
-fname2 = 'cor_nmap00750_i00750_f01499_bandSP_H_nlam0200_img_f.fits'
+fname1 = 'dir_nmap00750_i00000_f00749_bandSP_H_nlam0200_img_f_SP.fits'
+fname2 = 'cor_nmap00750_i00750_f01499_bandSP_H_nlam0200_img_f_SP.fits'
 
 
 fpath1 = fdir / fname1
