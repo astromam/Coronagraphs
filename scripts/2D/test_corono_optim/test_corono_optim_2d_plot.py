@@ -81,20 +81,20 @@ nImg2dbis = 500
 File reading for Pupil and Lyot stop
 """
 if True:
-    fdir = Path('../../data/2D/pupils/').resolve()
-# #    fdir = Path('/Users/mndiaye/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs/data/2D/pupils/').resolve()
+    fdir = Path('../../../data/2D/pupils/').resolve()
+#    fdir = Path('/Users/mndiaye/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs/data/2D/pupils/').resolve()
 
-#     if user == 'mndiaye':
-#         if syst == 'darwin':
-#             fdir = Path('~/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs/data/2D/pupils/').expanduser()
-#             sim_case = 'test' # 'test' or 'server'
-#         elif syst == 'linux':
-#             fdir = Path('/home/mndiaye/python/Coronagraphs/data/2D/pupils').resolve()
-#             sim_case = 'server' # 'test' or 'server'            
-#         else:
-#             raise ValueError('Unknown operating system {0}'.format(user))
-#     else:
-#         raise ValueError('Unknown user {0}'.format(user))
+#    if user == 'mndiaye':
+#        if syst == 'darwin':
+#            fdir = Path('~/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs/data/2D/pupils/').expanduser()
+#            sim_case = 'test' # 'test' or 'server'
+#        elif syst == 'linux':
+#            fdir = Path('/home/mndiaye/python/Coronagraphs/data/2D/pupils').resolve()
+#            sim_case = 'server' # 'test' or 'server'            
+#        else:
+#            raise ValueError('Unknown operating system {0}'.format(user))
+#    else:
+#        raise ValueError('Unknown user {0}'.format(user))
 
 
     if pupil_name == 'lvr':
@@ -127,7 +127,7 @@ params = coro.to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
 """
 Working directories
 """
-fdir = Path('../../results/2D/dat_pyth').resolve() / pupil_name
+fdir = Path('../../../results/2D/dat_pyth').resolve() / pupil_name
 #fdir = Path('/Users/mndiaye/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
 
 fdir_pdf = Path('../../results/2D/plots/').resolve()
