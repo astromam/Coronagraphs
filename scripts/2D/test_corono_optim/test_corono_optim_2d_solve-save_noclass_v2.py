@@ -701,12 +701,6 @@ try:
     print('ok')
     
     model.optimize()
-
-    if kwd_qrt:
-        Apod1 = np.zeros(((corono0.nPup//2)**2))
-    else:
-        Apod1 = np.zeros((corono0.nPup**2))
-    Apod1[idx_pup] = Apo.x
     
 except gb.GurobiError as e:
     print('Error code ' + str(e.errno) + ": " + str(e))
@@ -724,6 +718,12 @@ print(f'optimization time             : {t1-t0:.2f}s\n')
 """
 print('generation of the final apodizer')
 t0 = time.time()
+
+if kwd_qrt:
+    Apod1 = np.zeros(((corono0.nPup//2)**2))
+else:
+    Apod1 = np.zeros((corono0.nPup**2))
+Apod1[idx_pup] = Apo.x
 
 if kwd_qrt:
     Apod1_2d = np.zeros((corono0.nPup, corono0.nPup))
@@ -767,47 +767,3 @@ Save apodizer
 
 # if do_fits is True:
 #     fits.writeto(fpath, Apod1_2d, overwrite=True)
-
-#%%
-"""
-### Test sft quarter
-"""
-Psi_A = Pupil2d 
-Psi_B = coro.utils.sft(Psi_A, nFPM, rMask*2, CtrBtwnPix=True)*mask2d 
-Psi_C = Psi_A - coro.utils.isft(Psi_B, nPup, rMask*2, CtrBtwnPix=True)
-Psi_L = Psi_C * LyotStop2d 
-Psi_D = coro.utils.sft(Psi_L, nImg2d, Fmax2d, CtrBtwnPix=True)
-
-Psi_Aq = Pupil2d[nPup//2:,nPup//2:]
-Psi_Bq = sft_qrt(Psi_Aq, nFPM, rMask*2, CtrBtwnPix=True)*mask2d[nFPM//2:,nFPM//2:]
-Psi_Cq = Psi_Aq - isft_qrt(Psi_Bq, nPup, rMask*2, CtrBtwnPix=True) 
-Psi_Lq = Psi_Cq * LyotStop2d[nPup//2:,nPup//2:]
-Psi_Dq = sft_qrt(Psi_Lq, nImg2d, Fmax2d, CtrBtwnPix=True)
-
-#%%
-plt.figure(2)
-plt.clf()
-plt.subplot(431)
-plt.imshow(np.abs(Psi_A[nPup//2:,nPup//2:]))
-plt.subplot(432)
-plt.imshow(np.abs(Psi_Aq))
-plt.subplot(433)
-plt.imshow(np.abs(Psi_Aq)-np.abs(Psi_A[nPup//2:,nPup//2:]))
-plt.subplot(434)
-plt.imshow(Psi_B[nFPM//2:, nFPM//2:].real)
-plt.subplot(435)
-plt.imshow(Psi_Bq.real)
-plt.subplot(436)
-plt.imshow(Psi_Bq.real-Psi_B[nFPM//2:, nFPM//2:].real)
-plt.subplot(437)
-plt.imshow(Psi_C[nPup//2:, nPup//2:].real)
-plt.subplot(438)
-plt.imshow(Psi_Cq.real)
-plt.subplot(439)
-plt.imshow(Psi_Cq.real-Psi_C[nPup//2:, nPup//2:].real)
-plt.subplot(4,3,10)
-plt.imshow(Psi_D[nImg2d//2:, nImg2d//2:].real)
-plt.subplot(4,3,11)
-plt.imshow(Psi_Dq.real)
-plt.subplot(4,3,12)
-plt.imshow(Psi_Dq.real-Psi_D[nImg2d//2:, nImg2d//2:].real)
