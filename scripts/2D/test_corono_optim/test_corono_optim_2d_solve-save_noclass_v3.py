@@ -36,7 +36,7 @@ Parameters
 """
 # Telescope name
 corono_name  = 'APLC' # 'SP' or 'APLC'
-pupil_name   = 'vlt' # 'vlt' or 'sbr' or 'lvr'
+pupil_name   = 'vlt_btw' # 'vlt' or 'sbr' or 'lvr' or 'vlt_btw'
 problem_name = 'MaxContrastLinf' # 'MaxTau' # ,'MaxContrastLinf' # 'MaxContrastL1' #
 solver       = 'gurobipy' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
 slvLogToConsole = 1
@@ -51,7 +51,7 @@ FirstDerGlobalLim = 100.
 BinarityReg       = 0.1
 
 #nPup = corono0.params['nPup']
-nPup0 = 100
+nPup0 = 250
 nFPM = 50
 Fmax2d = 45#22.5
 nImg2d = 90#45
@@ -81,7 +81,7 @@ LSRobustness = False
 
 #nlam
 bw   = 0.1
-nlam = 1
+nlam = 3
 
 do_fits = True
 
@@ -617,19 +617,17 @@ for  k in range(nProgRef):
     if kwd_qrt:
         PsiD[0:npp,0:nPsiD] = compute_response_matrices_qrt(idx_pup, idx_dz, npp, ndz,corono0)
         if k != 0:
-            PsiD0 = np.zeros((corono0.nPup//2, corono0.nPup//2))
             PsiD0 = (1./4)*compute_corono_field_2d_qrt(Ones_2d2_qrt, Pupil2d2_qrt, LyotStop2d2_qrt, corono0)
-            PsiD0 = np.reshape(PsiD0, ((corono0.nImg2d//2)**2))     
+            PsiD0 = np.reshape(PsiD0, (corono0.nlam, (corono0.nImg2d//2)**2))     
     else:
         PsiD[0:npp,0:nPsiD] = compute_response_matrices(idx_pup, idx_dz, npp, ndz, corono0) 
         if k != 0:
-            PsiD0 = np.zeros((corono0.nPup, corono0.nPup))
             PsiD0 = corono0.compute_corono_field_2d(Ones_2d2)
-            PsiD0 = np.reshape(PsiD0, (corono0.nImg2d**2))        
+            PsiD0 = np.reshape(PsiD0, (corono0.nlam, corono0.nImg2d**2))        
     
     PsiD0bis = 0 
     if k != 0:
-        PsiD0bis = PsiD0[idx_dz] 
+        PsiD0bis = np.reshape(PsiD0[:, idx_dz], (corono0.nlam*ndz)) 
         
     t1= time.time()
     print(f'response matrix computation time: {t1-t0:.3f}s\n')
@@ -756,8 +754,8 @@ for  k in range(nProgRef):
     """
     Save apodizer
     """
-    fdir_sav = Path('../../../results/2D/dat_pyth').resolve() / pupil_name
-    #fdir = Path('/Users/mndiaye/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
+    # fdir_sav = Path('../../../results/2D/dat_pyth').resolve() / pupil_name
+    fdir_sav = Path('/Users/mndiaye/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
     if not os.path.exists(fdir_sav):
         os.makedirs(fdir_sav)
         
