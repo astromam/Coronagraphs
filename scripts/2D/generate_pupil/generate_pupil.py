@@ -24,8 +24,8 @@ import xaosim
 """
 ### Parameters
 """
-pupil_name = 'vlt'
-nPup= 250#384
+pupil_name = 'vlt_btw'
+nPup= 100#384
 do_fits = True
 
 #%%
@@ -34,6 +34,17 @@ do_fits = True
 """
 if pupil_name == 'vlt':
     pupil = aperture.vlt_pupil(nPup, nPup, dead_actuator_diameter=0.)
+elif pupil_name == 'vlt_btw':
+    pdiam, odiam = 8.00, 1.12
+    thick = 0.04              # adopted spider thickness (meters)
+    offset = 1.11            # spider intersection offset (meters)
+    beta = 50.5              # spider angle beta
+
+    pupil = xaosim.pupil.four_spider_mask(nPup, nPup, nPup/2, 
+                                          pdiam=pdiam, odiam=odiam,
+                                          beta=beta, thick=thick, offset=offset,
+                                          spiders=True,between_pix=True)
+    
 elif pupil_name == 'sbr':
     pdiam, odiam = 7.92, 2.3
     thick = 0.25              # adopted spider thickness (meters)
