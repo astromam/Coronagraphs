@@ -34,14 +34,14 @@ if True:
     # Telescope name
     corono_name  = 'APLC' # 'SP' or 'APLC'
     pupil_name   = 'vlt_btw' # 'vlt' or 'sbr' or 'lvr'
-    problem_name = 'MaxContrastLinf' # 'MaxContrastL1' #'MaxTau' # , 'MaxContrastLinf' # #  
+    problem_name = 'MaxTau' # 'MaxContrastL1' #'MaxTau' # , 'MaxContrastLinf' # #  
     solver       = 'gurobipy' # 'stdgrb' #  'gurobipy', 'scipy.linprog'
     
     MinIsland   = False
     FirstDerGlobalLim = 1.
     
     #nPup = corono0.params['nPup']
-    nPup = 1000
+    nPup = 100
     nFPM = 50
     Fmax2d = 50
     nImg2d = 500
