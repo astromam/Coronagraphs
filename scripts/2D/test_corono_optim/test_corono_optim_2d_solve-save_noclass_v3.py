@@ -37,7 +37,7 @@ Parameters
 # Telescope name
 corono_name  = 'APLC' # 'SP' or 'APLC'
 pupil_name   = 'vlt_btw' # 'vlt' or 'sbr' or 'lvr' or 'vlt_btw'
-problem_name = 'MaxContrastLinf' # 'MaxTau' # ,'MaxContrastLinf' # 'MaxContrastL1' #
+problem_name = 'MaxTau' # 'MaxTau' # ,'MaxContrastLinf' # 'MaxContrastL1' #
 solver       = 'gurobipy' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
 slvLogToConsole = 1
 slvCrossover    = 0
@@ -51,13 +51,13 @@ FirstDerGlobalLim = 100.
 BinarityReg       = 0.1
 
 #nPup = corono0.params['nPup']
-nPup0 = 250
+nPup0 = 100
 nFPM = 50
 Fmax2d = 45#22.5
 nImg2d = 90#45
 
 # number of progressive refinement
-nProgRef = 3
+nProgRef = 1
 
 # mask radius in lam0/D units
 rMask = 2.8
@@ -590,7 +590,19 @@ for  k in range(nProgRef):
     
     idx_pup = list(bbb[pup])
     npp     = len(idx_pup)
-        
+    
+    if problem_name == 'MaxTau':
+        if corono0.Pupil2dSym == False:
+            LyotStop_vec = np.reshape(LyotStop2d, ((corono0.nPup)**2))
+        else:
+            LyotStop_vec = np.reshape(LyotStop2d_qrt, ((corono0.nPup//2)**2))
+
+#%%
+    neps = 0
+    if problem_name == 'MaxContrastLinf':
+        neps = 1
+    elif problem_name == 'MaxContrastL1':
+        neps = ndz*1   
         
     #%%
     TR = np.sum(Pupil_vec)
@@ -652,26 +664,50 @@ for  k in range(nProgRef):
     """
     print('generating gurobi model')
     t00=time.time()
-    # Create a new model  
-    model = gb.Model("LP max C new")
-    
-    # Create variables
-    Apo = model.addMVar(npp, lb=0.0, ub=1.0, name="Apo")
-    Eps = model.addMVar(neps, lb=0.0, name="Eps")  
+    if problem_name == 'MaxContrastLinf' or problem_name == 'MaxContrastL1':
         
-    # Set objective
-    model.setObjective(Eps.sum(), gb.GRB.MINIMIZE)
-    
-    # Add constraint:
-    model.addConstr( PsiD.T @ Apo + PsiD0bis - Eps <= 0)
-    model.addConstr(-PsiD.T @ Apo - PsiD0bis - Eps <= 0)
-    model.addConstr(-Apo.sum() - ApoCst  <= -tau*TR)
+        # Create a new model  
+        model = gb.Model("LP max C new")
         
+        # Create variables
+        Apo = model.addMVar(npp, lb=0.0, ub=1.0, name="Apo")
+        if problem_name == 'MaxContrastLinf':
+            Eps = model.addMVar(neps, lb=0.0, name="Eps")
+        else:
+            Eps = model.addMVar(neps*corono0.nlam, lb=0.0, name="Eps")
+            
+        # Set objective
+        model.setObjective(Eps.sum(), gb.GRB.MINIMIZE)
+        
+        # Add constraint:
+        model.addConstr( PsiD.T @ Apo + PsiD0bis - Eps <= 0)
+        model.addConstr(-PsiD.T @ Apo - PsiD0bis - Eps <= 0)
+        model.addConstr(-Apo.sum() - ApoCst  <= -tau*TR)
+            
+        
+    else:
+        # Create a new model  
+        model = gb.Model("LP max tau new")
+        
+        # Create variables
+        Apo = model.addMVar(npp, lb=0.0, ub=1.0, name="Apo")
+            
+        # Set objective
+        model.setObjective(-Apo.sum() - ApoCst, gb.GRB.MINIMIZE)
+        
+        cst = (10.**(-cDarkHole/2.)/np.sqrt(2.))*corono0.Fmax2d/(corono0.nImg2d*corono0.nPup)
+        Psi0 = cst*np.sum(Pupil_vec[idx_pup]*LyotStop_vec[idx_pup])
+        
+        # Add constraint:
+        model.addConstr( PsiD.T @ Apo - Psi0 <= 0)
+        model.addConstr(-PsiD.T @ Apo - Psi0 <= 0)
+            
     # Update model
     model.update()
-    
+        
     t11=time.time()
-    print(f'gurobi model computation time: {t11-t00:.3f}s\n')    
+    print(f'gurobi model computation time: {t11-t00:.3f}s\n')
+        
     
     #%%
     """
