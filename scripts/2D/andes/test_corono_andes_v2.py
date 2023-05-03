@@ -14,6 +14,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from astropy.io import fits
 from pathlib import Path
+import pdb
 
 import os
 
@@ -328,12 +329,22 @@ def profile(img, ptype='mean', step=1, mask=None, center=None, rmax=0, clip=True
 """
 ### Working directory
 """
-# File directory
-fdir_dat = Path('/Users/mndiaye/Library/CloudStorage/OneDrive-UniversitéNiceSophiaAntipolis/data/andes/data/').resolve()
-# Directory for the OPD with the corresponding seed value
-fdir_res   = Path('/Users/mndiaye/Library/CloudStorage/OneDrive-UniversitéNiceSophiaAntipolis/data/andes/results/').resolve()
-# Directory for the OPD with the corresponding seed value
-fdir_plt   = Path('/Users/mndiaye/Library/CloudStorage/OneDrive-UniversitéNiceSophiaAntipolis/data/andes/plots/').resolve()
+user = 'Adrien'
+if user == 'Adrien':
+    # File directory
+    fdir_dat = Path('/home/asimonnin/Bureau/ThesisAdrien/Andes/Data_corono/data').resolve()
+    # Directory for the OPD with the corresponding seed value
+    fdir_res   = Path('/home/asimonnin/Bureau/ThesisAdrien/Andes/Data_corono/results/').resolve()
+    # Directory for the OPD with the corresponding seed value
+    fdir_plt   = Path('/home/asimonnin/Bureau/ThesisAdrien/Andes/Data_corono/plots/').resolve()
+
+elif user == 'Mamadou':
+    # File directory
+    fdir_dat = Path('/Users/mndiaye/Library/CloudStorage/OneDrive-UniversitéNiceSophiaAntipolis/data/andes/data/').resolve()
+    # Directory for the OPD with the corresponding seed value
+    fdir_res   = Path('/Users/mndiaye/Library/CloudStorage/OneDrive-UniversitéNiceSophiaAntipolis/data/andes/results/').resolve()
+    # Directory for the OPD with the corresponding seed value
+    fdir_plt   = Path('/Users/mndiaye/Library/CloudStorage/OneDrive-UniversitéNiceSophiaAntipolis/data/andes/plots/').resolve()
 
 # Directory for the pupils
 fdir_pupil = fdir_dat / 'Pupil'
@@ -366,14 +377,6 @@ mask2d = uniform_disk(nFPM, nFPM/2.)
 
 # Lyot stop
 LyotStop2d = Pupil*1
-
-#LyotStop2d = (uniform_disk(nPup, 0.95*nPup/2)-uniform_disk(nPup, 0.35*nPup/2))*Pupil
-
-#%%
-
-# plt.figure(11)
-# plt.clf()
-# plt.imshow(LyotStop2d)
 
 
 #%%
@@ -417,6 +420,7 @@ Int_DD *= norm_peakDD0
 
 
 #%%
+
 # plt.figure(10)
 # plt.clf()
 # plt.subplot(131)
@@ -428,6 +432,9 @@ Int_DD *= norm_peakDD0
 # plt.subplot(133)
 # plt.imshow(np.log10(Int_DD), vmax =0, vmin = -5, cmap ='inferno')
 # plt.title('plane D')
+# plt.savefig(fdir_plt / 'coronagraphic_image_lyotstop3.png', dpi=300)
+# plt.close()
+# pdb.set_trace()
 
 
 
@@ -667,7 +674,8 @@ for iPSF in range(len(fpath_psf)):
     plt.tight_layout()
     plt.savefig(fpath_images)
     
-    plt.show()
+    #plt.show()
+    plt.close()
     
     #%%
     """
@@ -715,7 +723,7 @@ for iPSF in range(len(fpath_psf)):
     plt.legend()
     
     plt.savefig(fpath_prf)
-    
-    plt.show()
+    plt.close()
+    #plt.show()
     
     
