@@ -34,7 +34,7 @@ if True:
     # Telescope name
     corono_name  = 'APLC' # 'SP' or 'APLC'
     pupil_name   = 'vlt_btw' # 'vlt' or 'sbr' or 'lvr'
-    problem_name = 'MaxTau' # 'MaxContrastL1' #'MaxTau' # , 'MaxContrastLinf' # #  
+    problem_name = 'MaxContrastLinf' # 'MaxContrastL1' #'MaxTau' # , 'MaxContrastLinf' # #  
     solver       = 'gurobipy' # 'stdgrb' #  'gurobipy', 'scipy.linprog'
     
     MinIsland   = False
@@ -54,7 +54,7 @@ if True:
     rho1 = 20.0
     
     # contrast in the dark region
-    cDarkHole = 7.0
+    cDarkHole = 10.0
     
     # tau (integrated Pupil transmission)
     tau   = 0.5
@@ -64,11 +64,20 @@ if True:
     CtrBtwnPix  = True
     CtrBtwnPix2 = True
     Pupil2dSym  = True # set it True only for optimization
+    LSRobustness = True
+    test_robust = True
+    axis_robust = 1
+    shift_robust = 1
     
     #nlam
     bw   = 0.1
-    nlam = 3
+    nlam = 1
 
+    # Lyot stop with dead actuators
+    do_dead_act = True
+    str_dead_act = ''
+    if do_dead_act:
+        str_dead_act = '_deadact'
     
     do_fits = False
 
@@ -103,11 +112,16 @@ if True:
     else:
         fname_pup = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
         fname_lys = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
+        if do_dead_act:
+            fname_lys = f'sphere_stop_ST_ALC2_nPup{nPup:04d}.fits'
     
     fpath_pup = fdir / fname_pup
     fpath_lys = fdir / fname_lys
     Pupil2d    = fits.getdata(fpath_pup)
     LyotStop2d = fits.getdata(fpath_lys)
+    
+    if test_robust:
+        LyotStop2d = np.roll(LyotStop2d, shift_robust, axis=axis_robust)
     
     if solver != 'gurobipy' and solver != 'stdgrb':
         solver = 'scipy'
@@ -121,7 +135,8 @@ params = coro.to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
                  problem_name = problem_name, 
                  solver = solver, 
                  corono_name = corono_name, pupil_name = pupil_name,
-                 MinIsland = MinIsland, FirstDerGlobalLim = FirstDerGlobalLim)
+                 MinIsland = MinIsland, FirstDerGlobalLim = FirstDerGlobalLim,
+                 LSRobustness = LSRobustness)
 
 #%%
 """
@@ -166,7 +181,7 @@ else:
 Read files
 """
 fname_gen = problem1.get_filename()
-fname     = fname_gen + '.fits'
+fname     = fname_gen + f'{str_dead_act}.fits'
 fpath     = fdir / fname
 print(fpath)
 
@@ -302,7 +317,7 @@ pl.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle=
 pl.axhline(10**(-cDarkHole), xmin=corono0.xi.min(), xmax=corono0.xi.max(), linewidth=1, color='k', linestyle='--')
 pl.xlabel(r'Angular separation in $\lambda_0$/D')
 pl.ylabel('Normalized intensity in log scale')
-pl.ylim(1e-9, 2e0)
+pl.ylim(1e-13, 2e0)
 pl.legend()
 pl.tight_layout()
 pl.savefig(str(fpath))
@@ -341,7 +356,7 @@ pl.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle=
 pl.axhline(10**(-cDarkHole), xmin=corono0.xi.min(), xmax=corono0.xi.max(), linewidth=1, color='k', linestyle='--')
 pl.xlabel(r'Angular separation in $\lambda_0$/D')
 pl.ylabel('Normalized intensity in log scale')
-pl.ylim(1e-9, 2e0)
+pl.ylim(1e-13, 2e0)
 pl.legend()
 pl.tight_layout()
 

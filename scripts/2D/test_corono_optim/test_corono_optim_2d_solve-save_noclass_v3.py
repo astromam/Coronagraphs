@@ -37,7 +37,7 @@ Parameters
 # Telescope name
 corono_name  = 'APLC' # 'SP' or 'APLC'
 pupil_name   = 'vlt_btw' # 'vlt' or 'sbr' or 'lvr' or 'vlt_btw'
-problem_name = 'MaxTau' # 'MaxTau' # ,'MaxContrastLinf' # 'MaxContrastL1' #
+problem_name = 'MaxContrastLinf' # 'MaxTau' # ,'MaxContrastLinf' # 'MaxContrastL1' #
 solver       = 'gurobipy' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
 slvLogToConsole = 1
 slvCrossover    = 0
@@ -52,6 +52,8 @@ BinarityReg       = 0.1
 
 #nPup = corono0.params['nPup']
 nPup0 = 100
+nExtra0 = 0
+nDim0 = nPup0 + nExtra0
 nFPM = 50
 Fmax2d = 45#22.5
 nImg2d = 90#45
@@ -67,25 +69,35 @@ rho0 =  5.0
 rho1 = 20.0
 
 # contrast in the dark region
-cDarkHole = 7.0
+cDarkHole = 10.0
 
 # tau (integrated Pupil transmission)
 tau   = 0.5
-
 # CtrBtwnPix2
 CtrBtwnPix  = True
 CtrBtwnPix2 = True
 Pupil2dSym  = True
 ImPart = False 
-LSRobustness = False
+LSRobustness = True
+kwd_qrt = True
 
 #nlam
 bw   = 0.1
-nlam = 3
+nlam = 1
+
+# Lyot stop with dead actuators
+str_dead_act = ''
+do_dead_act = True
+if do_dead_act:
+    Pupil2dSym = False
+    ImPart = True
+    kwd_qrt = False
+    str_dead_act = '_deadact'
+    
 
 do_fits = True
 
-kwd_qrt = True
+
 
 #%%
 """
@@ -111,8 +123,8 @@ mask2d = coro.utils.uniform_disk(nFPM, nFPM/2., CtrBtwnPix=CtrBtwnPix)
 mask2d_qrt = mask2d[nFPM//2:,nFPM//2:]
 
 # mask size at a given wavelength for SFT
-mB_t  = 2.*rMask*(lam0/lam_t)
-mD_t  = Fmax2d*(lam0/lam_t)
+mB_t  = 2.*rMask*(lam0/lam_t)*(nDim0/nPup0)
+mD_t  = Fmax2d*(lam0/lam_t)*(nDim0/nPup0)
 
 
 #%%
@@ -463,17 +475,17 @@ def get_filename(corono=None):
         # if MinIsland is True:
         #     str_FirstDerGlobal = '_1stderglo={FirstDerGlobalLim}'
             
-        # str_LSRobustness = ''
-        # if LSRobustness is True:
-        #     str_LSRobustness = '_LSRobustness=1'
+        str_LSRobustness = ''
+        if LSRobustness is True:
+            str_LSRobustness = '_LSRobustness=1'
     
         fname_corono = corono.get_filename()             
             
         fname_gen_optim  = '{problem_name}' \
         + str_opt \
+        + str_LSRobustness \
         + '_{solver}'
-
-        # str_FirstDerGlobal + str_LSRobustness \        
+        
         
         return '{pupil_name}_'.format(**params) + fname_corono + fname_gen_optim.format(**params)
 
@@ -488,24 +500,32 @@ ApoCst = 0
 for  k in range(nProgRef):
       
     
+    nDim = nDim0*2**k
     nPup = nPup0*2**k
     if pupil_name == 'lvr':
-        fname_pup = 'ATLAST_Aperture_nPup={0}.fits'.format(nPup,)
-        fname_lys = 'ATLAST_LyotStop_nPup={0}.fits'.format(nPup,)
+        fname_pup = f'ATLAST_Aperture_nPup={nPup}.fits'
+        fname_lys = f'ATLAST_LyotStop_nPup={nPup}.fits'
     else:
-        fname_pup = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
-        fname_lys = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
+        fname_pup = f'pupil={pupil_name}_nPup={nPup}.fits'
+        fname_lys = f'pupil={pupil_name}_nPup={nPup}.fits'
+        if do_dead_act:
+            fname_lys = f'sphere_stop_ST_ALC2_nPup{nPup:04d}.fits'
     
     fpath_pup = fdir / fname_pup
     fpath_lys = fdir / fname_lys
-    Pupil2d    = fits.getdata(fpath_pup)
-    LyotStop2d = fits.getdata(fpath_lys)
     
-    Pupil2d_qrt = Pupil2d[nPup//2:,nPup//2:]
-    LyotStop2d_qrt = LyotStop2d[nPup//2:,nPup//2:]
+    Pupil2d = np.zeros((nDim, nDim))
+    LyotStop2d = np.zeros((nDim, nDim))
+    nIni = (nDim-nPup)//2
+    nEnd = (nDim+nPup)//2
+    Pupil2d[nIni:nEnd, nIni:nEnd] = fits.getdata(fpath_pup)
+    LyotStop2d[nIni:nEnd, nIni:nEnd] = fits.getdata(fpath_lys)
+    
+    Pupil2d_qrt = Pupil2d[nDim//2:,nDim//2:]
+    LyotStop2d_qrt = LyotStop2d[nDim//2:,nDim//2:]
     
     
-    params = coro.to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
+    params0 = coro.to_dict(nPup=nDim, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
                      rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau, 
                      CtrBtwnPix=CtrBtwnPix, CtrBtwnPix2 = CtrBtwnPix2,
                      nlam=nlam, bw=bw,
@@ -520,18 +540,33 @@ for  k in range(nProgRef):
                      allLogToConsole = allLogToConsole,
                      MinIsland = MinIsland, FirstDerGlobalLim = FirstDerGlobalLim,
                      Binarity = Binarity, BinarityReg = BinarityReg,
-                     ImPart = ImPart)
+                     ImPart = ImPart, LSRobustness = LSRobustness)
     
     #%%  
     """ 
     Coronagraph defintion
     """
     if corono_name == 'SP':
-        corono0 = coro.design.SP2d(**params)
+        corono0 = coro.design.SP2d(**params0)
     elif corono_name == 'APLC':
-        corono0 = coro.design.APLC2d(**params)
+        corono0 = coro.design.APLC2d(**params0)
     else:
         raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
+        
+    if LSRobustness:
+        ncorono = 4
+        LyotStop2d_t = np.zeros((ncorono, nDim, nDim))
+        for i in range(2):
+            for j in range(2):
+                LyotStop2d_t[j+i*2] = np.roll(LyotStop2d, ((-1)**j)*(2**k), axis=i)
+                
+        params_t = []
+        corono_t = []
+        for l in range(ncorono):
+            params_t.append(coro.update_params(params0, LyotStop2d=LyotStop2d_t[l])) 
+            corono_t.append(coro.design.APLC2d(**params_t[l])) 
+        
+        
         
     #%%
     """
@@ -542,11 +577,11 @@ for  k in range(nProgRef):
         Ones_2d2 = np.kron(Ones_2d,np.ones((2,2))) 
         
         #%%
-        Ones_2d2_qrt = Ones_2d2[nPup//2:,nPup//2:]    
-        Gray_2d2_qrt = Gray_2d2[nPup//2:,nPup//2:]
+        Ones_2d2_qrt = Ones_2d2[nDim//2:,nDim//2:]    
+        Gray_2d2_qrt = Gray_2d2[nDim//2:,nDim//2:]
         
-        Pupil2d2_qrt = Pupil2d[nPup//2:,nPup//2:]
-        LyotStop2d2_qrt = LyotStop2d[nPup//2:,nPup//2:]
+        Pupil2d2_qrt = Pupil2d[nDim//2:,nDim//2:]
+        LyotStop2d2_qrt = LyotStop2d[nDim//2:,nDim//2:]
     
         ApoCst = Ones_2d2_qrt.sum()    
     
@@ -560,11 +595,15 @@ for  k in range(nProgRef):
     
     dz2d, rad2d = corono0.generate_area()
     
+    
     #%%
     
-    if corono0.Pupil2dSym == False:        
-        dz      = np.reshape(dz2d, (corono0.nImg2d**2))
-        aaa     = np.arange(corono0.nImg2d**2)
+    if corono0.Pupil2dSym == False:
+        # dz      = np.reshape(dz2d, (corono0.nImg2d**2))
+        # aaa     = np.arange(corono0.nImg2d**2)
+        dz2d_hlf  = dz2d[:nImg2d//2, :] 
+        dz      = np.reshape(dz2d_hlf, (corono0.nImg2d*corono0.nImg2d//2))
+        aaa     = np.arange(corono0.nImg2d*corono0.nImg2d//2)
     else:
         dz2d_qrt = dz2d[nImg2d//2:,nImg2d//2:] 
         dz = np.reshape(dz2d_qrt, ((corono0.nImg2d//2)**2))
@@ -577,7 +616,7 @@ for  k in range(nProgRef):
         if k == 0:
             Pupil_vec = np.reshape(corono0.Pupil2d, (corono0.nPup**2))
         else: 
-            Pupil_vec = np.reshape(Gray_2d, (corono0.nPup**2))
+            Pupil_vec = np.reshape(Gray_2d2, (corono0.nPup**2))
         pup     = (Pupil_vec > 0.)
         bbb     = np.arange(corono0.nPup**2)
     else:
@@ -623,6 +662,8 @@ for  k in range(nProgRef):
     t00=time.time() 
     PsiD = np.zeros((npp, nPsiD))
     
+    if LSRobustness:
+        PsiD_t = np.zeros((ncorono, npp, nPsiD))
     
     # Compute coronagraph response matrix
     t0 = time.time()
@@ -635,11 +676,15 @@ for  k in range(nProgRef):
         PsiD[0:npp,0:nPsiD] = compute_response_matrices(idx_pup, idx_dz, npp, ndz, corono0) 
         if k != 0:
             PsiD0 = corono0.compute_corono_field_2d(Ones_2d2)
-            PsiD0 = np.reshape(PsiD0, (corono0.nlam, corono0.nImg2d**2))        
+            PsiD0 = np.reshape(PsiD0, (corono0.nlam, corono0.nImg2d**2))
+            
+        if LSRobustness:
+            for l in range(ncorono):
+                PsiD_t[l, 0:npp,0:nPsiD] = compute_response_matrices(idx_pup, idx_dz, npp, ndz, corono_t[l])
     
     PsiD0bis = 0 
     if k != 0:
-        PsiD0bis = np.reshape(PsiD0[:, idx_dz], (corono0.nlam*ndz)) 
+        PsiD0bis = np.reshape(np.concatenate((PsiD0.real[:, idx_dz], PsiD0.imag[:, idx_dz]), axis=1), (corono0.nlam*ndz*nI1))
         
     t1= time.time()
     print(f'response matrix computation time: {t1-t0:.3f}s\n')
@@ -683,7 +728,12 @@ for  k in range(nProgRef):
         model.addConstr( PsiD.T @ Apo + PsiD0bis - Eps <= 0)
         model.addConstr(-PsiD.T @ Apo - PsiD0bis - Eps <= 0)
         model.addConstr(-Apo.sum() - ApoCst  <= -tau*TR)
-            
+        
+        # Add contraint of robustness to Lyot Stop misalignment
+        if LSRobustness:
+            for l in range(ncorono):
+                model.addConstr( PsiD_t[l].T @ Apo + PsiD0bis - Eps <= 0)
+                model.addConstr(-PsiD_t[l].T @ Apo - PsiD0bis - Eps <= 0)                
         
     else:
         # Create a new model  
@@ -701,6 +751,12 @@ for  k in range(nProgRef):
         # Add constraint:
         model.addConstr( PsiD.T @ Apo - Psi0 <= 0)
         model.addConstr(-PsiD.T @ Apo - Psi0 <= 0)
+        
+        # Add contraint of robustness to Lyot Stop misalignment
+        if LSRobustness:
+            for l in range(ncorono):
+                model.addConstr( PsiD_t[l].T @ Apo - Psi0 <= 0)
+                model.addConstr(-PsiD_t[l].T @ Apo - Psi0 <= 0)
             
     # Update model
     model.update()
@@ -779,11 +835,11 @@ for  k in range(nProgRef):
     nzp0 = (np.abs(Apod1_2d) <= 1e-2)
     nzp1 = (np.abs(Apod1_2d -1) <= 1e-2)
     
-    Gray_2d = np.ones((nPup0*2**k, nPup0*2**k))
+    Gray_2d = np.ones((nDim0*2**k, nDim0*2**k))
     Gray_2d[nzp0] = 0.
     Gray_2d[nzp1] = 0.
     
-    Ones_2d = np.zeros((nPup0*2**k, nPup0*2**k))
+    Ones_2d = np.zeros((nDim0*2**k, nDim0*2**k))
     Ones_2d[np.abs(Apod1_2d) > 0.99] = 1 
 
     #%%
@@ -795,7 +851,7 @@ for  k in range(nProgRef):
     if not os.path.exists(fdir_sav):
         os.makedirs(fdir_sav)
         
-    fname_sav = get_filename(corono0) + '.fits'
+    fname_sav = get_filename(corono0) + f'{str_dead_act}.fits'
     fpath_sav = fdir_sav / fname_sav
     
     if do_fits is True:
