@@ -83,7 +83,7 @@ kwd_qrt = True
 
 #nlam
 bw   = 0.1
-nlam = 1
+nlam = 3
 
 # Lyot stop with dead actuators
 str_dead_act = ''
@@ -554,13 +554,17 @@ for  k in range(nProgRef):
         raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
         
     if LSRobustness:
-        ncorono = 4
+        pix_x_t = [1, 0] #[-1, 1, 0, 0] #[-1, -1, -1, 0, 0, 1, 1, 1]
+        pix_y_t = [0, 1] #[0, 0, -1, 1] #[-1,  0,  1, -1, 1, -1, 0, 1]
+        ncorono = len(pix_x_t)
+        # List construstion for the Lyot stops 
         LyotStop2d_t = np.zeros((ncorono, nDim, nDim))
-        for i in range(2):
-            for j in range(2):
-                LyotStop2d_t[j+i*2] = np.roll(LyotStop2d, ((-1)**j)*(2**k), axis=i)
-                
+        for l in range(ncorono):
+            LyotStop2d_t[l] = np.roll(np.roll(LyotStop2d, (pix_x_t[l])*(2**k), axis=0), (pix_y_t[l])*(2**k), axis=1)
+        
+        # list of parameters for each coronagraph configuration
         params_t = []
+        # initialization of coronagraph list
         corono_t = []
         for l in range(ncorono):
             params_t.append(coro.update_params(params0, LyotStop2d=LyotStop2d_t[l])) 
