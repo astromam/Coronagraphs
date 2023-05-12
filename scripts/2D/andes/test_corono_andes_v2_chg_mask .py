@@ -42,6 +42,8 @@ nOPD = 2000
 # wavelength in m
 lam = 1600e-9
 
+lam_J = 1200e-9
+
 # Pupil diameter in m 
 D = 38.54
 
@@ -501,7 +503,7 @@ for  nb_lyot_conf in range(len(all_lyot_config)):
     # plt.imshow(LyotStop2d)
 
     
-    mB_conf = [3.0]#[3.0,3.2,3.4,3.6,3.8,4.0,4.2,4.4,4.6,4.8,5.0]
+    mB_conf = [3.0,3.2,3.4,3.6,3.8,4.0,4.2,4.4,4.6,4.8,5.0]
     # fraction_lum_apo = np.zeros(len(all_lyot_config),len(mB_conf))
     for s in range(len(mB_conf)) :
         """
@@ -564,6 +566,10 @@ for  nb_lyot_conf in range(len(all_lyot_config)):
         ee_c = np.sum(int_c)
 
         fraction_lum[nb_lyot_conf] = ee_c/ee_a
+
+        # print('Fraction of luminosity : ', fraction_lum[nb_lyot_conf])
+
+       
 
         # Field in the image plane D (no coronagraph)
         Fld_DD0 = sft(Fld_CC0, nImg, mD*diametre_lyot/nPup)
