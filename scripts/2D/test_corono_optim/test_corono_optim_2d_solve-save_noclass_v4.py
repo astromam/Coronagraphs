@@ -51,7 +51,7 @@ FirstDerGlobalLim = 100.
 BinarityReg       = 0.1
 
 #nPup = corono0.params['nPup']
-nPup0 = 100
+nPup0 = 200
 nExt0 = 0
 nDim0 = nPup0 + nExt0
 nFPM = 50
@@ -59,7 +59,7 @@ Fmax2d = 45#22.5
 nImg2d = 90#45
 
 # number of progressive refinement
-nProgRef = 1
+nProgRef = 2
 
 # mask radius in lam0/D units
 rMask = 2.8
@@ -76,8 +76,8 @@ tau   = 0.5
 # CtrBtwnPix2
 CtrBtwnPix  = True
 CtrBtwnPix2 = True
-Pupil2dSym  = False
-ImPart      = True 
+Pupil2dSym  = True
+ImPart      = False 
 LSRobustness = False
 # kwd_qrt = True
 
@@ -558,7 +558,7 @@ def compute_response_matrices_qrt(idx_pup, idx_dz, npp, ndz,corono=None):
                 Apod2d_qrt[i0,j0] = 1
                 test_qrt = (1./4)*compute_corono_field_2d_qrt(Apod2d_qrt, Pupil2d_qrt, LyotStop2d_qrt, corono)
                 corono_field_re_t_tmp[i] = \
-                np.reshape(test_qrt, (nlam, (nImg2d//2)**2))
+                np.reshape(test_qrt, (corono.nlam, (corono.nImg2d//2)**2))
                 # corono.compute_corono_field_2d_real_vec(Apod2d)
                 Apod2d_qrt[i0,j0] = 0 
                 
@@ -737,7 +737,7 @@ for k in range(nProgRef):
     """
     ### Point selection in the image plane
     """
-    if corono0.Pupil2dSym == False:
+    if ImPart == True:
         dz2d_hlf  = dz2d[:nImg2d//2, :] 
         dz        = np.reshape(dz2d_hlf, (corono0.nImg2d*corono0.nImg2d//2))
         aaa       = np.arange(corono0.nImg2d*corono0.nImg2d//2)
@@ -803,7 +803,7 @@ for k in range(nProgRef):
         PsiD_im = np.zeros((npp, nPsiD))
         PsiD_re[0:npp,0:nPsiD], PsiD_im[0:npp,0:nPsiD] = compute_response_matrices_qrt(idx_pup, idx_dz, npp, ndz, corono0)
         if k != 0:
-            PsiD0 = compute_corono_field_2d_LSasym(Ones_2d2_qrt, Pupil2d2_qrt, LyotStop2d, corono0)
+            PsiD0 = (1./4)*compute_corono_field_2d_LSasym(Ones_2d2_qrt, Pupil2d2_qrt, LyotStop2d, corono0)
             PsiD0 = np.reshape(PsiD0, (corono0.nlam, corono0.nImg2d**2))
             
     else:        
@@ -822,7 +822,7 @@ for k in range(nProgRef):
             for l in range(ncorono):
                 PsiD_re_t[l, 0:npp,0:nPsiD], PsiD_im_t[l, 0:npp,0:nPsiD] = compute_response_matrices_qrt(idx_pup, idx_dz, npp, ndz, corono_t[l])
                 if k != 0:
-                    PsiD0_t0 = compute_corono_field_2d_LSasym(Ones_2d2_qrt, Pupil2d2_qrt, LyotStop2d_t[l], corono_t[l])
+                    PsiD0_t0 = (1./4)*compute_corono_field_2d_LSasym(Ones_2d2_qrt, Pupil2d2_qrt, LyotStop2d_t[l], corono_t[l])
                     PsiD0_t[l] = np.reshape(PsiD0_t0, (corono_t[l].nlam, corono_t[l].nImg2d**2))
                 
         else:
@@ -837,9 +837,10 @@ for k in range(nProgRef):
     PsiD0bis = 0
     PsiD0bis_t = np.zeros((ncorono))
     if k != 0:
-        PsiD0bis = PsiD0[:, idx_dz]
+        PsiD0bis = np.reshape(PsiD0[:, idx_dz], (nPsiD))
         if LSRobustness:
-            PsiD0bis_t = PsiD0_t[:, :, idx_dz]
+            PsiD0bis_t = np.reshape(PsiD0_t[:, :, idx_dz], (ncorono, nPsiD))            
+    
     
     t1= time.time()
     print(f'response matrix computation time: {t1-t0:.3f}s\n')
@@ -881,21 +882,37 @@ for k in range(nProgRef):
         # Set objective
         model.setObjective(Eps.sum(), gb.GRB.MINIMIZE)
         
-        # Add constraint:        
-        model.addConstr( (PsiD_re + PsiD_im).T @ Apo + (PsiD0bis.real + PsiD0bis.imag) - Eps <= 0)
-        model.addConstr( (PsiD_re - PsiD_im).T @ Apo + (PsiD0bis.real - PsiD0bis.imag) - Eps <= 0)
-        model.addConstr((-PsiD_re + PsiD_im).T @ Apo +(-PsiD0bis.real + PsiD0bis.imag) - Eps <= 0)
-        model.addConstr((-PsiD_re - PsiD_im).T @ Apo +(-PsiD0bis.real - PsiD0bis.imag) - Eps <= 0)
+        # Add constraint:
+        if ImPart:    
+            model.addConstr( (PsiD_re + PsiD_im).T @ Apo + (PsiD0bis.real + PsiD0bis.imag) - Eps <= 0)
+            model.addConstr( (PsiD_re - PsiD_im).T @ Apo + (PsiD0bis.real - PsiD0bis.imag) - Eps <= 0)
+            model.addConstr((-PsiD_re + PsiD_im).T @ Apo +(-PsiD0bis.real + PsiD0bis.imag) - Eps <= 0)
+            model.addConstr((-PsiD_re - PsiD_im).T @ Apo +(-PsiD0bis.real - PsiD0bis.imag) - Eps <= 0)
+
+            # model.addConstr( (PsiD_re).T @ Apo + (PsiD0bis.real) - Eps <= 0)
+            # model.addConstr( (PsiD_im).T @ Apo + (PsiD0bis.imag) - Eps <= 0)
+            # model.addConstr((-PsiD_re).T @ Apo +(-PsiD0bis.real) - Eps <= 0)
+            # model.addConstr((-PsiD_im).T @ Apo +(-PsiD0bis.imag) - Eps <= 0)
+        else:
+            model.addConstr( PsiD_re.T @ Apo + PsiD0bis.real - Eps <= 0)
+            model.addConstr(-PsiD_re.T @ Apo - PsiD0bis.real - Eps <= 0)
+
         
         model.addConstr(-Apo.sum() - ApoCst  <= -tau*TR)
         
         # Add contraint of robustness to Lyot Stop misalignment
         if LSRobustness:
-            for l in range(ncorono):               
-                model.addConstr( (PsiD_re_t[l] + PsiD_im_t[l]).T @ Apo + (PsiD0bis_t[l].real + PsiD0bis_t[l].imag) - Eps <= 0)
-                model.addConstr( (PsiD_re_t[l] - PsiD_im_t[l]).T @ Apo + (PsiD0bis_t[l].real - PsiD0bis_t[l].imag) - Eps <= 0)
-                model.addConstr((-PsiD_re_t[l] + PsiD_im_t[l]).T @ Apo +(-PsiD0bis_t[l].real + PsiD0bis_t[l].imag) - Eps <= 0)
-                model.addConstr((-PsiD_re_t[l] - PsiD_im_t[l]).T @ Apo +(-PsiD0bis_t[l].real - PsiD0bis_t[l].imag) - Eps <= 0)
+            if ImPart: 
+                for l in range(ncorono):               
+                    model.addConstr( (PsiD_re_t[l] + PsiD_im_t[l]).T @ Apo + (PsiD0bis_t[l].real + PsiD0bis_t[l].imag) - Eps <= 0)
+                    model.addConstr( (PsiD_re_t[l] - PsiD_im_t[l]).T @ Apo + (PsiD0bis_t[l].real - PsiD0bis_t[l].imag) - Eps <= 0)
+                    model.addConstr((-PsiD_re_t[l] + PsiD_im_t[l]).T @ Apo +(-PsiD0bis_t[l].real + PsiD0bis_t[l].imag) - Eps <= 0)
+                    model.addConstr((-PsiD_re_t[l] - PsiD_im_t[l]).T @ Apo +(-PsiD0bis_t[l].real - PsiD0bis_t[l].imag) - Eps <= 0)
+                    
+            else:
+                for l in range(ncorono):               
+                    model.addConstr( PsiD_re_t[l].T @ Apo + PsiD0bis_t[l].real - Eps <= 0)
+                    model.addConstr(-PsiD_re_t[l].T @ Apo - PsiD0bis_t[l].real - Eps <= 0)
 
 
         
@@ -913,20 +930,27 @@ for k in range(nProgRef):
         Psi0 = cst*np.sum(PupilLyotStop_vec)
         
         # Add constraint:
-        model.addConstr( (PsiD_re + PsiD_im).T @ Apo - Psi0 <= 0)
-        model.addConstr( (PsiD_re - PsiD_im).T @ Apo - Psi0 <= 0)
-        model.addConstr((-PsiD_re + PsiD_im).T @ Apo - Psi0 <= 0)
-        model.addConstr((-PsiD_re - PsiD_im).T @ Apo - Psi0 <= 0)        
+        if ImPart:
+            model.addConstr( (PsiD_re + PsiD_im).T @ Apo - Psi0 <= 0)
+            model.addConstr( (PsiD_re - PsiD_im).T @ Apo - Psi0 <= 0)
+            model.addConstr((-PsiD_re + PsiD_im).T @ Apo - Psi0 <= 0)
+            model.addConstr((-PsiD_re - PsiD_im).T @ Apo - Psi0 <= 0)    
+        else:
+            model.addConstr( PsiD_re.T @ Apo - Psi0 <= 0)
+            model.addConstr(-PsiD_re.T @ Apo - Psi0 <= 0)
         
         # Add contraint of robustness to Lyot Stop misalignment
         if LSRobustness:
-            for l in range(ncorono):
-                model.addConstr( (PsiD_re_t[l] + PsiD_im_t[l]).T @ Apo - Psi0 <= 0)
-                model.addConstr( (PsiD_re_t[l] - PsiD_im_t[l]).T @ Apo - Psi0 <= 0)
-                model.addConstr((-PsiD_re_t[l] + PsiD_im_t[l]).T @ Apo - Psi0 <= 0)
-                model.addConstr((-PsiD_re_t[l] - PsiD_im_t[l]).T @ Apo - Psi0 <= 0)        
-
-
+            if ImPart:
+                for l in range(ncorono):
+                    model.addConstr( (PsiD_re_t[l] + PsiD_im_t[l]).T @ Apo - Psi0 <= 0)
+                    model.addConstr( (PsiD_re_t[l] - PsiD_im_t[l]).T @ Apo - Psi0 <= 0)
+                    model.addConstr((-PsiD_re_t[l] + PsiD_im_t[l]).T @ Apo - Psi0 <= 0)
+                    model.addConstr((-PsiD_re_t[l] - PsiD_im_t[l]).T @ Apo - Psi0 <= 0)  
+            else:
+                for l in range(ncorono):
+                    model.addConstr( PsiD_re_t[l].T @ Apo - Psi0 <= 0)
+                    model.addConstr(-PsiD_re_t[l].T @ Apo - Psi0 <= 0)
             
     # Update model
     model.update()
