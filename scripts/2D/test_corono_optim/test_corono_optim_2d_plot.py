@@ -34,7 +34,7 @@ if True:
     # Telescope name
     corono_name  = 'APLC' # 'SP' or 'APLC'
     pupil_name   = 'vlt_btw' # 'vlt' or 'sbr' or 'lvr'
-    problem_name = 'MaxContrastLinf' # 'MaxContrastL1' #'MaxTau' # , 'MaxContrastLinf' # #  
+    problem_name = 'MaxContrastLinf' # 'MaxTau' # , 'MaxContrastL1' # 'MaxContrastLinf' # #  
     solver       = 'gurobipy' # 'stdgrb' #  'gurobipy', 'scipy.linprog'
     
     MinIsland   = False
@@ -64,14 +64,16 @@ if True:
     CtrBtwnPix  = True
     CtrBtwnPix2 = True
     Pupil2dSym  = True # set it True only for optimization
-    LSRobustness = True
-    test_robust = True
-    axis_robust = 1
-    shift_robust = 1
+    LSRobustness = False
+    test_shift = True
+    shift_x = 0
+    shift_y = 0
+    test_flip_x = False
+    test_flip_y = False
     
     #nlam
     bw   = 0.1
-    nlam = 1
+    nlam = 3
 
     # Lyot stop with dead actuators
     do_dead_act = True
@@ -120,8 +122,14 @@ if True:
     Pupil2d    = fits.getdata(fpath_pup)
     LyotStop2d = fits.getdata(fpath_lys)
     
-    if test_robust:
-        LyotStop2d = np.roll(LyotStop2d, shift_robust, axis=axis_robust)
+    if test_shift:
+        LyotStop2d = np.roll(np.roll(LyotStop2d, shift_x, axis=0), shift_y, axis=1)
+        
+    if test_flip_x:
+        LyotStop2d = np.fliplr(LyotStop2d)
+        
+    if test_flip_y:
+        LyotStop2d = np.flipud(LyotStop2d)
     
     if solver != 'gurobipy' and solver != 'stdgrb':
         solver = 'scipy'
