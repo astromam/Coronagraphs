@@ -100,7 +100,7 @@ band = 'ELT_H'
 nlam = 1
 
 
-do_fits = True
+do_fits = False
 
 #%%
 """
