@@ -54,7 +54,7 @@ ImPart = False
 nlam = 1
 
 
-do_fits = False
+do_fits = True
 
 #%%
 
@@ -82,6 +82,7 @@ File reading for Pupil and Lyot stop
 if user == 'mndiaye':
     if syst == 'darwin':
         fdir = Path('/Users/mndiaye/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs/data/2D/pupils/').resolve()
+        fdir_dat = Path('/Users/mndiaye/Library/CloudStorage/OneDrive-UniversitéNiceSophiaAntipolis/data/andes/data/').resolve()
     elif syst == 'linux':
         fdir = Path('/scratch/mndiaye/data/Coronagraphs/data/2D/pupils/').resolve()
     else:
@@ -189,20 +190,6 @@ for iMask1, rMask1 in enumerate(rMask1_t):
             break
         iIt += 1
 
-    # if pupil_name == 'sbr':
-    #     fname_apod = f'pupilsbr_nPup{nPup}_pdiam{int(np.round(pdiam*100))}_odiam{int(np.round(odiam*100))}_thick{int(np.round(thick*100)):03d}_Apod_rMask{int(np.round(rMask1*100)):03d}{str_margin}.fits'
-    # elif pupil_name == 'tmt':
-    #     fname_apod = 'TMT_Pupil_Amplitude_MACOS_Logical_With_Obscuration_nArr1920_nPup1920_apod.fits'
-    # elif pupil_name == 'elt':
-    #     fname_apod = f'pupilelt_nPup{nPup}_Apod_rMask{int(np.round(rMask1*100)):03d}{str_margin}.fits'
-    # else:    
-    #     raise NameError(f'{pupil_name}: unknown pupil name')
-            
-    # fpath_apod = fdir / folder_tel / fname_apod
-    
-    # if do_fits is True:
-    #      fits.writeto(fpath_apod, Apod2d, overwrite=True)
-
 #%%
 Throughput = np.sum(np.abs(Apod2d)**2)/np.sum(np.abs(Pupil2d)**2)
 
@@ -224,6 +211,20 @@ IntD0 *= normD0
 
 print(f'Mask size: {rMask*2:.5f}lam/D')
 print(f'Max intensity: {np.max(IntD1)}')
+
+#%%
+if pupil_name == 'tmt':
+    fname_apod = 'TMT_Pupil_Amplitude_MACOS_Logical_With_Obscuration_nArr1920_nPup1920_apod.fits'
+elif pupil_name == 'elt':
+    fname_apod = f'pupilelt_nPup{nPup}_ApodRR_rMask{int(np.round(rMask1*10000000)):03d}.fits'
+else:    
+    raise NameError(f'{pupil_name}: unknown pupil name')
+        
+fpath_apod = fdir_dat / 'Apod' / fname_apod
+
+if do_fits is True:
+      fits.writeto(fpath_apod, Apod2d, overwrite=True)
+
 
 #%%
 plt.figure(0)
@@ -252,3 +253,5 @@ plt.clf()
 plt.plot(np.log10(IntD0[nImg2d//2, nImg2d//2:]), label='no coro')
 plt.plot(np.log10(IntD1[nImg2d//2, nImg2d//2:]), label='coro')
 plt.ylim(-16.2, 0.2)
+
+
