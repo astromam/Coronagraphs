@@ -54,7 +54,7 @@ ImPart = False
 nlam = 1
 
 
-do_fits = True
+do_fits = False
 
 #%%
 
@@ -108,7 +108,7 @@ fpath_lys = fdir / folder_tel / fname_lys
 Pupil2d    = fits.getdata(fpath_pup)
 LyotStop2d = fits.getdata(fpath_lys)
 # Pupil2d    = coro.utils.uniform_disk(nPup, nPup/2., 
-#                                  CtrBtwnPix=True)
+#                                   CtrBtwnPix=True)
 # LyotStop2d = Pupil2d*1.
 
 
