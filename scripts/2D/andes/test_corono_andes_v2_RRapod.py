@@ -35,7 +35,7 @@ nFPM = 100
 rMask1 = 1.2309889/2. # pupille ELT nPup = 400
 
 # Image size
-nImg = 400
+nImg = 8 #400
 
 # OPD map number in the files
 nOPD = 500 # 2000
@@ -60,8 +60,9 @@ pscale = 0.3
 mB = rMask1*2.
 
 # FoV in lam/D in the final image plane D
-mD = 58.393*(nImg/1600)
+mD = 58.393*(400/1600)
 
+CtrBtwnPix0 = False
 
 #%%
 """
@@ -394,7 +395,7 @@ LyotStop2d = Pupil2d*1
 Fld_AA0 = Apod2d*Pupil2d * 1.*LyotStop2d
 
 # Field in the image plane D (no coronagraph)
-Fld_DD0 = sft(Fld_AA0, nImg, mD, CtrBtwnPix=False)
+Fld_DD0 = sft(Fld_AA0, nImg, mD, CtrBtwnPix=CtrBtwnPix0)
 
 # Intensity 
 Int_DD0 = np.abs(Fld_DD0)**2
@@ -417,7 +418,7 @@ Fld_CC = Fld_AA0 - (1 - np.exp(1j*np.pi))*isft(Fld_BB, nPup, mB, CtrBtwnPix=True
 Fld_LL = Fld_CC*LyotStop2d
 
 # image plane D 
-Fld_DD = sft(Fld_LL, nImg, mD, CtrBtwnPix=False)
+Fld_DD = sft(Fld_LL, nImg, mD, CtrBtwnPix=CtrBtwnPix0)
 
 # Intensity
 Int_DD = np.abs(Fld_DD)**2
@@ -512,7 +513,7 @@ for iPSF in range(1):
         Fld_A0 = Apod2d * Pupil2d * np.exp(1j*2*np.pi*OPD_arr[iOPD]/lam) * LyotStop2d
         
         # Field in the image plane D (no coronagraph)
-        Fld_D0 = sft(Fld_A0, nImg, mD, CtrBtwnPix=False)
+        Fld_D0 = sft(Fld_A0, nImg, mD, CtrBtwnPix=CtrBtwnPix0)
         
         # Intensity 
         Int_D0 += np.abs(Fld_D0)**2
@@ -546,7 +547,7 @@ for iPSF in range(1):
         Fld_L = Fld_C*LyotStop2d
         
         # image plane D 
-        Fld_D = sft(Fld_L, nImg, mD, CtrBtwnPix=False)
+        Fld_D = sft(Fld_L, nImg, mD, CtrBtwnPix=CtrBtwnPix0)
         
         # Intensity
         Int_D += np.abs(Fld_D)**2    
@@ -672,21 +673,21 @@ for iPSF in range(1):
     plt.clf()
     
     # AO corrected PSF (MND)
-    plt.plot(rad_D0_prf_avg_lamD, Int_D0_prf_avg, label='PSF')
+    plt.step(rad_D0_prf_avg_lamD*lamD2mas, Int_D0_prf_avg, label='PSF')
         
     # AO corrected coronagraphic image
-    plt.plot(rad_D_prf_avg_lamD, Int_D_prf_avg, label='corono')
+    plt.step(rad_D_prf_avg_lamD*lamD2mas, Int_D_prf_avg, label='corono')
     
     # Focal plane mask boundary
     x = np.arange(0.0, 2, 0.01)
-    plt.axvline(x=mB/2, color='k', ls='--')
+    plt.axvline(x=mB*lamD2mas/2, color='k', ls='--')
     
     # Focal plane mask grey area
     plt.fill_betweenx(x, 0, mB/2, color='gray', alpha=0.3)
     
-    plt.xlim(-0.05, np.max(rad_D_prf_avg_lamD)+0.05)
+    plt.xlim(-0.05*lamD2mas, np.max(rad_D_prf_avg_lamD)*lamD2mas+0.05)
     plt.ylim(2e-5, 2e0)
-    plt.xlabel(r'Angular separation [$\lambda$/D]')
+    plt.xlabel(r'Angular separation [mas]')
     plt.ylabel('Normalized intensity in log scale')
     plt.yscale('log')
     plt.title(f'Radial averaged intensity profile at $\lambda$={lam*1e6:.3f}$\mu$m')
