@@ -41,7 +41,7 @@ if True:
     FirstDerGlobalLim = 1.
     
     #nPup = corono0.params['nPup']
-    nPup = 400
+    nPup = 200
     nFPM = 50
     Fmax2d = 50
     nImg2d = 500
@@ -57,7 +57,7 @@ if True:
     cDarkHole = 10.0
     
     # tau (integrated Pupil transmission)
-    tau   = 0.3
+    tau   = 0.5
     
     # CtrBtwnPix2
 
