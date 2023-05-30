@@ -135,9 +135,11 @@ fdir = Path('/Users/mndiaye/OneDrive - Université Nice Sophia Antipolis/data/C
 if user == 'mndiaye':
     if syst == 'darwin':
         fdir = Path('~/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs/data/2D/pupils/').expanduser()
+        fdir_sav = Path('/Users/mndiaye/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
         sim_case = 'test' # 'test' or 'server'
     elif syst == 'linux':
         fdir = Path('/home/mndiaye/python/Coronagraphs/data/2D/pupils').resolve()
+        fdir_sav = Path('/home/mndiaye/python/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
         sim_case = 'server' # 'test' or 'server'            
     else:
         raise ValueError('Unknown operating system {0}'.format(user))
