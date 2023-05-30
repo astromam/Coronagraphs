@@ -24,7 +24,7 @@ from mpl_toolkits.axes_grid1 import AxesGrid
 import time
 
 
-plt.rcParams.update({'font.size': 17})
+plt.rcParams.update({'font.size': 20})
 
 #%%
 """
@@ -43,7 +43,12 @@ nImg = 400
 nOPD = 2000
 
 # wavelength in m
-lam = 1600e-9
+bande = 'J'
+if bande =='H':
+    lam = 1600e-9
+
+elif bande =='J':
+    lam = 1200e-9
 
 # Pupil diameter in m 
 D = 38.54
@@ -384,6 +389,14 @@ mB_conf = [3.8]
 
 result = np.zeros((len(diametre_lyot),len(obstruction),len(mB_conf)))
 
+
+### To have all seeds
+
+Int_D_all =[]
+Int_D0_all=[]
+Rad_D_all=[]
+Rad_D0_all=[]
+
 fdir_res   = Path('/home/asimonnin/Bureau/ThesisAdrien/Andes/Data_corono/results/').resolve()
 i=0
 # frac_lum = np.load(fdir_res / 'fraction_lum.npy')
@@ -398,7 +411,7 @@ for diam in diametre_lyot :
 
             # fdir_plt = fdir_plt / 'lyot_diam_{diam}_obst_{obst}_mB={mB}'.format(diam=diam,obst = obst,mB=mB)
             fdir_res   = Path('/home/asimonnin/Bureau/ThesisAdrien/Andes/Data_corono/results/').resolve()
-            fdir_res = fdir_res / 'lyot_diam_{diam}_obst_{obst}_mB={mB}'.format(diam=diam,obst = obst,mB=mB)
+            fdir_res = fdir_res / 'lyot_diam_{diam}_obst_{obst}_mB={mB}_bande_J'.format(diam=diam,obst = obst,mB=mB)
             
             fname_Int_DD = 'wonoise_cor_'+coro_config+'.fits'
             fname_Int_DD0 = 'wonoise_lyot.fits'
@@ -430,12 +443,14 @@ for diam in diametre_lyot :
             
             ### When search best parameters
             
-            basse_sep = np.where(rad_DD_prf_avg_mas >= 20)[0][0]
-            haut_sep = np.where(rad_DD_prf_avg_mas >= 50)[0][0]
-            mean = np.mean(Int_DD_prf_avg[basse_sep:haut_sep])
-            result[i][j][k] = mean
+            # basse_sep = np.where(rad_DD_prf_avg_mas >= 20)[0][0]
+            # haut_sep = np.where(rad_DD_prf_avg_mas >= 50)[0][0]
+            # mean = np.mean(Int_DD_prf_avg[basse_sep:haut_sep])
+            # result[i][j][k] = mean
 
-            ### When we have it 
+            ### When we have it
+
+            # If only one seed
 
             # fname_Int_D = 'seed=12345_cor_'+coro_config+'.fits'
             # fname_Int_D0 = 'seed=12345_psf_'+coro_config+'.fits'
@@ -445,26 +460,42 @@ for diam in diametre_lyot :
             # fpath_Int_D = fdir_res / fname_Int_D
             # fpath_alc = fdir_res / fname_alc
 
-            # Int_D= fits.getdata(fpath_Int_D)
-            # Int_D0= fits.getdata(fpath_Int_D0)
-            # alc = fits.getdata(fpath_alc)
 
-            # Int_D0_prf_avg, rad_D0_prf_avg = profile(Int_D0, ptype='mean')
-            # Int_D0_prf_std, rad_D0_prf_std = profile(Int_D0, ptype='std')
+            ### for all Seed 
+             
+            Int_D_all_file = glob.glob('/home/asimonnin/Bureau/ThesisAdrien/Andes/Data_corono/results/lyot_diam_'+str(diam)+'_obst_'+str(obst)+'_mB='+str(mB)+'_bande_J/seed=*_cor_'+coro_config+'.fits')
+            Int_D0_all_file = glob.glob('/home/asimonnin/Bureau/ThesisAdrien/Andes/Data_corono/results/lyot_diam_'+str(diam)+'_obst_'+str(obst)+'_mB='+str(mB)+'_bande_J/seed=*_psf_'+coro_config+'.fits')
+
+            # print(Int_D_all_file)
+            for opd in range(len(Int_D_all_file)) :
+                Int_D= fits.getdata(Int_D_all_file[opd])
+                Int_D0= fits.getdata(Int_D0_all_file[opd])
+
+                
+                # alc = fits.getdata(fpath_alc)
+
+                Int_D0_prf_avg, rad_D0_prf_avg = profile(Int_D0, ptype='mean')
+                Int_D0_prf_std, rad_D0_prf_std = profile(Int_D0, ptype='std')
             
-            # Int_D_prf_avg, rad_D_prf_avg = profile(Int_D, ptype='mean')
-            # Int_D_prf_std, rad_D_prf_std = profile(Int_D, ptype='std')
+                Int_D_prf_avg, rad_D_prf_avg = profile(Int_D, ptype='mean')
+                Int_D_prf_std, rad_D_prf_std = profile(Int_D, ptype='std')
 
-            # alc_avg, rad_alc_avg = profile(alc, ptype='mean')
-            # alc_std, rad_alc_std = profile(alc, ptype='std')
+                # alc_avg, rad_alc_avg = profile(alc, ptype='mean')
+                # alc_std, rad_alc_std = profile(alc, ptype='std')
 
-            # rad_D_prf_avg_lamD = rad_D_prf_avg * mD/nImg 
-            # rad_D0_prf_avg_lamD = rad_D0_prf_avg * mD/nImg 
-            # alc_avg_lamD = rad_alc_avg * mD/nImg
+                rad_D_prf_avg_lamD = rad_D_prf_avg * mD/nImg 
+                rad_D0_prf_avg_lamD = rad_D0_prf_avg * mD/nImg 
+                # alc_avg_lamD = rad_alc_avg * mD/nImg
 
-            # rad_D_prf_avg_mas = rad_D_prf_avg_lamD / 38.54*lam/rad2mas
-            # rad_D0_prf_avg_mas = rad_D0_prf_avg_lamD / 38.54*lam/rad2mas
-            # rad_alc_avg_mas = alc_avg_lamD / 38.54*lam/rad2mas
+                rad_D_prf_avg_mas = rad_D_prf_avg_lamD / 38.54*lam/rad2mas
+                rad_D0_prf_avg_mas = rad_D0_prf_avg_lamD / 38.54*lam/rad2mas
+                # rad_alc_avg_mas = alc_avg_lamD / 38.54*lam/rad2mas
+
+                Int_D_all.append(Int_D_prf_avg)
+                Int_D0_all.append(Int_D0_prf_avg)
+
+                Rad_D_all.append(rad_D_prf_avg_mas)
+                Rad_D0_all.append(rad_D0_prf_avg_mas)
 
 
             # plt.plot(rad_DD0_prf_avg_mas, Int_DD0_prf_avg, label='without coro ',color='blue')
@@ -480,54 +511,59 @@ for diam in diametre_lyot :
         j+=1
     i+=1
 #%%
+mean_Int_D = np.mean(Int_D_all,axis=0)
+mean_Int_D0 = np.mean(Int_D0_all,axis=0)
 
-# plt.plot(rad_DD0_prf_avg_mas, Int_DD0_prf_avg, label='without coro ',color='blue')
-# plt.plot(rad_DD_prf_avg_mas, Int_DD_prf_avg, label='with coro ',color='green')
-# plt.yscale('log')
-# plt.xlabel('Angular separation [mas]')
-# plt.ylabel('Normalized intensity in log scale')
+for i in range(len(Int_D_all)) :
+    plt.plot(Rad_D_all[i], Int_D_all[i],color='lime',alpha=0.3)
+    plt.plot(Rad_D0_all[i], Int_D0_all[i],color='cyan',alpha=0.3)
+plt.plot(rad_D0_prf_avg_mas, mean_Int_D0, label='without coro ',color='blue')
+plt.plot(rad_D_prf_avg_mas, mean_Int_D, label='with coro ',color='green')
+plt.yscale('log')
+plt.xlabel('Angular separation [mas]')
+plt.ylabel('Normalized intensity in log scale')
 
-# x = np.arange(0.0, mB/2/ 38.54*lam/rad2mas, 0.01)
-# plt.axvline(x=mB/2/ 38.54*lam/rad2mas, color='k', ls='--')
+x = np.arange(0.0, mB/2/ 38.54*lam/rad2mas, 0.01)
+plt.axvline(x=mB/2/ 38.54*lam/rad2mas, color='k', ls='--')
         
-# # Focal plane mask grey area
-# plt.fill_between(x, 0, mB/2/ 38.54*lam/rad2mas, color='gray', alpha=0.3)
+# Focal plane mask grey area
+plt.fill_between(x, 0, mB/2/ 38.54*lam/rad2mas, color='gray', alpha=0.3)
 
-# #plt.xlim(-0.05, np.max(rad_D_prf_avg_lamD)+0.05)
+plt.xlim(-0.05, np.max(rad_D_prf_avg_mas)+0.05)
 # plt.xlim(-0.05,55)
-# plt.ylim(2e-7, 2e0)
-# plt.title(f'Radial averaged intensity profile at $\lambda$={lam*1e6:.3f}$\mu$m')
-# plt.legend()
-# plt.grid(True)
-# plt.tight_layout()
-# plt.show()
+plt.ylim(2e-7, 2e0)
+plt.title(f'Radial averaged intensity profile at $\lambda$={lam*1e6:.3f}$\mu$m')
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.show()
 
 #%% 
 
-# plt.plot(rad_D0_prf_avg_mas, Int_D0_prf_avg, label='without coro ',color='blue')
-# plt.plot(rad_D_prf_avg_mas, Int_D_prf_avg, label='with coro ',color='green')
-# plt.plot(rad_DD0_prf_avg_mas, Int_DD0_prf_avg, label='without coro without turbulence ',color='blue',ls= '--')
-# plt.plot(rad_DD_prf_avg_mas, Int_DD_prf_avg, label='with coro without turbulence',color='green',ls='--')
+plt.plot(rad_D0_prf_avg_mas, Int_D0_prf_avg, label='without coro ',color='blue')
+plt.plot(rad_D_prf_avg_mas, Int_D_prf_avg, label='with coro ',color='green')
+plt.plot(rad_DD0_prf_avg_mas, Int_DD0_prf_avg, label='without coro without turbulence ',color='blue',ls= '--')
+plt.plot(rad_DD_prf_avg_mas, Int_DD_prf_avg, label='with coro without turbulence',color='green',ls='--')
 
-# # plt.plot(rad_alc_avg_mas, alc_avg, label='ALC ',color='red')
-# plt.yscale('log')
-# plt.xlabel('Angular separation [mas]')
-# plt.ylabel('Normalized intensity in log scale')
+# plt.plot(rad_alc_avg_mas, alc_avg, label='ALC ',color='red')
+plt.yscale('log')
+plt.xlabel('Angular separation [mas]')
+plt.ylabel('Normalized intensity in log scale')
 
-# x = np.arange(0.0, mB/2/ 38.54*lam/rad2mas, 0.01)
-# plt.axvline(x=mB/2/ 38.54*lam/rad2mas, color='k', ls='--')
+x = np.arange(0.0, mB/2/ 38.54*lam/rad2mas, 0.01)
+plt.axvline(x=mB/2/ 38.54*lam/rad2mas, color='k', ls='--')
         
-# # Focal plane mask grey area
-# plt.fill_between(x, 0, mB/2/ 38.54*lam/rad2mas, color='gray', alpha=0.3)
+# Focal plane mask grey area
+plt.fill_between(x, 0, mB/2/ 38.54*lam/rad2mas, color='gray', alpha=0.3)
 
-# #plt.xlim(-0.05, np.max(rad_D_prf_avg_lamD)+0.05)
+plt.xlim(-0.05, np.max(rad_D_prf_avg_mas)+0.05)
 # plt.xlim(-0.05,55)
-# plt.ylim(2e-7, 2e0)
-# plt.title(f'Radial averaged intensity profile at $\lambda$={lam*1e6:.3f}$\mu$m')
-# plt.legend()
-# plt.grid(True)
-# plt.tight_layout()
-# plt.show()
+plt.ylim(2e-7, 2e0)
+plt.title(f'Radial averaged intensity profile at $\lambda$={lam*1e6:.3f}$\mu$m')
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.show()
             # pdb.set_trace()
 ### Save file for test lyot conf 
 #%%
