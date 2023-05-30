@@ -371,15 +371,22 @@ apodizer_files = np.sort(glob.glob(fdir_elt + 'pupilelt_nPup400_A**'))
 
 coro_config = "lyot" 
 
-diametre_lyot = [0.9,0.91,0.92,0.93,0.94,0.95,0.96,0.97,0.98,0.99,1.00]#0.9,0.92
-obstruction = [0.3,0.31,0.32,0.33,0.34,0.35,0.36,0.37,0.38,0.39,0.4]
-mB_conf = [3.0,3.2,3.4,3.6,3.8,4.0,4.2,4.4,4.6,4.8,5.0]
+###  Test differents parameters
+# diametre_lyot = [0.8,0.81,0.82,0.83,0.84,0.85,0.86,0.87,0.88,0.89,0.9,0.91,0.92,0.93,0.94,0.95,0.96,0.97,0.98,0.99,1.00]#0.9,0.92
+# obstruction = [0.3,0.31,0.32,0.33,0.34,0.35,0.36,0.37,0.38,0.39,0.4,0.41,0.42,0.43,0.44,0.45,0.46,0.47,0.48,0.49,0.5,]
+# mB_conf = [3.0,3.2,3.4,3.6,3.8,4.0,4.2,4.4,4.6,4.8,5.0]
+
+### Optimal parameters
+
+diametre_lyot = [0.9]
+obstruction = [0.4]
+mB_conf = [3.8]
 
 result = np.zeros((len(diametre_lyot),len(obstruction),len(mB_conf)))
 
 fdir_res   = Path('/home/asimonnin/Bureau/ThesisAdrien/Andes/Data_corono/results/').resolve()
 i=0
-frac_lum = np.load(fdir_res / 'fraction_lum.npy')
+# frac_lum = np.load(fdir_res / 'fraction_lum.npy')
 #%%
    
 for diam in diametre_lyot :
@@ -406,27 +413,59 @@ for diam in diametre_lyot :
             Int_DD0_prf_std, rad_DD0_prf_std = profile(Int_DD0, ptype='std')
             
 
-
             Int_DD_prf_avg, rad_DD_prf_avg = profile(Int_DD, ptype='mean')
             Int_DD_prf_std, rad_DD_prf_std = profile(Int_DD, ptype='std')
 
             rad_DD_prf_avg_lamD = rad_DD_prf_avg * mD/nImg 
             rad_DD0_prf_avg_lamD = rad_DD0_prf_avg * mD/nImg 
 
-            rad_DD_prf_avg_mas = rad_DD_prf_avg_lamD / 38.54*1.6e-6/rad2mas
-            rad_DD0_prf_avg_mas = rad_DD0_prf_avg_lamD / 38.54*1.6e-6/rad2mas
+            rad_DD_prf_avg_mas = rad_DD_prf_avg_lamD / 38.54*lam/rad2mas
+            rad_DD0_prf_avg_mas = rad_DD0_prf_avg_lamD / 38.54*lam/rad2mas
 
             # plt.imshow(np.log10(Int_DD), cmap='inferno')
             # plt.colorbar()
             # plt.show()
             # print(Int_DD_prf_avg[np.where(rad_DD_prf_avg_mas >= 20)[0][0]])
             # print(print(result[i,j,k]))
+            
+            ### When search best parameters
+            
             basse_sep = np.where(rad_DD_prf_avg_mas >= 20)[0][0]
             haut_sep = np.where(rad_DD_prf_avg_mas >= 50)[0][0]
             mean = np.mean(Int_DD_prf_avg[basse_sep:haut_sep])
-
-
             result[i][j][k] = mean
+
+            ### When we have it 
+
+            # fname_Int_D = 'seed=12345_cor_'+coro_config+'.fits'
+            # fname_Int_D0 = 'seed=12345_psf_'+coro_config+'.fits'
+            # fname_alc = 'seed=12345_alc_'+coro_config+'.fits'
+
+            # fpath_Int_D0 = fdir_res / fname_Int_D0
+            # fpath_Int_D = fdir_res / fname_Int_D
+            # fpath_alc = fdir_res / fname_alc
+
+            # Int_D= fits.getdata(fpath_Int_D)
+            # Int_D0= fits.getdata(fpath_Int_D0)
+            # alc = fits.getdata(fpath_alc)
+
+            # Int_D0_prf_avg, rad_D0_prf_avg = profile(Int_D0, ptype='mean')
+            # Int_D0_prf_std, rad_D0_prf_std = profile(Int_D0, ptype='std')
+            
+            # Int_D_prf_avg, rad_D_prf_avg = profile(Int_D, ptype='mean')
+            # Int_D_prf_std, rad_D_prf_std = profile(Int_D, ptype='std')
+
+            # alc_avg, rad_alc_avg = profile(alc, ptype='mean')
+            # alc_std, rad_alc_std = profile(alc, ptype='std')
+
+            # rad_D_prf_avg_lamD = rad_D_prf_avg * mD/nImg 
+            # rad_D0_prf_avg_lamD = rad_D0_prf_avg * mD/nImg 
+            # alc_avg_lamD = rad_alc_avg * mD/nImg
+
+            # rad_D_prf_avg_mas = rad_D_prf_avg_lamD / 38.54*lam/rad2mas
+            # rad_D0_prf_avg_mas = rad_D0_prf_avg_lamD / 38.54*lam/rad2mas
+            # rad_alc_avg_mas = alc_avg_lamD / 38.54*lam/rad2mas
+
 
             # plt.plot(rad_DD0_prf_avg_mas, Int_DD0_prf_avg, label='without coro ',color='blue')
             # plt.plot(rad_DD_prf_avg_mas, Int_DD_prf_avg, label='with coro ',color='green')
@@ -442,12 +481,79 @@ for diam in diametre_lyot :
     i+=1
 #%%
 
-ns_np2 = result/frac_lum 
+# plt.plot(rad_DD0_prf_avg_mas, Int_DD0_prf_avg, label='without coro ',color='blue')
+# plt.plot(rad_DD_prf_avg_mas, Int_DD_prf_avg, label='with coro ',color='green')
+# plt.yscale('log')
+# plt.xlabel('Angular separation [mas]')
+# plt.ylabel('Normalized intensity in log scale')
 
-np.save('/home/asimonnin/Bureau/ThesisAdrien/Andes/Data_corono/test_lyot_file/result_OD_ID_mB.npy',result)
-np.save('/home/asimonnin/Bureau/ThesisAdrien/Andes/Data_corono/test_lyot_file/ns_np2.npy',ns_np2)
-x_axis = np.array(diametre_lyot)
-y_axis = np.array(obstruction)
+# x = np.arange(0.0, mB/2/ 38.54*lam/rad2mas, 0.01)
+# plt.axvline(x=mB/2/ 38.54*lam/rad2mas, color='k', ls='--')
+        
+# # Focal plane mask grey area
+# plt.fill_between(x, 0, mB/2/ 38.54*lam/rad2mas, color='gray', alpha=0.3)
+
+# #plt.xlim(-0.05, np.max(rad_D_prf_avg_lamD)+0.05)
+# plt.xlim(-0.05,55)
+# plt.ylim(2e-7, 2e0)
+# plt.title(f'Radial averaged intensity profile at $\lambda$={lam*1e6:.3f}$\mu$m')
+# plt.legend()
+# plt.grid(True)
+# plt.tight_layout()
+# plt.show()
+
+#%% 
+
+# plt.plot(rad_D0_prf_avg_mas, Int_D0_prf_avg, label='without coro ',color='blue')
+# plt.plot(rad_D_prf_avg_mas, Int_D_prf_avg, label='with coro ',color='green')
+# plt.plot(rad_DD0_prf_avg_mas, Int_DD0_prf_avg, label='without coro without turbulence ',color='blue',ls= '--')
+# plt.plot(rad_DD_prf_avg_mas, Int_DD_prf_avg, label='with coro without turbulence',color='green',ls='--')
+
+# # plt.plot(rad_alc_avg_mas, alc_avg, label='ALC ',color='red')
+# plt.yscale('log')
+# plt.xlabel('Angular separation [mas]')
+# plt.ylabel('Normalized intensity in log scale')
+
+# x = np.arange(0.0, mB/2/ 38.54*lam/rad2mas, 0.01)
+# plt.axvline(x=mB/2/ 38.54*lam/rad2mas, color='k', ls='--')
+        
+# # Focal plane mask grey area
+# plt.fill_between(x, 0, mB/2/ 38.54*lam/rad2mas, color='gray', alpha=0.3)
+
+# #plt.xlim(-0.05, np.max(rad_D_prf_avg_lamD)+0.05)
+# plt.xlim(-0.05,55)
+# plt.ylim(2e-7, 2e0)
+# plt.title(f'Radial averaged intensity profile at $\lambda$={lam*1e6:.3f}$\mu$m')
+# plt.legend()
+# plt.grid(True)
+# plt.tight_layout()
+# plt.show()
+            # pdb.set_trace()
+### Save file for test lyot conf 
+#%%
+
+# ns_np2 = result/frac_lum 
+# obstruction = np.array(obstruction)
+# b = np.sort((0,2,4,6,8,10,12,14,16,18,20))
+# a = obstruction[b]
+
+
+
+# fig,ax = plt.subplots(1)
+# im = ax.imshow(frac_lum[:,:,0],origin='lower')
+# plt.xlabel('ID in Dtel')
+# plt.ylabel('OD in Dtel')
+# ax.set_yticks(np.arange(len(diametre_lyot)))
+# ax.set_yticklabels(diametre_lyot)
+# ax.set_xticks(np.arange(len(obstruction),step=2))
+# ax.set_xticklabels(a)
+# plt.colorbar(im)
+# plt.title('Fraction of energy through the Lyot stop')
+# plt.show()
+# np.save('/home/asimonnin/Bureau/ThesisAdrien/Andes/Data_corono/test_lyot_file/result_OD_ID_mB.npy',result)
+# np.save('/home/asimonnin/Bureau/ThesisAdrien/Andes/Data_corono/test_lyot_file/ns_np2.npy',ns_np2)
+# x_axis = np.array(diametre_lyot)
+# y_axis = np.array(obstruction)
 
 
 #%%
@@ -457,76 +563,100 @@ y_axis = np.array(obstruction)
 # imshow[OD,mB] -> y = OD, x = mB
 # imshow[ID,mB] -> y = ID, x = mB
 
-fig,ax = plt.subplots(1)
-fig.figsize=(15,15)
-# im = ax.imshow(np.log10(result[:,10,:]), cmap='inferno',vmin=-4,vmax=-3,origin='lower')
-im = ax.imshow(np.log10(ns_np2[:,10,:]), cmap='inferno',vmin=-4,vmax=-3,origin='lower')
-plt.ylabel('Lyot Stop Outer diameter')
-plt.xlabel('FPM Diameter in $\lambda$/D')
-ax.set_yticks(np.arange(len(diametre_lyot)))
-ax.set_yticklabels(diametre_lyot)
-ax.set_xticks(np.arange(len(mB_conf)))
-ax.set_xticklabels(mB_conf)
-plt.axvline(x=4,linestyle='--',color='white')
-plt.axhline(y=0,linestyle='--',color='white')
-# plt.xlim(diametre_lyot[0],diametre_lyot[-1])
-# plt.ylim(obstruction[0],obstruction[-1])
-plt.colorbar(im,label="Ns/Np² in log scale")#'Contrast in log scale')
-plt.title('Lyot Stop Inner diameter : '+str(obstruction[10]))
-# plt.contour([0,1,2,3,4,5,6,7,8,9,10],[0,1,2,3,4,5,6,7,8,9,10],np.log10(result[:,10,:]),levels=[-3.9,-3.8,-3.7,-3.6,-3.5,-3.4],colors='white')
-plt.contour([0,1,2,3,4,5,6,7,8,9,10],[0,1,2,3,4,5,6,7,8,9,10],np.log10(ns_np2[:,10,:]),levels=[-3.9,-3.8,-3.7,-3.6,-3.5,-3.4],colors='white')
-# plt.savefig('/home/asimonnin/Bureau/ThesisAdrien/Andes/Data_corono/plots/choix_Lyot/lyot_diam_vs_obst_mB={mB}.png'.format(mB=mB_conf[5]),dpi=300)
-# plt.close()
-plt.show()
+### CHOOSE PARAMETERS
+# min_frac_lum = np.where(frac_lum> 0.8)
+
+# od_min = np.array(min_frac_lum[0])
+# id_min = np.array(min_frac_lum[1])
+
+# valeur_choisi = np.min(ns_np2[od_min,id_min,:])
+# # mb_min = np.array(min_frac_lum[2])
+# # min_frac_lum = np.array(min_frac_lum)
+
+# valeurs_choisies = np.where(ns_np2 == valeur_choisi)
+
+###FIXE FPM DIAMETER
+
+# val_choi = np.min(ns_np2[:,:,3])
+# val_choi2 = np.where(ns_np2[:,:,3]==val_choi)
+
+#%%
+# c = np.where(ns_np2 == np.min(ns_np2))
+# ### Plot different imshow to find best config
+
+# fig,ax = plt.subplots(1)
+# # fig.figsize=(15,15)
+# # im = ax.imshow(np.log10(result[:,c[1][0],:]), cmap='inferno',vmin=-4,vmax=-3,origin='lower')
+# im = ax.imshow(np.log10(ns_np2[:,valeurs_choisies[1][0],:]), cmap='inferno',vmin=-4,vmax=-3,origin='lower',extent=[0,20,0,20])
+# plt.ylabel('Lyot Stop Outer diameter')
+# plt.xlabel('FPM Diameter in $\lambda$/D')
+# ax.set_yticks(np.arange(len(diametre_lyot)))
+# ax.set_yticklabels(diametre_lyot)
+# ax.set_xticks([0,2,4,6,8,10,12,14,16,18,20])
+# ax.set_xticklabels(mB_conf)
+# plt.axvline(x=valeurs_choisies[2]*2,linestyle='--',color='white')
+# plt.axhline(y=valeurs_choisies[0],linestyle='--',color='white')
+# # plt.xlim(diametre_lyot[0],diametre_lyot[-1])
+# # plt.ylim(obstruction[0],obstruction[-1])
+# plt.colorbar(im,label="Ns/Np² in log scale")#'Contrast in log scale')
+# plt.title('Lyot Stop Inner diameter : '+str(obstruction[valeurs_choisies[1][0]]))
+# # plt.contour([0,1,2,3,4,5,6,7,8,9,10],[0,1,2,3,4,5,6,7,8,9,10],np.log10(result[:,10,:]),levels=[-3.9,-3.8,-3.7,-3.6,-3.5,-3.4],colors='white')
+# # plt.contour([0,1,2,3,4,5,6,7,8,9,10],[0,1,2,3,4,5,6,7,8,9,10],np.log10(ns_np2[:,10,:]),levels=[-3.9,-3.8,-3.7,-3.6,-3.5,-3.4],colors='white')
+# # plt.savefig('/home/asimonnin/Bureau/ThesisAdrien/Andes/Data_corono/plots/choix_Lyot/lyot_diam_vs_obst_mB={mB}.png'.format(mB=mB_conf[5]),dpi=300)
+# # plt.close()
+# plt.show()
+
+#%%
+
+# fig,ax = plt.subplots(1)
+# # fig.figsize=(15,15)
+# # im = ax.imshow(np.log10(result[0,:,:]), cmap='inferno',vmin=-4,vmax=-3,origin='lower')
+# im = ax.imshow(np.log10(ns_np2[valeurs_choisies[0][0],:,:]), cmap='inferno',vmin=-4,vmax=-3,origin='lower',extent=[0,20,0,20])
+# plt.ylabel('Lyot Stop Inner diameter')
+# plt.xlabel('FPM Diameter in $\lambda$/D')
+# ax.set_xticks([0,2,4,6,8,10,12,14,16,18,20])
+# ax.set_xticklabels(mB_conf)
+# ax.set_yticks(np.arange(len(obstruction)))
+# ax.set_yticklabels(obstruction)
+# # plt.xlim(diametre_lyot[0],diametre_lyot[-1])
+# # plt.ylim(obstruction[0],obstruction[-1])
+# plt.axhline(y=valeurs_choisies[1],linestyle='--',color='white')
+# plt.axvline(x=valeurs_choisies[2]*2,linestyle='--',color='white')
+# plt.colorbar(im,label="Ns/Np² in log scale")#'Contrast in log scale')
+# plt.title('Lyot Stop Outer diameter : '+str(diametre_lyot[valeurs_choisies[0][0]]))
+# # plt.contour([0,1,2,3,4,5,6,7,8,9,10],[0,1,2,3,4,5,6,7,8,9,10],np.log10(result[0,:,:]),levels=[-3.9,-3.8,-3.7,-3.6,-3.5,-3.4],colors='white')
+# # plt.contour([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],[0,1,2,3,4,5,6,7,8,9,10],np.log10(ns_np2[0,:,:]),levels=[-3.9,-3.8,-3.7,-3.6,-3.5,-3.4],colors='white')
+# # plt.savefig('/home/asimonnin/Bureau/ThesisAdrien/Andes/Data_corono/plots/choix_Lyot/lyot_diam_vs_mB_obst={obst}.png'.format(obst=obstruction[5]),dpi=300)
+# # plt.close()
+# plt.show()
+
+#%%
+# fig,ax = plt.subplots(1)
+# # im = ax.imshow(np.log10(result[:,:,4]), cmap='inferno',vmin=-4,vmax=-3,origin='lower')
+# im = ax.imshow(np.log10(ns_np2[:,:,valeurs_choisies[2][0]]), cmap='inferno',vmin=-4,vmax=-3,origin='lower')
+# plt.xlabel('Lyot Stop Inner diameter')
+# plt.ylabel('Lyot Stop Outer diameter')
+# ax.set_xticks(np.arange(len(obstruction),step=2))
+# ax.set_xticklabels(obstruction[::2])
+# ax.set_yticks(np.arange(len(diametre_lyot)))
+# ax.set_yticklabels(diametre_lyot)
+# plt.axvline(x=valeurs_choisies[1],linestyle='--',color='white')
+# plt.axhline(y=valeurs_choisies[0],linestyle='--',color='white')
+# # plt.xlim(diametre_lyot[0],diametre_lyot[-1])
+# # plt.ylim(obstruction[0],obstruction[-1])
+# plt.colorbar(im,label="Ns/Np² in log scale")#'Contrast in log scale')
+# plt.title('FPM diameter : '+str(mB_conf[valeurs_choisies[2][0]])+r' $\lambda$/D')
+# # plt.contour([0,1,2,3,4,5,6,7,8,9,10],[0,1,2,3,4,5,6,7,8,9,10],np.log10(result[:,:,4]),levels=[-3.9,-3.8,-3.7,-3.6,-3.5,-3.4],colors='white')
+# # plt.contour([0,1,2,3,4,5,6,7,8,9,10],[0,1,2,3,4,5,6,7,8,9,10],np.log10(ns_np2[:,:,4]),levels=[-3.9,-3.8,-3.7,-3.6,-3.5,-3.4],colors='white')
+# # plt.savefig('/home/asimonnin/Bureau/ThesisAdrien/Andes/Data_corono/plots/choix_Lyot/lyot_obst_vs_mB_diam={diam}.png'.format(diam=diametre_lyot[5]),dpi=300)
+# # plt.close()
+# plt.show()
 
 
-fig,ax = plt.subplots(1)
-fig.figsize=(15,15)
-# im = ax.imshow(np.log10(result[0,:,:]), cmap='inferno',vmin=-4,vmax=-3,origin='lower')
-im = ax.imshow(np.log10(ns_np2[0,:,:]), cmap='inferno',vmin=-4,vmax=-3,origin='lower')
-plt.ylabel('Lyot Stop Inner diameter')
-plt.xlabel('FPM Diameter in $\lambda$/D')
-ax.set_xticks(np.arange(len(mB_conf)))
-ax.set_xticklabels(mB_conf)
-ax.set_yticks(np.arange(len(obstruction)))
-ax.set_yticklabels(obstruction)
-# plt.xlim(diametre_lyot[0],diametre_lyot[-1])
-# plt.ylim(obstruction[0],obstruction[-1])
-plt.axhline(y=10,linestyle='--',color='white')
-plt.axvline(x=4,linestyle='--',color='white')
-plt.colorbar(im,label="Ns/Np² in log scale")#'Contrast in log scale')
-plt.title('Lyot Stop Outer diameter : '+str(diametre_lyot[0]))
-# plt.contour([0,1,2,3,4,5,6,7,8,9,10],[0,1,2,3,4,5,6,7,8,9,10],np.log10(result[0,:,:]),levels=[-3.9,-3.8,-3.7,-3.6,-3.5,-3.4],colors='white')
-plt.contour([0,1,2,3,4,5,6,7,8,9,10],[0,1,2,3,4,5,6,7,8,9,10],np.log10(ns_np2[0,:,:]),levels=[-3.9,-3.8,-3.7,-3.6,-3.5,-3.4],colors='white')
-# plt.savefig('/home/asimonnin/Bureau/ThesisAdrien/Andes/Data_corono/plots/choix_Lyot/lyot_diam_vs_mB_obst={obst}.png'.format(obst=obstruction[5]),dpi=300)
-# plt.close()
-plt.show()
-
-
-fig,ax = plt.subplots(1)
-# im = ax.imshow(np.log10(result[:,:,4]), cmap='inferno',vmin=-4,vmax=-3,origin='lower')
-im = ax.imshow(np.log10(ns_np2[:,:,4]), cmap='inferno',vmin=-4,vmax=-3,origin='lower')
-plt.xlabel('Lyot Stop Inner diameter')
-plt.ylabel('Lyot Stop Outer diameter')
-ax.set_xticks(np.arange(len(obstruction)))
-ax.set_xticklabels(obstruction)
-ax.set_yticks(np.arange(len(diametre_lyot)))
-ax.set_yticklabels(diametre_lyot)
-plt.axvline(x=10,linestyle='--',color='white')
-plt.axhline(y=0,linestyle='--',color='white')
-# plt.xlim(diametre_lyot[0],diametre_lyot[-1])
-# plt.ylim(obstruction[0],obstruction[-1])
-plt.colorbar(im,label="Ns/Np² in log scale")#'Contrast in log scale')
-plt.title('FPM diameter : '+str(mB_conf[4])+r' $\lambda$/D')
-# plt.contour([0,1,2,3,4,5,6,7,8,9,10],[0,1,2,3,4,5,6,7,8,9,10],np.log10(result[:,:,4]),levels=[-3.9,-3.8,-3.7,-3.6,-3.5,-3.4],colors='white')
-plt.contour([0,1,2,3,4,5,6,7,8,9,10],[0,1,2,3,4,5,6,7,8,9,10],np.log10(ns_np2[:,:,4]),levels=[-3.9,-3.8,-3.7,-3.6,-3.5,-3.4],colors='white')
-# plt.savefig('/home/asimonnin/Bureau/ThesisAdrien/Andes/Data_corono/plots/choix_Lyot/lyot_obst_vs_mB_diam={diam}.png'.format(diam=diametre_lyot[5]),dpi=300)
-# plt.close()
-plt.show()
 # %%
-a= np.where(result == np.min(result))
+# a= np.where(result == np.min(result))
 
-mB_calc = np.asarray(mB_conf)
+# mB_calc = np.asarray(mB_conf)
 
-sep_lim  = mB_calc/2/ 38.54*1.6e-6/rad2mas
+# sep_lim  = mB_calc/2/ 38.54*1.6e-6/rad2mas
 # %%
