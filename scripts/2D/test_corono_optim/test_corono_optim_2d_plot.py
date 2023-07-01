@@ -41,23 +41,23 @@ if True:
     FirstDerGlobalLim = 1.
     
     #nPup = corono0.params['nPup']
-    nPup = 400
+    nPup = 100
     nFPM = 50
     Fmax2d = 50
     nImg2d = 500
     
     # mask radius in lam0/D unit
-    rMask = 2.8
+    rMask = 2.252
     
     # dark zone bounds (inner and outer edges) in lam0/D unit
-    rho0 =  2.0
+    rho0 =  0.0
     rho1 = 20.0
     
     # contrast in the dark region
     cDarkHole = 10.0
     
     # tau (integrated Pupil transmission)
-    tau   = 0.5
+    tau   = 0.6
     
     # CtrBtwnPix2
 
