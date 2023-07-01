@@ -51,7 +51,7 @@ FirstDerGlobalLim = 100.
 BinarityReg       = 0.1
 
 #nPup = corono0.params['nPup']
-nPup0 = 100
+nPup0 = 400
 nExt0 = 0
 nDim0 = nPup0 + nExt0
 nFPM = 50
@@ -65,7 +65,7 @@ nProgRef = 1
 rMask = 2.8
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
-rho0 =  0.0
+rho0 =  2.0
 rho1 = 20.0
 
 # contrast in the dark region
