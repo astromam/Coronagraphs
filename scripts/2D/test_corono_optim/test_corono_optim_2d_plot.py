@@ -41,7 +41,7 @@ if True:
     FirstDerGlobalLim = 1.
     
     #nPup = corono0.params['nPup']
-    nPup = 100
+    nPup = 400
     nFPM = 50
     Fmax2d = 50
     nImg2d = 500
@@ -264,19 +264,25 @@ Display direct and coronagraphic images
 fname = fname_gen + '_direct_image.pdf'
 fpath = fdir_pdf / fname
 
-pl.figure(10)
+fig = pl.figure(10)
 pl.clf()
-pl.imshow(poly_direct_image1**0.25, cmap = cm.inferno)
+im = pl.imshow(np.log10(poly_direct_image1/poly_direct_image1.max()), vmin = -10, vmax = 0, cmap = cm.inferno)
 pl.title('Apod1 - direct image')
+cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.70])
+fig.colorbar(im, cax=cbar_ax, label='Normalized intensity in log scale')
 pl.savefig(str(fpath))
+
+
 
 fname = fname_gen + '_apodized_image.pdf'
 fpath = fdir_pdf / fname
 
-pl.figure(11)
+fig = pl.figure(11)
 pl.clf()
-pl.imshow(poly_corono_image1**0.25, cmap = cm.inferno)
+im = pl.imshow(np.log10(poly_corono_image1/poly_direct_image1.max()), vmin = -10, vmax = 0, cmap = cm.inferno)
 pl.title('Apod1 - apodized image')
+cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.7])
+fig.colorbar(im, cax=cbar_ax, label='Normalized intensity in log scale')
 pl.savefig(str(fpath))
 
 #%% Intensity profiles of the direct and coronagraphic images

@@ -51,7 +51,7 @@ FirstDerGlobalLim = 100.
 BinarityReg       = 0.1
 
 #nPup = corono0.params['nPup']
-nPup0 = 400
+nPup0 = 512
 nExt0 = 0
 nDim0 = nPup0 + nExt0
 nFPM = 50
@@ -59,7 +59,7 @@ Fmax2d = 45#22.5
 nImg2d = 90#45
 
 # number of progressive refinement
-nProgRef = 1
+nProgRef = 3
 
 # mask radius in lam0/D units
 rMask = 2.8
