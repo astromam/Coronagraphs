@@ -34,14 +34,14 @@ if True:
     # Telescope name
     corono_name  = 'APLC' # 'SP' or 'APLC'
     pupil_name   = 'vlt_btw' # 'vlt' or 'sbr' or 'lvr'
-    problem_name = 'MaxContrastLinf' # 'MaxTau' # , 'MaxContrastL1' # 'MaxContrastLinf' # #  
+    problem_name = 'MaxContrastL1' # 'MaxTau' # , 'MaxContrastL1' # 'MaxContrastLinf' # #  
     solver       = 'gurobipy' # 'stdgrb' #  'gurobipy', 'scipy.linprog'
     
     MinIsland   = False
     FirstDerGlobalLim = 1.
     
     #nPup = corono0.params['nPup']
-    nPup = 200
+    nPup = 100
     nFPM = 50
     Fmax2d = 50
     nImg2d = 500
@@ -50,7 +50,7 @@ if True:
     rMask = 2.8
     
     # dark zone bounds (inner and outer edges) in lam0/D unit
-    rho0 =  5.0
+    rho0 =  2.0
     rho1 = 20.0
     
     # contrast in the dark region
@@ -69,10 +69,10 @@ if True:
     shift_x = 0
     shift_y = 0
     test_flip_x = False
-    test_flip_y = False
+    test_flip_y = True
     
     #nlam
-    bw   = 0.1
+    bw   = 0.2
     nlam = 3
 
     # Lyot stop with dead actuators

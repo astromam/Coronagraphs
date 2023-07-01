@@ -37,7 +37,7 @@ Parameters
 # Telescope name
 corono_name  = 'APLC' # 'SP' or 'APLC'
 pupil_name   = 'vlt_btw' # 'vlt' or 'sbr' or 'lvr' or 'vlt_btw'
-problem_name = 'MaxContrastLinf' # ,'MaxTau' #  'MaxContrastLinf' # 'MaxContrastL1' #
+problem_name = 'MaxContrastL1' # ,'MaxTau' #  'MaxContrastLinf' # 'MaxContrastL1' #
 solver       = 'gurobipy' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
 slvLogToConsole = 1
 slvCrossover    = 0
@@ -51,7 +51,7 @@ FirstDerGlobalLim = 100.
 BinarityReg       = 0.1
 
 #nPup = corono0.params['nPup']
-nPup0 = 200
+nPup0 = 100
 nExt0 = 0
 nDim0 = nPup0 + nExt0
 nFPM = 50
@@ -65,7 +65,7 @@ nProgRef = 1
 rMask = 2.8
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
-rho0 =  5.0
+rho0 =  0.0
 rho1 = 20.0
 
 # contrast in the dark region
@@ -82,7 +82,7 @@ LSRobustness = False
 # kwd_qrt = True
 
 #nlam
-bw   = 0.1
+bw   = 0.2
 nlam = 3
 
 # Lyot stop with dead actuators
@@ -1034,7 +1034,7 @@ for k in range(nProgRef):
     Save apodizer
     """
     # fdir_sav = Path('../../../results/2D/dat_pyth').resolve() / pupil_name
-    fdir_sav = Path('/Users/mndiaye/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
+    # fdir_sav = Path('/Users/mndiaye/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
     if not os.path.exists(fdir_sav):
         os.makedirs(fdir_sav)
         
