@@ -9,7 +9,8 @@ License: MIT license
 
 """
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as pl
+#import pylab as pl
 from pathlib import Path
 
 import os
@@ -41,7 +42,7 @@ if True:
     FirstDerGlobalLim = 1.
     
     #nPup = corono0.params['nPup']
-    nPup = 2048
+    nPup = 512
     nFPM = 50
     Fmax2d = 50
     nImg2d = 500
@@ -346,7 +347,6 @@ mono_direct_image1 = corono0.compute_direct_intensity_2d(Apod_pyth, poly=False)
 mono_corono_image1 = corono0.compute_corono_intensity_2d(Apod_pyth, poly=False)
 
 
-
 pl.figure(21)
 pl.clf()
 pl.title('Radial intensity profiles of the images')
@@ -376,11 +376,6 @@ pl.tight_layout()
 
 
 #%%
-pl.show()
-
-
-
-
 ##%% Intensity profiles of the direct and coronagraphic images
 #"""
 #Display of the intensity profiles of the coronagraphic images
