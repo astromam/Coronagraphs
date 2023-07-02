@@ -88,7 +88,8 @@ else:
     if kw_saxo is True and kw_2nddate is True:
         str_saxo = 'with_saxo'
 
-fdir = Path('../../').resolve()
+#fdir = Path('../../').resolve()
+fdir = Path('/Users/mndiaye/Library/CloudStorage/OneDrive-UniversitéNiceSophiaAntipolis/data/Coronagraphs').resolve()
 
 fdir_pupils  = fdir / 'data' / '2D' / 'pupils' / 'SPHERE' 
 fdir_results = fdir / 'results' / '2D' / 'data' / 'SPHERE' / str_aberr / str_date / str_obs / str_saxo / str_corr  
@@ -516,11 +517,11 @@ Robustness to NPCA
 """
 direct_poly_img_f = direct_poly_img_t[0]
 
-fdir_ncpa_int  = Path('/Users/mndiaye/Dropbox/python/Coronagraphs/data/2D/ZELDA/2018-04-03/internal') 
+fdir_ncpa_int  = Path('/Users/mndiaye/Library/CloudStorage/OneDrive-UniversitéNiceSophiaAntipolis/data/Coronagraphs/data/2D/ZELDA/2018-04-03/internal') 
 fname_ncpa_int = '2018-04-03_ncpa_loop_700modes_ncpa_loop_opd.fits'
 fpath_ncpa_int = fdir_ncpa_int / fname_ncpa_int
 
-fdir_ncpa_sky  = Path('/Users/mndiaye/Dropbox/python/Coronagraphs/data/2D/ZELDA/2018-04-03/sky') 
+fdir_ncpa_sky  = Path('/Users/mndiaye/Library/CloudStorage/OneDrive-UniversitéNiceSophiaAntipolis/data/Coronagraphs/data/2D/ZELDA/2018-04-03/sky') 
 fname_ncpa_sky = '2018-04-03_night_ncpa_loop_sky_2_ncpa_loop_opd.fits'
 fpath_ncpa_sky = fdir_ncpa_sky / fname_ncpa_sky
 
@@ -644,7 +645,7 @@ if len(corono_t) <= 9:
     for i in range(ncorono):
         exec('ax{2} = f2.add_subplot({0},{1},{2})'.format(1,ncorono,i+1))
         exec('im = ax{0}.imshow(np.log10(corono_poly_img_aberr_t[{1}]/direct_poly_img_aberr_t[{1}].max()), cmap = "inferno", vmin=-7.5, vmax=-3.5)'.format(i+1,i))
-        exec('ax{0}.text(nImg2dbis/2, 0.1*nImg2dbis, "{1} NCPA", fontsize=8, horizontalalignment="center", color = "white")'.format(i+1,ncpa_name[i]))
+        exec('ax{0}.text(nImg2d/2, 0.1*nImg2d, "{1} NCPA", fontsize=8, horizontalalignment="center", color = "white")'.format(i+1,ncpa_name[i]))
         exec('ax{0}.tick_params(axis="x", which="both", bottom="off", top="off", labelbottom="off")'.format(i+1,))
         exec('ax{0}.tick_params(axis="y", which="both", left="off", right="off", labelleft="off")'.format(i+1,))
         

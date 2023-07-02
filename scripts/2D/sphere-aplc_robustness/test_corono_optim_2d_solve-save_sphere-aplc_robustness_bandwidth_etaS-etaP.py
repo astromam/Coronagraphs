@@ -22,7 +22,8 @@ import os
 from astropy.io import fits
 import corono as coro
 
-from scipy.misc import imresize
+#from scipy.misc import imresize
+from skimage.transform import resize as imresize
 
 import time
 
@@ -113,7 +114,8 @@ if nImg2dbis%2 == 0:
 File reading for Pupil and Lyot stop
 """
 if True:
-    fdir = Path('../../data/2D/pupils/').resolve()
+#    fdir = Path('../../data/2D/pupils/').resolve()
+    fdir = Path('/Users/mndiaye/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs/data/2D/pupils/').resolve()
     if pupil_name == 'lvr':
         fname_pup = 'ATLAST_Aperture_nPup={0}.fits'.format(nPup,)
         fname_lys = 'ATLAST_LyotStop_nPup={0}.fits'.format(nPup,)
@@ -137,7 +139,8 @@ if True:
 """
 Working directories
 """
-fdir = Path('../../results/2D/dat_pyth').resolve() / pupil_name
+#fdir = Path('../../results/2D/dat_pyth').resolve() / pupil_name
+fdir = Path('/Users/mndiaye/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
 
 fdir_plots = Path('../../results/2D/plots/').resolve()
 if not os.path.exists(fdir_plots):
@@ -607,7 +610,7 @@ print('{0:5d} sep'.format(nsep))
 
 # array of angular distances in the final image plane
 xx,yy   = np.meshgrid(np.arange(nPup)-nPup/2, np.arange(nPup)-nPup/2)
-rr      = (2./np.float(nPup))*np.hypot(yy,xx)
+rr      = (2./float(nPup))*np.hypot(yy,xx)
 theta   = np.arctan2(yy,xx)
 Z       = 2.*rr*np.cos(theta)*Pupil2d   
 

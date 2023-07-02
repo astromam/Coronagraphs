@@ -106,7 +106,8 @@ else:
     if kw_saxo is True and kw_2nddate is True:
         str_saxo = 'with_saxo'
 
-fdir = Path('../../').resolve()
+#fdir = Path('../../').resolve()
+fdir = Path('/Users/mndiaye/Library/CloudStorage/OneDrive-UniversitéNiceSophiaAntipolis/data/Coronagraphs').resolve()
 
 fdir_pupils  = fdir / 'data' / '2D' / 'pupils' / 'SPHERE' 
 fdir_results = fdir / 'results' / '2D' / 'data' / 'SPHERE' / str_aberr / str_date / str_obs / str_saxo / str_corr  
@@ -655,7 +656,7 @@ print('{0:5d} sep'.format(nsep))
 
 # Zernike mode for the tip mode
 xx,yy   = np.meshgrid(np.arange(nPup)-nPup/2, np.arange(nPup)-nPup/2)
-rr      = (2./np.float(nPup))*np.hypot(yy,xx)
+rr      = (2./float(nPup))*np.hypot(yy,xx)
 theta   = np.arctan2(yy,xx)
 Z       = 2.*rr*np.cos(theta)*Pupil2d   
 

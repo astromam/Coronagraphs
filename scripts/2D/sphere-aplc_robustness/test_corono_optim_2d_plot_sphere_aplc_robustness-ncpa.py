@@ -19,7 +19,8 @@ from matplotlib import cm
 from astropy.io import fits
 import corono as coro
 
-from scipy.misc import imresize
+#from scipy.misc import imresize
+from skimage.transform import resize as imresize
 
 #%% parameters
 """
@@ -83,7 +84,8 @@ kw_correction = True
 File reading for Pupil and Lyot stop
 """
 if True:
-    fdir = Path('../../data/2D/pupils/').resolve()
+#    fdir = Path('../../data/2D/pupils/').resolve()
+    fdir = Path('/Users/mndiaye/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs/data/2D/pupils/').resolve()
     if pupil_name == 'lvr':
         fname_pup = 'ATLAST_Aperture_nPup={0}.fits'.format(nPup,)
         fname_lys = 'ATLAST_LyotStop_nPup={0}.fits'.format(nPup,)
@@ -120,7 +122,8 @@ params = coro.to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
 """
 Working directories
 """
-fdir = Path('../../results/2D/dat_pyth').resolve() / pupil_name
+#fdir = Path('../../results/2D/dat_pyth').resolve() / pupil_name
+fdir = Path('/Users/mndiaye/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
 
 fdir_pdf = Path('../../results/2D/plots/').resolve()
 if not os.path.exists(fdir_pdf):
@@ -220,7 +223,7 @@ if do_plot is True:
     pl.savefig(str(fpath), transparent=True)
 
 #%% Amplitude errors
-fpath_Ampmap2d = '/Users/mndiaye/Dropbox/python/Coronagraphs/data/2D/pupils/SPHERE/sphere_pupil_clear_BH_field.fits'
+fpath_Ampmap2d = '/Users/mndiaye/Library/CloudStorage/OneDrive-UniversitéNiceSophiaAntipolis/data/Coronagraphs/data/2D/pupils/SPHERE/sphere_pupil_clear_BH_field.fits'
 Ampmap2d = fits.getdata(fpath_Ampmap2d)
 
 fname = fname_gen + '_amplitude_map.pdf'
@@ -397,11 +400,11 @@ if do_plot is True:
 Robustness to NPCA
 """
 
-fdir_ncpa_int  = Path('/Users/mndiaye/Dropbox/python/Coronagraphs/data/2D/ZELDA/2018-04-03/internal') 
+fdir_ncpa_int  = Path('/Users/mndiaye/Library/CloudStorage/OneDrive-UniversitéNiceSophiaAntipolis/data/Coronagraphs/data/2D/ZELDA/2018-04-03/internal') 
 fname_ncpa_int = '2018-04-03_ncpa_loop_700modes_ncpa_loop_opd.fits'
 fpath_ncpa_int = fdir_ncpa_int / fname_ncpa_int
 
-fdir_ncpa_sky  = Path('/Users/mndiaye/Dropbox/python/Coronagraphs/data/2D/ZELDA/2018-04-03/sky') 
+fdir_ncpa_sky  = Path('/Users/mndiaye/Library/CloudStorage/OneDrive-UniversitéNiceSophiaAntipolis/data/Coronagraphs/data/2D/ZELDA/2018-04-03/sky') 
 fname_ncpa_sky = '2018-04-03_night_ncpa_loop_sky_2_ncpa_loop_opd.fits'
 fpath_ncpa_sky = fdir_ncpa_sky / fname_ncpa_sky
 
