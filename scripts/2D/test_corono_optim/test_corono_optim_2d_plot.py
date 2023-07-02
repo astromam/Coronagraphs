@@ -286,10 +286,12 @@ mono_corono_image1 = corono0.compute_corono_intensity_2d(Apod_pyth, poly=False)
 """
 ### normalization of the direct and coronagraphic image in monocrhomatic light
 """
-mono_direct_image1_peak = np.max(mono_direct_image1[(corono0.nlam+1)//2])
 
-mono_direct_image1 /= mono_direct_image1_peak
-mono_corono_image1 /= mono_direct_image1_peak
+for ilam in range(corono0.nlam):
+    mono_direct_image1_peak = np.max(mono_direct_image1[ilam])
+       
+    mono_direct_image1[ilam] /= mono_direct_image1_peak
+    mono_corono_image1[ilam] /= mono_direct_image1_peak
 
 
 #%%
