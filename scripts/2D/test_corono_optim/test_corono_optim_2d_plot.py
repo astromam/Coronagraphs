@@ -58,7 +58,7 @@ if True:
     cDarkHole = 10.0
     
     # tau (integrated Pupil transmission)
-    tau   = 0.6
+    tau   = 0.5
     
     # CtrBtwnPix2
 

@@ -675,7 +675,7 @@ val = 0
 if nImg2dbis%2 == 0:
     val = 1/2
 
-sepbis=2.5
+sepbis=3.0
 septer=5.0
 
 # array of angular distances in the final image plane
@@ -687,10 +687,15 @@ rester = (mydist <= septer +0.5)*(mydist >= septer -0.5)
 #%%
 corono_poly_avg_resbis_wv_t = []
 corono_poly_avg_rester_wv_t = []
+corono_poly_std_resbis_wv_t = []
+corono_poly_std_rester_wv_t = []
 
 for i in range(nlam_ter):
     corono_poly_avg_resbis_wv_t.append(np.mean(corono_mono_img_t3[i, resbis != 0])/direct_mono_img_t3[(nlam_ter-1)//2].max())
     corono_poly_avg_rester_wv_t.append(np.mean(corono_mono_img_t3[i, rester != 0])/direct_mono_img_t3[(nlam_ter-1)//2].max())
+    corono_poly_std_resbis_wv_t.append(np.std(corono_mono_img_t3[i, resbis != 0])/direct_mono_img_t3[(nlam_ter-1)//2].max())
+    corono_poly_std_rester_wv_t.append(np.std(corono_mono_img_t3[i, rester != 0])/direct_mono_img_t3[(nlam_ter-1)//2].max())
+
 
 #%%
 colors_shifts = pl.cm.rainbow(np.linspace(0,1,2))
@@ -703,16 +708,22 @@ plot_lines = []
 
 pl.figure(31)
 pl.clf()
-l1, = pl.semilogy(wv*1e6*corono3.lam_t, corono_poly_avg_resbis_wv_t,
-            color = colors_shifts[0], marker='x', ls ='--')
-l2, = pl.semilogy(wv*1e6*corono3.lam_t, corono_poly_avg_rester_wv_t,
-            color = colors_shifts[1], marker='x', ls ='--')
+# l1, = pl.semilogy(wv*1e6*corono3.lam_t, corono_poly_avg_resbis_wv_t,
+#             color = colors_shifts[0], marker='x', ls ='--')
+# l2, = pl.semilogy(wv*1e6*corono3.lam_t, corono_poly_avg_rester_wv_t,
+#             color = colors_shifts[1], marker='x', ls ='--')
+
+l1, = pl.semilogy(wv*1e6*corono3.lam_t, corono_poly_std_resbis_wv_t,
+            color = 'C0', ls ='--')
+l2, = pl.semilogy(wv*1e6*corono3.lam_t, corono_poly_std_rester_wv_t,
+            color = 'C0', ls ='-')
 
 #l5, = pl.semilogy([], [], color = "k", ls='-')
 #l6, = pl.semilogy([], [], color = "k", ls='--')
 
 pl.xlabel(r'Wavelength in $\mu$m ($\lambda_0={0}\mu$m)'.format(wv*1e6))
-pl.ylabel(r'Averaged normalized intensity')
+#pl.ylabel(r'Averaged normalized intensity')
+pl.ylabel(r'1$\sigma$ intensity in log scale')
 pl.axvline(x=(corono3.lam0-bw/2)*wv*1e6, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
 pl.axvline(x=(corono3.lam0+bw/2)*wv*1e6, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
 pl.axhline(10**(-cDarkHole+2), xmin=0, xmax=1,
@@ -721,12 +732,12 @@ pl.axhline(10**(-cDarkHole), xmin=0, xmax=1,
            linewidth=1, color='k', linestyle='--')    
 pl.xlim((corono3.lam0-corono3.bw/2)*wv*1e6, (corono3.lam0+corono3.bw/2)*wv*1e6)
 pl.ylim(3e-8, 3e-4)  
-pl.title(r'Averaged intensity in monochromatic light')
+pl.title(r'1$\sigma$ intensity in monochromatic light', fontsize=14)
 pl.grid(True,which="both",ls="--")
 
 #legend1 = pl.legend([l5,l6], ["x-axis", "y-axis"], loc=3)
 #pl.gca().add_artist(legend1)
-pl.legend([l1,l2], [r'{0:.1f} $\lambda_0/D$'.format(sepbis), r'{0:.1f} $\lambda_0/D$'.format(septer)], loc=4)
+pl.legend([l1,l2], [r'{0:.1f} $\lambda_0/D$'.format(sepbis), r'{0:.1f} $\lambda_0/D$'.format(septer)], loc=3, title='current APLC', fontsize=14)
 
 pl.tight_layout()
 pl.savefig(str(fpath_bw_plot), transparent=True)
@@ -817,7 +828,7 @@ ax0.text(10**(np.log10(lam0D_max)/2), 1.4, "Current APLC design", fontsize=ftsz,
 
 
 ax0.axvline(x=rMask, ymin=-12, ymax =2, linewidth=lw0, color='r', linestyle='--')
-ax0.axvline(x=rho0, ymin=-12, ymax =2, linewidth=lw0, color='b', linestyle='--')
+#ax0.axvline(x=rho0, ymin=-12, ymax =2, linewidth=lw0, color='b', linestyle='--')
 ax0.axvline(x=rho1, ymin=-12, ymax =2, linewidth=lw0, color='b', linestyle='--')
 
 ax0.axhline(y=1.0, xmin=0., xmax =lam0D_max, 
