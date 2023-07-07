@@ -44,13 +44,14 @@ if True:
     FirstDerGlobalLim = 1.
     
     #nPup = corono0.params['nPup']
-    nPup = 512
+    nPup = 100
     nFPM = 50
     Fmax2d = 22.5
     nImg2d = 45
     
     # mask radius in lam0/D unit
-    rMask = 2.252
+    rMask = 2.252 # (145mas ALC1 mask)
+#    rMask = 2.252 # (185mas ALC2 mask)
     
     # dark zone bounds (inner and outer edges) in lam0/D unit
     rho0 =  0.0
@@ -239,6 +240,7 @@ pl.clf()
 pl.imshow(corono0.Pupil2d, cmap = 'inferno')
 pl.title('Pupil transmission')
 
+#%%
 #fname = fname_gen + '_apodisation_ampl_nPup={0}.pdf'.format(nPup)
 fname = f'{pupil_name}_newAPLC_apod_nPup={0:04d}.pdf'.format(nPup)
 fpath = fdir_plots / fname
@@ -376,19 +378,19 @@ circle_rho1 = Circle((cx0, cy0), cr1, color='blue', fill = False, ls = '--',
 f2 = pl.figure(23, figsize=(7,5))
 pl.clf()
 ax0 = f2.add_subplot(111)
-im = ax0.imshow(np.log10(corono_poly_img_f/direct_poly_img_f.max()), cmap = "inferno", vmin=-10, vmax=0)
+im = ax0.imshow(np.log10(corono_poly_img_f/direct_poly_img_f.max()), cmap = "inferno", vmin=-7.5, vmax=-3.5)
 #exec('ax{0}.text(nImg2d/2, 0.1*nImg2d, "nmap={1:05d}", fontsize=16, horizontalalignment="center", color = "white")'.format(1,1))
 ax0.tick_params(axis="x", which="both", bottom="off", top="off", labelbottom="off")
 ax0.tick_params(axis="y", which="both", left="off", right="off", labelleft="off")
 ax0.add_artist(circle_mask)
-ax0.add_artist(circle_rho0)
+#ax0.add_artist(circle_rho0)
 ax0.add_artist(circle_rho1)
 
 f2.subplots_adjust(bottom=0.1, top=0.9, left=0.1, right=0.8,
                     wspace=0.02, hspace=0.02)
 
 f2.subplots_adjust(right=0.8)
-cbar_ax = f2.add_axes([0.85, 0.15, 0.05, 0.7])
+cbar_ax = f2.add_axes([0.825, 0.15, 0.05, 0.7])
 cbar    = f2.colorbar(im, cax=cbar_ax)
 cbar.ax.set_ylabel('Intensity in log scale', rotation=270, labelpad = 16)
 if do_plot is True:
@@ -522,23 +524,23 @@ colors_cor = pl.cm.rainbow(np.linspace(0,1,1))
 
 i0 = 0
 
-pl.figure(11)
+pl.figure(11, (8, 4.5))
 pl.clf()
-pl.semilogy(rad_corono*Fmax2dbis/nImg2dbis, 5*corono_poly_prf_std_f/direct_poly_img_f.max(),
-        label='map {0}'.format(0), color = colors_cor[i0])
+pl.semilogy(rad_corono*Fmax2dbis/nImg2dbis, corono_poly_prf_std_f/direct_poly_img_f.max(),
+        label='new APLC', color = 'C1')
 #pl.semilogy(rad_corono*Fmax2dbis/nImg2dbis, 5*corono_poly_prf_std_f,
 #        label='map {0}'.format(0), color = colors_cor[i0])
 
 pl.axvline(x=rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
-pl.axvline(x=rho0, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
+#pl.axvline(x=rho0, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
 pl.axvline(x=rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
 pl.axhline(10**(-cDarkHole), xmin=corono0.xi2d.min(), xmax=corono0.xi2d.max(), 
            linewidth=1, color='k', linestyle='--')
-pl.xlabel(r'Angular separation in $\lambda_0$/D')
-pl.ylabel(r'5$\sigma$ normalized intensity in log scale')
+pl.xlabel(f'Angular separation in $\lambda_0$/D (($\lambda_0={wv*1e6}\mu$m))')
+pl.ylabel(r'1$\sigma$ normalized intensity in log scale')
 pl.ylim(3e-8, 3e-4)
-pl.legend()
-pl.title(r'Intensity profile in broadband light ($\Delta\lambda/\lambda_0$={0:.1f}%)'.format(bw*100))
+pl.legend(loc=4)
+pl.title(r'Intensity profile in broadband light ($\Delta\lambda/\lambda_0$={0:.1f}%)'.format(bw*100), fontsize=14)
 pl.tight_layout()
 if do_plot is True:
     pl.savefig(str(fpath_image_plane_plot), transparent=True)
