@@ -383,21 +383,21 @@ colors_cor = pl.cm.rainbow(np.linspace(0,1,nmap))
 
 i0 = 0
 
-pl.figure(11)
+pl.figure(11, (8,4.5))
 pl.clf()
 pl.semilogy(rad_corono*Fmax2dbis/nImg2dbis, corono_poly_prf_std_t[i0]/direct_poly_img_t[i0].max(),
-        label='map {0}'.format(imap0), color = colors_cor[i0])
+        label='current APLC', color = 'C0')
 
 pl.axvline(x=rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
-pl.axvline(x=rho0, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
+#pl.axvline(x=rho0, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
 pl.axvline(x=rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
 pl.axhline(10**(-cDarkHole), xmin=corono00.xi2d.min(), xmax=corono00.xi2d.max(), 
            linewidth=1, color='k', linestyle='--')
-pl.xlabel(r'Angular separation in $\lambda_0$/D')
+pl.xlabel(f'Angular separation in $\lambda_0$/D (($\lambda_0={wv*1e6}\mu$m))')
 pl.ylabel(r'1$\sigma$ normalized intensity in log scale')
 pl.ylim(3e-8, 3e-4)
-pl.legend()
-pl.title(r'Intensity profile in broadband light ($\Delta\lambda/\lambda_0$={0:.1f}%)'.format(bw*100))
+pl.legend(loc=1)
+pl.title(r'Intensity profile in broadband light ($\Delta\lambda/\lambda_0$={0:.1f}%)'.format(bw*100), fontsize=14)
 pl.tight_layout()
 pl.savefig(str(fpath_image_plane_plot), transparent=True)
 
@@ -517,13 +517,13 @@ if nmap <= 10:
 
 #%%
 if nmap <= 10: 
-    f2 = pl.figure(22, figsize=(8,4.5))
+    f2 = pl.figure(22, figsize=(7,5))
     pl.clf()
     for i in range(nmap):
         exec('ax{0} = f2.add_subplot(1,{1},{0})'.format(i+1,nmap))
         if i < nmap: 
             exec('im = ax{0}.imshow(np.log10(corono_poly_img_t[{1}]/direct_poly_img_t[{1}].max()), cmap = "inferno", vmin=-7.5, vmax=-3.5)'.format(i+1,i))
-            exec('ax{0}.text(nImg2dbis/2, 0.1*nImg2dbis, "map {1}", fontsize=8, horizontalalignment="center", color = "white")'.format(i+1,i))
+#            exec('ax{0}.text(nImg2dbis/2, 0.1*nImg2dbis, "map {1}", fontsize=8, horizontalalignment="center", color = "white")'.format(i+1,i))
         exec('ax{0}.tick_params(axis="x", which="both", bottom="off", top="off", labelbottom="off")'.format(i+1,))
         exec('ax{0}.tick_params(axis="y", which="both", left="off", right="off", labelleft="off")'.format(i+1,))
     
@@ -538,6 +538,55 @@ if nmap <= 10:
     pl.tight_layout()
     pl.show()
 
+#%%
+"""
+Display of the coronagraphic image
+"""
+fname_image_plane_f_disp = 'corono_poly_img_f_nPup={0:04d}_disp.pdf'.format(nPup)
+fpath_image_plane_f_disp = fdir_plots / fname_image_plane_f_disp
+
+lw0 = 2.5
+
+# parameters for the circle definition
+cx0 = nImg2dbis/2
+cy0 = nImg2dbis/2
+crm = rMask*nImg2dbis/Fmax2dbis
+cr0 = rho0*nImg2dbis/Fmax2dbis
+cr1 = rho1*nImg2dbis/Fmax2dbis
+# definition of a circle for the pupil
+circle_mask = Circle((cx0, cy0), crm, color='red', fill = False, ls = '--',
+                     linewidth = lw0)
+circle_rho0 = Circle((cx0, cy0), cr0, color='blue', fill = False, ls = '--',
+                     linewidth = lw0)
+circle_rho1 = Circle((cx0, cy0), cr1, color='blue', fill = False, ls = '--',
+                     linewidth = lw0)
+# in the plot
+
+
+
+
+f2 = pl.figure(23, figsize=(7,5))
+pl.clf()
+ax0 = f2.add_subplot(111)
+im = ax0.imshow(np.log10(corono_poly_img_t[0]/direct_poly_img_t[0].max()), cmap = "inferno", vmin=-7.5, vmax=-3.5)
+#exec('ax{0}.text(nImg2d/2, 0.1*nImg2d, "nmap={1:05d}", fontsize=16, horizontalalignment="center", color = "white")'.format(1,1))
+ax0.tick_params(axis="x", which="both", bottom="off", top="off", labelbottom="off")
+ax0.tick_params(axis="y", which="both", left="off", right="off", labelleft="off")
+ax0.add_artist(circle_mask)
+#ax0.add_artist(circle_rho0)
+ax0.add_artist(circle_rho1)
+
+f2.subplots_adjust(bottom=0.1, top=0.9, left=0.1, right=0.8,
+                    wspace=0.02, hspace=0.02)
+
+f2.subplots_adjust(right=0.8)
+cbar_ax = f2.add_axes([0.825, 0.15, 0.05, 0.7])
+cbar    = f2.colorbar(im, cax=cbar_ax)
+cbar.ax.set_ylabel('Intensity in log scale', rotation=270, labelpad = 16)
+if do_plot is True:
+    pl.savefig(str(fpath_image_plane_f_disp), transparent=True)
+pl.tight_layout()
+pl.show()
 
 
 #%%

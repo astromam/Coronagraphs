@@ -647,7 +647,7 @@ print('computation time: {0:.2f}s'.format(t1-t0))
 # vector of angular separation for the computation of planet transmission
 sep_min  = 0.0
 sep_max  = Fmax2dbis//2
-sep_stp  = Fmax2dbis/nImg2dbis#0.5
+sep_stp  = Fmax2dbis/nImg2dbis #0.5
 
 # array of angular separations
 nsep     = int(round(1+(sep_max-sep_min)/sep_stp))
@@ -854,7 +854,12 @@ if do_plot is True:
 pl.tight_layout()
 pl.show()
 
-
-
-    
-
+#%%
+pl.figure(40)
+pl.clf()
+pl.plot(sep_arr, eta_P[:, nlam_ter//2], color='C0', label='current APLC')
+pl.xlabel(f'Angular separation in $\lambda_0$/D ($\lambda_0={wv*1e6}\mu$m)')
+pl.ylabel(r'Planet throughput $\eta_P$')
+pl.axvline(x=rMask, ymin=0, ymax =1, linewidth=1, color='r', linestyle='--')
+pl.grid()
+pl.tight_layout()
