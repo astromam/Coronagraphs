@@ -65,6 +65,7 @@ nProgRef = 3
 rMask = 1.766 # ALC1 at 1.593um (145mas) 
 # rMask = 2.252 # ALC2 at 1.593um (185mas)
 
+
 # dark zone bounds (inner and outer edges) in lam0/D unit
 rho0 =  0.0
 rho1 = 20.0
