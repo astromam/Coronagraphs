@@ -34,8 +34,8 @@ test_gurobi = False
 if True:
     # Telescope name
     corono_name  = 'APLC' # 'SP' or 'APLC'
-    pupil_name   = 'vlt_btw' # 'vlt' or 'sbr' or 'lvr'
-    problem_name = 'MaxContrastL1' # 'MaxTau' # , 'MaxContrastL1' # 'MaxContrastLinf' # #  
+    pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
+    problem_name = 'MaxTau' #'MaxContrastLinf' #'MaxContrastL1' #  , 'MaxContrastL1' # 'MaxContrastLinf' # #  
     solver       = 'gurobipy' # 'stdgrb' #  'gurobipy', 'scipy.linprog'
     
     MinIsland   = False
@@ -48,18 +48,18 @@ if True:
     nImg2d = 500
     
     # mask radius in lam0/D unit
-    rMask = 1.766 # ALC1 at 1.593um (145mas) 
+    rMask = 5.740/2 # ALC1 at 1.593um (145mas) 
     # rMask = 2.252 # ALC2 at 1.593um (185mas)
     
     # dark zone bounds (inner and outer edges) in lam0/D unit
-    rho0 =  0.0
+    rho0 =  4.5
     rho1 = 20.0
     
     # contrast in the dark region
-    cDarkHole = 10.0
+    cDarkHole = 9.0
     
     # tau (integrated Pupil transmission)
-    tau   = 0.600
+    tau   = 0.400
     
     # CtrBtwnPix2
 
@@ -74,11 +74,11 @@ if True:
     test_flip_y = True
     
     #nlam
-    bw   = 0.2
+    bw   = 0.01
     nlam = 3
 
     # Lyot stop with dead actuators
-    do_dead_act = True
+    do_dead_act = False
     str_dead_act = ''
     if do_dead_act:
         str_dead_act = '_deadact'
