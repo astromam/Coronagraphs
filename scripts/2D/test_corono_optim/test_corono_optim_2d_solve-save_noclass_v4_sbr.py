@@ -81,6 +81,11 @@ if do_margin:
     kodiam0 = odiam/(2.3+7.92*0.01)
 kthick0 = thick/0.25
 
+# Lyot stop parameters
+kpdiam0_ls = 0.96
+kodiam0_ls = 1.112
+kthick0_ls = 2.0
+
 #nPup = corono0.params['nPup']
 nPup0 = 512
 nExt0 = 0
@@ -673,7 +678,7 @@ for k in range(nProgRef):
     if pupil_name == 'sbr':
         folder_tel = ''
         fname_pup = f'pupilsbr_nPup{nPup}_kpdiam{int(np.round(kpdiam0*100)):03d}_kodiam{int(np.round(kodiam0*100)):03d}_kthick{int(np.round(kthick0*100)):03d}{str_margin}.fits' 
-        fname_lys = f'pupilsbr_nPup{nPup}_kpdiam{int(np.round(kpdiam0*100)):03d}_kodiam{int(np.round(kodiam0*100)):03d}_kthick{int(np.round(kthick0*100)):03d}{str_margin}.fits' 
+        fname_lys = f'pupilsbr_nPup{nPup}_kpdiam{int(np.round(kpdiam0_ls*100)):03d}_kodiam{int(np.round(kodiam0_ls*100)):03d}_kthick{int(np.round(kthick0_ls*100)):03d}{str_margin}.fits' 
     elif pupil_name == 'lvr':
         fname_pup = f'ATLAST_Aperture_nPup={nPup}.fits'
         fname_lys = f'ATLAST_LyotStop_nPup={nPup}.fits'

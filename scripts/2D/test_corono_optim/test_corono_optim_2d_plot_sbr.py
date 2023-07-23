@@ -64,6 +64,11 @@ if True:
         kodiam0 = odiam/(2.3+7.92*0.01)
     kthick0 = thick/0.25
     
+    # Lyot stop parameters
+    kpdiam0_ls = 0.96
+    kodiam0_ls = 1.112
+    kthick0_ls = 2.0
+    
     #nPup = corono0.params['nPup']
     nPup = 200
     nFPM = 50
@@ -135,7 +140,7 @@ if True:
     if pupil_name == 'sbr':
         folder_tel = ''
         fname_pup = f'pupilsbr_nPup{nPup}_kpdiam{int(np.round(kpdiam0*100)):03d}_kodiam{int(np.round(kodiam0*100)):03d}_kthick{int(np.round(kthick0*100)):03d}{str_margin}.fits' 
-        fname_lys = f'pupilsbr_nPup{nPup}_kpdiam{int(np.round(kpdiam0*100)):03d}_kodiam{int(np.round(kodiam0*100)):03d}_kthick{int(np.round(kthick0*100)):03d}{str_margin}.fits' 
+        fname_lys = f'pupilsbr_nPup{nPup}_kpdiam{int(np.round(kpdiam0_ls*100)):03d}_kodiam{int(np.round(kodiam0_ls*100)):03d}_kthick{int(np.round(kthick0_ls*100)):03d}{str_margin}.fits' 
     elif pupil_name == 'lvr':
         fname_pup = 'ATLAST_Aperture_nPup={0}.fits'.format(nPup,)
         fname_lys = 'ATLAST_LyotStop_nPup={0}.fits'.format(nPup,)
@@ -272,6 +277,16 @@ plt.savefig(str(fpath))
 cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.70])
 fig.colorbar(im, cax=cbar_ax, label='Normalized amplitude')
 plt.savefig(str(fpath))
+
+#%% Display of the apodizer
+"""
+### Display of the pupil
+"""
+plt.figure(2)
+plt.clf()
+plt.imshow(corono0.LyotStop2d, cmap = cm.Greys_r)
+plt.title('LyotStop transmission')
+
 
 #%% Signal in intensity
 """
