@@ -41,8 +41,31 @@ if True:
     MinIsland   = False
     FirstDerGlobalLim = 1.
     
+    do_margin = True
+
+    str_margin=''
+    if do_margin:
+        str_margin = '_v2'
+
+    # telescope parameters
+    pdiam, odiam = 7.92, 2.3 # tel. and obst. diameters (meters)
+    if do_margin:
+        pdiam, odiam = 7.92*0.99, 2.3+7.92*0.01 # tel. and obst. diameters (meters)
+    thick = 0.25                # adopted spider thickness (meters)
+    offset = 1.278            # spider intersection offset (meters)
+    beta = 51.75              # spider angle beta
+
+    Fratio    = 64
+
+    kpdiam0 = pdiam/(7.92)
+    kodiam0 = odiam/(2.3)
+    if do_margin:
+        kpdiam0 = pdiam/(7.92*0.99)
+        kodiam0 = odiam/(2.3+7.92*0.01)
+    kthick0 = thick/0.25
+    
     #nPup = corono0.params['nPup']
-    nPup = 100
+    nPup = 200
     nFPM = 50
     Fmax2d = 50
     nImg2d = 500
@@ -109,8 +132,11 @@ if True:
     else:
         raise ValueError('Unknown user {0}'.format(user))
 
-
-    if pupil_name == 'lvr':
+    if pupil_name == 'sbr':
+        folder_tel = ''
+        fname_pup = f'pupilsbr_nPup{nPup}_kpdiam{int(np.round(kpdiam0*100)):03d}_kodiam{int(np.round(kodiam0*100)):03d}_kthick{int(np.round(kthick0*100)):03d}{str_margin}.fits' 
+        fname_lys = f'pupilsbr_nPup{nPup}_kpdiam{int(np.round(kpdiam0*100)):03d}_kodiam{int(np.round(kodiam0*100)):03d}_kthick{int(np.round(kthick0*100)):03d}{str_margin}.fits' 
+    elif pupil_name == 'lvr':
         fname_pup = 'ATLAST_Aperture_nPup={0}.fits'.format(nPup,)
         fname_lys = 'ATLAST_LyotStop_nPup={0}.fits'.format(nPup,)
     else:
@@ -436,7 +462,7 @@ plt.title('Radial intensity profiles of the images')
 for ilam in range(corono0.nlam):
     if corono_name == 'SP':
         plt.semilogy(xi2d,mono_corono_image1[ilam, nImg2dbis//2,nImg2dbis//2:]/mono_corono_image1.max(), '-',
-                    label=r'{0:.2f}$\lambda_0$'.format(corono0.lam_t[ilam]),
+                    label=r'{0:.3f}$\lambda_0$'.format(corono0.lam_t[ilam]),
                     color = colors[ilam])
     else:
         plt.semilogy(xi2d,mono_corono_image1[ilam, nImg2dbis//2,nImg2dbis//2:], 
@@ -498,7 +524,7 @@ plt.title('Averaged intensity profiles of the images')
 
 for ilam in range(corono0.nlam):
     plt.semilogy(r_lamD, mono_corono_prf_avg[ilam],
-                 label=r'{0:.2f}$\lambda_0$'.format(corono0.lam_t[ilam]),  color = colors[ilam])
+                 label=r'{0:.3f}$\lambda_0$'.format(corono0.lam_t[ilam]),  color = colors[ilam])
 plt.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
 plt.axvline(x=corono0.rho0, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
 plt.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')

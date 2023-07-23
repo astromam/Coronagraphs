@@ -32,7 +32,7 @@ syst = sys.platform
 """
 ### Parameters
 """
-nPup= 200
+nPup= 400
 do_fits = False
 
 do_margin = True
@@ -48,9 +48,9 @@ thick = 0.25              # adopted spider thickness (meters)
 offset = 1.278            # spider intersection offset (meters)
 beta = 51.75              # spider angle beta
 
-kpdiam_t = [0.96]#np.linspace(0.9, 1.0, 11) # np.linspace(0.98, 1.0, 3) #
-kodiam_t = [1.112]#np.linspace(1.0, 2.0, 21) # np.linspace(1.0, 1.2, 5)  #
-kthick_t = [2.0]#np.linspace(1.0, 2.0, 11) # np.linspace(1.0, 1.2, 3)  #
+kpdiam_t = [1.0]#[0.96]#np.linspace(0.9, 1.0, 11) # np.linspace(0.98, 1.0, 3) #
+kodiam_t = [1.0]#[1.112]#np.linspace(1.0, 2.0, 21) # np.linspace(1.0, 1.2, 5)  #
+kthick_t = [1.0]#[2.0]#np.linspace(1.0, 2.0, 11) # np.linspace(1.0, 1.2, 3)  #
 
 pdiam2_t = np.asarray(kpdiam_t)*pdiam
 odiam2_t = np.asarray(kodiam_t)*odiam
@@ -116,25 +116,25 @@ for ipdiam, kpdiam in enumerate(kpdiam_t):
 """
 ### display vlt-like pupil
 """
-#pupil_sbr = xaosim.pupil.subaru(nPup, nPup, nPup/2, between_pix=True)
-#pupil_diff = pupil*1 - pupil_sbr*1
+pupil_sbr = xaosim.pupil.subaru(nPup, nPup, nPup/2, between_pix=True)
+pupil_diff = pupil*1 - pupil_sbr*1
 
-# pl.figure(0)
-# pl.clf()
-# pl.subplot(131)
-# pl.imshow(pupil)
+pl.figure(0)
+pl.clf()
+pl.subplot(131)
+pl.imshow(pupil)
 
-# pl.subplot(132)
-# pl.imshow(pupil_sbr)
+pl.subplot(132)
+pl.imshow(pupil_sbr)
 
-# pl.subplot(133)
-# pl.imshow(pupil_diff)
+pl.subplot(133)
+pl.imshow(pupil_diff)
 
-# pl.show()
+pl.show()
 
-# a = coro.utils.uniform_disk(nPup, (nPup/2)*kpdiam, CtrBtwnPix=True)
+a = coro.utils.uniform_disk(nPup, (nPup/2)*kpdiam, CtrBtwnPix=True)
 
-# pl.figure(0)
-# pl.clf()
-# pl.imshow(a*pupil)
+pl.figure(1)
+pl.clf()
+pl.imshow(a*pupil)
 

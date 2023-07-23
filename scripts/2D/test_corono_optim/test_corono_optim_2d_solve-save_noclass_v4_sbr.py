@@ -57,6 +57,30 @@ Binarity    = False
 FirstDerGlobalLim = 100.
 BinarityReg       = 0.1
 
+
+do_margin = True
+
+str_margin=''
+if do_margin:
+    str_margin = '_v2'
+
+# telescope parameters
+pdiam, odiam = 7.92, 2.3 # tel. and obst. diameters (meters)
+if do_margin:
+    pdiam, odiam = 7.92*0.99, 2.3+7.92*0.01 # tel. and obst. diameters (meters)
+thick = 0.25                # adopted spider thickness (meters)
+offset = 1.278            # spider intersection offset (meters)
+beta = 51.75              # spider angle beta
+
+Fratio    = 64
+
+kpdiam0 = pdiam/(7.92)
+kodiam0 = odiam/(2.3)
+if do_margin:
+    kpdiam0 = pdiam/(7.92*0.99)
+    kodiam0 = odiam/(2.3+7.92*0.01)
+kthick0 = thick/0.25
+
 #nPup = corono0.params['nPup']
 nPup0 = 512
 nExt0 = 0
@@ -66,7 +90,7 @@ Fmax2d = 45#22.5
 nImg2d = 90#45
 
 # number of progressive refinement
-nProgRef = 1
+nProgRef = 3
 
 # mask radius in lam0/D units
 rMask = 5.740/2 # ALC1 at 1.593um (145mas) 
@@ -646,7 +670,11 @@ for k in range(nProgRef):
     
     nDim = nDim0*2**k
     nPup = nPup0*2**k
-    if pupil_name == 'lvr':
+    if pupil_name == 'sbr':
+        folder_tel = ''
+        fname_pup = f'pupilsbr_nPup{nPup}_kpdiam{int(np.round(kpdiam0*100)):03d}_kodiam{int(np.round(kodiam0*100)):03d}_kthick{int(np.round(kthick0*100)):03d}{str_margin}.fits' 
+        fname_lys = f'pupilsbr_nPup{nPup}_kpdiam{int(np.round(kpdiam0*100)):03d}_kodiam{int(np.round(kodiam0*100)):03d}_kthick{int(np.round(kthick0*100)):03d}{str_margin}.fits' 
+    elif pupil_name == 'lvr':
         fname_pup = f'ATLAST_Aperture_nPup={nPup}.fits'
         fname_lys = f'ATLAST_LyotStop_nPup={nPup}.fits'
     else:
