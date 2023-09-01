@@ -27,6 +27,28 @@ import matplotlib.pyplot as plt
 
 from astropy.io import fits
 
+
+#%%
+"""
+### Parameters
+"""
+# save file in fits file
+do_fits = 1
+
+# save file in png file
+do_png = 1 
+
+# parameter to center things between pixels or not 
+val = 1/2
+
+# dimensions of the pupil in mm 
+rPup_mm = 5.15
+dPup_mm = 2*rPup_mm
+
+# number of pixels with the apodized version
+rPup_nPts = 515
+dPup_nPts = 2*rPup_nPts
+
 #%%
 """
 ### Directory
@@ -40,29 +62,9 @@ fname_apod1d_xls = '2023-08-03_IR_Apodizer_DesignA_profile_v1.3.0_python.xls'
 # filepath of the xls file for the original apodization
 fpath_apod1d_xls = fdir_apod / fname_apod1d_xls
 
-# filename of the 2D apodizations (initial and binary) 
-fname_apod2d_ini = 'apod_initial'
-fname_apod2d_bin = 'apod_binary'
-
-# filename in fits format
-fname_apod2d_ini_fits = fname_apod2d_ini + '.fits'
-fname_apod2d_bin_fits = fname_apod2d_bin + '.fits'
-
-# filename in png format
-fname_apod2d_ini_png = fname_apod2d_ini + '.png'
-fname_apod2d_bin_png = fname_apod2d_bin + '.png'
-
-# filepath for fits format
-fpath_apod2d_ini_fits = fdir_apod / fname_apod2d_ini_fits
-fpath_apod2d_bin_fits = fdir_apod / fname_apod2d_bin_fits
-
-# filepath for png format
-fpath_apod2d_ini_png = fdir_apod / fname_apod2d_ini_png
-fpath_apod2d_bin_png = fdir_apod / fname_apod2d_bin_png
-
 #%%
 """
-### define FLoyd-Steinberg algorithm function
+### FLoyd-Steinberg algorithm function
 """
 def floyd_steinberg(array):
     
@@ -92,21 +94,6 @@ def floyd_steinberg(array):
     
     return new_array
 
-#%%
-"""
-### Parameters
-"""
-# save file in fits file
-do_fits = 1
-
-# save file in png file
-do_png = 1 
-
-# parameter to center things between pixels or not 
-val = 1/2
-
-# number of pixels for the apodized version
-nPts = 3600
 
 #%%
 """
@@ -128,29 +115,68 @@ ampl1d_d = apod1d_file[apod1d_file_colname[1]]
 dist1d_r = dist1d_d[dist1d_d >= 0]
 ampl1d_r = ampl1d_d[dist1d_d >= 0]
 
+# approximate dimension of the xls file
 nDim = 2*len(dist1d_r)
+# dimension of the file for the final apodizer
+nPts = int(np.round(2.*max(dist1d_r)*rPup_nPts/rPup_mm))
+
+# number of polynomials for interpolation
+nPol = 16
+
+#%%
+"""
+### Filenames and paths to save files
+"""
+# filename of the 2D apodizations (initial and binary) 
+fname_apod2d_ini = 'apod_initial'
+fname_apod2d_bin = 'apod_binary'
+
+# filename in fits format
+fname_apod2d_ini_fits = fname_apod2d_ini + f'_{nPts:04d}' + '.fits'
+fname_apod2d_bin_fits = fname_apod2d_bin + f'_{nPts:04d}' +'.fits'
+
+# filename in png format
+fname_apod2d_ini_png = fname_apod2d_ini + f'_{nPts:04d}' +'.png'
+fname_apod2d_bin_png = fname_apod2d_bin + f'_{nPts:04d}' +'.png'
+
+# filepath for fits format
+fpath_apod2d_ini_fits = fdir_apod / fname_apod2d_ini_fits
+fpath_apod2d_bin_fits = fdir_apod / fname_apod2d_bin_fits
+
+# filepath for png format
+fpath_apod2d_ini_png = fdir_apod / fname_apod2d_ini_png
+fpath_apod2d_bin_png = fdir_apod / fname_apod2d_bin_png
 
 #%%
 """
 ### Polynomial approximation of the amplitude profile
 """
-z = np.polyfit(dist1d_r, ampl1d_r, 16)
+z = np.polyfit(dist1d_r, ampl1d_r, nPol)
 
 ampl1d_poly = np.poly1d(z)
 
 
 #%%
-
+"""
+### Interpolated amplitude with the computed polynomial
+"""
 ampl1d_r_fit = ampl1d_poly(dist1d_r) 
 
 #%%
 """
 ### Conversion of the 1d radial profile into 2d profile for radius
 """
+# compute array of distance in pixels and noramlized to diameter (amax =0.5)
 xx,yy  = np.meshgrid(np.arange(nPts)-nPts/2+val, np.arange(nPts)-nPts/2+val)
 mydist2d = np.hypot(yy,xx)/nPts
 
+# compute array of distance in phsyical units
 mydist2d_mm = mydist2d*max(dist1d_r)/0.5
+
+# compute physical pupil
+Pupil2d = np.zeros((nPts, nPts))
+Pupil2d[mydist2d_mm <= rPup_mm] = 1.
+
 
 #%%
 """
@@ -177,7 +203,7 @@ if do_fits:
     
 #%%
 """
-### Plot the file
+### Display the amplitude accross diameter
 """
 plt.figure(0)
 plt.clf()
@@ -185,6 +211,9 @@ plt.plot(dist1d_d, ampl1d_d)
 plt.title('amplitude apodizer profile')
 
 #%%
+"""
+### Display the radial amplitude and its fit
+"""
 plt.figure(1)
 plt.clf()
 plt.plot(dist1d_r, ampl1d_r)
@@ -194,6 +223,9 @@ plt.ylabel("Normalized amplitude")
 plt.title('amplitude apodizer profile')
 
 #%%
+"""
+### Display the difference between radial amplitude and its fit
+"""
 plt.figure(2)
 plt.clf()
 plt.plot(dist1d_r, ampl1d_r_fit-ampl1d_r)
@@ -202,17 +234,26 @@ plt.ylabel("Normalized amplitude")
 plt.title('absolute difference')
 
 #%%
+"""
+### Display the array of radius for the full array
+"""
 plt.figure(3)
 plt.clf()
 plt.imshow(mydist2d)
 
 #%%
+"""
+### Display the 2d amplitude computed from 1d profile
+"""
 plt.figure(4)
 plt.clf()
 plt.imshow(apod2d_ini, vmin=0, vmax=1, cmap='inferno')
 plt.title('apodizer from profile')
 
 #%%
+"""
+### Display comparison between initial 1d profile, fitted 1d profile, and 2d profile
+"""
 if nPts == 3600:
     plt.figure(5)
     plt.clf()
@@ -224,6 +265,9 @@ if nPts == 3600:
     plt.title('amplitude apodizer profile')
 
 #%%
+"""
+### Display difference between initial 1d profile with fitted 1d profile and 2d profile
+"""
 if nPts == 3600:
     plt.figure(6)
     plt.clf()
@@ -234,6 +278,9 @@ if nPts == 3600:
     plt.title('absolute difference')
 
 #%%
+"""
+### Display 2d profile before and after binarisation
+"""
 plt.figure(10)
 plt.clf()
 plt.subplot(121)
@@ -244,14 +291,32 @@ plt.imshow(apod2d_bin, vmin=0, vmax=1, cmap='inferno')
 plt.title('apodizer from profile')
 
 #%%
+"""
+### Display 2d profile before binarisation and save it in png format
+"""
 plt.figure(11)
 plt.clf()
 plt.imshow(apod2d_ini, cmap='Greys_r')
 if do_png:
     plt.savefig(fpath_apod2d_ini_png)
 
+#%%
+"""
+### Display 2d profile after binarisation and save it in png format
+"""
 plt.figure(12)
 plt.clf()
 plt.imshow(apod2d_bin, cmap='Greys_r')
 if do_png:
     plt.savefig(fpath_apod2d_bin_png)
+
+#%%
+"""
+### Display Pupil2d 
+"""
+plt.figure(20)
+plt.clf()
+plt.imshow(Pupil2d, cmap='Greys_r')
+plt.title('Pupil')
+
+
