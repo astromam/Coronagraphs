@@ -70,7 +70,7 @@ if True:
     kthick0_ls = 2.0
     
     #nPup = corono0.params['nPup']
-    nPup = 200
+    nPup = 512
     nFPM = 50
     Fmax2d = 50
     nImg2d = 500
