@@ -45,9 +45,23 @@ val = 1/2
 rPup_mm = 5.15
 dPup_mm = 2*rPup_mm
 
+# size of the dot in mm
+rDot_mm = 0.010
+
 # number of pixels with the apodized version
-rPup_nPts = 515
+rPup_nPts = int(np.round(rPup_mm/rDot_mm))
 dPup_nPts = 2*rPup_nPts
+
+# size of the apodizer substrate
+rSub_mm = 7.5
+dSub_mm = 2*rSub_mm
+
+# number of pixels within the substrate
+rSub_nPts = int(np.round(rSub_mm/rDot_mm))
+dSub_nPts = 2*rSub_nPts
+
+# number of polynomials for interpolation
+nPol = 16
 
 #%%
 """
@@ -117,11 +131,11 @@ ampl1d_r = ampl1d_d[dist1d_d >= 0]
 
 # approximate dimension of the xls file
 nDim = 2*len(dist1d_r)
-# dimension of the file for the final apodizer
-nPts = int(np.round(2.*max(dist1d_r)*rPup_nPts/rPup_mm))
 
-# number of polynomials for interpolation
-nPol = 16
+# dimension of the file with the initial dimensions of the file
+#nPts = int(np.round(2.*max(dist1d_r)*rPup_nPts/rPup_mm))
+
+
 
 #%%
 """
@@ -132,12 +146,12 @@ fname_apod2d_ini = 'apod_initial'
 fname_apod2d_bin = 'apod_binary'
 
 # filename in fits format
-fname_apod2d_ini_fits = fname_apod2d_ini + f'_{nPts:04d}' + '.fits'
-fname_apod2d_bin_fits = fname_apod2d_bin + f'_{nPts:04d}' +'.fits'
+fname_apod2d_ini_fits = fname_apod2d_ini + f'_{dSub_nPts:04d}' + '.fits'
+fname_apod2d_bin_fits = fname_apod2d_bin + f'_{dSub_nPts:04d}' + '.fits'
 
 # filename in png format
-fname_apod2d_ini_png = fname_apod2d_ini + f'_{nPts:04d}' +'.png'
-fname_apod2d_bin_png = fname_apod2d_bin + f'_{nPts:04d}' +'.png'
+fname_apod2d_ini_png = fname_apod2d_ini + f'_{dSub_nPts:04d}' +'.png'
+fname_apod2d_bin_png = fname_apod2d_bin + f'_{dSub_nPts:04d}' +'.png'
 
 # filepath for fits format
 fpath_apod2d_ini_fits = fdir_apod / fname_apod2d_ini_fits
@@ -167,14 +181,14 @@ ampl1d_r_fit = ampl1d_poly(dist1d_r)
 ### Conversion of the 1d radial profile into 2d profile for radius
 """
 # compute array of distance in pixels and noramlized to diameter (amax =0.5)
-xx,yy  = np.meshgrid(np.arange(nPts)-nPts/2+val, np.arange(nPts)-nPts/2+val)
-mydist2d = np.hypot(yy,xx)/nPts
+xx,yy  = np.meshgrid(np.arange(dSub_nPts)-dSub_nPts/2+val, np.arange(dSub_nPts)-dSub_nPts/2+val)
+mydist2d = np.hypot(yy,xx)/dSub_nPts
 
 # compute array of distance in phsyical units
-mydist2d_mm = mydist2d*max(dist1d_r)/0.5
+mydist2d_mm = mydist2d*rSub_mm/0.5
 
 # compute physical pupil
-Pupil2d = np.zeros((nPts, nPts))
+Pupil2d = np.zeros((dSub_nPts, dSub_nPts))
 Pupil2d[mydist2d_mm <= rPup_mm] = 1.
 
 
@@ -254,12 +268,12 @@ plt.title('apodizer from profile')
 """
 ### Display comparison between initial 1d profile, fitted 1d profile, and 2d profile
 """
-if nPts == 3600:
+if dSub_nPts == 3600:
     plt.figure(5)
     plt.clf()
     plt.plot(dist1d_r, ampl1d_r)
     plt.plot(dist1d_r, ampl1d_r_fit, ls='--')
-    plt.plot(dist1d_r+val/nPts, apod2d_ini[nPts//2, nPts//2:], ls='-.')
+    plt.plot(dist1d_r+val/dSub_nPts, apod2d_ini[dSub_nPts//2, dSub_nPts//2:], ls='-.')
     plt.xlabel("r")
     plt.ylabel("Normalized amplitude")
     plt.title('amplitude apodizer profile')
@@ -268,11 +282,11 @@ if nPts == 3600:
 """
 ### Display difference between initial 1d profile with fitted 1d profile and 2d profile
 """
-if nPts == 3600:
+if dSub_nPts == 3600:
     plt.figure(6)
     plt.clf()
     plt.plot(dist1d_r, ampl1d_r_fit-ampl1d_r)
-    plt.plot(dist1d_r, apod2d_ini[nPts//2, nPts//2:]-ampl1d_r)
+    plt.plot(dist1d_r, apod2d_ini[dSub_nPts//2, dSub_nPts//2:]-ampl1d_r)
     plt.xlabel("r")
     plt.ylabel("Normalized amplitude")
     plt.title('absolute difference')
