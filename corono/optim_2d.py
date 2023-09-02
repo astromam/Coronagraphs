@@ -11,14 +11,13 @@ License: MIT license
 """
 
 #%% Initialization problem
-#from memory_profiler import profile
 import numpy as np
 import json
 import time
 import gc
 import psutil
 import os
-from memory_profiler import profile
+#from memory_profiler import profile
 
 try:
     import stdgrb
