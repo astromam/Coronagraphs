@@ -332,11 +332,11 @@ def profile(img, ptype='mean', step=1, mask=None, center=None, rmax=0, clip=True
 user = 'Adrien'
 if user == 'Adrien':
     # File directory
-    fdir_dat = Path('/home/asimonnin/Bureau/ThesisAdrien/Andes/Data_corono/data').resolve()
+    fdir_dat = Path('/Users/asimonnin/Desktop/PhD/Andes/Data_corono/data').resolve()
     # Directory for the OPD with the corresponding seed value
-    fdir_res   = Path('/home/asimonnin/Bureau/ThesisAdrien/Andes/Data_corono/results/').resolve()
+    fdir_res   = Path('/Users/asimonnin/Desktop/PhD/Andes/Data_corono/results/').resolve()
     # Directory for the OPD with the corresponding seed value
-    fdir_plt   = Path('/home/asimonnin/Bureau/ThesisAdrien/Andes/Data_corono/plots/').resolve()
+    fdir_plt   = Path('/Users/asimonnin/Desktop/PhD/Andes/Data_corono/plots/').resolve()
 
 elif user == 'Mamadou':
     # File directory
