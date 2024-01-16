@@ -33,16 +33,21 @@ from astropy.io import fits
 ### Parameters
 """
 # save file in fits file
-do_fits = 1
+do_fits = 0
 
 # save file in png file
-do_png = 1 
+do_png = 0 
 
 # parameter to center things between pixels or not 
 val = 1/2
 
+# scaling factor for tests on pupil misalignments, set to 1 for manufacturing
+kfactor = 1 #500/1030
+# scaling factor to crop the apodizer to the desired size, set to 1 for manufacturing
+kcrop = 1 #520/728
+
 # dimensions of the pupil in mm 
-rPup_mm = 5.15
+rPup_mm = 5.15*kfactor
 dPup_mm = 2*rPup_mm
 
 # size of the dot in mm
@@ -53,7 +58,7 @@ rPup_nPts = int(np.round(rPup_mm/rDot_mm))
 dPup_nPts = 2*rPup_nPts
 
 # size of the apodizer substrate
-rSub_mm = 7.5
+rSub_mm = 7.5*kfactor*kcrop
 dSub_mm = 2*rSub_mm
 
 # number of pixels within the substrate
