@@ -14,7 +14,7 @@ import numpy as np
 #import pyzelda.utils.aperture as aperture
 from vigan.optics import aperture
 
-import pylab as pl
+import matplotlib.pyplot as plt
 from pathlib import Path
 
 from astropy.io import fits
@@ -27,8 +27,12 @@ import xaosim
 """
 pupil_name = 'vlt_btw'
 do_dead_act = False
-nPup= 400#384
+nPup= 500#384
 do_fits = False
+
+do_zeropad = False
+do_fits_zeropad = False
+nArr = 520
 
 
 #%%
@@ -70,17 +74,17 @@ elif pupil_name == 'sbr':
 """
 ### display vlt-like pupil
 """
-pl.figure(0)
-pl.clf()
-pl.imshow(pupil)
+plt.figure(0)
+plt.clf()
+plt.imshow(pupil)
 
-pl.show()
+plt.show()
 
 #%%
 """
 save pupil
 """
-fdir = Path('/Users/mndiaye/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs/data/2D/pupils').resolve()
+fdir = Path('/Users/mndiaye/workdata/data/Coronagraphs/data/2D/pupils').resolve()
 str_dead_act=''
 if do_dead_act and pupil_name == 'vlt':
     str_dead_act = '_dead_act'
@@ -91,3 +95,24 @@ print(fname)
 
 if do_fits:
     fits.writeto(fpath, pupil*1., overwrite=True)
+
+#%%
+if do_zeropad:
+    pupilpad = np.zeros((nArr, nArr))
+    nBeg = (nArr-nPup)//2
+    nEnd = (nArr+nPup)//2
+    pupilpad[nBeg:nEnd,nBeg:nEnd] = pupil*1.
+    
+    plt.figure(1)
+    plt.clf()
+    plt.imshow(pupilpad)
+
+    plt.show()
+    
+    fname_pad = f'pupil={pupil_name}_nPup={nPup}{str_dead_act}_nArr={nArr}.fits'
+    fpath_pad = fdir / fname_pad
+    print(fname_pad)
+    
+    if do_fits_zeropad:
+        fits.writeto(fpath_pad, pupilpad*1., overwrite=True)
+    
