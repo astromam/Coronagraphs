@@ -37,12 +37,17 @@ syst = sys.platform
 ### Parameters
 """
 # spatial sampling
-nPup   = 128   # pupil
+nPup   = 500   # pupil
 
 # save file
-do_sav = True
+do_sav = False
 # display file
 do_disp = True
+
+
+do_zeropad = False
+do_fits_zeropad = False
+nArr = 520
 
 #%%
 """
@@ -51,7 +56,7 @@ do_disp = True
 # simulation case and directory
 if user == 'mndiaye':
     if syst == 'darwin':
-        fdir = Path('~/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs').expanduser()
+        fdir = Path('~/scratch/data/Coronagraphs').expanduser()
         sim_case = 'test' # 'test' or 'server'
     elif syst == 'linux':
         fdir = Path('/scratch/{0}/data/Coronagraphs/'.format(user)).resolve()
@@ -119,3 +124,26 @@ if do_disp:
     plt.imshow(LyotStop2d)
     plt.title('Lyot stop')
 
+#%%
+"""
+### Add zero padding
+"""
+if do_zeropad:
+    LyotStop2dpad = np.zeros((nArr, nArr))
+    nBeg = (nArr-nPup)//2
+    nEnd = (nArr+nPup)//2
+    LyotStop2dpad[nBeg:nEnd,nBeg:nEnd] = LyotStop2d*1.
+    
+    plt.figure(1)
+    plt.clf()
+    plt.imshow(LyotStop2dpad)
+
+    plt.show()
+    
+    fname_pad = f'sphere_stop_ST_ALC2_nPup={nPup}_nArr={nArr}.fits'
+    fpath_pad = fdir2_pupils / fname_pad
+    print(fname_pad)
+    
+    if do_fits_zeropad:
+        fits.writeto(fpath_pad, LyotStop2dpad*1., overwrite=True)
+    

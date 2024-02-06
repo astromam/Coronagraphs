@@ -83,7 +83,7 @@ File reading for Pupil and Lyot stop
 """
 if True:
 #    fdir = Path('../../data/2D/pupils/').resolve()
-    fdir = Path('/Users/mndiaye/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs/data/2D/pupils/').resolve()
+    fdir = Path('/Users/mndiaye/scratch/data/Coronagraphs/data/2D/pupils/').resolve()
     if pupil_name == 'lvr':
         fname_pup = 'ATLAST_Aperture_nPup={0}.fits'.format(nPup,)
         fname_lys = 'ATLAST_LyotStop_nPup={0}.fits'.format(nPup,)
@@ -121,9 +121,9 @@ params = coro.to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
 """
 Working directories
 """
-fdir = Path('/Users/mndiaye/Library/CloudStorage/OneDrive-UniversitéNiceSophiaAntipolis/data/Coronagraphs/results/2D/dat_pyth').resolve() / pupil_name
+fdir = Path('/Users/mndiaye/scratch/data/Coronagraphs/results/2D/dat_pyth').resolve() / pupil_name
 
-fdir_pdf = Path('/Users/mndiaye/Library/CloudStorage/OneDrive-UniversitéNiceSophiaAntipolis/data/Coronagraphs/results/2D/plots/').resolve()
+fdir_pdf = Path('/Users/mndiaye/scratch/data/Coronagraphs/results/2D/plots/').resolve()
 if not os.path.exists(fdir_pdf):
     os.makedirs(fdir_pdf)
 

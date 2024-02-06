@@ -42,7 +42,7 @@ if True:
     FirstDerGlobalLim = 1.
     
     #nPup = corono0.params['nPup']
-    nPup = 512
+    nPup = 800 #512
     nFPM = 50
     Fmax2d = 50
     nImg2d = 500
@@ -52,11 +52,11 @@ if True:
     rMask = 2.252 # ALC2 at 1.593um (185mas)
     
     # dark zone bounds (inner and outer edges) in lam0/D unit
-    rho0 =  0.0
+    rho0 =  5.0
     rho1 = 20.0
     
     # contrast in the dark region
-    cDarkHole = 10.0
+    cDarkHole = 6.0
     
     # tau (integrated Pupil transmission)
     tau   = 0.756
@@ -68,7 +68,7 @@ if True:
     Pupil2dSym  = True # set it True only for optimization
     LSRobustness = False
     test_shift = True
-    shift_x = -3
+    shift_x = 4
     shift_y = 0
     test_flip_x = False
     test_flip_y = False
@@ -95,11 +95,17 @@ nImg2dbis = 500
 """
 if True:
 #    fdir = Path('../../../data/2D/pupils/').resolve()
-    fdir = Path('/Users/mndiaye/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs/data/2D/pupils/').resolve()
+    fdir = Path('/Users/mndiaye/scratch/data/Coronagraphs/data/2D/pupils/').resolve()
+    fdir_survey = Path('/Users/mndiaye/python/aplc_optimization/surveys/').resolve()
+    #folder_survey = 'sphere_multilslamC6_N0512_rita'  
+    folder_survey = 'sphere_refin-multilam_N0800_rita'
+    folder_survey += '/solutions'
+    #fname = '0_SPHERE_N512_FPM225M0512_IWA0500_OWA02000_C6_BW20_Nlam3_LS_ID_ST_A_OD_nPu_ls_0512.fits.fits'
+    fname = '0_SPHERE_N800_FPM225M0800_IWA0500_OWA02000_C6_BW20_Nlam3_LS_ID_ST_A_OD_nPu_ls_0800.fits.fits'
 
     if user == 'mndiaye':
         if syst == 'darwin':
-            fdir = Path('~/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs/data/2D/pupils/').expanduser()
+            fdir = Path('~/scratch/data/Coronagraphs/data/2D/pupils/').expanduser()
             sim_case = 'test' # 'test' or 'server'
         elif syst == 'linux':
             fdir = Path('/home/mndiaye/python/Coronagraphs/data/2D/pupils').resolve()
@@ -190,10 +196,13 @@ else:
 """
 ### Read files
 """
-fname_gen = problem1.get_filename()
-fname     = fname_gen + f'{str_dead_act}.fits'
-fpath     = fdir / fname
-print(fpath)
+# fname_gen = problem1.get_filename()
+# fname     = fname_gen + f'{str_dead_act}.fits'
+# fpath     = fdir / fname
+# print(fpath)
+
+fname_gen = fname
+fpath = fdir_survey / folder_survey / fname
 
 if test_gurobi is True:
     idx_pup = problem1.idx_pup
@@ -240,47 +249,19 @@ fpath = fdir_pdf / fname
 fig = plt.figure(1)
 plt.clf()
 im = plt.imshow(Apod_pyth*corono0.Pupil2d, vmin=0, vmax=1, cmap = cm.Greys_r)
-plt.title(f'Apod 1 transmission - {problem_name} problem - {solver}')
+# plt.title(f'Apod 1 transmission - {problem_name} problem - {solver}')
+plt.title(f'Apod 1 transmission')
 plt.savefig(str(fpath))
 
 cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.70])
 fig.colorbar(im, cax=cbar_ax, label='Normalized amplitude')
 plt.savefig(str(fpath))
 
-# #%%
-# fname = fname_gen + '_apodisation_ampl_flip_ud.pdf'
-# fpath = fdir_pdf / fname
-
-# fig = plt.figure(2)
-# plt.clf()
-# im = plt.imshow((Apod_pyth-np.flipud(Apod_pyth))*corono0.Pupil2d, vmin=0, vmax=1, cmap = cm.Greys_r)
-# plt.title(f'Apod 1 transmission - {problem_name} problem - {solver}')
-# plt.savefig(str(fpath))
-
-# cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.70])
-# fig.colorbar(im, cax=cbar_ax, label='Normalized amplitude')
-# plt.savefig(str(fpath))
-
-# #%%
-# fname = fname_gen + '_apodisation_ampl_flip_lr.pdf'
-# fpath = fdir_pdf / fname
-
-# fig = plt.figure(3)
-# plt.clf()
-# im = plt.imshow((Apod_pyth-np.fliplr(Apod_pyth))*corono0.Pupil2d, vmin=0, vmax=1, cmap = cm.Greys_r)
-# plt.title(f'Apod 1 transmission - {problem_name} problem - {solver}')
-# plt.savefig(str(fpath))
-
-# cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.70])
-# fig.colorbar(im, cax=cbar_ax, label='Normalized amplitude')
-# plt.savefig(str(fpath))
-
-
 #%% Signal in intensity
 """
 ### Computation of the direct and coronagraphic images
 """
-fname_gen  = problem1.get_filename(nlam=nlambis)
+#fname_gen  = problem1.get_filename(nlam=nlambis)
 params2    = coro.update_params(params, nlam=nlambis, Fmax2d = Fmax2dbis, nImg2d = nImg2dbis) 
 
 if corono_name == 'SP':
@@ -412,7 +393,7 @@ fpath = fdir_pdf / fname
 
 fig = plt.figure(11)
 plt.clf()
-im = plt.imshow(np.log10(poly_corono_image1), vmin = -8, vmax = -3, cmap = cm.inferno)
+im = plt.imshow(np.log10(poly_corono_image1), vmin = -10, vmax = 0, cmap = cm.inferno)
 plt.title('Apod1 - apodized image')
 cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.70])
 fig.colorbar(im, cax=cbar_ax, label='Normalized intensity in log scale')

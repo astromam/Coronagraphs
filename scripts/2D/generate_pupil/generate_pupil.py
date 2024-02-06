@@ -30,8 +30,8 @@ do_dead_act = False
 nPup= 500#384
 do_fits = False
 
-do_zeropad = False
-do_fits_zeropad = False
+do_zeropad = True
+do_fits_zeropad = True
 nArr = 520
 
 
@@ -84,7 +84,7 @@ plt.show()
 """
 save pupil
 """
-fdir = Path('/Users/mndiaye/workdata/data/Coronagraphs/data/2D/pupils').resolve()
+fdir = Path('/Users/mndiaye/scratch/data/Coronagraphs/data/2D/pupils').resolve()
 str_dead_act=''
 if do_dead_act and pupil_name == 'vlt':
     str_dead_act = '_dead_act'

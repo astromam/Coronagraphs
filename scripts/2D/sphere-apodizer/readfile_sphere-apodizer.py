@@ -42,9 +42,9 @@ do_png = 0
 val = 1/2
 
 # scaling factor for tests on pupil misalignments, set to 1 for manufacturing
-kfactor = 1 #500/1030
+kfactor = 1 # 500/1030
 # scaling factor to crop the apodizer to the desired size, set to 1 for manufacturing
-kcrop = 1 #520/728
+kcrop = 1 # 520/728
 
 # dimensions of the pupil in mm 
 rPup_mm = 5.15*kfactor
@@ -67,6 +67,7 @@ dSub_nPts = 2*rSub_nPts
 
 # number of polynomials for interpolation
 nPol = 16
+
 
 #%%
 """
@@ -170,7 +171,7 @@ fpath_apod2d_bin_png = fdir_apod / fname_apod2d_bin_png
 """
 ### Polynomial approximation of the amplitude profile
 """
-z = np.polyfit(dist1d_r, ampl1d_r, nPol)
+z = np.polyfit(dist1d_r*kfactor, ampl1d_r, nPol)
 
 ampl1d_poly = np.poly1d(z)
 

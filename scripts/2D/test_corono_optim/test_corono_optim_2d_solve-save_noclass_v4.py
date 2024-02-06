@@ -59,7 +59,7 @@ Fmax2d = 45#22.5
 nImg2d = 90#45
 
 # number of progressive refinement
-nProgRef = 3
+nProgRef = 1
 
 # mask radius in lam0/D units
 #rMask = 1.766 # ALC1 at 1.593um (145mas) 
@@ -74,7 +74,7 @@ rho1 = 20.0
 cDarkHole = 10.0
 
 # tau (integrated Pupil transmission)
-tau   = 0.7
+tau   = 0.756
 # CtrBtwnPix2
 CtrBtwnPix  = True
 CtrBtwnPix2 = True
