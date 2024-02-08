@@ -49,11 +49,12 @@ if True:
     nImg2d = 45
     
     # mask radius in lam0/D unit
-    rMask = 2.252*(nPup0/nPup)
+    rMask0 = 2.252 # ALC2 at 1.593um (185mas)
+    rMask = rMask0*(nPup/nPup0)
     
     # dark zone bounds (inner and outer edges) in lam0/D unit
-    rho0 =  2.0
-    rho1 = 10.0
+    rho0 =  0.0
+    rho1 = 20.0
     
     # contrast in the dark region
     cDarkHole = 6.0
@@ -73,11 +74,21 @@ if True:
    
     do_fits = True
 
-nlambis = 5    
-Fmax2dbis = 60*(nPup0/nPup)
+nlambis = 11 
+Fmax2dbis0 = 60   
+Fmax2dbis = Fmax2dbis0*(nPup/nPup0)
 nImg2dbis = 600
 
 do_plot = False    
+
+# separation for contrast estimates
+sepbis=3.0
+septer=5.0
+
+# maximum pixel shift along a given axis for apodizer 
+pix_max = 10
+nLinShift = 1
+
 
 #%%
 """
@@ -88,7 +99,7 @@ if True:
     fdir = Path('/Users/mndiaye/scratch/data/Coronagraphs/data/2D/pupils/').resolve()
     
     fdir_apod = Path('/Users/mndiaye/scratch/data/Coronagraphs/data/2D/pupils/SPHERE/upgrade/').resolve()  
-    fname_apod = f'apod_initial_{nArr:04d}.fits'
+    fname_apod = f'apod_binary_{nArr:04d}.fits'
     
     if pupil_name == 'lvr':
         fname_pup = 'ATLAST_Aperture_nPup={0}.fits'.format(nPup,)
@@ -283,7 +294,7 @@ fpath_image_plane_f_disp = fdir_pdf / fname_image_plane_f_disp
 f2 = plt.figure(23, figsize=(8,4.5))
 plt.clf()
 exec('ax{0} = f2.add_subplot(1,{1},{0})'.format(1,1))
-exec('im = ax{0}.imshow(np.log10(corono_poly_img_f/direct_poly_img_f.max()), cmap = "inferno", vmin=-7.5, vmax=-3.5)'.format(1))
+exec('im = ax{0}.imshow(np.log10(corono_poly_img_f/direct_poly_img_f.max()), cmap = "inferno", vmin=-7, vmax=-3)'.format(1))
 #exec('ax{0}.text(nImg2d/2, 0.1*nImg2d, "nmap={1:05d}", fontsize=16, horizontalalignment="center", color = "white")'.format(1,1))
 exec('ax{0}.tick_params(axis="x", which="both", bottom="off", top="off", labelbottom="off")'.format(1,))
 exec('ax{0}.tick_params(axis="y", which="both", left="off", right="off", labelleft="off")'.format(1,))
@@ -322,9 +333,9 @@ else:
 # Intensity profiles of the direct and coronagraphic images
 plt.figure(12)
 plt.clf()
-for i in range(nlambis):
-    plt.semilogy(rad_corono*Fmax2dbis/nImg2dbis, 5*corono_mono_prf_std_t[i]/direct_mono_img_t[idx_lam_peak].max(),
-                label=r'{0:.3f}$\lambda_0$'.format(corono0.lam_t[i]), color = colors_wv[i])
+for ilam in range(corono0.nlam):
+    plt.semilogy(rad_corono*Fmax2dbis/nImg2dbis, corono_mono_prf_std_t[ilam]/direct_mono_img_t[idx_lam_peak].max(),
+                label=r'{0:.3f}$\lambda_0$'.format(corono0.lam_t[ilam]), color = colors_wv[ilam])
     
 plt.axvline(x=rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
 plt.axvline(x=rho0, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
@@ -332,7 +343,7 @@ plt.axvline(x=rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
 plt.axhline(10**(-cDarkHole), xmin=corono0.xi2d.min(), xmax=corono0.xi2d.max(), 
            linewidth=1, color='k', linestyle='--')
 plt.xlabel(r'Angular separation in $\lambda_0$/D')
-plt.ylabel(r'5$\sigma$ normalized intensity in log scale')
+plt.ylabel(r'1$\sigma$ normalized intensity in log scale')
 plt.ylim(3e-8, 3e-4)
 plt.legend()
 plt.title('Intensity profile in monochromatic light')
@@ -355,16 +366,16 @@ i0 = 0
 
 plt.figure(11)
 plt.clf()
-plt.semilogy(rad_corono*Fmax2dbis/nImg2dbis, 5*corono_poly_prf_std_f/direct_poly_img_f.max(),
+plt.semilogy(rad_corono*Fmax2dbis/nImg2dbis, corono_poly_prf_std_f/direct_poly_img_f.max(),
         label='map {0}'.format(0), color = colors_cor[i0])
 
-plt.axvline(x=rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
+plt.axvline(x=rMask0, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
 plt.axvline(x=rho0, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
 plt.axvline(x=rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
 plt.axhline(10**(-cDarkHole), xmin=corono0.xi2d.min(), xmax=corono0.xi2d.max(), 
            linewidth=1, color='k', linestyle='--')
 plt.xlabel(r'Angular separation in $\lambda_0$/D')
-plt.ylabel(r'5$\sigma$ normalized intensity in log scale')
+plt.ylabel(r'1$\sigma$ normalized intensity in log scale')
 plt.ylim(3e-8, 3e-4)
 plt.legend()
 plt.title(r'Intensity profile in broadband light ($\Delta\lambda/\lambda_0$={0:.1f}%)'.format(bw*100))
@@ -375,12 +386,13 @@ if do_plot is True:
 
 #%%
 """
-Robustness to Lyot stop misalignments
+### Robustness to apodizer misalignments
 """
-# maximum pixel shift along a given axis for Lyot stop 
-pix_max = 50
 
-pix_t = (np.round(pix_max*(np.arange(5)-2)/2)).astype(int) #np.arange(2*pix_max+1)-pix_max
+if nLinShift >1:
+    pix_t = (np.round(pix_max*(np.arange(nLinShift)-nLinShift//2)*(2/(nLinShift-1)))).astype(int) #np.arange(2*pix_max+1)-pix_max
+else:
+    pix_t = np.asarray([0])
 npix = len(pix_t)
 
 Apod2d_t = []
@@ -410,9 +422,6 @@ else:
 val = 0
 if nImg2dbis%2 == 0:
     val = 1/2
-
-sepbis=2.5
-septer=5.0
 
 
 # array of angular distances in the final image plane
@@ -457,54 +466,140 @@ for i in range(nApod2d):
     corono_poly_avg_resbis_aberr_t.append(np.mean(corono_poly_img_aberr_t[i, resbis != 0])/direct_poly_img_f.max())
     corono_poly_avg_rester_aberr_t.append(np.mean(corono_poly_img_aberr_t[i, rester != 0])/direct_poly_img_f.max())
 
-#%%
-if nApod2d <= 9: 
-    f2 = plt.figure(30, figsize=(10,4.5))
-    plt.clf()
-    for j in range(npix):
-        for i in range(npix):
-            exec('ax{2} = f2.add_subplot({0},{1},{2})'.format(npix,npix,j*npix+i+1))
-            exec('im = ax{0}.imshow(np.log10(corono_poly_img_aberr_t[{1}]/direct_poly_img_f.max()), cmap = "inferno", vmin=-7, vmax=-3)'.format(j*npix+i+1,j*npix+i))
-            exec('ax{0}.text(nImg2dbis/2, 0.1*nImg2dbis, "({1:.1f}, {2:.1f}) pix shift" , fontsize=8, horizontalalignment="center", color = "black")'.format(j*npix+i+1,pix_t[npix-1-j],pix_t[i]))
-            exec('ax{0}.tick_params(axis="x", which="both", bottom="off", top="off", labelbottom="off")'.format(j*npix+i+1,))
-            exec('ax{0}.tick_params(axis="y", which="both", left="off", right="off", labelleft="off")'.format(j*npix+i+1,))
-    
-f2.subplots_adjust(bottom=0.1, top=0.9, left=0.1, right=0.8,
-                    wspace=0.02, hspace=0.02)
-
-f2.subplots_adjust(right=0.85)
-cbar_ax = f2.add_axes([0.85, 0.15, 0.05, 0.7])
-cbar    = f2.colorbar(im, cax=cbar_ax)
-cbar.ax.set_ylabel('corono image', rotation=270, labelpad = 10)
-#        plt.savefig(str(fpath_image_plane_disp), transparent=True)
-plt.tight_layout()
-plt.show()
 
 #%%
 """
-### Display the images in the mosaic shape
+### Create the apodizer mosaic
 """
+if nApod2d <= 25:
+    apo_mosaic = np.zeros((nLinShift*nPup,nLinShift*nPup))
+    for  i in range(nLinShift):
+        for j in range(nLinShift):
+            apo_mosaic[i*nPup:(i+1)*nPup,j*nPup:(j+1)*nPup] = Apod2d_t[i*nLinShift+j]*Pupil2d
 
-if nApod2d == 25:
-    img_mosaic = np.zeros((5*nImg2dbis,5*nImg2dbis))
-    for  i in range(5):
-        for j in range(5):
-            img_mosaic[i*nImg2dbis:(i+1)*nImg2dbis,j*nImg2dbis:(j+1)*nImg2dbis] = corono_poly_img_aberr_t[i*5+j]
+#%%
+"""
+### Create the coronagraphic image maosaic
+"""
+if nApod2d <= 25:
+    img_mosaic = np.zeros((nLinShift*nImg2dbis,nLinShift*nImg2dbis))
+    for  i in range(nLinShift):
+        for j in range(nLinShift):
+            img_mosaic[i*nImg2dbis:(i+1)*nImg2dbis,j*nImg2dbis:(j+1)*nImg2dbis] = corono_poly_img_aberr_t[i*nLinShift+j]
             
     img_mosaic /= direct_poly_img_f.max()
-    
-#%%
 
+ 
+#%%
+"""
+### Plot display of the impact of apodizer misalignment on contrast 
+"""
+colors_shifts = plt.cm.rainbow(np.linspace(0,1,2))
+ls_shifts = ["-", "--"]
+
+fname_lowfe_plot = 'corono_poly_apodizer_sensitivity_plot.pdf'
+fpath_lowfe_plot = fdir_pdf / fname_lowfe_plot
+
+plot_lines = []
+
+idx = list((npix-1)//2+npix*np.arange(npix))
+
+plt.figure(31)
+plt.clf()
+l1, = plt.semilogy(100*pix_t/nPup0, corono_poly_avg_resbis_aberr_t[npix*(npix-1)//2:npix*((npix-1)//2+1)],
+            color = colors_shifts[0], marker='x', ls ='-')
+l2, = plt.semilogy(100*pix_t/nPup0, corono_poly_avg_rester_aberr_t[npix*(npix-1)//2:npix*((npix-1)//2+1)],
+            color = colors_shifts[1], marker='x', ls ='-')
+l3, = plt.semilogy(100*pix_t/nPup0, np.asarray(corono_poly_avg_resbis_aberr_t)[idx],
+            color = colors_shifts[0], marker='x', ls='--')
+l4, = plt.semilogy(100*pix_t/nPup0, np.asarray(corono_poly_avg_rester_aberr_t)[idx],
+            color = colors_shifts[1], marker='x', ls='--')
+
+l5, = plt.semilogy([], [], color = "k", ls='-')
+l6, = plt.semilogy([], [], color = "k", ls='--')
+
+plt.xlabel(r'Apodizer shift in pupil diameter [%]')
+plt.ylabel(r'Averaged normalized intensity'.format(sepbis))
+plt.axhline(10**(-cDarkHole+2), xmin=pix_t.min(), xmax=pix_t.max(), 
+           linewidth=1, color='k', linestyle='--')    
+plt.axhline(10**(-cDarkHole), xmin=pix_t.min(), xmax=pix_t.max(), 
+           linewidth=1, color='k', linestyle='--')    
+plt.xlim(-2.5, 2.5)
+plt.ylim(3e-6, 3e-3)  
+plt.title(r'Averaged intensity in broadband light ($\Delta\lambda/\lambda_0$={0:.1f}%)'.format(bw*100))
+plt.grid(True,which="both",ls="--")
+
+legend1 = plt.legend([l5,l6], ["x-axis", "y-axis"], loc=3)
+plt.gca().add_artist(legend1)
+plt.legend([l1,l2], [r'{0:.1f} $\lambda_0/D$'.format(sepbis), r'{0:.1f} $\lambda_0/D$'.format(septer)], loc=4)
+
+plt.tight_layout()
+if do_plot is True:
+    plt.savefig(str(fpath_lowfe_plot), transparent=True)
+
+#%%
+"""
+### Display of the apodizer mosaic
+"""
+    
+if nApod2d <= 25:
+    
+    fname_mosaic_plot = 'corono_poly_apodizer_sensitivity_mosaic_apo_plot.pdf'
+    fpath_mosaic_plot = fdir_pdf / fname_mosaic_plot
+    
+    ticks0 = [nPup//2 + i*nPup for i in range(nLinShift)]
+    xticklabels0 = [str(100*pix_t[i]/nPup0) for i in range(nLinShift)]
+    
+    #xticklabels0 = ['-1.0', '-0.5', '0.0', '0.5', '1.0']
+    xcoords = [i*nPup for i in range(nLinShift)]
+    
+    
+    f3 = plt.figure(33, figsize=(10,12))
+    plt.clf()
+    ax1 = f3.add_subplot(111)
+    im = ax1.imshow(apo_mosaic, cmap ="inferno", vmin=0, vmax=1)
+    plt.xlabel('Apodizer shift in pupil diameter [%](x-axis)')
+    plt.ylabel('Apodizer shift in pupil diameter [%](y-axis)')
+    
+    ax1.set_xticks(ticks0)
+    ax1.set_xticklabels(xticklabels0) #, fontdict=font_dict)
+
+    ax1.set_yticks(ticks0)
+    ax1.set_yticklabels(xticklabels0) #, fontdict=font_dict)
+    
+    for xc in xcoords:
+        plt.axvline(x=xc, color='k')
+        plt.axhline(y=xc, color='k')        
+
+    f3.subplots_adjust(bottom=0.1, top=0.9, left=0.1, right=0.8,
+                    wspace=0.02, hspace=0.02)
+    
+    f3.subplots_adjust(right=0.89)
+    cbar_ax = f3.add_axes([0.89, 0.15, 0.05, 0.7])
+    cbar    = f3.colorbar(im, cax=cbar_ax)
+    cbar.ax.set_ylabel('Normalized intensity', rotation=270, labelpad = 10)
+    plt.tight_layout()
+    plt.show()     
+
+    if do_plot is True:
+        plt.savefig(str(fpath_mosaic_plot), transparent=True)
+
+       
+#%%
+"""
+### Display of the coronagraphic image mosaic
+"""
+if nApod2d <= 25:
     fname_mosaic_plot = 'corono_poly_apodizer_sensitivity_mosaic_plot.pdf'
     fpath_mosaic_plot = fdir_pdf / fname_mosaic_plot
     
-    ticks0 = [nImg2dbis//2 + i*nImg2dbis for i in range(5)]
-    xticklabels0 = [str(100*pix_t[i]/nPup0) for i in range(5)]
+    ticks0 = [nImg2dbis//2 + i*nImg2dbis for i in range(nLinShift)]
+    xticklabels0 = [str(100*pix_t[i]/nPup0) for i in range(nLinShift)]
     
     #xticklabels0 = ['-1.0', '-0.5', '0.0', '0.5', '1.0']
-    xcoords = [i*nImg2dbis for i in range(5)]
+    xcoords = [i*nImg2dbis for i in range(nLinShift)]
     
-    if nApod2d == 25:
+    if nApod2d <= 25:
         f3 = plt.figure(32, figsize=(10,12))
         plt.clf()
         ax1 = f3.add_subplot(111)
@@ -536,100 +631,7 @@ if nApod2d == 25:
             plt.savefig(str(fpath_mosaic_plot), transparent=True)
 
 
-#%%
 
-    colors_shifts = plt.cm.rainbow(np.linspace(0,1,2))
-    ls_shifts = ["-", "--"]
-    
-    fname_lowfe_plot = 'corono_poly_apodizer_sensitivity_plot.pdf'
-    fpath_lowfe_plot = fdir_pdf / fname_lowfe_plot
-    
-    plot_lines = []
-    
-    idx = list((npix-1)//2+npix*np.arange(npix))
-    
-    plt.figure(31)
-    plt.clf()
-    l1, = plt.semilogy(100*pix_t/nPup0, corono_poly_avg_resbis_aberr_t[npix*(npix-1)//2:npix*((npix-1)//2+1)],
-                color = colors_shifts[0], marker='x', ls ='-')
-    l2, = plt.semilogy(100*pix_t/nPup0, corono_poly_avg_rester_aberr_t[npix*(npix-1)//2:npix*((npix-1)//2+1)],
-                color = colors_shifts[1], marker='x', ls ='-')
-    l3, = plt.semilogy(100*pix_t/nPup0, np.asarray(corono_poly_avg_resbis_aberr_t)[idx],
-                color = colors_shifts[0], marker='x', ls='--')
-    l4, = plt.semilogy(100*pix_t/nPup0, np.asarray(corono_poly_avg_rester_aberr_t)[idx],
-                color = colors_shifts[1], marker='x', ls='--')
-    
-    l5, = plt.semilogy([], [], color = "k", ls='-')
-    l6, = plt.semilogy([], [], color = "k", ls='--')
-    
-    plt.xlabel(r'Apodizer shift in pupil diameter [%]')
-    plt.ylabel(r'Averaged normalized intensity'.format(sepbis))
-    plt.axhline(10**(-cDarkHole+2), xmin=pix_t.min(), xmax=pix_t.max(), 
-               linewidth=1, color='k', linestyle='--')    
-    plt.axhline(10**(-cDarkHole), xmin=pix_t.min(), xmax=pix_t.max(), 
-               linewidth=1, color='k', linestyle='--')    
-    plt.xlim(-2.5, 2.5)
-    plt.ylim(3e-8, 3e-4)  
-    plt.title(r'Averaged intensity in broadband light ($\Delta\lambda/\lambda_0$={0:.1f}%)'.format(bw*100))
-    plt.grid(True,which="both",ls="--")
-    
-    legend1 = plt.legend([l5,l6], ["x-axis", "y-axis"], loc=3)
-    plt.gca().add_artist(legend1)
-    plt.legend([l1,l2], [r'{0:.1f} $\lambda_0/D$'.format(sepbis), r'{0:.1f} $\lambda_0/D$'.format(septer)], loc=4)
-    
-    plt.tight_layout()
-    if do_plot is True:
-        plt.savefig(str(fpath_lowfe_plot), transparent=True)
-
-#%%
-"""
-### Apodizer mosaic
-"""
-if nApod2d == 25:
-    apo_mosaic = np.zeros((5*nPup,5*nPup))
-    for  i in range(5):
-        for j in range(5):
-            apo_mosaic[i*nPup:(i+1)*nPup,j*nPup:(j+1)*nPup] = Apod2d_t[i*5+j]*Pupil2d
             
-
-    fname_mosaic_plot = 'corono_poly_apodizer_sensitivity_mosaic_apo_plot.pdf'
-    fpath_mosaic_plot = fdir_pdf / fname_mosaic_plot
-    
-    ticks0 = [nPup//2 + i*nPup for i in range(5)]
-    xticklabels0 = [str(100*pix_t[i]/nPup0) for i in range(5)]
-    
-    #xticklabels0 = ['-1.0', '-0.5', '0.0', '0.5', '1.0']
-    xcoords = [i*nPup for i in range(5)]
-    
-    if nApod2d == 25:
-        f3 = plt.figure(33, figsize=(10,12))
-        plt.clf()
-        ax1 = f3.add_subplot(111)
-        im = ax1.imshow(apo_mosaic, cmap ="inferno", vmin=0, vmax=1)
-        plt.xlabel('Apodizer shift in pupil diameter [%](x-axis)')
-        plt.ylabel('Apodizer shift in pupil diameter [%](y-axis)')
-        
-        ax1.set_xticks(ticks0)
-        ax1.set_xticklabels(xticklabels0) #, fontdict=font_dict)
-    
-        ax1.set_yticks(ticks0)
-        ax1.set_yticklabels(xticklabels0) #, fontdict=font_dict)
-        
-        for xc in xcoords:
-            plt.axvline(x=xc, color='k')
-            plt.axhline(y=xc, color='k')        
-    
-        f3.subplots_adjust(bottom=0.1, top=0.9, left=0.1, right=0.8,
-                        wspace=0.02, hspace=0.02)
-        
-        f3.subplots_adjust(right=0.89)
-        cbar_ax = f3.add_axes([0.89, 0.15, 0.05, 0.7])
-        cbar    = f3.colorbar(im, cax=cbar_ax)
-        cbar.ax.set_ylabel('Normalized intensity', rotation=270, labelpad = 10)
-        plt.tight_layout()
-        plt.show()     
-    
-        if do_plot is True:
-            plt.savefig(str(fpath_mosaic_plot), transparent=True)
 
 
