@@ -86,7 +86,7 @@ else:
         str_saxo = 'with_saxo'
 
 #fdir = Path('../../').resolve()
-fdir = Path('/Users/mndiaye/Library/CloudStorage/OneDrive-UniversitéNiceSophiaAntipolis/data/Coronagraphs').resolve()
+fdir = Path('/Users/mndiaye/scratch/data/Coronagraphs').resolve()
 
 fdir_pupils  = fdir / 'data' / '2D' / 'pupils' / 'SPHERE' 
 fdir_results = fdir / 'results' / '2D' / 'data' / 'SPHERE' / str_aberr / str_date / str_obs / str_saxo / str_corr  
