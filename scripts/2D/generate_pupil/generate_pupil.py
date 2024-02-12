@@ -27,8 +27,8 @@ import xaosim
 """
 pupil_name = 'vlt_btw'
 do_dead_act = False
-nPup= 500#384
-do_fits = False
+nPup= 500
+do_fits = True
 
 do_zeropad = True
 do_fits_zeropad = True
@@ -49,8 +49,16 @@ if pupil_name == 'vlt':
     else:
         pupil = aperture.vlt_pupil(nPup, nPup, dead_actuator_diameter=0.)
 elif pupil_name == 'vlt_btw':
-    pdiam, odiam = 8.00, 1.12
-    thick = 0.04              # adopted spider thickness (meters)
+    # using data in Frantz'code
+    # pdiam, odiam = 8.00, 1.12
+    # thick = 0.04             # adopted spider thickness (meters)
+    # offset = 1.11            # spider intersection offset (meters)
+    # beta = 50.5              # spider angle beta
+    
+    
+    # using data in Arthur's code and based on vlt pupil measurement with IRDIS (partial match for spider orientation)
+    pdiam, odiam = 8.00, 1.10*1.03
+    thick = 7*8./384             # adopted spider thickness (meters)
     offset = 1.11            # spider intersection offset (meters)
     beta = 50.5              # spider angle beta
 
@@ -116,3 +124,13 @@ if do_zeropad:
     if do_fits_zeropad:
         fits.writeto(fpath_pad, pupilpad*1., overwrite=True)
     
+#%%
+"""
+### pupil difference
+"""
+# pupil_true = aperture.vlt_pupil(nPup, nPup, dead_actuator_diameter=0., cpix=False)
+# pupil_diff = pupil - pupil_true
+
+# plt.figure(2)
+# plt.clf()
+# plt.imshow(pupil_diff)
