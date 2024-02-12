@@ -12,7 +12,11 @@ License: MIT license
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
-from pyzelda.utils import aperture, imutils, zernike
+from pyzelda.utils import imutils, zernike
+from vigan.optics import aperture
+
+ftsz = 16 
+plt.rcParams.update({'font.size': ftsz})
 
 import os
 from matplotlib import cm
@@ -44,12 +48,31 @@ if True:
     nArr = 520
     nPup = 520
     nPup0= 500
-    nFPM = 20
+    nFPM = 50
     Fmax2d = 22.5
     nImg2d = 45
     
+    wv        = 1.593e-6
+    dAper     = 8
+    mas2rad   = np.pi/(180.*3600)
+    rMask_m   = 287e-6/2.
+    Fratio    = 40
+    rMask0  = rMask_m/(wv*Fratio)
+    rMask_mas = 1000.*rMask0 * (wv/dAper)/mas2rad
+    print('Mask radius: {0:.2f} mas at {1:.3f}um'.format(rMask_mas, wv*1e6))
+    
+    # use real data    
+    use_real_data = False
+    if use_real_data:
+        nArr = 384 #520
+        nPup = 384 #520
+        nPup0= 384 #500
+        
+    
+    # apodizer type
+    ApodBinary = False
+    
     # mask radius in lam0/D unit
-    rMask0 = 2.252 # ALC2 at 1.593um (185mas)
     rMask = rMask0*(nPup/nPup0)
     
     # dark zone bounds (inner and outer edges) in lam0/D unit
@@ -64,9 +87,13 @@ if True:
     
     # CtrBtwnPix2
     CtrBtwnPix  = True
-    CtrBtwnPix2 = True
+    CtrBtwnPix2 = False
     Pupil2dSym  = False # set it True only for optimization
     ImPart      = True
+    
+    if use_real_data:
+        CtrBtwnPix  = False
+        CtrBtwnPix2 = False
     
     #nlam
     bw   = 0.2
@@ -75,11 +102,13 @@ if True:
     do_fits = True
 
 nlambis = 11 
-Fmax2dbis0 = 60   
-Fmax2dbis = Fmax2dbis0*(nPup/nPup0)
-nImg2dbis = 600
 
-do_plot = False    
+nImg2dbis = 256
+Fmax2dbis0 = nImg2dbis/(2*(wv/950e-9))
+  
+Fmax2dbis = Fmax2dbis0*(nPup/nPup0)
+
+do_plot = True    
 
 # separation for contrast estimates
 sepbis=3.0
@@ -87,7 +116,7 @@ septer=5.0
 
 # maximum pixel shift along a given axis for apodizer 
 pix_max = 10
-nLinShift = 1
+nLinShift = 5
 
 
 #%%
@@ -99,7 +128,11 @@ if True:
     fdir = Path('/Users/mndiaye/scratch/data/Coronagraphs/data/2D/pupils/').resolve()
     
     fdir_apod = Path('/Users/mndiaye/scratch/data/Coronagraphs/data/2D/pupils/SPHERE/upgrade/').resolve()  
-    fname_apod = f'apod_binary_{nArr:04d}.fits'
+
+    fname_apod = f'apod_initial_{nArr:04d}.fits'
+    if ApodBinary is True:
+        fname_apod = f'apod_binary_{nArr:04d}.fits'
+        
     
     if pupil_name == 'lvr':
         fname_pup = 'ATLAST_Aperture_nPup={0}.fits'.format(nPup,)
@@ -113,11 +146,22 @@ if True:
     else:
         fname_pup = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
         fname_lys = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
+
+    if use_real_data is True:  
+        fdir_apod = Path('/Users/mndiaye/scratch/data/Coronagraphs/data/2D/pupils/SPHERE/').resolve()  
+        fname_apod = 'SPHERE_APO1_field_transmission_map.fits'
+        fname_lys = 'sphere_stop_ST_ALC2.fits'
+        fpath_lys = fdir_apod / fname_lys    
+        Pupil2d = aperture.vlt_pupil(nPup, nPup, dead_actuator_diameter=0, cpix=True)
+        LyotStop2d = fits.getdata(fpath_lys)
+    else:
+        fpath_pup = fdir / fname_pup
+        fpath_lys = fdir / fname_lys
+        Pupil2d   = aperture.vlt_pupil(nArr, nPup0, dead_actuator_diameter=0, cpix=False) #fits.getdata(fpath_pup)
+        LyotStop2d = fits.getdata(fpath_lys)
+
+
     
-    fpath_pup = fdir / fname_pup
-    fpath_lys = fdir / fname_lys
-    Pupil2d   = fits.getdata(fpath_pup)
-    LyotStop2d = fits.getdata(fpath_lys)
     
     if solver != 'gurobipy' and solver != 'stdgrb':
         solver = 'scipy'
@@ -266,7 +310,7 @@ for ilam in range(corono0.nlam):
 
 #%% Intensity profiles of the direct and coronagraphic images
 """
-### Display of the intensity profiles of the coronagraphic images
+### Display of the coronagraphic images in broadband light
 """
 
 #val = 0
@@ -331,7 +375,7 @@ else:
     idx_lam_peak = 0
 
 # Intensity profiles of the direct and coronagraphic images
-plt.figure(12)
+plt.figure(12, figsize=(8,4.5))
 plt.clf()
 for ilam in range(corono0.nlam):
     plt.semilogy(rad_corono*Fmax2dbis/nImg2dbis, corono_mono_prf_std_t[ilam]/direct_mono_img_t[idx_lam_peak].max(),
@@ -364,18 +408,19 @@ colors_cor = plt.cm.rainbow(np.linspace(0,1,1))
 
 i0 = 0
 
-plt.figure(11)
+plt.figure(11, figsize=(8,4.5))
 plt.clf()
 plt.semilogy(rad_corono*Fmax2dbis/nImg2dbis, corono_poly_prf_std_f/direct_poly_img_f.max(),
-        label='map {0}'.format(0), color = colors_cor[i0])
+        label='current APLC', color = colors_cor[i0])
 
 plt.axvline(x=rMask0, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
 plt.axvline(x=rho0, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
 plt.axvline(x=rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
 plt.axhline(10**(-cDarkHole), xmin=corono0.xi2d.min(), xmax=corono0.xi2d.max(), 
            linewidth=1, color='k', linestyle='--')
-plt.xlabel(r'Angular separation in $\lambda_0$/D')
+plt.xlabel(f'Angular separation in $\lambda_0$/D ($\lambda_0={wv*1e6:.3f}\mu m$)')
 plt.ylabel(r'1$\sigma$ normalized intensity in log scale')
+plt.xlim(-1.0, 21.0)
 plt.ylim(3e-8, 3e-4)
 plt.legend()
 plt.title(r'Intensity profile in broadband light ($\Delta\lambda/\lambda_0$={0:.1f}%)'.format(bw*100))
@@ -504,7 +549,7 @@ plot_lines = []
 
 idx = list((npix-1)//2+npix*np.arange(npix))
 
-plt.figure(31)
+plt.figure(31, figsize=(8,4.5))
 plt.clf()
 l1, = plt.semilogy(100*pix_t/nPup0, corono_poly_avg_resbis_aberr_t[npix*(npix-1)//2:npix*((npix-1)//2+1)],
             color = colors_shifts[0], marker='x', ls ='-')
@@ -554,7 +599,7 @@ if nApod2d <= 25:
     xcoords = [i*nPup for i in range(nLinShift)]
     
     
-    f3 = plt.figure(33, figsize=(10,12))
+    f3 = plt.figure(33, figsize=(13,10))
     plt.clf()
     ax1 = f3.add_subplot(111)
     im = ax1.imshow(apo_mosaic, cmap ="inferno", vmin=0, vmax=1)
@@ -574,10 +619,10 @@ if nApod2d <= 25:
     f3.subplots_adjust(bottom=0.1, top=0.9, left=0.1, right=0.8,
                     wspace=0.02, hspace=0.02)
     
-    f3.subplots_adjust(right=0.89)
-    cbar_ax = f3.add_axes([0.89, 0.15, 0.05, 0.7])
+    f3.subplots_adjust(right=0.85)
+    cbar_ax = f3.add_axes([0.85, 0.15, 0.05, 0.7])
     cbar    = f3.colorbar(im, cax=cbar_ax)
-    cbar.ax.set_ylabel('Normalized intensity', rotation=270, labelpad = 10)
+    cbar.ax.set_ylabel('Normalized intensity', rotation=270, labelpad = 20)
     plt.tight_layout()
     plt.show()     
 
@@ -600,7 +645,7 @@ if nApod2d <= 25:
     xcoords = [i*nImg2dbis for i in range(nLinShift)]
     
     if nApod2d <= 25:
-        f3 = plt.figure(32, figsize=(10,12))
+        f3 = plt.figure(32, figsize=(13,10))
         plt.clf()
         ax1 = f3.add_subplot(111)
         im = ax1.imshow(np.log10(img_mosaic), cmap ="inferno", vmin=-7, vmax=-3)
@@ -620,10 +665,10 @@ if nApod2d <= 25:
         f3.subplots_adjust(bottom=0.1, top=0.9, left=0.1, right=0.8,
                         wspace=0.02, hspace=0.02)
         
-        f3.subplots_adjust(right=0.89)
-        cbar_ax = f3.add_axes([0.89, 0.15, 0.05, 0.7])
+        f3.subplots_adjust(right=0.85)
+        cbar_ax = f3.add_axes([0.85, 0.15, 0.05, 0.7])
         cbar    = f3.colorbar(im, cax=cbar_ax)
-        cbar.ax.set_ylabel('Image intensity in log scale', rotation=270, labelpad = 10)
+        cbar.ax.set_ylabel('Image intensity in log scale', rotation=270, labelpad = 20)
         plt.tight_layout()
         plt.show()     
     
