@@ -42,9 +42,9 @@ do_png = 0
 val = 1/2
 
 # scaling factor for tests on pupil misalignments, set to 1 for manufacturing
-kfactor = 1 # 500/1030
+kfactor = 500/1030
 # scaling factor to crop the apodizer to the desired size, set to 1 for manufacturing
-kcrop = 1 # 520/728
+kcrop = 520/728
 
 # dimensions of the pupil in mm 
 rPup_mm = 5.15*kfactor
@@ -130,7 +130,7 @@ apod1d_file.info()
 apod1d_file_colname = apod1d_file.columns
 
 dist1d_d = apod1d_file[apod1d_file_colname[0]]
-ampl1d_d = apod1d_file[apod1d_file_colname[1]]
+ampl1d_d = np.sqrt(apod1d_file[apod1d_file_colname[1]])
 
 dist1d_r = dist1d_d[dist1d_d >= 0]
 ampl1d_r = ampl1d_d[dist1d_d >= 0]
