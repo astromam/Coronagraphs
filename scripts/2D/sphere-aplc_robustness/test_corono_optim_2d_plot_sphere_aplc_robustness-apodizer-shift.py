@@ -64,8 +64,8 @@ if True:
     # use real data    
     use_real_data = False
     if use_real_data:
-        nArr = 384 #520
-        nPup = 384 #520
+        nArr = 384+20 #520
+        nPup = 384+20 #520
         nPup0= 384 #500
         
     
@@ -103,12 +103,12 @@ if True:
 
 nlambis = 11 
 
-nImg2dbis = 256
+nImg2dbis = 134 #256
 Fmax2dbis0 = nImg2dbis/(2*(wv/950e-9))
   
 Fmax2dbis = Fmax2dbis0*(nPup/nPup0)
 
-do_plot = True    
+do_plot = False    
 
 # separation for contrast estimates
 sepbis=3.0
@@ -152,16 +152,40 @@ if True:
         fname_apod = 'SPHERE_APO1_field_transmission_map.fits'
         fname_lys = 'sphere_stop_ST_ALC2.fits'
         fpath_lys = fdir_apod / fname_lys    
-        Pupil2d = aperture.vlt_pupil(nPup, nPup, dead_actuator_diameter=0, cpix=True)
-        LyotStop2d = fits.getdata(fpath_lys)
+        Pupil2d = aperture.vlt_pupil(nArr, nPup0, dead_actuator_diameter=0, cpix=True)
+        LyotStop2dtmp = fits.getdata(fpath_lys)
+        
     else:
         fpath_pup = fdir / fname_pup
         fpath_lys = fdir / fname_lys
         Pupil2d   = aperture.vlt_pupil(nArr, nPup0, dead_actuator_diameter=0, cpix=False) #fits.getdata(fpath_pup)
         LyotStop2d = fits.getdata(fpath_lys)
 
+#%%
+"""
+### Read the apodizer file
+"""
 
-    
+fpath_apod = fdir_apod / fname_apod
+print(fpath_apod)
+
+
+if use_real_data:
+    Apod2dtmp = fits.getdata(fpath_apod,)
+    if nArr == nPup0:
+        Apod2d = Apod2dtmp
+        LyotStop2d = LyotStop2dtmp
+    else:
+        Apod2d = np.zeros((nArr, nArr))
+        LyotStop2d = np.zeros((nArr, nArr))
+        x_ini = (nArr-nPup0)//2
+        x_end = (nArr+nPup0)//2
+        Apod2d[x_ini:x_end, x_ini:x_end] = Apod2dtmp
+        LyotStop2d[x_ini:x_end, x_ini:x_end] = LyotStop2dtmp
+else:
+    Apod2d = fits.getdata(fpath_apod,)
+
+#%%    
     
     if solver != 'gurobipy' and solver != 'stdgrb':
         solver = 'scipy'
@@ -233,15 +257,6 @@ elif corono_name == 'APLC':
 else:
     raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
 
-#%%
-"""
-### Read the apodizer file
-"""
-
-fpath_apod = fdir_apod / fname_apod
-print(fpath_apod)
-
-Apod2d = fits.getdata(fpath_apod,)
 
 #%% Display of the apodizer
 """
@@ -520,7 +535,7 @@ if nApod2d <= 25:
     apo_mosaic = np.zeros((nLinShift*nPup,nLinShift*nPup))
     for  i in range(nLinShift):
         for j in range(nLinShift):
-            apo_mosaic[i*nPup:(i+1)*nPup,j*nPup:(j+1)*nPup] = Apod2d_t[i*nLinShift+j]*Pupil2d
+            apo_mosaic[i*nPup:(i+1)*nPup,j*nPup:(j+1)*nPup] = np.abs(Apod2d_t[i*nLinShift+j]*Pupil2d)**2
 
 #%%
 """
@@ -533,6 +548,25 @@ if nApod2d <= 25:
             img_mosaic[i*nImg2dbis:(i+1)*nImg2dbis,j*nImg2dbis:(j+1)*nImg2dbis] = corono_poly_img_aberr_t[i*nLinShift+j]
             
     img_mosaic /= direct_poly_img_f.max()
+
+#%%
+"""
+### Create the contrast maosaic
+"""
+if nApod2d <= 25:
+    corono_poly_avg_resbis_aberr_mosaic = np.zeros((nLinShift,nLinShift))
+    corono_poly_avg_rester_aberr_mosaic = np.zeros((nLinShift,nLinShift))
+    for  i in range(nLinShift):
+        for j in range(nLinShift):
+            corono_poly_avg_resbis_aberr_mosaic[i,j] = np.log10(corono_poly_avg_resbis_aberr_t[i*nLinShift+j])
+            corono_poly_avg_rester_aberr_mosaic[i,j] = np.log10(corono_poly_avg_rester_aberr_t[i*nLinShift+j])
+
+#corono_poly_avg_resbis_aberr_mosaic = 100*np.abs((corono_poly_avg_resbis_aberr_mosaic - corono_poly_avg_resbis_aberr_mosaic[nLinShift//2, nLinShift//2]))/np.abs(corono_poly_avg_resbis_aberr_mosaic[nLinShift//2, nLinShift//2])
+#corono_poly_avg_rester_aberr_mosaic = 100*np.abs((corono_poly_avg_rester_aberr_mosaic - corono_poly_avg_rester_aberr_mosaic[nLinShift//2, nLinShift//2]))/np.abs(corono_poly_avg_rester_aberr_mosaic[nLinShift//2, nLinShift//2])
+
+corono_poly_avg_resbis_aberr_mosaic = corono_poly_avg_resbis_aberr_mosaic - corono_poly_avg_resbis_aberr_mosaic[nLinShift//2, nLinShift//2]
+corono_poly_avg_rester_aberr_mosaic = corono_poly_avg_rester_aberr_mosaic - corono_poly_avg_rester_aberr_mosaic[nLinShift//2, nLinShift//2]
+
 
  
 #%%
@@ -570,7 +604,7 @@ plt.axhline(10**(-cDarkHole+2), xmin=pix_t.min(), xmax=pix_t.max(),
 plt.axhline(10**(-cDarkHole), xmin=pix_t.min(), xmax=pix_t.max(), 
            linewidth=1, color='k', linestyle='--')    
 plt.xlim(-2.5, 2.5)
-plt.ylim(3e-6, 3e-3)  
+plt.ylim(3e-7, 3e-4)  
 plt.title(r'Averaged intensity in broadband light ($\Delta\lambda/\lambda_0$={0:.1f}%)'.format(bw*100))
 plt.grid(True,which="both",ls="--")
 
@@ -635,8 +669,8 @@ if nApod2d <= 25:
 ### Display of the coronagraphic image mosaic
 """
 if nApod2d <= 25:
-    fname_mosaic_plot = 'corono_poly_apodizer_sensitivity_mosaic_plot.pdf'
-    fpath_mosaic_plot = fdir_pdf / fname_mosaic_plot
+    fname_mosaic_img_plot = 'corono_poly_apodizer_sensitivity_mosaic_img_plot.pdf'
+    fpath_mosaic_img_plot = fdir_pdf / fname_mosaic_img_plot
     
     ticks0 = [nImg2dbis//2 + i*nImg2dbis for i in range(nLinShift)]
     xticklabels0 = [str(100*pix_t[i]/nPup0) for i in range(nLinShift)]
@@ -673,10 +707,74 @@ if nApod2d <= 25:
         plt.show()     
     
         if do_plot is True:
-            plt.savefig(str(fpath_mosaic_plot), transparent=True)
+            plt.savefig(str(fpath_mosaic_img_plot), transparent=True)
 
 
+#%%
+"""
+### Display of the contrast mosaic
+"""
+    
+if nApod2d <= 25:
+    
+    fname_mosaic_cst1_plot = 'corono_poly_apodizer_sensitivity_mosaic_cst1_plot.pdf'
+    fpath_mosaic_cst1_plot = fdir_pdf / fname_mosaic_cst1_plot
+    
+    ticks0 = [i for i in range(nLinShift)]
+    xticklabels0 = [str(100*pix_t[i]/nPup0) for i in range(nLinShift)]
+    
+    #xticklabels0 = ['-1.0', '-0.5', '0.0', '0.5', '1.0']
+    xcoords = [0.5+ i*1 for i in range(nLinShift)]
+    
+    
+    f3 = plt.figure(34, figsize=(12,5))
+    plt.clf()
+    ax1 = f3.add_subplot(121)
+    im = ax1.imshow(corono_poly_avg_resbis_aberr_mosaic, cmap ="inferno", vmin=0, vmax=0.1)
+    plt.xlabel('Apodizer shift in pupil diameter [%]')
+    plt.ylabel('Apodizer shift in pupil diameter [%]')
+    
+    ax1.set_xticks(ticks0)
+    ax1.set_xticklabels(xticklabels0) #, fontdict=font_dict)
 
-            
+    ax1.set_yticks(ticks0)
+    ax1.set_yticklabels(xticklabels0) #, fontdict=font_dict)
+    
+    ax1.set_title(f'at {sepbis:.1f}$\lambda$/D')
+    
+    for xc in xcoords:
+        ax1.axvline(x=xc, color='k')
+        ax1.axhline(y=xc, color='k')        
+
+    ax2 = f3.add_subplot(122)
+    im = ax2.imshow(corono_poly_avg_rester_aberr_mosaic, cmap ="inferno", vmin=0, vmax=0.1)
+    ax2.set_xlabel('Apodizer shift in pupil diameter [%]')
+    #ax2.set_ylabel('Apodizer shift in pupil diameter [%]')
+    
+    ax2.set_xticks(ticks0)
+    ax2.set_xticklabels(xticklabels0) #, fontdict=font_dict)
+
+    ax2.set_yticks(ticks0)
+    ax2.set_yticklabels(xticklabels0) #, fontdict=font_dict)
+    
+    ax2.set_title(f'at {septer:.1f}$\lambda$/D')
+    
+    for xc in xcoords:
+        ax2.axvline(x=xc, color='k')
+        ax2.axhline(y=xc, color='k')        
+
+
+    f3.subplots_adjust(bottom=0.1, top=0.9, left=0., right=0.7,
+                    wspace=0.02, hspace=0.02)
+    
+    f3.subplots_adjust(right=1.)
+    cbar_ax = f3.add_axes([0.9, 0.2, 0.025, 0.7])
+    cbar    = f3.colorbar(im, cax=cbar_ax)
+    cbar.ax.set_ylabel('Contrast loss in dex', rotation=270, labelpad = 20)
+    plt.tight_layout()
+    plt.show()     
+
+    if do_plot is True:
+        plt.savefig(str(fpath_mosaic_cst1_plot), transparent=True)
 
 
