@@ -441,14 +441,14 @@ plt.subplot(131)
 plt.imshow(np.abs(Fld_CC)**2)
 plt.title('plane C-')
 plt.subplot(132)
-plt.imshow(np.log10(Int_DD0), vmax =0, vmin = -5, cmap ='inferno')
+plt.imshow(np.abs(Fld_LL)**2)
 plt.title('plane C+')
 plt.subplot(133)
 plt.imshow(np.log10(Int_DD), vmax =0, vmin = -5, cmap ='inferno')
 plt.title('plane D')
 # plt.savefig(fdir_plt / 'coronagraphic_image_lyotstop.png', dpi=300)
-# plt.show()
-plt.close()
+plt.show()
+# plt.close()
 
 
 
