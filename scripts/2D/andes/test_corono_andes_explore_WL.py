@@ -429,8 +429,8 @@ for lam in lam_list :
     Pupil configuration
     """
 
-    diam = 1
-    obst = 0
+    diam = 0.9
+    obst = 0.4
     mB = 3.8 * lam_0/lam # mutiplier par lambda_0/lamdba # mB en fonction de lam or not ? 
 
     LyotStop2d = Pupil*(uniform_disk(nPup, diam*nPup/2)-uniform_disk(nPup, obst*nPup/2))
