@@ -425,7 +425,7 @@ mD = 58.393*(nImg/1600) #* (lam_0/lam)
 Pupil configuration
 """
 
-### FOR RESEARCH OF BEST PARAMETERS
+### All parameters to test
 
 diametre_lyot = [0.8,0.81,0.82,0.83,0.84,0.85,0.86,0.87,0.88,0.89,0.9,0.91,0.92,0.93,0.94,0.95,0.96,0.97,0.98,0.99,1.00]#0.9,0.92
 obstruction = [0.3,0.31,0.32,0.33,0.34,0.35,0.36,0.37,0.38,0.39,0.4,0.41,0.42,0.43,0.44,0.45,0.46,0.47,0.48,0.49,0.5,]
@@ -437,6 +437,7 @@ throughput = np.zeros((len(diametre_lyot),len(obstruction),len(mB_conf)))
 
 diam_k=0
 
+### Création des tableaux pour stocker les résultats
 resultat_no_coro_no_turb_rad = []
 resultat_no_coro_no_turb_int = []
 
@@ -449,14 +450,16 @@ resultat_no_coro_w_turb_int = []
 resultat_w_woro_w_turb_rad = []
 resultat_w_woro_w_turb_int = []
 
+#%%
+
+### Loop over the parameters
+
 for diam in diametre_lyot: 
     obst_i=0
     for obst in obstruction:
         mb_i=0
         print(diam,obst)
         LyotStop2d = Pupil*(uniform_disk(nPup, diam*nPup/2)-uniform_disk(nPup, obst*nPup/2))
-
-#%%
         coro_config = 'lyot'
                 
         for s in range(len(mB_conf)) :
@@ -538,6 +541,7 @@ for diam in diametre_lyot:
             # save the direct and coronagraphic images
 
 
+            # computation of the averaged intensity profiles of the images
             Int_DD_prf_avg, rad_DD_prf_avg = profile(Int_DD, ptype='mean')
             Int_DD0_prf_avg, rad_DD0_prf_avg = profile(Int_DD0, ptype='mean')
 
@@ -551,6 +555,7 @@ for diam in diametre_lyot:
             rad_DD0_prf_avg_mas = rad_DD0_prf_avg_lamD * lamD2mas
             rad_DD_prf_avg_mas = rad_DD_prf_avg_lamD * lamD2mas
 
+            ### Save images
             resultat_w_coro_no_turb_rad.append(rad_DD_prf_avg)
             resultat_w_coro_no_turb_int.append(Int_DD_prf_avg)
 
@@ -559,7 +564,7 @@ for diam in diametre_lyot:
                 
 
             """
-            ### load OPD of Anne Laure
+            ### load OPD of Anne Laure to compute images with turbulences
             """
 
 
@@ -571,8 +576,6 @@ for diam in diametre_lyot:
                 """
                 ### Compute PSF (with errors)
                 """
-
-
 
                 t0 = time.time()
                 Int_D0 = np.zeros((nImg, nImg))
@@ -668,16 +671,16 @@ for diam in diametre_lyot:
 
 
 
-np.save(fdir_res / 'resultat_no_coro_no_turb_rad_{wl}.npy', resultat_no_coro_no_turb_rad)
-np.save(fdir_res / 'resultat_no_coro_no_turb_int_{wl}.npy', resultat_no_coro_no_turb_int)
+np.save(fdir_res / 'Paramaeters_diff_resultat_no_coro_no_turb_rad_{wl}.npy', resultat_no_coro_no_turb_rad)
+np.save(fdir_res / 'Paramaeters_resultat_no_coro_no_turb_int_{wl}.npy', resultat_no_coro_no_turb_int)
 
-np.save(fdir_res / 'resultat_w_coro_no_turb_rad_{wl}.npy', resultat_w_coro_no_turb_rad)
-np.save(fdir_res / 'resultat_w_coro_no_turb_int_{wl}.npy', resultat_w_coro_no_turb_int)
+np.save(fdir_res / 'Paramaeters_resultat_w_coro_no_turb_rad_{wl}.npy', resultat_w_coro_no_turb_rad)
+np.save(fdir_res / 'Paramaeters_resultat_w_coro_no_turb_int_{wl}.npy', resultat_w_coro_no_turb_int)
 
-np.save(fdir_res / 'resultat_no_coro_w_turb_rad_{wl}.npy', resultat_no_coro_w_turb_rad)
-np.save(fdir_res / 'resultat_no_coro_w_turb_int_{wl}.npy', resultat_no_coro_w_turb_int)
+np.save(fdir_res / 'Paramaeters_resultat_no_coro_w_turb_rad_{wl}.npy', resultat_no_coro_w_turb_rad)
+np.save(fdir_res / 'Paramaeters_resultat_no_coro_w_turb_int_{wl}.npy', resultat_no_coro_w_turb_int)
 
-np.save(fdir_res / 'resultat_w_woro_w_turb_rad_{wl}.npy', resultat_w_woro_w_turb_rad)
-np.save(fdir_res / 'resultat_w_woro_w_turb_int_{wl}.npy', resultat_w_woro_w_turb_int)
+np.save(fdir_res / 'Paramaeters_resultat_w_woro_w_turb_rad_{wl}.npy', resultat_w_woro_w_turb_rad)
+np.save(fdir_res / 'Paramaeters_resultat_w_woro_w_turb_int_{wl}.npy', resultat_w_woro_w_turb_int)
 
-np.save(fdir_res / 'throughput_{wl}.npy', throughput)
+np.save(fdir_res / 'Paramaeters_throughput_{wl}.npy', throughput)

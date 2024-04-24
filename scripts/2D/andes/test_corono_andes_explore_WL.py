@@ -620,16 +620,16 @@ for lam in lam_list :
 
 
 
-np.save(fdir_res / 'resultat_no_coro_no_turb_rad_{wl}.npy', resultat_no_coro_no_turb_rad)
-np.save(fdir_res / 'resultat_no_coro_no_turb_int_{wl}.npy', resultat_no_coro_no_turb_int)
+np.save(fdir_res / 'WL_diff_resultat_no_coro_no_turb_rad.npy', resultat_no_coro_no_turb_rad)
+np.save(fdir_res / 'WL_diff_resultat_no_coro_no_turb_int.npy', resultat_no_coro_no_turb_int)
 
-np.save(fdir_res / 'resultat_w_coro_no_turb_rad_{wl}.npy', resultat_w_coro_no_turb_rad)
-np.save(fdir_res / 'resultat_w_coro_no_turb_int_{wl}.npy', resultat_w_coro_no_turb_int)
+np.save(fdir_res / 'WL_diff_resultat_w_coro_no_turb_rad.npy', resultat_w_coro_no_turb_rad)
+np.save(fdir_res / 'WL_diff_resultat_w_coro_no_turb_int.npy', resultat_w_coro_no_turb_int)
 
-np.save(fdir_res / 'resultat_no_coro_w_turb_rad_{wl}.npy', resultat_no_coro_w_turb_rad)
-np.save(fdir_res / 'resultat_no_coro_w_turb_int_{wl}.npy', resultat_no_coro_w_turb_int)
+np.save(fdir_res / 'WL_diff_resultat_no_coro_w_turb_rad.npy', resultat_no_coro_w_turb_rad)
+np.save(fdir_res / 'WL_diff_resultat_no_coro_w_turb_int.npy', resultat_no_coro_w_turb_int)
 
-np.save(fdir_res / 'resultat_w_woro_w_turb_rad_{wl}.npy', resultat_w_woro_w_turb_rad)
-np.save(fdir_res / 'resultat_w_woro_w_turb_int_{wl}.npy', resultat_w_woro_w_turb_int)
+np.save(fdir_res / 'WL_diff_resultat_w_woro_w_turb_rad.npy', resultat_w_woro_w_turb_rad)
+np.save(fdir_res / 'WL_diff_resultat_w_woro_w_turb_int.npy', resultat_w_woro_w_turb_int)
 
 
