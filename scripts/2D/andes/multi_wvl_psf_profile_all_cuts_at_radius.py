@@ -109,7 +109,7 @@ p_dir=('OPDs_PASSATA/OPD/WS/JQ1/20240515_163822',
 
 #%%
 
-slc = False
+slc = True
 if slc:
     ptrn = 'Lbd2D_'
 else:
