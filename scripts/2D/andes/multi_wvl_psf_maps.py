@@ -12,6 +12,7 @@ Created on Tue Jun 11 13:36:25 2024
 
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.patches import Ellipse
 from astropy.io import fits
 import os
 from pathlib import Path
@@ -54,7 +55,6 @@ def recursive_search(path: str) -> "list[str]":
 """
 
 lam_c = 1.6e-6  #  "central" reference lambda, "of interest", in meters
-slc = False  #  supersed lam_c with lam_lst[i]
 
 # conversion lradian to mas
 rad2mas = np.pi/(180.*3600*1000)
@@ -152,7 +152,7 @@ opds_dir=('OPDs_PASSATA/OPD/WS/JQ1/20240515_163822',
 for dir_nb in range(len(opds_dir)):
             
     opd_set = os.path.basename(fdir_res / opds_dir[dir_nb] ).split('.')[0]
-    # opd_set='toto'
+    # opd_set='toto'  #  ne pas oublier de creer toto avant
     print(fdir_res / opd_set)
     
     #%%
@@ -220,7 +220,7 @@ for dir_nb in range(len(opds_dir)):
     fig = plt.figure(4, figsize=(16,6))
     plt.clf()
     plt.tight_layout()
-    plt.suptitle('ao corrected psf (top) vs ao corrected coro. psf (bottom)')
+    # plt.suptitle('ao corrected psf (top) vs ao corrected coro. psf (bottom)')
     
     grid = AxesGrid(fig, 111,
             nrows_ncols=(2, 5),
@@ -233,12 +233,23 @@ for dir_nb in range(len(opds_dir)):
     for i in range(5):
         
         im = grid[i].imshow(
-            np.log10(Int_D0[iD[i],:]), vmin=vmin0, vmax=vmax0, cmap='inferno')
+            np.log10(Int_D0[iD[i],:]),vmin=vmin0,vmax=vmax0,cmap='inferno',
+            extent=(-aS[-1],aS[-1],-aS[-1],aS[-1]))
         grid[i].set_title(str(int(lam_lst[iD[i]]*1e9+.1))+'nm')
-        
+        grid[i].add_patch(
+            Ellipse( (0,0),rW_mas*mB,rW_mas*mB,
+                    color='w',ls='--',hatch='xxx',fill=False))
+        grid[i].add_patch(
+            Ellipse( (0,0), as_oi*2, as_oi*2,color='w',ls=':',lw=2,fill=False))
+         
         im = grid[i+5].imshow(
-            np.log10(Int_D[iD[i],:]), vmin=vmin0, vmax=vmax0, cmap='inferno')
-        # grid[i+1+5].set_title('coro. psf')
+            np.log10(Int_D[iD[i],:]),vmin=vmin0,vmax=vmax0,cmap='inferno',
+            extent=(-aS[-1],aS[-1],-aS[-1],aS[-1]))
+        grid[i+5].add_patch(
+            Ellipse( (0,0),rW_mas*mB,rW_mas*mB,
+                    color='w',ls='--',hatch='xxx',fill=False))
+        grid[i+5].add_patch(
+            Ellipse( (0,0), as_oi*2, as_oi*2,color='w',ls=':',lw=2,fill=False))
         
     # colorbar
     cbar = grid[0].cax.colorbar(im)
