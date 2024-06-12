@@ -257,8 +257,8 @@ for dir_nb in range(len(opds_dir)):
     cbar.ax.get_yaxis().labelpad = 15
     cbar.ax.set_ylabel('Intensity in log scale', rotation=270)
     
-    # plt.savefig(fpath_images_svg)
-    # plt.savefig(fpath_images_pdf)
+    plt.savefig(fpath_images_svg)
+    plt.savefig(fpath_images_pdf)
     
     # if i==5:
     plt.show()
