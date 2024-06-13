@@ -227,7 +227,8 @@ for dir_nb in range(len(opds_dir)):
             axes_pad=0.3,
             cbar_mode='single',
             cbar_location='right',
-            cbar_pad=0.2
+            cbar_pad=0.2,
+            label_mode='L'
             )
     
     for i in range(5):
@@ -235,6 +236,7 @@ for dir_nb in range(len(opds_dir)):
         im = grid[i].imshow(
             np.log10(Int_D0[iD[i],:]),vmin=vmin0,vmax=vmax0,cmap='inferno',
             extent=(-aS[-1],aS[-1],-aS[-1],aS[-1]))
+        grid[i].set_ylabel("sep. [mas]")
         grid[i].set_title(str(int(lam_lst[iD[i]]*1e9+.1))+'nm')
          
         im = grid[i+5].imshow(
@@ -243,8 +245,10 @@ for dir_nb in range(len(opds_dir)):
         grid[i+5].add_patch(
             Ellipse( (0,0),rW_mas*mB,rW_mas*mB,
                     color='w',ls=':',hatch='xxx',fill=False,alpha=0.7))
-        grid[i+5].add_patch(
-            Ellipse( (0,0), as_oi*2, as_oi*2,color='w',ls=':',lw=2,fill=False))
+        grid[i+5].set_xlabel("sep. [mas]")
+        grid[i+5].set_ylabel("sep. [mas]")
+        # grid[i+5].add_patch(
+        #     Ellipse( (0,0), as_oi*2, as_oi*2,color='w',ls=':',lw=2,fill=False))
         
     # colorbar
     cbar = grid[0].cax.colorbar(im)
