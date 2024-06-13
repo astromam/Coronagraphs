@@ -236,18 +236,13 @@ for dir_nb in range(len(opds_dir)):
             np.log10(Int_D0[iD[i],:]),vmin=vmin0,vmax=vmax0,cmap='inferno',
             extent=(-aS[-1],aS[-1],-aS[-1],aS[-1]))
         grid[i].set_title(str(int(lam_lst[iD[i]]*1e9+.1))+'nm')
-        grid[i].add_patch(
-            Ellipse( (0,0),rW_mas*mB,rW_mas*mB,
-                    color='w',ls='--',hatch='xxx',fill=False))
-        grid[i].add_patch(
-            Ellipse( (0,0), as_oi*2, as_oi*2,color='w',ls=':',lw=2,fill=False))
          
         im = grid[i+5].imshow(
             np.log10(Int_D[iD[i],:]),vmin=vmin0,vmax=vmax0,cmap='inferno',
             extent=(-aS[-1],aS[-1],-aS[-1],aS[-1]))
         grid[i+5].add_patch(
             Ellipse( (0,0),rW_mas*mB,rW_mas*mB,
-                    color='w',ls='--',hatch='xxx',fill=False))
+                    color='w',ls=':',hatch='xxx',fill=False,alpha=0.7))
         grid[i+5].add_patch(
             Ellipse( (0,0), as_oi*2, as_oi*2,color='w',ls=':',lw=2,fill=False))
         
