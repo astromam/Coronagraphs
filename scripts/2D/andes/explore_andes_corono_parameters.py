@@ -6,6 +6,7 @@ Created on Fri Mar 31 13:26:29 2023
 @author: mndiaye, asimmonnin, asp
 """
 
+
 #%%
 """
 ### Initialization
@@ -16,14 +17,11 @@ from astropy.io import fits
 import slow_fourier_transform as sft
 from uniform_disk import uniform_disk
 from psf_profile import profile
+from draw_vanes import six_vanes
 
+import os
 from pathlib import Path
-# import pdb
-# import glob
-
-# import os
-# from mpl_toolkits.axes_grid1 import AxesGrid
-# import time
+from datetime import datetime  #  asp for datetime of now
 
 #definir font size
 plt.rcParams.update({'font.size': 20})            
@@ -63,6 +61,10 @@ elif wl == 'Y':
 # Pupil diameter in m 
 D = 38.54
 
+# vane width in pixels
+v_width = 3.
+
+donow = datetime.now().strftime("%Y%m%d%H%M%S")  #  asp, datetime of now
 
 #%%
 """
@@ -71,8 +73,10 @@ D = 38.54
 user = 'Alain'
 if user == 'Alain':
     fdir_dat = Path("D:/Andes/Data_corono/data/").resolve()  # opd's seed value
-    fdir_res   = Path('D:/Andes/Data_corono/results/').resolve()  #  fits data
     fdir_plt   = Path('D:/Andes/Data_corono/plots/').resolve()   #  plots
+    fdir_res   = Path('D:/Andes/Data_corono/results/').resolve()  #  fits data
+    fdir_res = (fdir_res / donow)
+    os.makedirs(fdir_res, exist_ok=True)
 if user == 'Adrien':
     # File directory
     fdir_dat = Path(
@@ -96,7 +100,7 @@ elif user == 'Mamadou':
 
 # Directory for the pupils
 fdir_pupil = fdir_dat / 'Pupil'
-fdir_elt = '/Users/asimonnin/Desktop/PhD/Andes/Data_corono/data/elt/'
+# fdir_elt = '/Users/asimonnin/Desktop/PhD/Andes/Data_corono/data/elt/'
 
 # Filename and path for the ELT pupil
 # fname_elt = 'Tel-Pupil.fits'
@@ -108,9 +112,13 @@ fpath_elt = fdir_pupil / fname_elt
 ### Read file
 """
 # Read ELT pupil 
-# Pupil = fits.getdata(fpath_elt,)
+Pupil = fits.getdata(fpath_elt,)
 
-Pupil = uniform_disk(nPup, nPup/2.)
+Pupil = Pupil.copy() * six_vanes(nPup, v_width)
+
+plt.imshow(Pupil)
+plt.show()
+
 
     #%%
 """
@@ -180,7 +188,7 @@ for dL in range(len(diametre_lyot)):
     for ob in range(len(obstruction)):
         obst=obstruction[ob]
         mb_i=0
-        print(diam,obst)
+        # print(np.round(diam,3),np.round(obst,3))
         LyotStop2d = Pupil*(uniform_disk(nPup, diam*nPup/2)
                             - uniform_disk(nPup, obst*nPup/2))
         coro_config = 'lyot'
@@ -191,7 +199,7 @@ for dL in range(len(diametre_lyot)):
             """
             mB = mB_conf[s]
             
-            Pupil_coro = Pupil  # .copy() ? , asp
+            Pupil_coro = Pupil.copy()  # .copy(), just in case ... asp
 
             """
             ### Compute perfect PSF
@@ -249,20 +257,6 @@ for dL in range(len(diametre_lyot)):
             # Normalized intensity
             Int_DD *= norm_peakDD0 #norm_peakDD0
 
-            # fname_Int_DD = 'wonoise_cor_'+coro_config+'.fits'
-            # fname_Int_DD0 = 'wonoise_'+coro_config+'.fits'
-            # fname_Int_DD0_no_lyot = 'wonoise_'+coro_config+'_no_lyot.fits'
-            # fname_fract_lum = "fraction_lum.npy"
-            
-
-            # # filepath for the direct and coronagraphic images
-                
-            # fpath_Int_DD  = fdir_res / fname_Int_DD
-            # fpath_Int_DD0  = fdir_res / fname_Int_DD0
-            # # fpath_Int_DD0_no_lyot  = fdir_res / fname_Int_DD0_no_lyot
-            # # save the direct and coronagraphic images
-
-
             # computation of the averaged intensity profiles of the images
             Int_DD_prf_avg, rad_DD_prf_avg = profile(Int_DD, ptype='mean')
             Int_DD0_prf_avg, rad_DD0_prf_avg = profile(Int_DD0, ptype='mean')
@@ -285,24 +279,30 @@ for dL in range(len(diametre_lyot)):
             resultat_no_coro_no_turb_int.append(Int_DD0_prf_avg)
                 
 
-fits.writeto(fdir_res / 'Paramaeters_diff_resultat_no_coro_no_turb_rad_{wl}.fits',
-             resultat_no_coro_no_turb_rad,overwrite=True)
-fits.writeto(fdir_res / 'Paramaeters_resultat_no_coro_no_turb_int_{wl}.fits',
-             resultat_no_coro_no_turb_int, overwrite=True)
-fits.writeto(fdir_res / 'Paramaeters_resultat_w_coro_no_turb_rad_{wl}.fits',
-             resultat_w_coro_no_turb_rad, overwrite=True)
-fits.writeto(fdir_res / 'Paramaeters_resultat_w_coro_no_turb_int_{wl}.fits',
-             resultat_w_coro_no_turb_int, overwrite=True)
-fits.writeto(fdir_res / 'Paramaeters_throughput_{wl}.fits',
-             throughput, overwrite=True)
+fits.writeto(
+    fdir_res / ('Paramaeters_diff_resultat_no_coro_no_turb_rad_'+wl+'.fits'),
+    np.array(resultat_no_coro_no_turb_rad),overwrite=True)
+fits.writeto(
+    fdir_res / ('Paramaeters_resultat_no_coro_no_turb_int_'+wl+'.fits'),
+    np.array(resultat_no_coro_no_turb_int), overwrite=True)
+fits.writeto(
+    fdir_res / ('Paramaeters_resultat_w_coro_no_turb_rad_'+wl+'.fits'),
+    np.array(resultat_w_coro_no_turb_rad), overwrite=True)
+fits.writeto(
+    fdir_res / ('Paramaeters_resultat_w_coro_no_turb_int_'+wl+'.fits'),
+    np.array(resultat_w_coro_no_turb_int), overwrite=True)
+fits.writeto(
+    fdir_res / ('Paramaeters_throughput_'+wl+'.fits'),
+    np.array(throughput), overwrite=True)
 
-fpath_psf_lst=('Paramaeters_diff_resultat_no_coro_no_turb_rad_{wl}.fits',
-               'Paramaeters_resultat_no_coro_no_turb_int_{wl}.fits',
-               'Paramaeters_resultat_w_coro_no_turb_rad_{wl}.fits',
-               'Paramaeters_resultat_w_coro_no_turb_int_{wl}.fits',
-               'Paramaeters_throughput_{wl}.fits')
+fpath_psf_lst=(
+    fdir_res /  ('Paramaeters_diff_resultat_no_coro_no_turb_rad_'+wl+'.fits'),
+    fdir_res / ('Paramaeters_resultat_no_coro_no_turb_int_'+wl+'.fits'),
+    fdir_res / ('Paramaeters_resultat_w_coro_no_turb_rad_'+wl+'.fits'),
+    fdir_res / ('Paramaeters_resultat_w_coro_no_turb_int_'+wl+'.fits'),
+    fdir_res / ('Paramaeters_throughput_'+wl+'.fits'))
 
-for fpath in (fdir_res / fpath_psf_lst):
+for fpath in (fpath_psf_lst):
     fits.setval(fpath,'NPUP',value=nPup,comment='pupil size')
     fits.setval(fpath,'NFPM',value=nFPM,comment='FP coro. sampling')
     fits.setval(fpath,'NIMG',value=nImg,comment='image size')
