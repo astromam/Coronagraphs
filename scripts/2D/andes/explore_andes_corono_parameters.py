@@ -74,7 +74,7 @@ user = 'Alain'
 if user == 'Alain':
     fdir_dat = Path("D:/Andes/Data_corono/data/").resolve()  # opd's seed value
     fdir_plt   = Path('D:/Andes/Data_corono/plots/').resolve()   #  plots
-    fdir_res   = Path('D:/Andes/Data_corono/results/').resolve()  #  fits data
+    fdir_res   = Path('D:/Andes/Data_corono/results/').resolve()  #  fits files
     fdir_res = (fdir_res / donow)
     os.makedirs(fdir_res, exist_ok=True)
 if user == 'Adrien':
@@ -114,7 +114,7 @@ fpath_elt = fdir_pupil / fname_elt
 # Read ELT pupil 
 Pupil = fits.getdata(fpath_elt,)
 
-Pupil = Pupil.copy() * six_vanes(nPup, v_width)
+# Pupil = Pupil.copy() * six_vanes(nPup, v_width)
 
 plt.imshow(Pupil)
 plt.show()
@@ -189,8 +189,9 @@ for dL in range(len(diametre_lyot)):
         obst=obstruction[ob]
         mb_i=0
         # print(np.round(diam,3),np.round(obst,3))
-        LyotStop2d = Pupil*(uniform_disk(nPup, diam*nPup/2)
-                            - uniform_disk(nPup, obst*nPup/2))
+        LyotStop2d = (Pupil.copy() * six_vanes(nPup, v_width) *
+                      (uniform_disk(nPup, diam*nPup/2)
+                       - uniform_disk(nPup, obst*nPup/2)))
         coro_config = 'lyot'
                 
         for s in range(len(mB_conf)) :
