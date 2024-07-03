@@ -63,6 +63,7 @@ D = 38.54
 
 # vane width in pixels
 v_width = 3.
+vanes = six_vanes(nPup, v_width)
 
 donow = datetime.now().strftime("%Y%m%d%H%M%S")  #  asp, datetime of now
 
@@ -113,11 +114,6 @@ fpath_elt = fdir_pupil / fname_elt
 """
 # Read ELT pupil 
 Pupil = fits.getdata(fpath_elt,)
-
-# Pupil = Pupil.copy() * six_vanes(nPup, v_width)
-
-plt.imshow(Pupil)
-plt.show()
 
 
     #%%
@@ -189,9 +185,8 @@ for dL in range(len(diametre_lyot)):
         obst=obstruction[ob]
         mb_i=0
         # print(np.round(diam,3),np.round(obst,3))
-        LyotStop2d = (Pupil.copy() * six_vanes(nPup, v_width) *
-                      (uniform_disk(nPup, diam*nPup/2)
-                       - uniform_disk(nPup, obst*nPup/2)))
+        LyotStop2d = (Pupil.copy() * vanes * (uniform_disk(nPup, diam*nPup/2) -
+                                              uniform_disk(nPup, obst*nPup/2)))
         coro_config = 'lyot'
                 
         for s in range(len(mB_conf)) :
@@ -219,8 +214,8 @@ for dL in range(len(diametre_lyot)):
 
             ee_c = np.sum(int_c)
 
-            throughput[diam_k,obst_i,mb_i] = ee_c/ee_a
-
+            # throughput[diam_k,obst_i,mb_i] = ee_c/ee_a
+            throughput[dL,ob,s] = ee_c/ee_a
 
             # Field in the image plane D (no coronagraph)*
             Fld_DD0 = sft.sft(Fld_CC0, nImg, mD*diam) #diametre_lyot
@@ -262,15 +257,14 @@ for dL in range(len(diametre_lyot)):
             Int_DD_prf_avg, rad_DD_prf_avg = profile(Int_DD, ptype='mean')
             Int_DD0_prf_avg, rad_DD0_prf_avg = profile(Int_DD0, ptype='mean')
 
-            Int_DD0_prf_std, rad_DD0_prf_std = profile(Int_DD0, ptype='std')
-            Int_DD_prf_std, rad_DD_prf_std = profile(Int_DD, ptype='std')
+            # Int_DD0_prf_std, rad_DD0_prf_std = profile(Int_DD0, ptype='std')
+            # Int_DD_prf_std, rad_DD_prf_std = profile(Int_DD, ptype='std')
 
+            # rad_DD0_prf_avg_lamD = rad_DD0_prf_avg * mD/nImg
+            # rad_DD_prf_avg_lamD = rad_DD_prf_avg * mD/nImg
 
-            rad_DD0_prf_avg_lamD = rad_DD0_prf_avg * mD/nImg
-            rad_DD_prf_avg_lamD = rad_DD_prf_avg * mD/nImg
-
-            rad_DD0_prf_avg_mas = rad_DD0_prf_avg_lamD * lamD2mas
-            rad_DD_prf_avg_mas = rad_DD_prf_avg_lamD * lamD2mas
+            # rad_DD0_prf_avg_mas = rad_DD0_prf_avg_lamD * lamD2mas
+            # rad_DD_prf_avg_mas = rad_DD_prf_avg_lamD * lamD2mas
 
             ### Save images
             resultat_w_coro_no_turb_rad.append(rad_DD_prf_avg)
@@ -281,27 +275,21 @@ for dL in range(len(diametre_lyot)):
                 
 
 fits.writeto(
-    fdir_res / ('Paramaeters_diff_resultat_no_coro_no_turb_rad_'+wl+'.fits'),
-    np.array(resultat_no_coro_no_turb_rad),overwrite=True)
+    fdir_res / ('Parameters_resultat_no_coro_no_turb_'+wl+'.fits'),
+    np.array([resultat_no_coro_no_turb_int, resultat_no_coro_no_turb_rad]),
+    overwrite=True)
 fits.writeto(
-    fdir_res / ('Paramaeters_resultat_no_coro_no_turb_int_'+wl+'.fits'),
-    np.array(resultat_no_coro_no_turb_int), overwrite=True)
+    fdir_res / ('Parameters_resultat_w_coro_no_turb_'+wl+'.fits'),
+    np.array([resultat_w_coro_no_turb_int, resultat_w_coro_no_turb_rad]),
+    overwrite=True)
 fits.writeto(
-    fdir_res / ('Paramaeters_resultat_w_coro_no_turb_rad_'+wl+'.fits'),
-    np.array(resultat_w_coro_no_turb_rad), overwrite=True)
-fits.writeto(
-    fdir_res / ('Paramaeters_resultat_w_coro_no_turb_int_'+wl+'.fits'),
-    np.array(resultat_w_coro_no_turb_int), overwrite=True)
-fits.writeto(
-    fdir_res / ('Paramaeters_throughput_'+wl+'.fits'),
-    np.array(throughput), overwrite=True)
+    fdir_res / ('Parameters_throughput_'+wl+'.fits'), np.array(throughput),
+    overwrite=True)
 
 fpath_psf_lst=(
-    fdir_res /  ('Paramaeters_diff_resultat_no_coro_no_turb_rad_'+wl+'.fits'),
-    fdir_res / ('Paramaeters_resultat_no_coro_no_turb_int_'+wl+'.fits'),
-    fdir_res / ('Paramaeters_resultat_w_coro_no_turb_rad_'+wl+'.fits'),
-    fdir_res / ('Paramaeters_resultat_w_coro_no_turb_int_'+wl+'.fits'),
-    fdir_res / ('Paramaeters_throughput_'+wl+'.fits'))
+    fdir_res / ('Parameters_resultat_no_coro_no_turb_'+wl+'.fits'),
+    fdir_res / ('Parameters_resultat_w_coro_no_turb_'+wl+'.fits'),
+    fdir_res / ('Parameters_throughput_'+wl+'.fits'))
 
 for fpath in (fpath_psf_lst):
     fits.setval(fpath,'NPUP',value=nPup,comment='pupil size')

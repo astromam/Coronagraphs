@@ -31,7 +31,7 @@ def six_vanes(nPup, width):
     ig = np.where(np.abs(X-nPup/2) <= hlf)
     vanes[:][ig] = 0.
     
-    plt.imshow(vanes)
+    # plt.imshow(vanes)
     
     return vanes
 
