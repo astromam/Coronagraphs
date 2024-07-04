@@ -62,7 +62,7 @@ elif wl == 'Y':
 D = 38.54
 
 # vane width in pixels
-v_width = 3.
+v_width = 8.
 vanes = six_vanes(nPup, v_width)
 
 donow = datetime.now().strftime("%Y%m%d%H%M%S")  #  asp, datetime of now
@@ -167,11 +167,10 @@ throughput = np.zeros((len(diametre_lyot),len(obstruction),len(mB_conf)))
 diam_k=0
 
 ### Création des tableaux pour stocker les résultats
-resultat_no_coro_no_turb_rad = []
-resultat_no_coro_no_turb_int = []
+resultat_no_coro_no_turb = np.zeros(
+    (2, len(diametre_lyot), len(obstruction), len(mB_conf), nImg//2))
 
-resultat_w_coro_no_turb_rad = []
-resultat_w_coro_no_turb_int = []
+resultat_w_coro_no_turb = resultat_no_coro_no_turb.copy()
 
 
 #%%
@@ -267,21 +266,19 @@ for dL in range(len(diametre_lyot)):
             # rad_DD_prf_avg_mas = rad_DD_prf_avg_lamD * lamD2mas
 
             ### Save images
-            resultat_w_coro_no_turb_rad.append(rad_DD_prf_avg)
-            resultat_w_coro_no_turb_int.append(Int_DD_prf_avg)
+            resultat_w_coro_no_turb[0,dL,ob,s,:] = rad_DD_prf_avg
+            resultat_w_coro_no_turb[1,dL,ob,s,:] = Int_DD_prf_avg
 
-            resultat_no_coro_no_turb_rad.append(rad_DD0_prf_avg)
-            resultat_no_coro_no_turb_int.append(Int_DD0_prf_avg)
+            resultat_no_coro_no_turb[0,dL,ob,s,:] = rad_DD0_prf_avg
+            resultat_no_coro_no_turb[1,dL,ob,s,:] = Int_DD0_prf_avg
                 
 
 fits.writeto(
     fdir_res / ('Parameters_resultat_no_coro_no_turb_'+wl+'.fits'),
-    np.array([resultat_no_coro_no_turb_int, resultat_no_coro_no_turb_rad]),
-    overwrite=True)
+    resultat_no_coro_no_turb, overwrite=True)
 fits.writeto(
     fdir_res / ('Parameters_resultat_w_coro_no_turb_'+wl+'.fits'),
-    np.array([resultat_w_coro_no_turb_int, resultat_w_coro_no_turb_rad]),
-    overwrite=True)
+    resultat_w_coro_no_turb, overwrite=True)
 fits.writeto(
     fdir_res / ('Parameters_throughput_'+wl+'.fits'), np.array(throughput),
     overwrite=True)
