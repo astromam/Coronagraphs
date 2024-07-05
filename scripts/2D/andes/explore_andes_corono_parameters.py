@@ -162,7 +162,7 @@ mB_max = 5.0
 mB_stp = 0.2
 mB_conf = np.arange(mB_min,mB_max+mB_stp,mB_stp)
 
-throughput = np.zeros((len(diametre_lyot),len(obstruction),len(mB_conf)))
+throughput = np.zeros((len(diametre_lyot),len(obstruction)))
 
 diam_k=0
 
@@ -214,7 +214,8 @@ for dL in range(len(diametre_lyot)):
             ee_c = np.sum(int_c)
 
             # throughput[diam_k,obst_i,mb_i] = ee_c/ee_a
-            throughput[dL,ob,s] = ee_c/ee_a
+            if s ==0:
+                throughput[dL,ob] = ee_c/ee_a
 
             # Field in the image plane D (no coronagraph)*
             Fld_DD0 = sft.sft(Fld_CC0, nImg, mD*diam) #diametre_lyot
@@ -313,6 +314,6 @@ for fpath in (fpath_psf_lst):
                 comment='maxim. fractional Lyot pupil diameter')
     fits.setval(fpath,'DLYO_STP',value=dL_stp,
                 comment='step fractional Lyot pupil diameter')
-    fits.setval(fpath,'LYO_vw',value=v_width,
+    fits.setval(fpath,'LYO_VW',value=v_width,
                 comment='Lyot mask vane width in pixels')
 
