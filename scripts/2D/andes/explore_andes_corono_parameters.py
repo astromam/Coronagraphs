@@ -61,8 +61,8 @@ elif wl == 'Y':
 # Pupil diameter in m 
 D = 38.54
 
-# vane width in pixels
-v_width = 8.
+# lyot mask vane width in pixels
+v_width = 3.  #  3. pour fichier ELT_pupil_400.fits non modifie
 vanes = six_vanes(nPup, v_width)
 
 donow = datetime.now().strftime("%Y%m%d%H%M%S")  #  asp, datetime of now
@@ -313,4 +313,6 @@ for fpath in (fpath_psf_lst):
                 comment='maxim. fractional Lyot pupil diameter')
     fits.setval(fpath,'DLYO_STP',value=dL_stp,
                 comment='step fractional Lyot pupil diameter')
+    fits.setval(fpath,'LYO_vw',value=v_width,
+                comment='Lyot mask vane width in pixels')
 
