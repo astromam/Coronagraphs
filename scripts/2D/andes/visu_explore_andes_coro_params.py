@@ -26,6 +26,9 @@ res_dirs=("d:/Andes/Data_corono/results/20240705161700",
           "d:/Andes/Data_corono/results/20240705163602")
 
 #%%
+
+print("work. dir. / vane width / throughput / min. intensity / min params")
+
 for i in range(len(res_dirs)):
     
     donow_dir = os.path.basename(res_dirs[i]).split('.')[0]
@@ -71,11 +74,11 @@ for i in range(len(res_dirs)):
     os.makedirs(save_dir, exist_ok=True)
     plt.figure(0)
     plt.imshow(np.log10(coro_data[i_min[0],:,:]), vmin=cd_min, vmax=cd_max,
-               extent=(obs_min,obs_max,mB_min,mB_max),
-               aspect=(obs_max-obs_min)/(mB_max-mB_min),cmap='inferno')
-    plt.xlabel("obscuration")
-    plt.ylabel("FPM [lam/D]")
-    plt.title(('lyot diam. frac. :' + str(np.round(dL[i_min[0]],1))))
+               extent=(mB_min,mB_max,obs_max,obs_min),
+               aspect=(mB_max-mB_min)/(obs_max-obs_min),cmap='inferno')
+    plt.xlabel("FPM [lam/D]")
+    plt.ylabel("obscuration")
+    plt.title(('lyot diam. frac. :' + str(np.round(dL[i_min[0]],2))))
     plt.colorbar()
     plt.savefig(save_dir+"/obsVsFPM.pdf")
     plt.savefig(save_dir+"/obsVsFPM.svg")
@@ -83,11 +86,11 @@ for i in range(len(res_dirs)):
     
     plt.figure(1)
     plt.imshow(np.log10(coro_data[:,i_min[1],:]), vmin=cd_min, vmax=cd_max,
-               extent=(dL_min,dL_max,mB_min,mB_max),
-               aspect=(dL_max-dL_min)/(mB_max-mB_min), cmap='inferno')
-    plt.xlabel("Lyot diam. frac.")
-    plt.ylabel("FPM [lam/D]")
-    plt.title(('obscuration :' + str(np.round(obs[i_min[1]],1))))
+               extent=(mB_min,mB_max,dL_max,dL_min),
+               aspect=(mB_max-mB_min)/(dL_max-dL_min), cmap='inferno')
+    plt.xlabel("FPM [lam/D]")
+    plt.ylabel("Lyot stop diam.")
+    plt.title(('obscuration :' + str(np.round(obs[i_min[1]],2))))
     plt.colorbar()
     plt.savefig(save_dir+"/DLyotVsFPM.pdf")
     plt.savefig(save_dir+"/DLyotVsFPM.svg")
@@ -95,10 +98,10 @@ for i in range(len(res_dirs)):
     
     plt.figure(2)
     plt.imshow(np.log10(coro_data[:,:,i_min[2]]), vmin=cd_min, vmax=cd_max,
-               extent=(dL_min,dL_max,obs_min,obs_max), cmap='inferno')
-    plt.xlabel("Lyot diam. frac.")
-    plt.ylabel("obscuration")
-    plt.title(('FPM [lam/D] :' + str(np.round(mB[i_min[2]],1))))
+               extent=(obs_min,obs_max,dL_max,dL_min,), cmap='inferno')
+    plt.xlabel("obscuration")
+    plt.ylabel("Lyot stop diam.")
+    plt.title(('FPM [lam/D] :' + str(np.round(mB[i_min[2]],2))))
     plt.colorbar()
     plt.savefig(save_dir+"/DLyoVsobs.pdf")
     plt.savefig(save_dir+"/DLyoVsobs.svg")
@@ -110,15 +113,21 @@ for i in range(len(res_dirs)):
     plt.imshow((thrp_data[:,:]),
                vmin=np.min((thrp_data)),
                vmax=np.max((thrp_data)),
-               extent=(dL_min,dL_max,obs_min,obs_max), cmap='gray')
+               extent=(obs_min,obs_max,dL_max,dL_min), cmap='gray')
     
-    plt.xlabel("Lyot diam. frac.")
-    plt.ylabel("obscuration")
+    # plt.xlabel("Lyot diam. frac.")
+    # plt.ylabel("obscuration")
     plt.colorbar()
+    plt.xlabel("obscuration")
+    plt.ylabel("Lyot stop diam.")
     plt.savefig(save_dir+"/throughput_DLyoVsobs.pdf")
     plt.savefig(save_dir+"/throughputDLyoVsobs.svg")
     plt.show()
 
-    
-    
+    print(donow_dir, np.round(v_width),
+          np.round(thrp_data[i_min[0],i_min[1]],3),
+          np.round(np.min(coro_data),9),
+          np.round([dL[i_min[0]],obs[i_min[1]],mB[i_min[2]]],2))
+
+
     
