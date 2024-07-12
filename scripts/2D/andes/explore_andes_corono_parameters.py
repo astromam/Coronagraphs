@@ -62,7 +62,7 @@ elif wl == 'Y':
 D = 38.54
 
 # lyot mask vane width in pixels
-v_width = 3.  #  3. pour fichier ELT_pupil_400.fits non modifie
+v_width = 8.  #  3. pour fichier ELT_pupil_400.fits non modifie
 vanes = six_vanes(nPup, v_width)
 
 donow = datetime.now().strftime("%Y%m%d%H%M%S")  #  asp, datetime of now
@@ -306,7 +306,7 @@ for fpath in (fpath_psf_lst):
                 comment='minim. fractional pup. diameter')
     fits.setval(fpath,'OBST_MAX',value=obs_max,
                 comment='maxim. fractional obscuration')
-    fits.setval(fpath,'OBST_STP',value=mB_stp,
+    fits.setval(fpath,'OBST_STP',value=obs_stp,
                 comment='step fractional obscuration')
     fits.setval(fpath,'DLYO_MIN',value=dL_min,
                 comment='minim. fractional Lyot pupil diameter')

@@ -19,11 +19,13 @@ mas2rad = 1/rad2mas
 # field radius of interest in mas
 f_rad = 25.
 
+# throughput threshold 0.8^2 = .64
+t_t = 0.64
 #%%
-res_dirs=("d:/Andes/Data_corono/results/20240705161700",
-          "d:/Andes/Data_corono/results/20240705162606",
-          "d:/Andes/Data_corono/results/20240705163115",
-          "d:/Andes/Data_corono/results/20240705163602")
+res_dirs=("d:/Andes/Data_corono/results/20240710135622",
+          "d:/Andes/Data_corono/results/20240710140245",
+          "d:/Andes/Data_corono/results/20240710140743",
+          "d:/Andes/Data_corono/results/20240710141234")
 
 #%%
 
@@ -77,8 +79,8 @@ for i in range(len(res_dirs)):
                extent=(mB_min,mB_max,obs_max,obs_min),
                aspect=(mB_max-mB_min)/(obs_max-obs_min),cmap='inferno')
     plt.xlabel("FPM [lam/D]")
-    plt.ylabel("obscuration")
-    plt.title(('lyot diam. frac. :' + str(np.round(dL[i_min[0]],2))))
+    plt.ylabel("obstruction")
+    plt.title(('lyot stop diam. : ' + str(np.round(dL[i_min[0]],2))))
     plt.colorbar()
     plt.savefig(save_dir+"/obsVsFPM.pdf")
     plt.savefig(save_dir+"/obsVsFPM.svg")
@@ -90,7 +92,7 @@ for i in range(len(res_dirs)):
                aspect=(mB_max-mB_min)/(dL_max-dL_min), cmap='inferno')
     plt.xlabel("FPM [lam/D]")
     plt.ylabel("Lyot stop diam.")
-    plt.title(('obscuration :' + str(np.round(obs[i_min[1]],2))))
+    plt.title(('obstruction : ' + str(np.round(obs[i_min[1]],2))))
     plt.colorbar()
     plt.savefig(save_dir+"/DLyotVsFPM.pdf")
     plt.savefig(save_dir+"/DLyotVsFPM.svg")
@@ -99,9 +101,9 @@ for i in range(len(res_dirs)):
     plt.figure(2)
     plt.imshow(np.log10(coro_data[:,:,i_min[2]]), vmin=cd_min, vmax=cd_max,
                extent=(obs_min,obs_max,dL_max,dL_min,), cmap='inferno')
-    plt.xlabel("obscuration")
+    plt.xlabel("obstruction")
     plt.ylabel("Lyot stop diam.")
-    plt.title(('FPM [lam/D] :' + str(np.round(mB[i_min[2]],2))))
+    plt.title(('FPM [lam/D] : ' + str(np.round(mB[i_min[2]],2))))
     plt.colorbar()
     plt.savefig(save_dir+"/DLyoVsobs.pdf")
     plt.savefig(save_dir+"/DLyoVsobs.svg")
@@ -115,10 +117,8 @@ for i in range(len(res_dirs)):
                vmax=np.max((thrp_data)),
                extent=(obs_min,obs_max,dL_max,dL_min), cmap='gray')
     
-    # plt.xlabel("Lyot diam. frac.")
-    # plt.ylabel("obscuration")
     plt.colorbar()
-    plt.xlabel("obscuration")
+    plt.xlabel("obstruction")
     plt.ylabel("Lyot stop diam.")
     plt.savefig(save_dir+"/throughput_DLyoVsobs.pdf")
     plt.savefig(save_dir+"/throughputDLyoVsobs.svg")
@@ -129,5 +129,75 @@ for i in range(len(res_dirs)):
           np.round(np.min(coro_data),9),
           np.round([dL[i_min[0]],obs[i_min[1]],mB[i_min[2]]],2))
 
+#%%
+# masked
+    
+    plt.figure(4)
+
+    m_data = np.ma.masked_where(np.reshape(np.tile(
+        thrp_data[i_min[0],:],coro_data.shape[2])<t_t,
+        coro_data[i_min[0],:,:].shape), coro_data[i_min[0],:,:])
+
+    plt.imshow(np.log10(m_data), vmin=cd_min, vmax=cd_max,
+                extent=(mB_min,mB_max,obs_max,obs_min),
+                aspect=(mB_max-mB_min)/(obs_max-obs_min),cmap='inferno')
+
+    plt.xlabel("FPM [lam/D]")
+    plt.ylabel("obstruction")
+    plt.title(('lyot stop diam. : ' + str(np.round(dL[i_min[0]],2))))
+    plt.colorbar()
+    plt.savefig(save_dir+"/obsVsFPM_m.pdf")
+    plt.savefig(save_dir+"/obsVsFPM_m.svg")
+    plt.show()
+    
+
+    plt.figure(5)
+
+    m_data = np.ma.masked_where(np.reshape(np.tile(
+        thrp_data[:,i_min[1]], coro_data.shape[2])<t_t,
+        coro_data[:,i_min[1],:].shape),coro_data[:,i_min[1],:])
+
+    plt.imshow(np.log10(m_data), vmin=cd_min, vmax=cd_max,
+                extent=(mB_min,mB_max,dL_max,dL_min),
+                aspect=(mB_max-mB_min)/(dL_max-dL_min), cmap='inferno')
+
+    plt.xlabel("FPM [lam/D]")
+    plt.ylabel("Lyot stop diam.")
+    plt.title(('obstruction : ' + str(np.round(obs[i_min[1]],2))))
+    plt.colorbar()
+    plt.savefig(save_dir+"/DLyotVsFPM_m.pdf")
+    plt.savefig(save_dir+"/DLyotVsFPM_m.svg")
+    plt.show()
 
     
+    plt.figure(6)
+
+    m_data = np.ma.masked_where(thrp_data<t_t,coro_data[:,:,i_min[2]])
+
+    plt.imshow(np.log10(m_data), vmin=cd_min, vmax=cd_max,
+                extent=(obs_min,obs_max,dL_max,dL_min,), cmap='inferno')
+
+    plt.xlabel("obstruction")
+    plt.ylabel("Lyot stop diam.")
+    plt.title(('FPM [lam/D] : ' + str(np.round(mB[i_min[2]],2))))
+    plt.colorbar()
+    plt.savefig(save_dir+"/DLyoVsobs_m.pdf")
+    plt.savefig(save_dir+"/DLyoVsobs_m.svg")
+    plt.show()
+    
+
+    plt.figure(7)
+
+    m_data = np.ma.masked_where(thrp_data<t_t,thrp_data)
+
+    plt.imshow((m_data),
+                vmin=np.min((thrp_data)),
+                vmax=np.max((thrp_data)),
+                extent=(obs_min,obs_max,dL_max,dL_min), cmap='gray')
+
+    plt.colorbar()
+    plt.xlabel("obstruction")
+    plt.ylabel("Lyot stop diam.")
+    plt.savefig(save_dir+"/throughput_DLyoVsobs_m.pdf")
+    plt.savefig(save_dir+"/throughputDLyoVsobs_m.svg")
+    plt.show()
