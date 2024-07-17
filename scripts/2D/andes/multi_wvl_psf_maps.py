@@ -72,6 +72,9 @@ user = 'Alain'
 if user == 'Alain':
     fdir_res   = Path('D:/Andes/Data_corono/results/').resolve()  #  fits data
     fdir_plt   = Path('D:/Andes/Data_corono/plots/').resolve()   #  plots
+    was_donow = '20240712154051'
+    fdir_res = fdir_res / was_donow
+    fdir_plt = fdir_plt / was_donow
 
 elif user == 'Adrien':
     # Directory for the OPD with the corresponding seed value
@@ -165,8 +168,8 @@ for dir_nb in range(len(opds_dir)):
     file_lst = sorted(
         recursive_search(fdir_res / opd_set), key=os.path.getmtime)
     # , reverse=True
-    file_psf = [x for x in file_lst if 'ao_corr_psf_202406' in x]
-    file_cro = [x for x in file_lst if 'ao_corr_coro_psf_202406' in x]
+    file_psf = [x for x in file_lst if 'ao_corr_psf_202407' in x]
+    file_cro = [x for x in file_lst if 'ao_corr_coro_psf_202407' in x]
     
     print("psf :", file_psf)
     print("psf coro :", file_cro)
@@ -175,7 +178,9 @@ for dir_nb in range(len(opds_dir)):
     base_cro = os.path.basename(file_cro[0]).split('.')[0]
     
     Int_D0 = fits.getdata(fdir_res / opd_set / file_psf[0])
+    print(np.min(Int_D0), np.max(Int_D0))
     Int_D  = fits.getdata(fdir_res / opd_set / file_cro[0])
+    print(np.min(Int_D), np.max(Int_D))
     
     head_psf = fits.getheader(fdir_res / opd_set / file_psf[0])
     
@@ -211,10 +216,10 @@ for dir_nb in range(len(opds_dir)):
     fpath_images_pdf = fdir_plt / opd_set / fname_images_pdf
     
     # index of wvl to display
-    iD = [0,nL//4,nL//2,nL*3//4,nL-1]
+    iD = [0,nL//4-1,nL//2-1,nL*3//4-1,nL-1]
     
     # boundaries for the images in log scale
-    vmin0 = -5
+    vmin0 = -5.5
     vmax0 = 0
     
     fig = plt.figure(4, figsize=(16,6))

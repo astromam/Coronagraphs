@@ -53,7 +53,7 @@ nOPD = 2000
 
 # wavelengths in m
 lamC = 1600e-9  #  some wvl unique value
-lam_min = 980e-9  #  min value in range
+lam_min = 960e-9  #  min value in range
 lam_max = 2450e-9  #  max value in range  #  2450e-9 // 1800e-9
 lam_itv = 18  #  nb of intervals in range --> nb+1 wvl's !  #  18 // 10
 lam_stp = np.floor(np.ceil((lam_max-lam_min)*1e9/lam_itv)/10)*1e-8  # wvl step
@@ -73,7 +73,9 @@ mas2rad = 1/rad2mas
 pscale = 0.3
 
 # FPM size in lam/D in the focal plane B
-mB = 3.8  #  at 1600nm !!
+# 4. with 'ELT_pupil_400.fits'
+# 3.8 with 'Tel-Pupil.fits', old!
+mB = 4. # 3.8  #  at 1600nm !!
 
 lamCD2mas = (lamC/D)*mas2rad
 
@@ -82,13 +84,16 @@ lamCD2mas = (lamC/D)*mas2rad
 """
 # Focal plane mask
 mask2d = uniform_disk(nFPM, nFPM/2.)
-diam = 0.9 # diameter of the pupil in fraction of the pupil size
-obst = 0.38 # diameter of the central obscuration in fraction of the pupil size
+# diam = 0.86 obs = 0.30 with 'ELT_pupil_400.fits'
+# diam = 0.90 obs = 0.38 with 'Tel-Pupil.fits'
+diam = 0.86 # diameter of the pupil in fraction of the pupil size
+obst = 0.30 # diameter of the central obscuration in fraction of the pupil size
 
 # 2 sizes of spaxels 10 mas and 100 mas
 
 # datetime of script execution
 donow = datetime.now().strftime("%Y%m%d%H%M%S")  #  asp, datetime of now
+print('date of now : ', donow)
 
 
 #%%
@@ -124,6 +129,9 @@ elif user == 'Mamadou':
 
 # Directory for the pupils
 fdir_pupil = fdir_dat / 'Pupil'
+
+fdir_res = fdir_res / donow
+fdir_plt = fdir_plt / donow
 
 
 #%%
@@ -542,10 +550,10 @@ for dir_nb in range(len(opds_dir)):
     # fpath_images_svg = fdir_plt / opd_set / fname_images_svg
     # fpath_images_pdf = fdir_plt / opd_set / fname_images_pdf
     
-    # # index of wvl to display
-    # iD = [0,nL//4,nL//2,nL*3//4,nL-1]
+    # index of wvl to display
+    # iD = [0,nL//4-1,nL//2-1,nL*3//4-1,nL-1]
     
-    # # boundaries for the images in log scale
+    # boundaries for the images in log scale
     # vmin0 = -7
     # vmax0 = 0
     
@@ -581,11 +589,11 @@ for dir_nb in range(len(opds_dir)):
     # plt.savefig(fpath_images_svg)
     # plt.savefig(fpath_images_pdf)
     
-    # # if i==5:
+    # if i==5:
     # plt.show()
-    # # else : 
-    # # plt.close()
-    # # plt.close()
+    # else : 
+    # plt.close()
+    # plt.close()
     
     
     #%%

@@ -70,6 +70,10 @@ user = 'Alain'
 if user == 'Alain':
     fdir_res   = Path('D:/Andes/Data_corono/results/').resolve()  #  fits data
     fdir_plt   = Path('D:/Andes/Data_corono/plots/').resolve()   #  plots
+    # dir name where to find results and plots of a common script run date
+    was_donow = '20240712154051'
+    fdir_res = fdir_res / was_donow
+    fdir_plt = fdir_plt / was_donow
 
 elif user == 'Adrien':
     # Directory for the OPD with the corresponding seed value
@@ -163,8 +167,8 @@ for dir_nb in range(len(opds_dir)):
     file_lst = sorted(
         recursive_search(fdir_res / opd_set), key=os.path.getmtime)
     # , reverse=True
-    file_psf = [x for x in file_lst if 'ao_corr_psf_202406' in x]
-    file_cro = [x for x in file_lst if 'ao_corr_coro_psf_202406' in x]
+    file_psf = [x for x in file_lst if 'ao_corr_psf_202407' in x]
+    file_cro = [x for x in file_lst if 'ao_corr_coro_psf_202407' in x]
     
     print("psf :", file_psf)
     print("psf coro :", file_cro)
@@ -237,8 +241,8 @@ for dir_nb in range(len(opds_dir)):
 
     prf_as_oi_mas = int(np.median(np.argmin(np.abs(aS[:]-as_oi))))
     
-    file_psf_prf = [x for x in file_lst if 'ao_corr_psf_profile_202406' in x]
-    file_cro_prf = [x for x in file_lst if 'ao_corr_coro_psf_profile_202406' in x]
+    file_psf_prf = [x for x in file_lst if 'ao_corr_psf_profile_202407' in x]
+    file_cro_prf = [x for x in file_lst if 'ao_corr_coro_psf_profile_202407' in x]
     
     print("psf profile:", file_psf_prf)
     print("psf coro profile:", file_cro_prf)
@@ -260,10 +264,11 @@ for dir_nb in range(len(opds_dir)):
     plt.yscale('log')
     plt.title('gain at 25 mas vs wvl')
     plt.grid(True)
-    plt.ylim(9e-1, 2e2)
+    plt.ylim(9e-1, 2e3)
 
-    plt.plot(lam_lst*1e9,
-              Int_D0_prf_avg[:,prf_as_oi_mas]/Int_D_prf_avg[:,prf_as_oi_mas])
+    g_val = Int_D0_prf_avg[:,prf_as_oi_mas]/Int_D_prf_avg[:,prf_as_oi_mas]
+    print(np.min(g_val), np.max(g_val))    
+    plt.plot(lam_lst*1e9, g_val)
     
     if slc:
         fname_gain_as_oi_mas = (
