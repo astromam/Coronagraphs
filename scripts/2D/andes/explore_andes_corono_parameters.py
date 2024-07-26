@@ -42,19 +42,19 @@ nImg = 400
 
 # wavelength in m
 
-wl = 'H'
+wvl = 'H'
 
-if wl == 'H' : 
+if wvl == 'H' : 
 
     lam = 1600e-9
     #liste de 11 wavelengths pour H band
     # lam_list = [1.4e-6, 1.44e-6, 1.48e-6, 1.52e-6, 1.56e-6, 1.6e-6, 1.64e-6,
     #             1.68e-6, 1.72e-6, 1.76e-6, 1.80e-6]
 
-elif wl == 'J' :
+elif wvl == 'J' :
 
     lam = 1200e-9
-elif wl == 'Y': 
+elif wvl == 'Y': 
     
     lam = 1000e-9
 
@@ -62,7 +62,7 @@ elif wl == 'Y':
 D = 38.54
 
 # lyot mask vane width in pixels
-v_width = 8.  #  3. pour fichier ELT_pupil_400.fits non modifie
+v_width = 3.  #  3. pour fichier ELT_pupil_400.fits non modifie
 vanes = six_vanes(nPup, v_width)
 
 donow = datetime.now().strftime("%Y%m%d%H%M%S")  #  asp, datetime of now
@@ -78,6 +78,7 @@ if user == 'Alain':
     fdir_res   = Path('D:/Andes/Data_corono/results/').resolve()  #  fits files
     fdir_res = (fdir_res / donow)
     os.makedirs(fdir_res, exist_ok=True)
+    
 if user == 'Adrien':
     # File directory
     fdir_dat = Path(
@@ -149,17 +150,17 @@ Pupil configuration
 """
 ### All parameters to test
 
-dL_min = 0.8
-dL_max = 1.0
+dL_min = 0.81
+dL_max = 0.96
 dL_stp = 0.01
 diametre_lyot = np.arange(dL_min,dL_max+dL_stp,dL_stp)
-obs_min = 0.3
-obs_max = 0.5
+obs_min = 0.30
+obs_max = 0.45
 obs_stp = 0.01
 obstruction = np.arange(obs_min,obs_max+obs_stp,obs_stp)
 mB_min = 3.0
-mB_max = 5.0
-mB_stp = 0.2
+mB_max = 4.5
+mB_stp = 0.1
 mB_conf = np.arange(mB_min,mB_max+mB_stp,mB_stp)
 
 throughput = np.zeros((len(diametre_lyot),len(obstruction)))
@@ -275,19 +276,19 @@ for dL in range(len(diametre_lyot)):
                 
 
 fits.writeto(
-    fdir_res / ('Parameters_resultat_no_coro_no_turb_'+wl+'.fits'),
+    fdir_res / ('Parameters_resultat_no_coro_no_turb_'+wvl+'.fits'),
     resultat_no_coro_no_turb, overwrite=True)
 fits.writeto(
-    fdir_res / ('Parameters_resultat_w_coro_no_turb_'+wl+'.fits'),
+    fdir_res / ('Parameters_resultat_w_coro_no_turb_'+wvl+'.fits'),
     resultat_w_coro_no_turb, overwrite=True)
 fits.writeto(
-    fdir_res / ('Parameters_throughput_'+wl+'.fits'), np.array(throughput),
+    fdir_res / ('Parameters_throughput_'+wvl+'.fits'), np.array(throughput),
     overwrite=True)
 
 fpath_psf_lst=(
-    fdir_res / ('Parameters_resultat_no_coro_no_turb_'+wl+'.fits'),
-    fdir_res / ('Parameters_resultat_w_coro_no_turb_'+wl+'.fits'),
-    fdir_res / ('Parameters_throughput_'+wl+'.fits'))
+    fdir_res / ('Parameters_resultat_no_coro_no_turb_'+wvl+'.fits'),
+    fdir_res / ('Parameters_resultat_w_coro_no_turb_'+wvl+'.fits'),
+    fdir_res / ('Parameters_throughput_'+wvl+'.fits'))
 
 for fpath in (fpath_psf_lst):
     fits.setval(fpath,'NPUP',value=nPup,comment='pupil size')

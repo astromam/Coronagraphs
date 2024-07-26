@@ -71,7 +71,7 @@ if user == 'Alain':
     fdir_res   = Path('D:/Andes/Data_corono/results/').resolve()  #  fits data
     fdir_plt   = Path('D:/Andes/Data_corono/plots/').resolve()   #  plots
     # dir name where to find results and plots of a common script run date
-    was_donow = '20240712154051'
+    was_donow = '20240722135512'
     fdir_res = fdir_res / was_donow
     fdir_plt = fdir_plt / was_donow
 

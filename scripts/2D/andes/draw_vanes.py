@@ -6,7 +6,7 @@ Created on Mon Jul  1 17:35:17 2024
 """
 
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 def six_vanes(nPup, width):
     

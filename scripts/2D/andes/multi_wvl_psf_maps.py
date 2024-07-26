@@ -72,7 +72,7 @@ user = 'Alain'
 if user == 'Alain':
     fdir_res   = Path('D:/Andes/Data_corono/results/').resolve()  #  fits data
     fdir_plt   = Path('D:/Andes/Data_corono/plots/').resolve()   #  plots
-    was_donow = '20240712154051'
+    was_donow = '20240722135512'
     fdir_res = fdir_res / was_donow
     fdir_plt = fdir_plt / was_donow
 
@@ -216,7 +216,7 @@ for dir_nb in range(len(opds_dir)):
     fpath_images_pdf = fdir_plt / opd_set / fname_images_pdf
     
     # index of wvl to display
-    iD = [0,nL//4-1,nL//2-1,nL*3//4-1,nL-1]
+    iD = [0,nL//4,nL//2,nL*3//4,nL-1]
     
     # boundaries for the images in log scale
     vmin0 = -5.5
