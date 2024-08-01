@@ -361,6 +361,7 @@ fname_elt = 'ELT_pupil_400.fits' # New pupil with new spider
 fpath_elt = fdir_pupil / fname_elt
 
 
+
 #%%
 """
 ### Read file
@@ -374,7 +375,7 @@ plt.imshow(Pupil)
 plt.title('ELT pupil')
 plt.savefig(fdir_plt / 'New_ELT_pupil.png', dpi=300)
 plt.show()
-plt.close()
+# plt.close()
 
 #%%
 """
@@ -382,13 +383,20 @@ plt.close()
 """
 # Focal plane mask
 mask2d = uniform_disk(nFPM, nFPM/2.)
-diam = 0.9 # diameter of the pupil in fraction of the pupil size
-obst = 0.38 # diameter of the central obscuration in fraction of the pupil size
+diam = 0.96 # diameter of the pupil in fraction of the pupil size
+obst = 0.4 # diameter of the central obscuration in fraction of the pupil size
 
 # Lyot stop
 # LyotStop2d = Pupil*1
-LyotStop2d = Pupil*(uniform_disk(nPup, diam*nPup/2)-uniform_disk(nPup, obst*nPup/2))
+LyotStop2d = (uniform_disk(nPup, diam*nPup/2)-uniform_disk(nPup, obst*nPup/2))
 
+plt.figure(0)
+plt.clf()
+plt.imshow(Pupil)
+plt.contour(LyotStop2d)
+plt.title('ELT pupil')
+# plt.savefig(fdir_plt / 'New_ELT_pupil.png', dpi=300)
+plt.show()
 #%%
 """
 ### Compute perfect PSF
@@ -510,29 +518,83 @@ Int_DD_prf_std, rad_DD_prf_std = profile(Int_DD, ptype='std')
 
 # New set of OPDs from PASSATA 
 
-new_spider_flare = fdir_dat / 'OPDs_PASSATA/OPD/20231122_142204.0/' # with flare
+new_spider_flare = fdir_dat / 'PASSATA/20240228_112033.0_Seeing_0_65/' 
+# Adrien_OPDs_filtered =  Path('/Users/asimonnin/Desktop/PhD/Andes/results/OPD_Adrien/filtered/').resolve()
+# Adrien_OPDs_no_filtered =  Path('/Users/asimonnin/Desktop/PhD/Andes/results/OPD_Adrien/no_filtered/').resolve()
 # new_spider = fdir_dat / 'OPDs_PASSATA/OPD/20231124_090126.0/' # with no flare
 
-fdir_opd   = new_spider_flare
+# fdir_opd_filtered   = Adrien_OPDs_filtered #new_spider_flare
+# fdir_opd_no_filtered = Adrien_OPDs_no_filtered
+fdir_opd_flare = new_spider_flare
 
 # Filename and path for the OPD maps
-flist_opd = os.listdir(fdir_opd) 
-nOPD = len(flist_opd)
-fpath_opd = [fdir_opd / flist_opd[i] for i in range(nOPD)]
-fpath_opd = sorted(fpath_opd)
+# flist_opd_filtered = os.listdir(fdir_opd_filtered) 
+# nOPD_filtered = len(flist_opd_filtered)
+# fpath_opd_filtered = [fdir_opd_filtered / flist_opd_filtered[i] for i in range(nOPD_filtered)]
+# fpath_opd_filtered = sorted(fpath_opd_filtered)
+
+# Filename and path for the OPD maps
+# flist_opd_no_filtered = os.listdir(fdir_opd_no_filtered) 
+# nOPD_no_filtered = len(flist_opd_no_filtered)
+# fpath_opd_no_filtered = [fdir_opd_no_filtered / flist_opd_no_filtered[i] for i in range(nOPD_no_filtered)]
+# fpath_opd_no_filtered = sorted(fpath_opd_no_filtered)
+
+# Filename and path for the OPD maps
+flist_opd_flare = os.listdir(fdir_opd_flare) 
+nOPD_flare = len(flist_opd_flare)
+fpath_opd_flare = [fdir_opd_flare / flist_opd_flare[i] for i in range(nOPD_flare)]
+fpath_opd_flare = sorted(fpath_opd_flare)
 
 """
 ### Read file
 """
 t0 = time.time()
 # Read OPD maps for the nOPD files
-OPD_arr = np.asarray([fits.getdata(fpath_opd[i]) for i in range(nOPD)])
-OPD_arr = OPD_arr*1e-9 # convert OPD from nm `to m if new OPD with new pupil
+# OPD_arr_filtered = np.asarray([fits.getdata(fpath_opd_filtered[i]) for i in range(nOPD_filtered)])
+# OPD_arr_filtered = OPD_arr_filtered*1e-9 # convert OPD from nm `to m if new OPD with new pupil
+
+
+# # Read OPD maps for the nOPD files
+# OPD_arr_no_filtered = np.asarray([fits.getdata(fpath_opd_no_filtered[i]) for i in range(nOPD_no_filtered)])
+# OPD_arr_no_filtered = OPD_arr_no_filtered*1e-9 # convert OPD from nm `to m if new OPD with new pupil
+
+# Read OPD maps for the nOPD files
+OPD_arr_flare = np.asarray([fits.getdata(fpath_opd_flare[i]) for i in range(200,201)])
+OPD_arr_flare = OPD_arr_flare*1e-9 # convert OPD from nm `to m if new OPD with new pupil
+
+OPD_filtered_AL = np.load('/Users/asimonnin/Desktop/PhD/Andes/results/OPD_Adrien/OPD_filtré_AL.npy')
+
 
 #%%
-plt.imshow(OPD_arr[200]*Pupil)
-plt.colorbar()
-plt.show()
+# plt.imshow(abs(OPD_arr_no_filtered[200]*Pupil))
+# plt.colorbar()
+# plt.show()
+#%%
+# std_filtered = np.std(OPD_arr_filtered,axis=(1,2))
+# mean_spatial_std = np.mean(std_filtered)
+# std_spatial_std = np.std(std_filtered)
+# #%%
+# mean_temp = np.mean(OPD_arr_filtered,axis=(0))
+# std_temp = np.std(mean_temp)
+
+# mean_temp_flare = np.mean(OPD_arr_flare,axis=(0))
+# std_temp_flare = np.std(mean_temp_flare)
+
+#%%
+
+# std_flare = np.std(OPD_arr_flare,axis=(1,2))
+# mean_spatial_std_flare = np.mean(std_flare)
+# std_spatial_std_flare = np.std(std_flare)
+
+
+#%%
+# plt.imshow(OPD_arr_filtered[200]*Pupil)
+# plt.colorbar()
+# plt.show()
+
+# plt.imshow(OPD_arr_flare[200]*Pupil)
+# plt.colorbar()
+# plt.show()
 
 #%%
 
@@ -540,24 +602,21 @@ plt.show()
 t1 = time.time()
 print(f'OPD reading file time: {t1-t0:.3f}s') 
 
-flare = [[231,255],[555,582],[914,933],[1254,1306],[1355,1381],[200,2200]] #list of all the flare, last array is the full set of OPD
 
-for i in range(5,6):  
-    """
-    ### Compute PSF (with errors)
-    """
-    t0 = time.time()
-    Int_D0 = np.zeros((nImg, nImg))
-    Int_D0_2 = np.zeros((nImg, nImg))
-    # 531 - 300 = 231
-    OPD_sum = OPD_arr[0]*0 
-    # for iOPD in range(nOPD):
-        
-    for iOPD in range(flare[i][0], flare[i][1]):
 
+"""
+### Compute PSF (with errors)
+"""
+t0 = time.time()
+Int_D0 = np.zeros((nImg, nImg))
+Int_D0_2 = np.zeros((nImg, nImg))
+if k ==0 : 
+    # for iOPD in range(nOPD_filtered):
+    for iOPD in range(1):   
+    
         # Field in the entrance pupil plane A
-        Fld_A0 = Pupil * np.exp(1j*2*np.pi*OPD_arr[iOPD]/(lam)) * LyotStop2d ## Avec Lyot stop
-        # Fld_A0_2 = Pupil * np.exp(1j*2*np.pi*OPD_arr[iOPD]/(lam)) # Sans Lyot stop
+        # Fld_A0 = Pupil * np.exp(1j*2*np.pi*OPD_arr_filtered[iOPD]/(lam)) * LyotStop2d ## Avec Lyot stop
+        Fld_A0 = Pupil * np.exp(1j*2*np.pi*OPD_filtered_AL[iOPD]/(lam))* LyotStop2d # Sans Lyot stop
 
         # Field in the image plane D (no coronagraph)
         Fld_D0 = sft(Fld_A0, nImg, mD*diam) ## Avec Lyot stop
@@ -569,28 +628,29 @@ for i in range(5,6):
 
     t1 = time.time()       
     print(f'PSF computation time: {t1-t0:.3f}s')  
-    
+
     # Normalized intensity
-    Int_D0 /= flare[i][1]-flare[i][0] ## Avec Lyot stop
+    Int_D0 /= 1 ## Avec Lyot stop
     # Int_D0_2 /= flare[i][1]-flare[i][0]# Sans Lyot stop
     
     # Normalized intensity
     norm_peakD0 = 1/np.max(Int_D0)
     # norm_peakD0_2 = 1/np.max(Int_D0_2)
 
-    Int_D0 *= norm_peakDD0 #norm_peakD0 DD0 to have common scale
+    Int_D0 *= norm_peakD0 #norm_peakD0 DD0 to have common scale
     # Int_D0_2 *= norm_peakD0_2
-    
+        
     """
     ### Compute coronographic image (with errors)
     """
     t0 = time.time()
     Int_D = np.zeros((nImg, nImg))
 
-    for iOPD in range(flare[i][0], flare[i][1]):
+    # for iOPD in range(nOPD_filtered):
+    for iOPD in range(1):
         # pupil plane A
-        Fld_A0 = Pupil * np.exp(1j*2*np.pi*OPD_arr[iOPD]/(lam))
-        
+        # Fld_A0 = Pupil * np.exp(1j*2*np.pi*OPD_arr_filtered[iOPD]/(lam))
+        Fld_A0 = Pupil * np.exp(1j*2*np.pi*OPD_filtered_AL[iOPD]/(lam))
         # focal plane B 
         Fld_B = mask2d*sft(Fld_A0, nFPM, mB)
         
@@ -610,12 +670,12 @@ for i in range(5,6):
     print(f'Coro image computation time: {t1-t0:.3f}s')  
     
     # Normalized intensity
-    Int_D /= flare[i][1] - flare[i][0]#nOPD
-    
+    Int_D /= 1#nOPD_filtered
+
     # Normalized intensity
-    Int_D *= norm_peakDD0 #norm_peakD0 DD0 to have common scale
-    
-    
+    Int_D *= norm_peakD0 #norm_peakD0 DD0 to have common scale
+
+
     """
     ### Compute the radial intensity profiles of the images
     """
@@ -629,16 +689,14 @@ for i in range(5,6):
     Int_D0_prf_std, rad_D0_prf_std = profile(Int_D0, ptype='std')
     Int_D_prf_std, rad_D_prf_std = profile(Int_D, ptype='std')
 
-  
+
     """
     ### Save images
     """
     # filename for the direct and coronagraphic images
-    # fname_Int_D0 = 'seed=' + str(seed) + 'new_spider_psf_flare_'+str(i)+'.fits'
-    # fname_Int_D = 'seed=' + str(seed) + 'new_spider_cor_flare_'+str(i)+'.fits'
-    fname_Int_D0 = 'new_spider_psf_'+str(i)+'_flare.fits'
-    fname_Int_D = 'new_spider_cor_'+str(i)+'_flare.fits'
-    
+    fname_Int_D0 = 'seed=' + str(seed) + 'new_spider_psf_flare_'+str(i)+'.fits'
+    fname_Int_D = 'seed=' + str(seed) + 'new_spider_cor_flare_'+str(i)+'.fits'
+
     # filepath for the direct and coronagraphic images
     fpath_Int_D0 = fdir_res / fname_Int_D0
     fpath_Int_D  = fdir_res / fname_Int_D
@@ -646,126 +704,144 @@ for i in range(5,6):
     # save the direct and coronagraphic images
     fits.writeto(fpath_Int_D0, Int_D0, overwrite=True)
     fits.writeto(fpath_Int_D, Int_D, overwrite=True)
-    
-    #%%
-    """
-    ### Display images
-    """
-    # filename of the plot
-    # fname_images = 'seed=' + str(seed) + '_images_flare_'+str(i)+'.pdf'
-    fname_images = 'Flare_'+str(i)+'_normal_Lyot_flare.pdf'
-    
-    # filepath for the direct and coronagraphic images
-    fpath_images = fdir_plt / fname_images
-    
-    # boundaries for the images in log scale
-    vmin0 = -7
-    vmax0 = 0
-    
-    fig = plt.figure(1, figsize=(12,6))
-    plt.clf()
-    
-    grid = AxesGrid(fig, 111,
-                    nrows_ncols=(2, 3),
-                    axes_pad=0.3,
-                    cbar_mode='single',
-                    cbar_location='right',
-                    cbar_pad=0.2
-                    )
-    
-    # Perfect PSF
-    im = grid[0].imshow(np.log10(Int_DD0), vmin=vmin0, vmax=vmax0, cmap='inferno')
-    grid[0].set_title('perfect PSF')
-    
-    # AO corrected PSF 
-    im = grid[1].imshow(np.log10(Int_D0), vmin=vmin0, vmax=vmax0, cmap='inferno')
-    grid[1].set_title(f'AO corrected PSF ')
 
-    # Perfect coronagraphic image
-    im = grid[3].imshow(np.log10(Int_DD), vmin=vmin0, vmax=vmax0, cmap='inferno')
-    grid[3].set_title('Perfect coro. image')
-    
-    # AO corrected coronagraphic image
-    im = grid[4].imshow(np.log10(Int_D), vmin=vmin0, vmax=vmax0, cmap='inferno')
-    grid[4].set_title('AO corrected coro. image')
-    
-    # colorbar
-    cbar = grid[0].cax.colorbar(im)
-    cbar = grid.cbar_axes[0].colorbar(im)
-    cbar.ax.get_yaxis().labelpad = 15
-    cbar.ax.set_ylabel('Intensity in log scale', rotation=270)
-    
-    plt.tight_layout()
-    # plt.savefig(fpath_images)
-    if i==5:
-        plt.show()
-    else : 
-        plt.close()
-    # plt.close()
-    
-    #%%``
-    """
-    ### plot the radial profiles of the image intensity
-    """
-    # filename of the plot
-    fname_prf = 'profiles_flare_'+str(i)+'_v2.pdf'
+#%%
 
-    # filepath for the direct and coronagraphic images
-    fpath_prf = fdir_plt / fname_prf
-    
-    
-    # convert pixel scale into lam/D scale for the x-axis
-    rad_D0_prf_avg_lamD = rad_D0_prf_avg * mD/nImg
-    rad_D_prf_avg_lamD = rad_D_prf_avg * mD/nImg
-    rad_DD0_prf_avg_lamD = rad_DD0_prf_avg * mD/nImg
+"""
+### Display images
+"""
+
+##load filtered and not filtered images 
+fname_Int_D0_no_filtered = 'No_Filtered_OPDs.fits'
+fname_Int_D_no_filtered = 'No_Filtered_OPDs_coro.fits'
+
+fname_Int_D0_filtered = 'Filtered_OPDs.fits'
+fname_Int_D_filtered = 'Filtered_OPDs_coro.fits'
+
+Int_D0_Filtered = fits.getdata(fdir_res / fname_Int_D0_filtered)
+Int_D0_no_Filtered = fits.getdata(fdir_res / fname_Int_D0_no_filtered)
+Int_D_Filtered = fits.getdata(fdir_res / fname_Int_D_filtered)
+Int_D_no_Filtered = fits.getdata(fdir_res / fname_Int_D_no_filtered)
+# filename of the plot
+# fname_images = 'seed=' + str(seed) + '_images_flare_'+str(i)+'.pdf'
+
+fname_images_Filtered = 'Comp.pdf'
 
 
-    rad_D0_prf_avg_mas = rad_D0_prf_avg_lamD * lamD2mas
-    rad_D_prf_avg_mas = rad_D_prf_avg_lamD * lamD2mas
-    rad_DD0_prf_avg_mas = rad_DD0_prf_avg_lamD * lamD2mas 
+# filepath for the direct and coronagraphic images
+fpath_images = fdir_plt / fname_images_Filtered
 
-    
-    
-    # plot of the radial profiles
-    plt.figure(2, (8, 4.5))
-    plt.clf()
-    
-    # AO corrected PSF (MND)
-    plt.plot(rad_D0_prf_avg_mas, Int_D0_prf_avg, label='no Corono',linestyle = '--',color='orange')
-    
-    # AO corrected PSF (No noise)
-    # plt.plot(rad_D0_prf_avg_lamD, Int_D0_prf_avg2, label='PSF no Corono no Lyot', ls='--')
-    
-    # AO corrected coronagraphic image
-    plt.plot(rad_D_prf_avg_mas, Int_D_prf_avg, label='with Corono',color='orange')
+# boundaries for the images in log scale
+vmin0 = -5
+vmax0 = 0
 
-    # Perfect coronagraphic image
-    # plt.plot(rad_DD0_prf_avg_lamD, Int_DD_prf_avg, label='PSF with Corono no atm turb', ls='--',alpha = 0.5)
+fig = plt.figure(1, figsize=(12,10))
+plt.clf()
 
-    # Perfect PSF
-    # plt.plot(rad_DD0_prf_avg_lamD, Int_DD0_prf_avg, label='PSF no Corono no turb', ls='--',alpha = 0.5)
+grid = AxesGrid(fig, 111,
+                nrows_ncols=(2, 2),
+                axes_pad=0.3,
+                cbar_mode='single',
+                cbar_location='right',
+                cbar_pad=0.2
+                )
 
-    
-    # Focal plane mask boundary
-    x = np.arange(0.0, mB/2, 0.01)
-    plt.axvline(x=mB/2 *lamD2mas, color='k', ls='--')
-    
-    # Focal plane mask grey area
-    plt.fill_between(x *lamD2mas, 0, mB/2/ 38.54*1.6e-6/rad2mas, color='gray', alpha=0.3)
-    
-    plt.xlim(-0.05,np.max(rad_D_prf_avg_mas)+0.05)
-    plt.ylim(1e-5, 2e0)#(2e-5, 2e0)
-    plt.xlabel('Angular separation [mas]')#[$\lambda$/D]')
-    plt.ylabel('Normalized intensity in log scale')
-    plt.yscale('log')
-    plt.title(f'Radial averaged intensity profile at $\lambda$={lam*1e6:.3f}$\mu$m')
-    plt.grid(True)
-    plt.tight_layout()
-    plt.legend()
-    
-    # plt.savefig(fpath_prf)
-    # plt.close()
-    plt.show()
-    
-    result = rad_D0_prf_avg_lamD,Int_D0_prf_avg 
+# AO corrected PSF 
+im = grid[0].imshow(np.log10(Int_D0_Filtered), vmin=vmin0, vmax=vmax0, cmap='inferno')
+grid[0].set_title(f'AO corrected PSF Filtered')
+
+# AO corrected coronagraphic image
+im = grid[2].imshow(np.log10(Int_D_Filtered), vmin=vmin0, vmax=vmax0, cmap='inferno')
+grid[2].set_title('AO corrected coro. image  Filtered')
+
+im = grid[1].imshow(np.log10(Int_D0_no_Filtered), vmin=vmin0, vmax=vmax0, cmap='inferno')
+grid[1].set_title(f'AO corrected PSF NO Filtered')
+
+# AO corrected coronagraphic image
+im = grid[3].imshow(np.log10(Int_D_no_Filtered), vmin=vmin0, vmax=vmax0, cmap='inferno')
+grid[3].set_title('AO corrected coro. image No Filtered')
+
+
+# colorbar
+cbar = grid[0].cax.colorbar(im)
+cbar = grid.cbar_axes[0].colorbar(im)
+cbar.ax.get_yaxis().labelpad = 15
+cbar.ax.set_ylabel('Intensity in log scale', rotation=270)
+
+plt.tight_layout()
+# plt.savefig(fpath_images)
+
+plt.show()
+
+# plt.close()
+#%%
+
+Int_D0_prf_avg_filtered, rad_D0_prf_avg = profile(Int_D0_Filtered, ptype='mean')
+Int_D0_prf_avg_no_filtered, rad_D0_prf_avg = profile(Int_D0_no_Filtered, ptype='mean')
+Int_D_prf_avg_filtered, rad_D_prf_avg = profile(Int_D_Filtered, ptype='mean')
+Int_D_prf_avg_no_filtered, rad_D0_prf_avg = profile(Int_D_no_Filtered, ptype='mean')
+
+#%%``
+"""
+### plot the radial profiles of the image intensity
+"""
+# filename of the plot
+# fname_prf = 'profiles_flare_'+str(i)+'_v2.pdf'
+
+# # filepath for the direct and coronagraphic images
+# fpath_prf = fdir_plt / fname_prf
+
+
+# convert pixel scale into lam/D scale for the x-axis
+rad_D0_prf_avg_lamD = rad_D0_prf_avg * mD/nImg
+rad_D_prf_avg_lamD = rad_D_prf_avg * mD/nImg
+
+rad_D0_prf_avg_mas = rad_D0_prf_avg_lamD * lamD2mas
+rad_D_prf_avg_mas = rad_D_prf_avg_lamD * lamD2mas
+
+
+
+
+# plot of the radial profiles
+plt.figure(2, (8, 4.5))
+plt.clf()
+
+# AO corrected PSF (MND)
+plt.plot(rad_D0_prf_avg_mas, Int_D0_prf_avg_filtered, label='no Corono Filtered',color='orange')
+
+# AO corrected PSF (No noise)
+plt.plot(rad_D0_prf_avg_mas, Int_D0_prf_avg_no_filtered, label='no Corono no Filtered ',color='blue')
+
+# AO corrected coronagraphic image
+plt.plot(rad_D_prf_avg_mas, Int_D_prf_avg_filtered, label='with Corono Filtered', ls='--',color='orange')
+
+# Perfect coronagraphic image
+plt.plot(rad_D_prf_avg_mas, Int_D_prf_avg_no_filtered, label='Coro No Filtered', ls='--',color='blue')
+
+# Perfect PSF
+# plt.plot(rad_DD0_prf_avg_lamD, Int_DD0_prf_avg, label='PSF no Corono no turb', ls='--',alpha = 0.5)
+
+
+# Focal plane mask boundary
+x = np.arange(0.0, mB/2, 0.01)
+plt.axvline(x=mB/2 *lamD2mas, color='k', ls='--')
+
+# Focal plane mask grey area
+plt.fill_between(x *lamD2mas, 0, mB/2/ 38.54*1.6e-6/rad2mas, color='gray', alpha=0.3)
+
+plt.xlim(-0.05,np.max(rad_D_prf_avg_mas)+0.05)
+plt.ylim(1e-5, 2e0)#(2e-5, 2e0)
+plt.xlabel('Angular separation [mas]')#[$\lambda$/D]')
+plt.ylabel('Normalized intensity in log scale')
+plt.yscale('log')
+plt.title(f'Radial averaged intensity profile at $\lambda$={lam*1e6:.3f}$\mu$m')
+plt.grid(True)
+plt.tight_layout()
+plt.legend()
+
+# plt.savefig(fpath_prf)
+# plt.close()
+plt.show()
+
+result = rad_D0_prf_avg_lamD,Int_D0_prf_avg 
 # %%

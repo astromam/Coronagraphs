@@ -401,6 +401,7 @@ OPD_arr = np.asarray([fits.getdata(fpath_opd[i]) for i in range(nOPD)])
 
 
 
+
 #%%
 
 # conversion lradian to mas
@@ -454,55 +455,54 @@ resultat_w_woro_w_turb_int = []
 
 ### Loop over the parameters
 
-for diam in diametre_lyot: 
+for diam in diametre_lyot[0:1]: 
     obst_i=0
-    for obst in obstruction:
+    for obst in obstruction[0:10]:
         mb_i=0
         print(diam,obst)
         LyotStop2d = Pupil*(uniform_disk(nPup, diam*nPup/2)-uniform_disk(nPup, obst*nPup/2))
         coro_config = 'lyot'
                 
+            
+        Pupil_coro = Pupil  
+
+        """
+        ### Compute perfect PSF
+        """
+        # Field in the entrance pupil plane A
+        Fld_AA0 = Pupil_coro
+
+        int_a = np.abs(Fld_AA0)**2
+
+        ee_a = np.sum(int_a)
+
+        # Field in the entrance pupil plane C
+        Fld_CC0 = Fld_AA0 * 1.*LyotStop2d
+
+        int_c = np.abs(Fld_CC0)**2
+
+        ee_c = np.sum(int_c)
+
+        throughput[diam_k,obst_i,mb_i] = ee_c/ee_a
+
+
+        # Field in the image plane D (no coronagraph)*
+        Fld_DD0 = sft(Fld_CC0, nImg, mD*diam) #diametre_lyot
+
+        # Intensity 
+        Int_DD0 = np.abs(Fld_DD0)**2
+
+        # Normalized intensity
+        norm_peakDD0 = 1/np.max(Int_DD0)
+
+
+        Int_DD0 *= norm_peakDD0 #norm_peakDD0
+
         for s in range(len(mB_conf)) :
             """
             ### Selection of the good apodizer configuration according to FPM
             """
             mB = mB_conf[s]
-
-            
-            Pupil_coro = Pupil  
-
-            """
-            ### Compute perfect PSF
-            """
-            # Field in the entrance pupil plane A
-            Fld_AA0 = Pupil_coro
-
-            int_a = np.abs(Fld_AA0)**2
-
-            ee_a = np.sum(int_a)
-
-            # Field in the entrance pupil plane C
-            Fld_CC0 = Fld_AA0 * 1.*LyotStop2d
-
-            int_c = np.abs(Fld_CC0)**2
-
-            ee_c = np.sum(int_c)
-
-            throughput[diam_k,obst_i,mb_i] = ee_c/ee_a
-
-
-            # Field in the image plane D (no coronagraph)*
-            Fld_DD0 = sft(Fld_CC0, nImg, mD*diam) #diametre_lyot
-
-            # Intensity 
-            Int_DD0 = np.abs(Fld_DD0)**2
-
-            # Normalized intensity
-            norm_peakDD0 = 1/np.max(Int_DD0)
-
-    
-            Int_DD0 *= norm_peakDD0 #norm_peakDD0
-
             """
             ### Calcul of corono image without atmospheric turbulences
             """
@@ -562,125 +562,16 @@ for diam in diametre_lyot:
             resultat_no_coro_no_turb_rad.append(rad_DD0_prf_avg)
             resultat_no_coro_no_turb_int.append(Int_DD0_prf_avg)
                 
+            mb_i+=1
+        obst_i+=1
 
-            """
-            ### load OPD of Anne Laure to compute images with turbulences
-            """
+# np.save(fdir_res / 'Paramaeters_diff_resultat_no_coro_no_turb_rad_{wl}.npy', resultat_no_coro_no_turb_rad)
+# np.save(fdir_res / 'Paramaeters_resultat_no_coro_no_turb_int_{wl}.npy', resultat_no_coro_no_turb_int)
 
-
-            for i in range (nOPD):
-                t1 = time.time()
-                print(f'OPD reading file time: {t1-t0:.3f}s') 
-            
-            
-                """
-                ### Compute PSF (with errors)
-                """
-
-                t0 = time.time()
-                Int_D0 = np.zeros((nImg, nImg))
-                for iOPD in range(nOPD):
-                    # Field in the entrance pupil plane A
-                    Fld_A0 = Pupil_coro * np.exp(2*1j*np.pi*OPD_arr[iOPD]/lam) 
-                    # print(lam,lam_0)
-                    # Field in the entrance pupil plane C
-                    Fld_C0 = Fld_A0 * LyotStop2d
-                    # Field in the image plane D (no coronagraph)
-                    Fld_D0 = sft(Fld_C0, nImg, mD*diam)#diametre_lyot mD*diam
-
-                    # Intensity 
-                    Int_D0 += np.abs(Fld_D0)**2
-
-                t1 = time.time()       
-                # print(f'PSF computation time: {t1-t0:.3f}s')  
-
-                # Normalized intensity
-                Int_D0 /= nOPD
-
-            
-                # Normalized intensity
-                norm_peakD0 = 1/np.max(Int_D0)
-
-                # norm_peak_2 = 1/np.max(Int_DD0)
-
-                Int_D0 *= norm_peakD0
-
-                """
-                ### Compute coronographic image (with errors)
-                """
-                t0 = time.time()
-                Int_D = np.zeros((nImg, nImg))
-                for iOPD in range(nOPD):
-                    # pupil plane A
-                    Fld_A0 = Pupil_coro * np.exp(2*1j*np.pi*OPD_arr[iOPD]/lam)
-                
-                    # focal plane B 
-                    Fld_B = mask2d*sft(Fld_A0, nFPM, mB)
-                
-                    # pupil plane C before Lyot stop
-                    Fld_C = Fld_A0 - isft(Fld_B, nPup, mB)
-                    # pupil plane C after Lyot stop
-                    Fld_L = Fld_C*LyotStop2d
-                
-                    # image plane D 
-                    Fld_D = sft(Fld_L, nImg, mD*diam) #diametre_lyot *diam
-                
-                    # Intensity
-                    Int_D += np.abs(Fld_D)**2    
-                t1 = time.time()       
-                # print(f'Coro image computation time: {t1-t0:.3f}s')  
-            
-
-                # Normalized intensity
-                Int_D /= nOPD
-            
-                # Normalized intensity
-                Int_D *= norm_peakD0#_no_lyot #* norm_peakD0
-            
-
-            
-                """
-                ### Compute the radial intensity profiles of the images
-                """
-                # computation of the averaged intensity profiles of the images   
-                Int_D0_prf_avg, rad_D0_prf_avg = profile(Int_D0, ptype='mean')
-                Int_D_prf_avg, rad_D_prf_avg = profile(Int_D, ptype='mean')
+# np.save(fdir_res / 'Paramaeters_resultat_w_coro_no_turb_rad_{wl}.npy', resultat_w_coro_no_turb_rad)
+# np.save(fdir_res / 'Paramaeters_resultat_w_coro_no_turb_int_{wl}.npy', resultat_w_coro_no_turb_int)
 
 
-                # computation of the standard deviation intensity profiles of the images
-                Int_D0_prf_std, rad_D0_prf_std = profile(Int_D0, ptype='std')
-                Int_D_prf_std, rad_D_prf_std = profile(Int_D, ptype='std')
+# np.save(fdir_res / 'Paramaeters_throughput_{wl}.npy', throughput)
 
-
-
-                # convert pixel scale into lam/D scale for the x-axis
-                rad_D0_prf_avg_lamD = rad_D0_prf_avg * mD/nImg
-                rad_D_prf_avg_lamD = rad_D_prf_avg * mD/nImg
-                
-                rad_D0_prf_avg_mas = rad_D0_prf_avg_lamD * lamD2mas
-                rad_D_prf_avg_mas = rad_D_prf_avg_lamD * lamD2mas
-              
-                """
-                ### Save images
-                """
-                resultat_no_coro_w_turb_rad.append(rad_D0_prf_avg_mas)
-                resultat_no_coro_w_turb_int.append(Int_D0_prf_avg)
-
-                resultat_w_woro_w_turb_rad.append(rad_D_prf_avg_mas)
-                resultat_w_woro_w_turb_int.append(Int_D_prf_avg)
-
-
-
-np.save(fdir_res / 'Paramaeters_diff_resultat_no_coro_no_turb_rad_{wl}.npy', resultat_no_coro_no_turb_rad)
-np.save(fdir_res / 'Paramaeters_resultat_no_coro_no_turb_int_{wl}.npy', resultat_no_coro_no_turb_int)
-
-np.save(fdir_res / 'Paramaeters_resultat_w_coro_no_turb_rad_{wl}.npy', resultat_w_coro_no_turb_rad)
-np.save(fdir_res / 'Paramaeters_resultat_w_coro_no_turb_int_{wl}.npy', resultat_w_coro_no_turb_int)
-
-np.save(fdir_res / 'Paramaeters_resultat_no_coro_w_turb_rad_{wl}.npy', resultat_no_coro_w_turb_rad)
-np.save(fdir_res / 'Paramaeters_resultat_no_coro_w_turb_int_{wl}.npy', resultat_no_coro_w_turb_int)
-
-np.save(fdir_res / 'Paramaeters_resultat_w_woro_w_turb_rad_{wl}.npy', resultat_w_woro_w_turb_rad)
-np.save(fdir_res / 'Paramaeters_resultat_w_woro_w_turb_int_{wl}.npy', resultat_w_woro_w_turb_int)
-
-np.save(fdir_res / 'Paramaeters_throughput_{wl}.npy', throughput)
+# %%
