@@ -371,27 +371,6 @@ Pupil = fits.getdata(fpath_elt,)
 ### Read OPDs
 """
 
-# fdir_opd = '/Users/asimonnin/Desktop/PhD/Andes/Data_corono/data/PASSATA/20240228_112033.0_Seeing_0_65' #median
-
-fdir_opd = '/Users/asimonnin/Desktop/PhD/Andes/Data_corono/data/PASSATA/20240228_053027.0_Seeing_0_57' #JQ2
-
-
-fdir_opd = Path(fdir_opd).resolve()
-
-# Filename and path for the OPD maps
-flist_opd = os.listdir(fdir_opd) 
-fpath_opd = [fdir_opd / flist_opd[i] for i in range(len(flist_opd)) if flist_opd[i].endswith('.fits')]
-            
-fpath_opd = sorted(fpath_opd)
-
-fpath_opd = fpath_opd[200:2201]  #5min temps exposition
-        
-                
-t0 = time.time()
-# Read OPD maps for the nOPD files
-OPD_arr = np.asarray([fits.getdata(fpath_opd[i]) for i in range(2000)])
-
-
 fdir_opd_AL = Path('/Users/asimonnin/Desktop/PhD/Andes/Data_corono/data/JQ2_PASSATA/JQ2_01/20240517_181033/').resolve() #JQ2
 
 # Filename and path for the OPD maps
@@ -402,7 +381,7 @@ fpath_opd = sorted(fpath_opd)
                         
 t0 = time.time()
 # Read OPD maps for the nOPD files
-data_windshake = np.asarray([fits.getdata(fpath_opd[i]) for i in range(2000)])*1e-9
+data_windshake = np.asarray([fits.getdata(fpath_opd[i]) for i in range(2000)])*1e-9 # in nm
 
 
 #%%
@@ -410,25 +389,27 @@ data_windshake = np.asarray([fits.getdata(fpath_opd[i]) for i in range(2000)])*1
 
 # Determine PSD of OPDs
 
-# OPD_only_pupil = OPD_arr*Pupil
-
 OPD_only_pupil = data_windshake*Pupil
 
 #%%
-tab = np.zeros((400,400))
-N = 400 # Number of points in each dimension
-ind_init = (N-200)//2
-ind_end = (N+200)//2
-tab[ind_init:ind_end,ind_init:ind_end]=1
-plt.imshow(tab)
-plt.show()
+
+"""
+Filtrage Carré
+"""
+# tab = np.zeros((400,400))
+# N = 400 # Number of points in each dimension
+# ind_init = (N-200)//2
+# ind_end = (N+200)//2
+# tab[ind_init:ind_end,ind_init:ind_end]=1
+# plt.imshow(tab)
+# plt.show()
 
 #%%
-import numpy as np
-
+"""
+Filtrage Gaussien
+"""
 # Dimensions de la matrice
 N = 400
-
 # Créer une matrice de coordonnées
 x = np.linspace(-1, 1, N)
 y = np.linspace(-1, 1, N)
@@ -444,95 +425,84 @@ gaussian = np.exp(-(x**2 + y**2) / (2 * sigma**2))
 gaussian /= gaussian.max()
 
 # Affichage de la matrice résultante
-print(gaussian)
-
 plt.imshow(gaussian)
 plt.show()
 
 #%%
-#%%
 mean_psd = 0*OPD_only_pupil[0]
 opd_filtré = 0*OPD_only_pupil
-mD = 400#58.393*(nImg/(lam*1e9))
-### filtrage de l'OPD en gaussien 
+mD = 400
 
+### filtrage de l'OPD en gaussien 
 tab_gauss = np.zeros((400,400))
 N = 400 # Number of points in each dimension
-
-
 i=0
-for opds in OPD_only_pupil : 
-    
-    
-    tf_opd = sft(opds,400,mD)
-    tf_opd_tab = tf_opd*gaussian
-    opd_filtré_o = isft(tf_opd_tab,400,mD)
 
+"""
+Test filtrage OPD ALC 
+"""
+for opds in OPD_only_pupil : 
+    tf_opd = sft(opds,400,mD)
+    tf_opd_filtre = tf_opd*gaussian
+    opd_filtré_o = isft(tf_opd_filtre,400,mD)
     opd_filtré[i] = np.real(opd_filtré_o)*Pupil
     i+=1
 
+np.save('/Users/asimonnin/Desktop/PhD/Andes/results/OPD_Adrien/OPD_filtré_AL7.npy',opd_filtré)
+np.save('/Users/asimonnin/Desktop/PhD/Andes/results/OPD_Adrien/OPD_AL7.npy',OPD_only_pupil)
 #%%
-for opds in OPD_only_pupil : 
 
+"""
+Génération PSD moyenne OPDs ALC
+"""
+for opds in OPD_only_pupil : 
     tf_opd = sft(opds,400,mD)  
     psd = np.abs(tf_opd)**2
     mean_psd += psd
 
 mean_psd = mean_psd/len(OPD_only_pupil)
-#%%
-plt.imshow(opd_filtré[0])
-plt.colorbar()
-plt.show()
-
-plt.imshow(OPD_only_pupil[0])
-plt.colorbar()
-plt.show()
 
 #%%
-plt.imshow(data_windshake[0])
-plt.colorbar()
-plt.show()
-
-mean_test = np.mean(data_windshake[:,Pupil==1],axis=1)
-
-data_mean_0 = 0*data_windshake
-
-for i in range(2000):
-    data_mean_0[i] = (data_windshake[i]*Pupil) - mean_test[i]
-
-plt.imshow(data_mean_0[0])
-plt.colorbar()
-plt.show()
-# psd*=tab
-
-# plt.imshow(np.log10(psd))
+# plt.imshow(opd_filtré[0])
 # plt.colorbar()
 # plt.show()
-#%%
-np.save('/Users/asimonnin/Desktop/PhD/Andes/results/OPD_Adrien/OPD_filtré_AL7.npy',opd_filtré)
-np.save('/Users/asimonnin/Desktop/PhD/Andes/results/OPD_Adrien/OPD_AL7.npy',OPD_only_pupil)
-### Faire calcul de PSF avec et sans corono pour un ecran de phase filtré et non filtré
 
-
-
-# plt.imshow(np.log10(psd))
+# plt.imshow(OPD_only_pupil[0])
+# plt.colorbar()
 # plt.show()
+
 #%%
-# psd_profile, rad_D0_prf_avg = profile(psd,ptype='mean')
+
+"""
+Mettre moyenne OPDs à 0
+"""
+# mean_test = np.mean(data_windshake[:,Pupil==1],axis=1)
+# data_mean_0 = 0*data_windshake
+
+# for i in range(2000):
+#     data_mean_0[i] = (data_windshake[i]*Pupil) - mean_test[i]
+
+# plt.imshow(data_mean_0[0])
+# plt.colorbar()
+# plt.show()
+
+#%%
+"""
+Génération d'OPDs aléatoires à partir PSD moyenne (avec et sans filtrage)
+"""
+
 for i in range(2000):
     amplitude = np.sqrt(mean_psd)
     random = np.random.randn(*amplitude.shape)
-
     random_opd = isft(amplitude*random,400,mD)
-
-    random_opd_real = np.real(random_opd)*Pupil
+    random_opd_real = np.real(random_opd)*Pupil ### OPDs non filtrés
 
     ### filtrage de l'OPD
 
     tf_opd_flt = sft(random_opd,400,mD)
     tf_opd_flt_tab = tf_opd_flt*gaussian
     random_opd_tab = isft(tf_opd_flt_tab,400,mD)
-    random_opd_tab_real = np.real(random_opd_tab)*Pupil
+    random_opd_tab_real = np.real(random_opd_tab)*Pupil ### OPDs filtrés
 
     ## save as fits file
     fpath_new_OPD = '/Users/asimonnin/Desktop/PhD/Andes/results/OPD_Adrien/no_filtered_windshake_JQ2/OPD_'+str(i)+'.fits'
@@ -541,8 +511,102 @@ for i in range(2000):
     fits.writeto(fpath_new_OPD_tab, random_opd_tab_real, overwrite=True)
 
 
-# mean += random_opd
 #%%
+
+# New set of OPDs from PASSATA 
+Adrien_OPDs_filtered =  Path('/Users/asimonnin/Desktop/PhD/Andes/results/OPD_Adrien/filtered_windshake_JQ2/').resolve()
+Adrien_OPDs_no_filtered =  Path('/Users/asimonnin/Desktop/PhD/Andes/results/OPD_Adrien/no_filtered_windshake_JQ2/').resolve()
+
+fdir_opd_filtered   = Adrien_OPDs_filtered #new_spider_flare
+fdir_opd_no_filtered = Adrien_OPDs_no_filtered
+
+# Filename and path for the filtered OPD maps
+flist_opd_filtered = os.listdir(fdir_opd_filtered) 
+nOPD_filtered = len(flist_opd_filtered)
+fpath_opd_filtered = [fdir_opd_filtered / flist_opd_filtered[i] for i in range(nOPD_filtered)]
+fpath_opd_filtered = sorted(fpath_opd_filtered)
+
+# Filename and path for the no filtered OPD maps
+flist_opd_no_filtered = os.listdir(fdir_opd_no_filtered)
+nOPD_no_filtered = len(flist_opd_no_filtered)
+fpath_opd_no_filtered = [fdir_opd_no_filtered / flist_opd_no_filtered[i] for i in range(nOPD_no_filtered)]
+fpath_opd_no_filtered = sorted(fpath_opd_no_filtered)
+
+mean_jq2 = 125*1e-9#103*1e-9
+std_jq2 =1.1*1e-8# 2*1e-9
+
+rand_norm = np.random.normal(mean_jq2,std_jq2,2000)
+
+"""
+### Read file
+"""
+t0 = time.time()
+# Read OPD maps for the nOPD files for filtered OPDs
+OPD_arr_filtered = np.asarray([fits.getdata(fpath_opd_filtered[i]) for i in range(nOPD_filtered)])
+OPD_arr_filtered = OPD_arr_filtered# convert OPD from nm `to m if new OPD with new pupil
+OPD_arr_filtered_normalised = 1*OPD_arr_filtered
+
+# Read OPD maps for the nOPD files for no filtered OPDs
+OPD_arr_no_filtered = np.asarray([fits.getdata(fpath_opd_no_filtered[i]) for i in range(nOPD_no_filtered)])
+OPD_arr_no_filtered = OPD_arr_no_filtered# convert OPD from nm `to m if new OPD with new pupil
+OPD_arr_no_filtered_normalised = 1*OPD_arr_no_filtered
+
+
+
+for i in range(2000):
+    OPD_arr_filtered_normalised[i,Pupil==1] = (OPD_arr_filtered_normalised[i,Pupil==1] /np.std(OPD_arr_filtered_normalised[i,Pupil==1]) *rand_norm[i])
+    OPD_arr_no_filtered_normalised[i,Pupil==1] = (OPD_arr_no_filtered_normalised[i,Pupil==1] /np.std(OPD_arr_no_filtered_normalised[i,Pupil==1]) *rand_norm[i])
+
+mean_psd_new = 0*OPD_arr_filtered[0]
+mean_psd_new_no_filtered = 0*OPD_arr_no_filtered[0]
+
+for opds in OPD_arr_filtered_normalised : 
+
+    tf_opd = sft(opds,400,400)  
+    psd = np.abs(tf_opd)**2
+    mean_psd_new += psd
+
+mean_psd_new = mean_psd_new/len(OPD_arr_filtered)
+
+for opds in OPD_arr_no_filtered_normalised :
+    
+    tf_opd = sft(opds,400,400)  
+    psd = np.abs(tf_opd)**2
+    mean_psd_new_no_filtered += psd
+
+mean_psd_new_no_filtered = mean_psd_new_no_filtered/len(OPD_arr_no_filtered)
+
+# %%
+std_spat = np.std(OPD_arr_filtered_normalised[:,Pupil==1],axis=1)
+
+temp_mean = np.mean(std_spat)
+temp_std = np.std(std_spat)
+
+std_spat_no_filtered = np.std(OPD_arr_no_filtered_normalised[:,Pupil==1],axis=1)
+
+temp_mean_no_filtered = np.mean(std_spat_no_filtered)
+temp_std_no_filtered = np.std(std_spat_no_filtered)
+
+plt.imshow(np.log10(mean_psd_new))
+plt.colorbar()
+plt.title('PSD moyenne OPDs filtrés')
+plt.show()
+
+plt.imshow(np.log10(mean_psd_new_no_filtered))
+plt.colorbar()
+plt.title('PSD moyenne OPDs non filtrés')
+plt.show()
+
+plt.imshow(mean_psd)
+plt.colorbar()
+plt.title('PSD moyenne OPDs ALC')
+plt.show()
+
+
+# %%
+"""
+Génération OPDs avec PSD suivant une loi en f^-2
+"""
 
 # Définir le domaine de fréquence
 f_min = 0.01  # Fréquence minimale (éviter zéro pour éviter l'infini)
@@ -582,10 +646,6 @@ random_opd_f2 = np.real(isft(amplitude*random,800,400))
 
 # Normalisation de l'image pour l'affichage
 opd_f2 = (random_opd_f2  - np.min(random_opd_f2 )) / (np.max(random_opd_f2 ) - np.min(random_opd_f2 ))
-#%%
-
-# opd_f2[Pupil==1] -= np.mean(opd_f2[Pupil==1])
-#%%
 # Affichage de l'image
 plt.imshow(opd_f2, cmap='gray')
 plt.colorbar()
@@ -596,50 +656,3 @@ plt.show()
 
 plt.imshow(np.log(dsp),vmax=3)
 plt.colorbar()
-# %%
-
-# New set of OPDs from PASSATA 
-Adrien_OPDs_filtered =  Path('/Users/asimonnin/Desktop/PhD/Andes/results/OPD_Adrien/no_filtered_windshake_JQ2/').resolve()
-
-fdir_opd_filtered   = Adrien_OPDs_filtered #new_spider_flare
-
-
-# Filename and path for the filtered OPD maps
-flist_opd_filtered = os.listdir(fdir_opd_filtered) 
-nOPD_filtered = len(flist_opd_filtered)
-fpath_opd_filtered = [fdir_opd_filtered / flist_opd_filtered[i] for i in range(nOPD_filtered)]
-fpath_opd_filtered = sorted(fpath_opd_filtered)
-
-mean_jq2 = 125*1e-9#103*1e-9
-std_jq2 =1.1*1e-8# 2*1e-9
-
-rand_norm = np.random.normal(mean_jq2,std_jq2,2000)
-
-"""
-### Read file
-"""
-t0 = time.time()
-# Read OPD maps for the nOPD files
-OPD_arr_filtered = np.asarray([fits.getdata(fpath_opd_filtered[i]) for i in range(nOPD_filtered)])
-OPD_arr_filtered = OPD_arr_filtered# convert OPD from nm `to m if new OPD with new pupil
-OPD_arr_filtered_normalised = 1*OPD_arr_filtered
-
-for i in range(2000):
-    OPD_arr_filtered_normalised[i,Pupil==1] = (OPD_arr_filtered_normalised[i,Pupil==1] /np.std(OPD_arr_filtered_normalised[i,Pupil==1]) *rand_norm[i])
-
-
-mean_psd_new = 0*OPD_arr_filtered[0]
-
-for opds in OPD_arr_filtered_normalised : 
-
-    tf_opd = sft(opds,400,400)  
-    psd = np.abs(tf_opd)**2
-    mean_psd_new += psd
-
-mean_psd_new = mean_psd_new/len(OPD_arr_filtered)
-# %%
-std_spat = np.std(OPD_arr_filtered_normalised[:,Pupil==1],axis=1)
-
-temp_mean = np.mean(std_spat)
-temp_std = np.std(std_spat)
-# %%
