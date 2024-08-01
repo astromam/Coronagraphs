@@ -28,10 +28,10 @@ nPadBis = kPad*nPupBis
 dSub_nPts= 1500
 
 # save file in fits file
-do_fits = 1
+do_fits = 0
 
 # save file in png file
-do_png = 1
+do_png = 0
 
 #%%
 """
