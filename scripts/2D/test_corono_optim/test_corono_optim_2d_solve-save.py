@@ -45,7 +45,7 @@ FirstDerGlobalLim = 100.
 BinarityReg       = 0.1
 
 #nPup = corono0.params['nPup']
-nPup = 200
+nPup = 100
 nFPM = 50
 Fmax2d = 45#22.5
 nImg2d = 90#45
@@ -79,19 +79,22 @@ do_fits = True
 """
 File reading for Pupil and Lyot stop
 """
-fdir = Path('../../../data/2D/pupils/').resolve()
+#fdir = Path('../../../data/2D/pupils/').resolve()
 #fdir = Path('/Users/mndiaye/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs/data/2D/pupils/').resolve()
-# if user == 'mndiaye':
-#     if syst == 'darwin':
-#         fdir = Path('~/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs/data/2D/pupils/').expanduser()
-#         sim_case = 'test' # 'test' or 'server'
-#     elif syst == 'linux':
-#         fdir = Path('/home/mndiaye/python/Coronagraphs/data/2D/pupils').resolve()
-#         sim_case = 'server' # 'test' or 'server'            
-#     else:
-#         raise ValueError('Unknown operating system {0}'.format(user))
-# else:
-#     raise ValueError('Unknown user {0}'.format(user))
+if user == 'mndiaye':
+    if syst == 'darwin':
+        fdir_dat = Path('~/scratch/data/Coronagraphs/data/2D/pupils/').expanduser()
+        fdir_res = Path('~/scratch/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
+        sim_case = 'test' # 'test' or 'server'
+    elif syst == 'linux':
+        fdir_dat = Path('/scratch/mndiaye/data/Coronagraphs/data/2D/pupils/').resolve()
+        fdir_res = Path('/scratch/mndiaye/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
+
+        sim_case = 'server' # 'test' or 'server'            
+    else:
+        raise ValueError('Unknown operating system {0}'.format(user))
+else:
+    raise ValueError('Unknown user {0}'.format(user))
 
 
 if pupil_name == 'lvr':
@@ -101,8 +104,8 @@ else:
     fname_pup = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
     fname_lys = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
 
-fpath_pup = fdir / fname_pup
-fpath_lys = fdir / fname_lys
+fpath_pup = fdir_dat / fname_pup
+fpath_lys = fdir_dat / fname_lys
 Pupil2d    = fits.getdata(fpath_pup)
 LyotStop2d = fits.getdata(fpath_lys)
 
@@ -178,13 +181,11 @@ if Pupil2dSym == True:
 """
 Save apodizer
 """
-fdir = Path('../../../results/2D/dat_pyth').resolve() / pupil_name
-#fdir = Path('/Users/mndiaye/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
-if not os.path.exists(fdir):
-    os.makedirs(fdir)
+if not os.path.exists(fdir_res):
+    os.makedirs(fdir_res)
     
 fname = problem1.get_filename() + '.fits'
-fpath = fdir / fname
+fpath = fdir_res / fname
 
 if do_fits is True:
     fits.writeto(fpath, Apod1_2d, overwrite=True)

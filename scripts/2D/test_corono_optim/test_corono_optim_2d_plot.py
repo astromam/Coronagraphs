@@ -42,7 +42,7 @@ if True:
     FirstDerGlobalLim = 1.
     
     #nPup = corono0.params['nPup']
-    nPup = 200
+    nPup = 100
     nFPM = 50
     Fmax2d = 50
     nImg2d = 500
@@ -94,15 +94,19 @@ nImg2dbis = 500
 ### File reading for Pupil and Lyot stop
 """
 if True:
-    fdir = Path('../../../data/2D/pupils/').resolve()
+#    fdir = Path('../../../data/2D/pupils/').resolve()
 #    fdir = Path('/Users/mndiaye/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs/data/2D/pupils/').resolve()
 
     if user == 'mndiaye':
         if syst == 'darwin':
-            fdir = Path('~/scratch/data/Coronagraphs/data/2D/pupils/').expanduser()
+            fdir_dat = Path('~/scratch/data/Coronagraphs/data/2D/pupils/').expanduser()
+            fdir_res = Path('~/scratch/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
+            fdir_pdf = Path('~/scratch/data/Coronagraphs/results/2D/plots/').resolve()
             sim_case = 'test' # 'test' or 'server'
         elif syst == 'linux':
-            fdir = Path('/home/mndiaye/python/Coronagraphs/data/2D/pupils').resolve()
+            fdir_dat = Path('/scratch/mndiaye/data/Coronagraphs/data/2D/pupils/').resolve()
+            fdir_res = Path('/scratch/mndiaye/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
+            fdir_pdf = Path('/scratch/mndiaye/data/Coronagraphs/results/2D/plots/').resolve()
             sim_case = 'server' # 'test' or 'server'            
         else:
             raise ValueError('Unknown operating system {0}'.format(user))
@@ -119,8 +123,8 @@ if True:
         if do_dead_act:
             fname_lys = f'sphere_stop_ST_ALC2_nPup{nPup:04d}.fits'
     
-    fpath_pup = fdir / fname_pup
-    fpath_lys = fdir / fname_lys
+    fpath_pup = fdir_dat / fname_pup
+    fpath_lys = fdir_dat / fname_lys
     Pupil2d    = fits.getdata(fpath_pup)
     LyotStop2d = fits.getdata(fpath_lys)
     
@@ -152,10 +156,10 @@ params = coro.to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
 """
 ### Working directories
 """
-fdir = Path('../../../results/2D/dat_pyth').resolve() / pupil_name
+# fdir_res = Path('../../../results/2D/dat_pyth').resolve() / pupil_name
 #fdir = Path('/Users/mndiaye/scratch/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
 
-fdir_pdf = Path('../../results/2D/plots/').resolve()
+#fdir_pdf = Path('../../results/2D/plots/').resolve()
 if not os.path.exists(fdir_pdf):
     os.makedirs(fdir_pdf)
 
@@ -192,7 +196,7 @@ else:
 """
 fname_gen = problem1.get_filename()
 fname     = fname_gen + f'{str_dead_act}.fits'
-fpath     = fdir / fname
+fpath     = fdir_res / fname
 print(fpath)
 
 if test_gurobi is True:
