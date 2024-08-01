@@ -29,7 +29,7 @@ syst = sys.platform
 Parameters
 """
 # Telescope name
-corono_name  = 'APLC' # 'SP' or 'APLC'
+corono_name  = 'SP' # 'SP' or 'APLC'
 pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
 problem_name = 'MaxContrastLinf' # 'MaxTau' # ,'MaxContrastLinf' # 'MaxContrastL1' #
 solver       = 'gurobipy' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
@@ -188,5 +188,7 @@ fpath = fdir / fname
 
 if do_fits is True:
     fits.writeto(fpath, Apod1_2d, overwrite=True)
+    
+print(fpath)
     
     

@@ -33,33 +33,33 @@ plt.close('all')
 test_gurobi = False
 if True:
     # Telescope name
-    corono_name  = 'APLC' # 'SP' or 'APLC'
-    pupil_name   = 'vlt_btw' # 'vlt' or 'sbr' or 'lvr'
-    problem_name = 'MaxContrastL1' # 'MaxTau' # , 'MaxContrastL1' # 'MaxContrastLinf' # #  
+    corono_name  = 'SP' # 'SP' or 'APLC'
+    pupil_name   = 'sbr' #'vlt_btw' # 'vlt' or 'sbr' or 'lvr'
+    problem_name = 'MaxContrastLinf' # 'MaxTau' # , 'MaxContrastL1' # 'MaxContrastLinf' # #  
     solver       = 'gurobipy' # 'stdgrb' #  'gurobipy', 'scipy.linprog'
     
     MinIsland   = False
     FirstDerGlobalLim = 1.
     
     #nPup = corono0.params['nPup']
-    nPup = 512
+    nPup = 200
     nFPM = 50
     Fmax2d = 50
     nImg2d = 500
     
     # mask radius in lam0/D unit
     # rMask = 1.766 # ALC1 at 1.593um (145mas) 
-    rMask = 2.252 # ALC2 at 1.593um (185mas)
+    rMask = 2.8# 2.252 # ALC2 at 1.593um (185mas)
     
     # dark zone bounds (inner and outer edges) in lam0/D unit
-    rho0 =  0.0
+    rho0 =  5.0
     rho1 = 20.0
     
     # contrast in the dark region
-    cDarkHole = 10.0
+    cDarkHole = 7.0
     
     # tau (integrated Pupil transmission)
-    tau   = 0.756
+    tau   = 0.5 #0.756
     
     # CtrBtwnPix2
 
@@ -74,11 +74,11 @@ if True:
     test_flip_y = False
     
     #nlam
-    bw   = 0.2
-    nlam = 3
+    bw   = 0.1
+    nlam = 1
 
     # Lyot stop with dead actuators
-    do_dead_act = True
+    do_dead_act = False
     str_dead_act = ''
     if do_dead_act:
         str_dead_act = '_deadact'
@@ -94,12 +94,12 @@ nImg2dbis = 500
 ### File reading for Pupil and Lyot stop
 """
 if True:
-#    fdir = Path('../../../data/2D/pupils/').resolve()
-    fdir = Path('/Users/mndiaye/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs/data/2D/pupils/').resolve()
+    fdir = Path('../../../data/2D/pupils/').resolve()
+#    fdir = Path('/Users/mndiaye/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs/data/2D/pupils/').resolve()
 
     if user == 'mndiaye':
         if syst == 'darwin':
-            fdir = Path('~/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs/data/2D/pupils/').expanduser()
+            fdir = Path('~/scratch/data/Coronagraphs/data/2D/pupils/').expanduser()
             sim_case = 'test' # 'test' or 'server'
         elif syst == 'linux':
             fdir = Path('/home/mndiaye/python/Coronagraphs/data/2D/pupils').resolve()
@@ -152,8 +152,8 @@ params = coro.to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
 """
 ### Working directories
 """
-#fdir = Path('../../../results/2D/dat_pyth').resolve() / pupil_name
-fdir = Path('/Users/mndiaye/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
+fdir = Path('../../../results/2D/dat_pyth').resolve() / pupil_name
+#fdir = Path('/Users/mndiaye/scratch/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
 
 fdir_pdf = Path('../../results/2D/plots/').resolve()
 if not os.path.exists(fdir_pdf):
