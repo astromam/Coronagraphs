@@ -17,15 +17,12 @@ rad2mas = np.pi/(180.*3600*1000)
 mas2rad = 1/rad2mas
 
 # field radius of interest in mas
-f_rad = 25.
-
-# throughput threshold 0.8^2 = .64
-# t_t = [1., 0.73, 0.64]
+f_rad = 35.
 
 
 #%%
-res_dirs=("d:/Andes/Data_corono/results/20240731111155",)
-
+res_dirs=("d:/Andes/Data_corono/results/20240801100039",)
+# 20240801100039 , 20240801112122 , 20240801134347 , 20240801145829
 # wvl in Y, J, H, K
 wvl = 'Y'
 
@@ -36,10 +33,10 @@ print("threshold  throughput  intensity  [parameters DLyot obst. FPM]")
 for i in range(len(res_dirs)):
     
     donow_dir = os.path.basename(res_dirs[i]).split('.')[0]
-    print(donow_dir)
+    print(donow_dir, wvl, f_rad)
 
     fnm = Path(res_dirs[i] +
-               '/Parameters_results_w_coro_no_turb_'+wvl+'.fits')
+               '/Parameters_results_contrast_w_coro_no_turb_'+wvl+'.fits')
     coro_data = fits.getdata(fnm)
     head_data = fits.getheader(fnm)
     lam = head_data['LMBD']
@@ -62,6 +59,11 @@ for i in range(len(res_dirs)):
     
     v_width = head_data['LYO_VW']
     D = head_data['DIAM']
+
+    # fnm = Path(res_dirs[i] +
+    #            '/Parameters_results_contrast_no_coro_no_turb_'+wvl+'.fits')
+    # psf_data = fits.getdata(fnm)
+    # gain_data = psf_data / coro_data
     
     lamD2mas = (lam/D)*mas2rad
     # FoV in lam/D in the final image plane D
@@ -73,6 +75,8 @@ for i in range(len(res_dirs)):
     i_min = np.unravel_index(np.argmin(coro_data), data_shape)
     cd_min = np.log10(np.min(coro_data))
     cd_max = np.log10(np.max(coro_data))
+
+    # gain_data = gain_data[1,:,:,:,i_f_rad]
 
     fnm = Path(res_dirs[i] + '/Parameters_throughput_'+wvl+'.fits')
     thrp_data = fits.getdata(fnm)
@@ -140,8 +144,8 @@ for i in range(len(res_dirs)):
 # masked
 
     thr_cube = np.zeros(data_shape)
-    for i in range(data_shape[2]):
-        thr_cube[:,:,i] = thrp_data.copy()
+    for j in range(data_shape[2]):
+        thr_cube[:,:,j] = thrp_data.copy()
     
     thrVsInt = []
     thr = 0.
@@ -231,16 +235,22 @@ for i in range(len(res_dirs)):
 
         thr = thrp_data[i_min[0],i_min[1]].copy()
         thrVsInt.append([[np.round(thrp_data[i_min[0],i_min[1]],3)],
-                         [np.round(np.min(ma_data),9)]])
+                         [np.round(np.min(ma_data),9)],
+                         [np.round(dL[i_min[0]],2)],
+                         [np.round(obs[i_min[1]],2)],
+                         [np.round(mB[i_min[2]],2)]])
 
     thrVsInt = np.array(thrVsInt)
-    plt.figure(8)
+    plt.figure(8, (8,5))
     plt.plot(thrVsInt[:,0,0], thrVsInt[:,1,0])
     plt.xlabel("throughput")
-    plt.ylabel("intensity @ " + str(int(f_rad)) + " mas radius")
+    plt.ylabel("contrast @ " + str(int(f_rad)) + " mas radius")
     plt.title("wvl : " + str(int(lam*1e9)) + " nm")
-    fnm = "/throughput_DLyoVsobs_allThresholds."
-    plt.savefig(save_dir+fnm+"pdf")
-    plt.savefig(save_dir+fnm+"svg")
+    fnm = ("/throughput_DLyoVsobs_allThresholds_wvl"+ str(int(lam*1e9)) +
+           "nm_radMas"+str(int(np.round(f_rad))))
+    plt.savefig(save_dir+fnm+".pdf")
+    plt.savefig(save_dir+fnm+".svg")
+    fits.writeto(Path(res_dirs[i] + fnm + ".fits"), thrVsInt,
+                 header=head_data, overwrite=True)
     plt.show()
     

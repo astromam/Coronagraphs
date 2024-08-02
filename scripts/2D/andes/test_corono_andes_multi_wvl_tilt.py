@@ -90,7 +90,7 @@ diam = 0.86 # diameter of the pupil in fraction of the pupil size
 obst = 0.30 # diameter of the central obscuration in fraction of the pupil size
 
 # dispersion mas/m
-disp = 8e7
+disp = 0.  #  8e7
 
 # 2D array pupil slope for tilt
 frq = np.broadcast_to(np.arange(-nPup//2,nPup//2,1),(nPup,nPup)) + 0.5

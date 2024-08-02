@@ -72,7 +72,7 @@ user = 'Alain'
 if user == 'Alain':
     fdir_res   = Path('D:/Andes/Data_corono/results/').resolve()  #  fits data
     fdir_plt   = Path('D:/Andes/Data_corono/plots/').resolve()   #  plots
-    was_donow = '20240722135512'
+    was_donow = '20240729170321'
     fdir_res = fdir_res / was_donow
     fdir_plt = fdir_plt / was_donow
 
