@@ -88,7 +88,7 @@ bw   = 0.2
 nlam = 3
 
 # LS robustness
-LSRobustness_coeff = 0.1
+LSRobustness_coeff = 0.5
 
 # Lyot stop with dead actuators
 str_dead_act = ''
