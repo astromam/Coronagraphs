@@ -51,7 +51,7 @@ FirstDerGlobalLim = 100.
 BinarityReg       = 0.1
 
 #nPup = corono0.params['nPup']
-nPup0 = 100#512
+nPup0 = 200#512
 nExt0 = 0
 nDim0 = nPup0 + nExt0
 nFPM = 50
@@ -133,11 +133,11 @@ mD_t  = Fmax2d*(lam0/lam_t)*(nDim0/nPup0)
 File reading for Pupil and Lyot stop
 """
 #fdir = Path('../../../data/2D/pupils/').resolve()
-fdir = Path('/Users/mndiaye/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs/data/2D/pupils/').resolve()
+fdir = Path('/Users/mndiaye/scratch/data/Coronagraphs/data/2D/pupils/').resolve()
 if user == 'mndiaye':
     if syst == 'darwin':
-        fdir = Path('~/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs/data/2D/pupils/').expanduser()
-        fdir_sav = Path('/Users/mndiaye/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
+        fdir = Path('~/scratch/data/Coronagraphs/data/2D/pupils/').expanduser()
+        fdir_sav = Path('/Users/mndiaye/scratch/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
         sim_case = 'test' # 'test' or 'server'
     elif syst == 'linux':
         fdir = Path('/home/mndiaye/python/Coronagraphs/data/2D/pupils').resolve()
