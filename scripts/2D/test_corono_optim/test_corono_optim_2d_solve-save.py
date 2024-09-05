@@ -29,9 +29,9 @@ syst = sys.platform
 Parameters
 """
 # Telescope name
-corono_name  = 'SP' # 'SP' or 'APLC'
-pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
-problem_name = 'MaxContrastLinf' # 'MaxTau' # ,'MaxContrastLinf' # 'MaxContrastL1' #
+corono_name  = 'APLC' # 'SP' or 'APLC'
+pupil_name   = 'vlt' # 'vlt' or 'sbr' or 'lvr'
+problem_name = 'MaxContrastLinf' #'MaxTau' #'MaxContrastL1' #  ,'MaxContrastLinf' # 
 solver       = 'gurobipy' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
 slvLogToConsole = 1
 slvCrossover    = 0
@@ -58,10 +58,10 @@ rho0 =  5.0
 rho1 = 20.0
 
 # contrast in the dark region
-cDarkHole = 7.0
+cDarkHole = 6.0
 
 # tau (integrated Pupil transmission)
-tau   = 0.5
+tau   = 0.75
 
 # CtrBtwnPix2
 CtrBtwnPix  = True
@@ -71,7 +71,7 @@ ImPart = False
 
 #nlam
 bw   = 0.1
-nlam = 1
+nlam = 3
 
 do_fits = True
 
