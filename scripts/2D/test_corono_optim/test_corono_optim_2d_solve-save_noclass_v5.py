@@ -80,7 +80,7 @@ CtrBtwnPix  = True
 CtrBtwnPix2 = True
 Pupil2dSym  = True
 ImPart      = False 
-LSRobustness = True # (new robustness approach using derivative of the field with respect to Lyot stop displacement)
+LSRobustness = False # (new robustness approach using derivative of the field with respect to Lyot stop displacement)
 # kwd_qrt = True
 
 #nlam
@@ -139,12 +139,12 @@ File reading for Pupil and Lyot stop
 fdir = Path('/Users/mndiaye/scratch/data/Coronagraphs/data/2D/pupils/').resolve()
 if user == 'mndiaye':
     if syst == 'darwin':
-        fdir = Path('~/scratch/data/Coronagraphs/data/2D/pupils/').expanduser()
+        fdir = Path('/Users/mndiaye/scratch/data/Coronagraphs/data/2D/pupils/').expanduser()
         fdir_sav = Path('/Users/mndiaye/scratch/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
         sim_case = 'test' # 'test' or 'server'
     elif syst == 'linux':
-        fdir = Path('/home/mndiaye/python/Coronagraphs/data/2D/pupils').resolve()
-        fdir_sav = Path('/home/mndiaye/python/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
+        fdir = Path('/scratch/mndiaye/data/Coronagraphs/data/2D/pupils/').resolve()
+        fdir_sav = Path('/scratch/mndiaye/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
         sim_case = 'server' # 'test' or 'server'            
     else:
         raise ValueError('Unknown operating system {0}'.format(user))
