@@ -33,9 +33,9 @@ plt.close('all')
 test_gurobi = False
 if True:
     # Telescope name
-    corono_name  = 'SP' # 'SP' or 'APLC'
-    pupil_name   = 'sbr' #'vlt_btw' # 'vlt' or 'sbr' or 'lvr'
-    problem_name = 'MaxContrastLinf' # 'MaxTau' # , 'MaxContrastL1' # 'MaxContrastLinf' # #  
+    corono_name  = 'APLC' # 'SP' or 'APLC'
+    pupil_name   = 'vlt_btw' #'vlt_btw' # 'vlt' or 'sbr' or 'lvr'
+    problem_name = 'MaxContrastL1' # 'MaxContrastLinf' #'MaxTau' # ,  'MaxContrastLinf' # #  
     solver       = 'gurobipy' # 'stdgrb' #  'gurobipy', 'scipy.linprog'
     
     MinIsland   = False
@@ -49,36 +49,36 @@ if True:
     
     # mask radius in lam0/D unit
     # rMask = 1.766 # ALC1 at 1.593um (145mas) 
-    rMask = 2.8# 2.252 # ALC2 at 1.593um (185mas)
+    rMask = 2.252 # ALC2 at 1.593um (185mas)
     
     # dark zone bounds (inner and outer edges) in lam0/D unit
-    rho0 =  5.0
+    rho0 =  0.0
     rho1 = 20.0
     
     # contrast in the dark region
-    cDarkHole = 7.0
+    cDarkHole = 6.0
     
     # tau (integrated Pupil transmission)
-    tau   = 0.5 #0.756
+    tau   = 0.756 #0.756
     
     # CtrBtwnPix2
 
     CtrBtwnPix  = True
     CtrBtwnPix2 = True
     Pupil2dSym  = True # set it True only for optimization
-    LSRobustness = False
+    LSRobustness = True
     test_shift = True
-    shift_x = -3
+    shift_x = -1
     shift_y = 0
     test_flip_x = False
     test_flip_y = False
     
     #nlam
-    bw   = 0.1
-    nlam = 1
+    bw   = 0.2
+    nlam = 3
 
     # Lyot stop with dead actuators
-    do_dead_act = False
+    do_dead_act = True
     str_dead_act = ''
     if do_dead_act:
         str_dead_act = '_deadact'
@@ -99,9 +99,9 @@ if True:
 
     if user == 'mndiaye':
         if syst == 'darwin':
-            fdir_dat = Path('~/scratch/data/Coronagraphs/data/2D/pupils/').expanduser()
-            fdir_res = Path('~/scratch/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
-            fdir_pdf = Path('~/scratch/data/Coronagraphs/results/2D/plots/').resolve()
+            fdir_dat = Path('/Users/mndiaye/scratch/data/Coronagraphs/data/2D/pupils/').expanduser()
+            fdir_res = Path('/Users/mndiaye/scratch/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
+            fdir_pdf = Path('/Users/mndiaye/scratch/data/Coronagraphs/results/2D/plots/').resolve()
             sim_case = 'test' # 'test' or 'server'
         elif syst == 'linux':
             fdir_dat = Path('/scratch/mndiaye/data/Coronagraphs/data/2D/pupils/').resolve()
@@ -112,7 +112,6 @@ if True:
             raise ValueError('Unknown operating system {0}'.format(user))
     else:
         raise ValueError('Unknown user {0}'.format(user))
-
 
     if pupil_name == 'lvr':
         fname_pup = 'ATLAST_Aperture_nPup={0}.fits'.format(nPup,)
