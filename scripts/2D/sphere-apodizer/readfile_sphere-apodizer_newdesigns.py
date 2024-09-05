@@ -22,10 +22,10 @@ from astropy.io import fits
 ### Directory
 """
 
-fdir_pupils = Path('/Users/mndiaye/Library/CloudStorage/OneDrive-UniversitéNiceSophiaAntipolis/data/Coronagraphs/data/2D/pupils/').resolve()
+fdir_pupils = Path('/Users/mndiaye/scratch/data/Coronagraphs/data/2D/pupils/').resolve()
 
 fdir_sphere = fdir_pupils / 'SPHERE'
-fdir_newapod = Path('/Users/mndiaye/Library/CloudStorage/OneDrive-UniversitéNiceSophiaAntipolis/data/Coronagraphs/results/2D/dat_pyth/vlt').resolve()
+fdir_newapod = Path('/Users/mndiaye/scratch/data/Coronagraphs/results/2D/dat_pyth/vlt').resolve()
 
 #%% vlt pupil
 fname_vlt = 'pupil_vlt_nPup384.fits'
