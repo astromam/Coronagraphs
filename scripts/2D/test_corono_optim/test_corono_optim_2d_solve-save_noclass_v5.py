@@ -28,7 +28,7 @@ except ImportError:
     
 import matplotlib.pyplot as plt
 
-import cv2
+#import cv2
 
 #%% parameters
 """
@@ -1113,27 +1113,27 @@ plt.imshow(Apod1_2d, vmin=0, vmax=1)
 """
 ### Edge detection algorithm (canny?)
 """
-t0 = time.time()
-Apod1_2dCopy = np.uint8(Apod1_2d*255)
-Apod1_2d_edges = cv2.Canny(Apod1_2dCopy, threshold1=0, threshold2=255)
-t1 = time.time()
-print(f'edge detection algorithm computation time: {t1-t0:.3f}s')
+# t0 = time.time()
+# Apod1_2dCopy = np.uint8(Apod1_2d*255)
+# Apod1_2d_edges = cv2.Canny(Apod1_2dCopy, threshold1=0, threshold2=255)
+# t1 = time.time()
+# print(f'edge detection algorithm computation time: {t1-t0:.3f}s')
 
-kernel = np.ones((3, 3), np.uint8)
-Apod1_2d_edges_dilation = cv2.dilate(Apod1_2d_edges, kernel, iterations=1)
+# kernel = np.ones((3, 3), np.uint8)
+# Apod1_2d_edges_dilation = cv2.dilate(Apod1_2d_edges, kernel, iterations=1)
 
 #%%
-plt.figure(20)
-plt.clf()
-plt.subplot(131)
-plt.imshow(Apod1_2d, cmap='gray')
-plt.title('original apodizer')
-plt.subplot(132)
-plt.imshow(Apod1_2d_edges, cmap='gray')
-plt.title('edge apodizer')
-plt.subplot(133)
-plt.imshow(Apod1_2d_edges_dilation, cmap='gray')
-plt.title('edge apodizer - dilation')
+# plt.figure(20)
+# plt.clf()
+# plt.subplot(131)
+# plt.imshow(Apod1_2d, cmap='gray')
+# plt.title('original apodizer')
+# plt.subplot(132)
+# plt.imshow(Apod1_2d_edges, cmap='gray')
+# plt.title('edge apodizer')
+# plt.subplot(133)
+# plt.imshow(Apod1_2d_edges_dilation, cmap='gray')
+# plt.title('edge apodizer - dilation')
 
 #%%
 plt.figure(30)
