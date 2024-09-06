@@ -80,7 +80,7 @@ CtrBtwnPix  = True
 CtrBtwnPix2 = True
 Pupil2dSym  = True
 ImPart      = False 
-LSRobustness = True # (new robustness approach using derivative of the field with respect to Lyot stop displacement)
+LSRobustness = False # (new robustness approach using derivative of the field with respect to Lyot stop displacement)
 # kwd_qrt = True
 
 #nlam
