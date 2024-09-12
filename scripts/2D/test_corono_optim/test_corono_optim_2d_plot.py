@@ -56,7 +56,7 @@ if True:
     rho1 = 20.0
     
     # contrast in the dark region
-    cDarkHole = 6.0
+    cDarkHole = 10.0
     
     # tau (integrated Pupil transmission)
     tau   = 0.756 #0.756
@@ -65,17 +65,18 @@ if True:
 
     CtrBtwnPix  = True
     CtrBtwnPix2 = True
-    Pupil2dSym  = True # set it True only for optimization
+    Pupil2dSym  = False # set it True only for optimization
     LSRobustness = True
+
     test_shift = True
-    shift_x = -1
+    shift_x = 1
     shift_y = 0
     test_flip_x = False
     test_flip_y = False
     
     #nlam
     bw   = 0.2
-    nlam = 3
+    nlam = 1
 
     # Lyot stop with dead actuators
     do_dead_act = True
@@ -83,11 +84,27 @@ if True:
     if do_dead_act:
         str_dead_act = '_deadact'
     
+    LSRobustness_bis = False
+    LSRobustness_coeff = 10. #0.05
+    LSRobustness_coeff_bis = 0.01
+
+    str_LSRcoeff = ''
+    str_LSRcoeff_bis = ''
+    if LSRobustness:
+        if LSRobustness_bis:
+            str_LSRcoeff_bis = f'LSRcoeff_bis={int(np.round(LSRobustness_coeff_bis*1e3)):05d}'
+        else:
+            str_LSRcoeff = f'LSRcoeff={int(np.round(LSRobustness_coeff*1e3)):05d}'
+
+    
     do_fits = False
 
-nlambis = 11    
+nlambis = 1    
 Fmax2dbis = 50
 nImg2dbis = 500    
+
+ylim_min0 = 1e-8
+ylim_max0 = 1e-2
 
 #%%
 """
@@ -127,14 +144,11 @@ if True:
     Pupil2d    = fits.getdata(fpath_pup)
     LyotStop2d = fits.getdata(fpath_lys)
     
-    if test_shift:
-        LyotStop2d = np.roll(np.roll(LyotStop2d, shift_x, axis=0), shift_y, axis=1)
-        
     if test_flip_x:
         LyotStop2d = np.fliplr(LyotStop2d)
         
     if test_flip_y:
-        LyotStop2d = np.flipud(LyotStop2d)
+        LyotStop2d = np.flipud(LyotStop2d)  
     
     if solver != 'gurobipy' and solver != 'stdgrb':
         solver = 'scipy'
@@ -194,7 +208,7 @@ else:
 ### Read files
 """
 fname_gen = problem1.get_filename()
-fname     = fname_gen + f'{str_dead_act}.fits'
+fname     = fname_gen + f'{str_dead_act}' + str_LSRcoeff + str_LSRcoeff_bis + '.fits'
 fpath     = fdir_res / fname
 print(fpath)
 
@@ -300,6 +314,23 @@ else:
 poly_corono_image1 = corono0.compute_corono_intensity_2d(Apod_pyth)
 
 #%%
+if test_shift:
+    LyotStop2d_shift = np.roll(np.roll(LyotStop2d, shift_x, axis=0), shift_y, axis=1)
+    params_shift    = coro.update_params(params, nlam=nlambis, Fmax2d = Fmax2dbis, nImg2d = nImg2dbis, LyotStop2d = LyotStop2d_shift)
+    if corono_name == 'SP':
+        corono0_shift = coro.design.SP2d(**params_shift)
+    elif corono_name == 'APLC':
+        corono0_shift = coro.design.APLC2d(**params_shift)
+    else:
+        raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
+
+    if corono_name == 'APLC':
+        poly_direct_image1_shift = corono0_shift.compute_direct_intensity_2d(Apod_pyth)
+    else:
+        poly_direct_image1_shift = corono0_shift.compute_direct_intensity_2d(corono0.Pupil2d)
+    poly_corono_image1_shift = corono0_shift.compute_corono_intensity_2d(Apod_pyth)
+   
+#%%
 """
 ### normalization of the direct and coronagraphic image in broadband light
 """
@@ -309,11 +340,22 @@ poly_direct_image1 /= poly_direct_image1_peak
 poly_corono_image1 /= poly_direct_image1_peak
 
 #%%
+if test_shift:
+    poly_direct_image1_shift_peak = np.max(poly_direct_image1_shift)
+
+    poly_direct_image1_shift /= poly_direct_image1_shift_peak
+    poly_corono_image1_shift /= poly_direct_image1_shift_peak
+
+#%%
 """
 ### normalization of the direct and coronagraphic image in monochromatic light
 """
 mono_direct_image1 = corono0.compute_direct_intensity_2d(Apod_pyth, poly=False)
 mono_corono_image1 = corono0.compute_corono_intensity_2d(Apod_pyth, poly=False)
+
+if test_shift:
+    mono_direct_image1_shift = corono0_shift.compute_direct_intensity_2d(Apod_pyth, poly=False)
+    mono_corono_image1_shift = corono0_shift.compute_corono_intensity_2d(Apod_pyth, poly=False)
 
 #%%
 """
@@ -325,7 +367,13 @@ for ilam in range(corono0.nlam):
        
     mono_direct_image1[ilam] /= mono_direct_image1_peak
     mono_corono_image1[ilam] /= mono_direct_image1_peak
-
+    
+if test_shift:    
+    for ilam in range(corono0_shift.nlam):
+        mono_direct_image1_shift_peak = np.max(mono_direct_image1_shift[ilam])
+           
+        mono_direct_image1_shift[ilam] /= mono_direct_image1_shift_peak
+        mono_corono_image1_shift[ilam] /= mono_direct_image1_shift_peak
 
 #%%
 """
@@ -334,14 +382,6 @@ for ilam in range(corono0.nlam):
 # radius coordinate in the image
 r  = np.linspace(0,nImg2dbis//2-1,num=nImg2dbis//2)
 r_lamD = (Fmax2dbis/nImg2dbis)*r 
-
-# definition of the array profiles for the direct image
-poly_direct_prf_avg = np.zeros((nImg2dbis//2))
-poly_direct_prf_std = np.zeros((nImg2dbis//2))
-
-# definition of the array profiles for the coronagraphic image
-poly_corono_prf_avg = np.zeros((nImg2dbis//2))
-poly_corono_prf_std = np.zeros((nImg2dbis//2))
 
 # image center
 xc = nImg2dbis//2
@@ -352,6 +392,14 @@ xx,yy = np.meshgrid(np.arange(nImg2dbis),np.arange(nImg2dbis))
 
 # grid in radius R
 R = np.sqrt((xx-xc)**2+(yy-yc)**2)
+
+# definition of the array profiles for the direct image
+poly_direct_prf_avg = np.zeros((nImg2dbis//2))
+poly_direct_prf_std = np.zeros((nImg2dbis//2))
+
+# definition of the array profiles for the coronagraphic image
+poly_corono_prf_avg = np.zeros((nImg2dbis//2))
+poly_corono_prf_std = np.zeros((nImg2dbis//2))
 
 # computation of the average and standard deviation intensity profiles for direct image 
 f_poly_dir_avg = lambda r : poly_direct_image1[(R >= r -.5) & (R < r +.5)].mean()
@@ -364,6 +412,27 @@ f_poly_cor_avg = lambda r : poly_corono_image1[(R >= r -.5) & (R < r +.5)].mean(
 f_poly_cor_std = lambda r : poly_corono_image1[(R >= r -.5) & (R < r +.5)].std()
 poly_corono_prf_avg = np.vectorize(f_poly_cor_avg)(r)
 poly_corono_prf_std = np.vectorize(f_poly_cor_std)(r)
+
+if test_shift:
+    # definition of the array profiles for the direct image
+    poly_direct_shift_prf_avg = np.zeros((nImg2dbis//2))
+    poly_direct_shift_prf_std = np.zeros((nImg2dbis//2))
+
+    # definition of the array profiles for the coronagraphic image
+    poly_corono_shift_prf_avg = np.zeros((nImg2dbis//2))
+    poly_corono_shift_prf_std = np.zeros((nImg2dbis//2))
+
+    # computation of the average and standard deviation intensity profiles for direct image 
+    f_poly_dir_shift_avg = lambda r : poly_direct_image1_shift[(R >= r -.5) & (R < r +.5)].mean()
+    f_poly_dir_shift_std = lambda r : poly_direct_image1_shift[(R >= r -.5) & (R < r +.5)].std()
+    poly_direct_shift_prf_avg = np.vectorize(f_poly_dir_shift_avg)(r)
+    poly_direct_shift_prf_std = np.vectorize(f_poly_dir_shift_std)(r)
+
+    # computation of the average and standard deviation intensity profiles for coronagraphic image 
+    f_poly_cor_shift_avg = lambda r : poly_corono_image1_shift[(R >= r -.5) & (R < r +.5)].mean()
+    f_poly_cor_shift_std = lambda r : poly_corono_image1_shift[(R >= r -.5) & (R < r +.5)].std()
+    poly_corono_shift_prf_avg = np.vectorize(f_poly_cor_shift_avg)(r)
+    poly_corono_shift_prf_std = np.vectorize(f_poly_cor_shift_std)(r)
 
 #%%
 """
@@ -390,6 +459,29 @@ for ilam in range(corono0.nlam):
     f_mono_cor_std = lambda r : mono_corono_image1[ilam, (R >= r -.5) & (R < r +.5)].std()
     mono_corono_prf_avg[ilam] = np.vectorize(f_mono_cor_avg)(r)
     mono_corono_prf_std[ilam] = np.vectorize(f_mono_cor_std)(r)
+    
+if test_shift:
+    # definition of the array profiles for the direct image
+    mono_direct_shift_prf_avg = np.zeros((corono0.nlam, nImg2dbis//2))
+    mono_direct_shift_prf_std = np.zeros((corono0.nlam, nImg2dbis//2))
+
+    # definition of the array profiles for the coronagraphic image
+    mono_corono_shift_prf_avg = np.zeros((corono0.nlam, nImg2dbis//2))
+    mono_corono_shift_prf_std = np.zeros((corono0.nlam, nImg2dbis//2))
+    
+    # computation of the average and standard deviation intensity profiles for direct image 
+    for ilam in range(corono0_shift.nlam):
+        f_mono_dir_shift_avg = lambda r : mono_direct_image1_shift[ilam, (R >= r -.5) & (R < r +.5)].mean()
+        f_mono_dir_shift_std = lambda r : mono_direct_image1_shift[ilam, (R >= r -.5) & (R < r +.5)].std()
+        mono_direct_shift_prf_avg[ilam] = np.vectorize(f_mono_dir_shift_avg)(r)
+        mono_direct_shift_prf_std[ilam] = np.vectorize(f_mono_dir_shift_std)(r)
+
+    # computation of the average and standard deviation intensity profiles for coronagraphic image
+    for ilam in range(corono0_shift.nlam): 
+        f_mono_cor_shift_avg = lambda r : mono_corono_image1_shift[ilam, (R >= r -.5) & (R < r +.5)].mean()
+        f_mono_cor_shift_std = lambda r : mono_corono_image1_shift[ilam, (R >= r -.5) & (R < r +.5)].std()
+        mono_corono_shift_prf_avg[ilam] = np.vectorize(f_mono_cor_shift_avg)(r)
+        mono_corono_shift_prf_std[ilam] = np.vectorize(f_mono_cor_shift_std)(r)
 
 #%% image plot
 """
@@ -406,6 +498,15 @@ cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.70])
 fig.colorbar(im, cax=cbar_ax, label='Normalized intensity in log scale')
 plt.savefig(str(fpath))
 
+# if test_shift:
+#     fig = plt.figure(12)
+#     plt.clf()
+#     im = plt.imshow(np.log10(poly_direct_image1_shift), vmin = -10, vmax = 0, cmap = cm.inferno)
+#     plt.title('Apod1 - direct image (shift)')
+#     cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.70])
+#     fig.colorbar(im, cax=cbar_ax, label='Normalized intensity in log scale')
+    
+
 #%% image plot
 """
 ### Display of the coronagraphic images
@@ -420,6 +521,14 @@ plt.title('Apod1 - apodized image')
 cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.70])
 fig.colorbar(im, cax=cbar_ax, label='Normalized intensity in log scale')
 plt.savefig(str(fpath))
+
+if test_shift:
+    fig = plt.figure(13)
+    plt.clf()
+    im = plt.imshow(np.log10(poly_corono_image1_shift), vmin = -8, vmax = -3, cmap = cm.inferno)
+    plt.title('Apod1 - apodized image (shift)')
+    cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.70])
+    fig.colorbar(im, cax=cbar_ax, label='Normalized intensity in log scale')
 
 #%% Intensity profiles of the direct and coronagraphic images
 """
@@ -441,6 +550,12 @@ if corono_name == 'SP':
     plt.semilogy(xi2d,poly_corono_image1[nImg2dbis//2,nImg2dbis//2:]/poly_corono_image1.max(),label=solver)
 else:
     plt.semilogy(xi2d,poly_corono_image1[nImg2dbis//2,nImg2dbis//2:]/poly_direct_image1.max(),label=solver) 
+    
+if test_shift:
+    if corono_name == 'SP':
+        plt.semilogy(xi2d,poly_corono_image1_shift[nImg2dbis//2,nImg2dbis//2:]/poly_corono_image1.max(),label=solver+ ' shift', ls=':')
+    else:
+        plt.semilogy(xi2d,poly_corono_image1_shift[nImg2dbis//2,nImg2dbis//2:]/poly_direct_image1.max(),label=solver +' shift', ls=':') 
     
 plt.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
 plt.axvline(x=corono0.rho0, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
@@ -473,14 +588,28 @@ for ilam in range(corono0.nlam):
     else:
         plt.semilogy(xi2d,mono_corono_image1[ilam, nImg2dbis//2,nImg2dbis//2:], 
                     '-',
-                    label=r'{0:.2f}$\lambda_0$'.format(corono0.lam_t[ilam]),  color = colors[ilam])
+                    label=r'{0:.2f}$\lambda_0$'.format(corono0.lam_t[ilam]),  
+                    color = colors[ilam])
+
+if test_shift:
+    for ilam in range(corono0.nlam):
+        if corono_name == 'SP':
+            plt.semilogy(xi2d,mono_corono_image1_shift[ilam, nImg2dbis//2,nImg2dbis//2:]/mono_corono_image1_shift.max(), ':',
+                        label=r'{0:.2f}$\lambda_0$'.format(corono0_shift.lam_t[ilam]),
+                        color = colors[ilam])
+        else:
+            plt.semilogy(xi2d,mono_corono_image1_shift[ilam, nImg2dbis//2,nImg2dbis//2:], 
+                        ':',
+                        label=r'{0:.2f}$\lambda_0$'.format(corono0_shift.lam_t[ilam]) + ' shift',  
+                        color = colors[ilam])    
+
 plt.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
 plt.axvline(x=corono0.rho0, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
 plt.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
 plt.axhline(10**(-cDarkHole), xmin=corono0.xi.min(), xmax=corono0.xi.max(), linewidth=1, color='k', linestyle='--')
 plt.xlabel(r'Angular separation in $\lambda_0$/D')
 plt.ylabel('Normalized intensity in log scale')
-plt.ylim(1e-13, 2e0)
+plt.ylim(ylim_min0, ylim_max0)
 plt.legend()
 plt.tight_layout()
 
@@ -501,13 +630,17 @@ plt.clf()
 plt.title('Averaged intensity profiles of the images')
 
 plt.semilogy(r_lamD,poly_corono_prf_avg,label=solver)
+
+if test_shift:
+    plt.semilogy(r_lamD,poly_corono_shift_prf_avg,label=solver + ' shift', ls=':')
+    
 plt.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
 plt.axvline(x=corono0.rho0, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
 plt.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
 plt.axhline(10**(-cDarkHole), xmin=corono0.xi.min(), xmax=corono0.xi.max(), linewidth=1, color='k', linestyle='--')
 plt.xlabel(r'Angular separation in $\lambda_0$/D')
 plt.ylabel('Normalized averaged intensity in log scale')
-plt.ylim(1e-13, 2e0)
+plt.ylim(ylim_min0, ylim_max0)
 plt.legend()
 plt.tight_layout()
 plt.savefig(str(fpath))
@@ -531,13 +664,19 @@ plt.title('Averaged intensity profiles of the images')
 for ilam in range(corono0.nlam):
     plt.semilogy(r_lamD, mono_corono_prf_avg[ilam],
                  label=r'{0:.2f}$\lambda_0$'.format(corono0.lam_t[ilam]),  color = colors[ilam])
+    
+if test_shift:
+    for ilam in range(corono0.nlam):
+        plt.semilogy(r_lamD, mono_corono_shift_prf_avg[ilam],
+                     label=r'{0:.2f}$\lambda_0$'.format(corono0_shift.lam_t[ilam]) + ' shift',  color = colors[ilam], ls=':')
+    
 plt.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
 plt.axvline(x=corono0.rho0, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
 plt.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
 plt.axhline(10**(-cDarkHole), xmin=corono0.xi.min(), xmax=corono0.xi.max(), linewidth=1, color='k', linestyle='--')
 plt.xlabel(r'Angular separation in $\lambda_0$/D')
 plt.ylabel('Normalized averaged intensity in log scale')
-plt.ylim(1e-13, 2e0)
+plt.ylim(ylim_min0, ylim_max0)
 plt.legend()
 plt.tight_layout()
 plt.savefig(str(fpath))
