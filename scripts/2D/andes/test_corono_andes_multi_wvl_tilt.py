@@ -5,6 +5,10 @@ Created on Fri Mar 31 13:26:29 2023
 
 @authors: mndiaye, asimonnin, asp
 """
+# for multiple wavelengths compute normalized psf profiles intensity for coro 
+# and no coro, with or without residual opds/windshake including 
+# tilt/atmospheric dispersion
+# normalized to the peak intensity of the no coro, no opds pupil with lyot stop
 
 #%%
 """
