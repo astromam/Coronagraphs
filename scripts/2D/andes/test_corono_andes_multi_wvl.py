@@ -5,6 +5,10 @@ Created on Fri Mar 31 13:26:29 2023
 
 @authors: mndiaye, asimonnin, asp
 """
+# for multiple wavelengths compute normalized psf profiles intensity for coro 
+# and no coro, with or without residual opds/windshake
+# normalized to the peak intensity of the no coro, no opds pupil with lyot stop
+
 
 #%%
 """
@@ -18,7 +22,7 @@ from uniform_disk import uniform_disk
 from psf_profile import profile
 
 import matplotlib.pyplot as plt
-from mpl_toolkits.axes_grid1 import AxesGrid
+# from mpl_toolkits.axes_grid1 import AxesGrid
 
 from astropy.io import fits
 
@@ -86,8 +90,10 @@ lamCD2mas = (lamC/D)*mas2rad
 mask2d = uniform_disk(nFPM, nFPM/2.)
 # diam = 0.86 obs = 0.30 with 'ELT_pupil_400.fits'
 # diam = 0.90 obs = 0.38 with 'Tel-Pupil.fits'
-diam = 0.86 # diameter of the pupil in fraction of the pupil size
-obst = 0.30 # diameter of the central obscuration in fraction of the pupil size
+# diam = 0.88 obs = 0.32 with 'ELT_pupil_400.fits' "new" : 75% throughput
+
+diam = 0.88 # diameter of the pupil in fraction of the pupil size
+obst = 0.32 # diameter of the central obscuration in fraction of the pupil size
 
 # 2 sizes of spaxels 10 mas and 100 mas
 

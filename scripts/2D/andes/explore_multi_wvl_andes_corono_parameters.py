@@ -6,6 +6,9 @@ Created on Fri Mar 31 13:26:29 2023
 @author: mndiaye, asimmonnin, asp
 """
 
+# explore coronagraph parameters ranges and compute throughput, band averaged
+# intensity profiles of the psf, with or without coro, at each discret 
+# wavelength and at central lambda over D width for each discret wavelength
 
 #%%
 """

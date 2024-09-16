@@ -5,6 +5,8 @@ Created on Mon Jun  3 08:32:52 2024
 @author: asp
 """
 
+# plot contrats and gain at given angular separation from contrast profile
+# fits files produced by multi_wvl_psf_profile_cut.py
 
 import numpy as np
 import matplotlib.pyplot as plt

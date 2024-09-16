@@ -4,6 +4,10 @@ Created on Fri Jul  5 11:14:11 2024
 
 @author: asp
 """
+
+
+# visualize outputs of explore_multi_wvl_contrast_andes_coro_params.py
+
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy.io import fits

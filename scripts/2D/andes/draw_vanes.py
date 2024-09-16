@@ -3,6 +3,9 @@
 Created on Mon Jul  1 17:35:17 2024
 
 @author: asp
+
+to compute mask that is six vanes with equal width
+
 """
 
 import numpy as np

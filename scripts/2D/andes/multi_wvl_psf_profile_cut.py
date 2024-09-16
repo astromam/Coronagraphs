@@ -5,6 +5,8 @@ Created on Fri May 17 09:59:22 2024
 @author: asp, mndiaye, asimonnin
 """
 
+# compute contrast profiles vs angular separation for multiple wavelength
+
 #%%
 """
 ### Initialization

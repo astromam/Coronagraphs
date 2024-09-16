@@ -4,6 +4,8 @@ Created on Tue Jun 11 13:36:25 2024
 
 @author: asp
 """
+# plot psf maps from contrast profile
+# fits files produced by test_andes_corono_multi_wvl*.py
 
 #%%
 """
