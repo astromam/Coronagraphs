@@ -49,19 +49,20 @@ fpath_elt = fdir_pupil / fname_elt
 Pupil = fits.getdata(fpath_elt,)
 
 # image dimensions, even, twice the pupil size
-N = Pupil.shape[0]*2
+nMap = Pupil.shape[0] * 2
 
 # 2D frequency space
-kx = (np.arange(N)-N//2)/(N/2)  # spatial frequencies
-ky = (np.arange(N)-N//2)/(N/2)
+kx = (np.arange(nMap)-nMap//2)/(nMap/2)  # spatial frequencies
+ky = (np.arange(nMap)-nMap//2)/(nMap/2)
 kx2, ky2 = np.meshgrid(kx, ky)
 k = np.sqrt(kx2**2 + ky2**2)  # spatial fréquencies norm vector
 
 # DSP law in f^-pwr
 # add epsilon to avoid zero division
 pwr=-2.
-epsilon = 1e-10
-dsp = 1./(k**pwr + (k==0)*epsilon)
+epsilon = 1e-15
+k_pwr = k**pwr
+dsp = 1./(np.where(k_pwr!=0,k_pwr,epsilon))
 
 # uniform random phase generation
 # complex valued spectra
@@ -71,20 +72,21 @@ random = np.random.uniform(low=-0.5,high=0.5,size=amplitude.shape)
 ncpa_field = amplitude * np.exp(1j*2.*np.pi*random)
 
 # Transformée de Fourier inverse pour obtenir l'image spatiale
-rndOpd_powLaw = np.real(sft.isft(ncpa_field,N,N//2))
+rndOpd_powLaw = np.real(sft.isft(ncpa_field,nMap,nMap//2))
 
 # boucle extraction aleatoire d'un masque random de dimension identique
 # à la pupille
 
-# N = pupil size now
-N=N//2
+# N = pupil size
+N=nMap//2
 hlf=N//2
 nb_ncpa = 2048
 rnd=np.random.randn(nb_ncpa)
+rnd /= 2.
 xi=np.round(rnd*hlf/np.max([-np.min(rnd),np.max(rnd)])).astype(int)
 rnd=np.random.randn(nb_ncpa)
+rnd /= 2.
 yi=np.round(rnd*hlf/np.max([-np.min(rnd),np.max(rnd)])).astype(int)
-
 ncpa = np.ones((N,N,nb_ncpa))
 ncpa *= Pupil[:,:,None].copy()
 iok = np.nonzero(Pupil.copy())
