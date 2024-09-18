@@ -56,7 +56,7 @@ as_oi = 25.
 nOPD = 2000
 
 # wavelengths in m
-lamC = 1600e-9  #  some wvl unique value
+lamC = 2200e-9  #  some wvl unique central value 1020/1240/1600/2200
 lam_min = 960e-9  #  min value in range
 lam_max = 2450e-9  #  max value in range  #  2450e-9 // 1800e-9
 lam_itv = 18  #  nb of intervals in range --> nb+1 wvl's !  #  18 // 10
@@ -77,9 +77,9 @@ mas2rad = 1/rad2mas
 pscale = 0.3
 
 # FPM size in lam/D in the focal plane B
-# 4. with 'ELT_pupil_400.fits'
+# 4. with 'ELT_pupil_400.fits' bef. parameter exploration
 # 3.8 with 'Tel-Pupil.fits', old!
-mB = 4. # 3.8  #  at 1600nm !!
+mB = 4.3 # 1020nm/3.6 1240nm/3.6 1600nm/4.1 2200nm/4.3
 
 lamCD2mas = (lamC/D)*mas2rad
 
@@ -196,23 +196,52 @@ LyotStop2d = Pupil*(
 #               'OPDs_PASSATA/OPD/20240302_000411-003/20240302_000411.0',
 #               'OPDs_PASSATA/OPD/20240313_133532-004/20240313_133532.0',
 #               'OPDs_PASSATA/OPD/20240228_112033-002/20240228_112033.0')
-opds_dir=('OPDs_PASSATA/OPD/WS/JQ1/20240515_163822',
-          'OPDs_PASSATA/OPD/WS/JQ1/20240517_091216',
-          'OPDs_PASSATA/OPD/WS/JQ1/20240517_100705',
-          'OPDs_PASSATA/OPD/WS/JQ1/20240517_103452',
-          'OPDs_PASSATA/OPD/WS/JQ1/20240517_105822',
-          'OPDs_PASSATA/OPD/WS/JQ1/20240517_111658',
-          'OPDs_PASSATA/OPD/WS/JQ1/20240517_113534',
-          'OPDs_PASSATA/OPD/WS/JQ1/20240517_121247',
-          'OPDs_PASSATA/OPD/WS/JQ2/20240517_181033',
-          'OPDs_PASSATA/OPD/WS/JQ2/20240517_183817',
-          'OPDs_PASSATA/OPD/WS/JQ2/20240517_190418',
-          'OPDs_PASSATA/OPD/WS/JQ2/20240517_192251',
-          'OPDs_PASSATA/OPD/WS/JQ2/20240517_194126',
-          'OPDs_PASSATA/OPD/WS/JQ2/20240517_195959',
-          'OPDs_PASSATA/OPD/WS/JQ2/20240517_201835',
-          'OPDs_PASSATA/OPD/WS/JQ2/20240517_203708',
-          'OPDs_PASSATA/OPD/WS/JQM/20240509_182041/20240509_182041.0',
+# opds_dir=('OPDs_PASSATA/OPD/WS/JQ1/20240515_163822',
+#           'OPDs_PASSATA/OPD/WS/JQ1/20240517_091216',
+#           'OPDs_PASSATA/OPD/WS/JQ1/20240517_100705',
+#           'OPDs_PASSATA/OPD/WS/JQ1/20240517_103452',
+#           'OPDs_PASSATA/OPD/WS/JQ1/20240517_105822',
+#           'OPDs_PASSATA/OPD/WS/JQ1/20240517_111658',
+#           'OPDs_PASSATA/OPD/WS/JQ1/20240517_113534',
+#           'OPDs_PASSATA/OPD/WS/JQ1/20240517_121247',
+#           'OPDs_PASSATA/OPD/WS/JQ2/20240517_181033',
+#           'OPDs_PASSATA/OPD/WS/JQ2/20240517_183817',
+#           'OPDs_PASSATA/OPD/WS/JQ2/20240517_190418',
+#           'OPDs_PASSATA/OPD/WS/JQ2/20240517_192251',
+#           'OPDs_PASSATA/OPD/WS/JQ2/20240517_194126',
+#           'OPDs_PASSATA/OPD/WS/JQ2/20240517_195959',
+#           'OPDs_PASSATA/OPD/WS/JQ2/20240517_201835',
+#           'OPDs_PASSATA/OPD/WS/JQ2/20240517_203708',
+#           'OPDs_PASSATA/OPD/WS/JQM/20240509_182041/20240509_182041.0',
+#           'OPDs_PASSATA/OPD/WS/JQM/20240509_183915/20240509_183915.0',
+#           'OPDs_PASSATA/OPD/WS/JQM/20240509_191620/20240509_191620.0',
+#           'OPDs_PASSATA/OPD/WS/JQM/20240509_193453/20240509_193453.0',
+#           'OPDs_PASSATA/OPD/WS/JQM/20240509_195327/20240509_195327.0',
+#           'OPDs_PASSATA/OPD/WS/JQM/20240509_201200/20240509_201200.0',
+#           'OPDs_PASSATA/OPD/WS/JQM/20240509_203033/20240509_203033.0',
+#           'OPDs_PASSATA/OPD/WS/JQM/20240509_204907/20240509_204907.0',
+#           'OPDs_PASSATA/OPD/WS/JQM/20240509_210742/20240509_210742.0',
+#           'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-001/JQ3/20240521_200540',
+#           'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-004/JQ3/20240521_181105',
+#           'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-002/JQ3/20240521_213115',
+#           'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-005/JQ3/20240521_222747',
+#           'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-003/JQ3/20240521_210334',
+#           'OPDs_PASSATA/OPD/WS/JQ3/20240527_190439/JQ3/20240527_190439',
+#           'OPDs_PASSATA/OPD/WS/JQ3/20240527_195648/JQ3/20240527_195648',
+#           'OPDs_PASSATA/OPD/WS/JQ3/20240527_204843/JQ3/20240527_204843',
+#           'OPDs_PASSATA/OPD/WS/JQ3/20240527_214043/JQ3/20240527_214043',
+#           'OPDs_PASSATA/OPD/WS/JQ3/20240527_223245/JQ3/20240527_223245',
+#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_161522/JQ4/20240528_161522',
+#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_163416/JQ4/20240528_163416',
+#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_165414/JQ4/20240528_165414',
+#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_171307/JQ4/20240528_171307',
+#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_173157/JQ4/20240528_173157',
+#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_175246/JQ4/20240528_175246',
+#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_181244/JQ4/20240528_181244',
+#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_183130/JQ4/20240528_183130',
+#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_185018/JQ4/20240528_185018',
+#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_190906/JQ4/20240528_190906')
+opds_dir=('OPDs_PASSATA/OPD/WS/JQM/20240509_182041/20240509_182041.0',
           'OPDs_PASSATA/OPD/WS/JQM/20240509_183915/20240509_183915.0',
           'OPDs_PASSATA/OPD/WS/JQM/20240509_191620/20240509_191620.0',
           'OPDs_PASSATA/OPD/WS/JQM/20240509_193453/20240509_193453.0',
@@ -220,27 +249,7 @@ opds_dir=('OPDs_PASSATA/OPD/WS/JQ1/20240515_163822',
           'OPDs_PASSATA/OPD/WS/JQM/20240509_201200/20240509_201200.0',
           'OPDs_PASSATA/OPD/WS/JQM/20240509_203033/20240509_203033.0',
           'OPDs_PASSATA/OPD/WS/JQM/20240509_204907/20240509_204907.0',
-          'OPDs_PASSATA/OPD/WS/JQM/20240509_210742/20240509_210742.0',
-          'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-001/JQ3/20240521_200540',
-          'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-004/JQ3/20240521_181105',
-          'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-002/JQ3/20240521_213115',
-          'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-005/JQ3/20240521_222747',
-          'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-003/JQ3/20240521_210334',
-          'OPDs_PASSATA/OPD/WS/JQ3/20240527_190439/JQ3/20240527_190439',
-          'OPDs_PASSATA/OPD/WS/JQ3/20240527_195648/JQ3/20240527_195648',
-          'OPDs_PASSATA/OPD/WS/JQ3/20240527_204843/JQ3/20240527_204843',
-          'OPDs_PASSATA/OPD/WS/JQ3/20240527_214043/JQ3/20240527_214043',
-          'OPDs_PASSATA/OPD/WS/JQ3/20240527_223245/JQ3/20240527_223245',
-          'OPDs_PASSATA/OPD/WS/JQ4/20240528_161522/JQ4/20240528_161522',
-          'OPDs_PASSATA/OPD/WS/JQ4/20240528_163416/JQ4/20240528_163416',
-          'OPDs_PASSATA/OPD/WS/JQ4/20240528_165414/JQ4/20240528_165414',
-          'OPDs_PASSATA/OPD/WS/JQ4/20240528_171307/JQ4/20240528_171307',
-          'OPDs_PASSATA/OPD/WS/JQ4/20240528_173157/JQ4/20240528_173157',
-          'OPDs_PASSATA/OPD/WS/JQ4/20240528_175246/JQ4/20240528_175246',
-          'OPDs_PASSATA/OPD/WS/JQ4/20240528_181244/JQ4/20240528_181244',
-          'OPDs_PASSATA/OPD/WS/JQ4/20240528_183130/JQ4/20240528_183130',
-          'OPDs_PASSATA/OPD/WS/JQ4/20240528_185018/JQ4/20240528_185018',
-          'OPDs_PASSATA/OPD/WS/JQ4/20240528_190906/JQ4/20240528_190906')
+          'OPDs_PASSATA/OPD/WS/JQM/20240509_210742/20240509_210742.0')
 
 for dir_nb in range(len(opds_dir)):
 
@@ -338,10 +347,10 @@ for dir_nb in range(len(opds_dir)):
         # pupil plane A
         Fld_AA = Pupil * 1.
         # focal plane B 
-        Fld_BB = mask2d*sft.sft(Fld_AA, nFPM, mB)
+        Fld_BB = mask2d*sft.sft(Fld_AA, nFPM, mB*lamC/lam)
         
         # pupil plane C before Lyot stop
-        Fld_CC = Fld_AA - sft.isft(Fld_BB, nPup, mB)
+        Fld_CC = Fld_AA - sft.isft(Fld_BB, nPup, mB*lamC/lam)
         
         # # pupil plane C after Lyot stop
         Fld_LL = Fld_CC*LyotStop2d
@@ -442,10 +451,10 @@ for dir_nb in range(len(opds_dir)):
             Fld_A0 = Pupil * np.exp(1j*2*np.pi*OPD_arr[iOPD]/(lam))
             
             # focal plane B 
-            Fld_B = mask2d*sft.sft(Fld_A0, nFPM, mB)
+            Fld_B = mask2d*sft.sft(Fld_A0, nFPM, mB*lamC/lam)
             
             # pupil plane C before Lyot stop
-            Fld_C = Fld_A0 - sft.isft(Fld_B, nPup, mB)
+            Fld_C = Fld_A0 - sft.isft(Fld_B, nPup, mB*lamC/lam)
             
             # pupil plane C after Lyot stop
             Fld_L = Fld_C*LyotStop2d
@@ -499,10 +508,14 @@ for dir_nb in range(len(opds_dir)):
     # filename for the direct and coronagraphic images and profiles
     # fname_Int_DD0 = 'wonoise_psf_'+donow+'.fits'
     # fname_Int_DD = 'wonoise_coro_psf_'+donow+'.fits'
-    fname_Int_D0 = 'ao_corr_psf_'+donow+'.fits'
-    fname_Int_D = 'ao_corr_coro_psf_'+donow+'.fits'
-    fname_Prf_D0 = 'ao_corr_psf_profile_'+donow+'.fits'
-    fname_Prf_D = 'ao_corr_coro_psf_profile_'+donow+'.fits'
+    fname_Int_D0 = ('ao_corr_psf_lmbdC'+str(int(lamC*1e9))+'nm_'+
+                    donow+'.fits')
+    fname_Int_D = ('ao_corr_coro_psf_lmbdC'+str(int(lamC*1e9))+'nm_'
+                   +donow+'.fits')
+    fname_Prf_D0 = ('ao_corr_psf_profile_lmbdC'+str(int(lamC*1e9))+'nm_'
+                    +donow+'.fits')
+    fname_Prf_D = ('ao_corr_coro_psf_profile_lmbdC'+str(int(lamC*1e9))+'nm_'
+                   +donow+'.fits')
     
     
     # filepath for the direct and coronagraphic images
@@ -531,7 +544,8 @@ for dir_nb in range(len(opds_dir)):
         fits.setval(fpath,'NFPM',value=nFPM,comment='FP coro. sampling')
         fits.setval(fpath,'NIMG',value=nImg,comment='image size')
         fits.setval(fpath,'NOPD',value=nOPD,comment='number of OPD files')
-        fits.setval(fpath,'LMIN',value=lam_min,comment='wavelength in meters')
+        fits.setval(fpath,'LMIN',value=lam_min,comment='central wvl in meters')
+        fits.setval(fpath,'LMBD',value=lamC,comment='wavelength in meters')
         #fits.setval(fpath,'LMAX',value=lam_max,comment='wavelength in meters')
         fits.setval(fpath,'LITV',value=lam_itv,comment='# of wvl intervals')
         fits.setval(fpath,'LSTP',value=lam_stp,comment='wvl step in meters')
