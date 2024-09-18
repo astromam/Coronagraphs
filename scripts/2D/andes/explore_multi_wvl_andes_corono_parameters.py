@@ -45,7 +45,7 @@ nImg = 400
 # lam_max = 2460e-9  #  max value in range
 # lam_itv = 4  #  nb of intervals in range --> nb+1 wvl's !
 
-wvl = 'K'
+wvl = 'YJH'
 
 if wvl == 'K' : 
 
@@ -78,10 +78,38 @@ elif wvl == 'Y':
     lam_min = 980e-9  #  min value in range
     lam_max = 1070e-9  #  max value in range  
     lam_itv = 4  #  nb of intervals in range --> nb+1 wvl's !  
-    
-lam_stp = np.floor(np.ceil((lam_max-lam_min)*1e9/lam_itv)/10)*1e-8
-lam_lst = (np.arange(lam_min,lam_max,lam_stp) if lam_max != lam_min
-           else [lamC])
+
+elif wvl == 'YJH': 
+
+    # wavelengths in m
+    lamC = 1600e-9  #  some wvl unique value
+    lam_min = 980e-9  #  min value in range
+    lam_max = 1770e-9  #  max value in range  
+    lam_itv = 14  #  
+    lam_lst = np.array([9.80e-07, 1.00e-06, 1.02e-06, 1.04e-06, 1.06e-06,
+                        1.16e-06, 1.20e-06, 1.24e-06, 1.28e-06, 1.32e-06,
+                        1.44e-06, 1.52e-06, 1.60e-06, 1.68e-06, 1.76e-06])
+    lam_stp = np.median(lam_lst)
+
+elif wvl == 'YJHK': 
+
+    # wavelengths in m
+    lamC = 1600e-9  #  some wvl unique value
+    lam_min = 980e-9  #  min value in range
+    lam_max = 2460e-9  #  max value in range  
+    lam_itv = 20  #
+    lam_lst = np.array([9.80e-07, 1.00e-06, 1.02e-06, 1.04e-06, 1.06e-06,
+                        1.16e-06, 1.20e-06, 1.24e-06, 1.28e-06, 1.32e-06,
+                        1.44e-06, 1.52e-06, 1.60e-06, 1.68e-06, 1.76e-06,
+                        1.96e-06, 2.08e-06, 2.20e-06, 2.32e-06, 2.44e-06])
+    lam_stp = np.median(lam_lst)
+
+if len(wvl)==1:
+
+    lam_stp = np.floor(np.ceil((lam_max-lam_min)*1e9/lam_itv)/10)*1e-8
+    lam_lst = (np.arange(lam_min,lam_max,lam_stp) if lam_max != lam_min
+               else [lamC])
+
 nL = len(lam_lst)
 
 print(nL, lam_stp, lam_lst)
@@ -280,15 +308,15 @@ for i in np.arange(nL):
                 Int_DD0 *= norm_peakDD0 #norm_peakDD0
     
                 """
-                ### Calcul of corono image without atmospheric turbulences
+                ### Calculation of corono image without atmospheric turbulences
                 """
                     
                 Fld_AA = Pupil_coro
                 # focal plane B 
-                Fld_BB = mask2d*sft.sft(Fld_AA, nFPM, mB)
+                Fld_BB = mask2d*sft.sft(Fld_AA, nFPM, mB*lamC/lam)
     
                 # pupil plane C before Lyot stop
-                Fld_CC = Fld_AA - sft.isft(Fld_BB, nPup, mB)
+                Fld_CC = Fld_AA - sft.isft(Fld_BB, nPup, mB*lamC/lam)
     
     
                 # pupil plane C after Lyot stop
