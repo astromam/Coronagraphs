@@ -45,7 +45,7 @@ nImg = 400
 # lam_max = 2460e-9  #  max value in range
 # lam_itv = 4  #  nb of intervals in range --> nb+1 wvl's !
 
-wvl = 'YJH'
+wvl = 'YJHK'
 
 if wvl == 'K' : 
 
@@ -89,7 +89,7 @@ elif wvl == 'YJH':
     lam_lst = np.array([9.80e-07, 1.00e-06, 1.02e-06, 1.04e-06, 1.06e-06,
                         1.16e-06, 1.20e-06, 1.24e-06, 1.28e-06, 1.32e-06,
                         1.44e-06, 1.52e-06, 1.60e-06, 1.68e-06, 1.76e-06])
-    lam_stp = np.median(lam_lst)
+    lam_stp = np.median(np.diff(lam_lst))
 
 elif wvl == 'YJHK': 
 
@@ -102,7 +102,7 @@ elif wvl == 'YJHK':
                         1.16e-06, 1.20e-06, 1.24e-06, 1.28e-06, 1.32e-06,
                         1.44e-06, 1.52e-06, 1.60e-06, 1.68e-06, 1.76e-06,
                         1.96e-06, 2.08e-06, 2.20e-06, 2.32e-06, 2.44e-06])
-    lam_stp = np.median(lam_lst)
+    lam_stp = np.median(np.diff(lam_lst))
 
 if len(wvl)==1:
 
