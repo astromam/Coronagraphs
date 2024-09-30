@@ -28,6 +28,8 @@ lam_c = 1600e-9  #  "central" lambda (of interest) in meters
 rad2mas = np.pi/(180.*3600*1000)
 mas2rad = 1/rad2mas
 
+as_oi = 35.
+as_str = str(int(as_oi))
 
 #%%
 """
@@ -39,7 +41,7 @@ if user == 'Alain':
     fdir_plt   = Path('D:/Andes/Data_corono/plots/').resolve()   #  plots
     fdir_dat = Path("D:/Andes/Data_corono/data/OPDs_PASSATA/OPD/WS/").resolve()
     # dir name where to find results and plots of a common script run date
-    was_donow = '20240729170321'
+    was_donow = '20240927171148'
     fdir_res = fdir_res / was_donow
     fdir_plt = fdir_plt / was_donow
     
@@ -60,14 +62,23 @@ elif user == 'Mamadou':
     fdir_plt   = Path( fdir_base / 'plots' ).resolve()
     fdir_plt   = Path( fdir_base / 'data/OPDs_PASSATA/OPD/WS' ).resolve()
 
+# 20240917170858 1.02e-06 9.6e-07 0.88 0.32 3.6 Y
+# 20240918083539 1.24e-06 9.6e-07 0.88 0.32 3.5 J
+# 20240918114427 1.6e-06 9.6e-07 0.88 0.32 4.1 H
+# 20240918151606 2.2e-06 9.6e-07 0.88 0.32 4.3 K
+# 20240919154503 1.6e-06 9.6e-07 0.9 0.37 4.5 YJH
+# 20240920074206 1.6e-06 9.6e-07 0.96 0.34 4.5 YJHK
+# 20240920143014 1.6e-06 9.6e-07 0.9 0.37 4.0 JH
+# 20240923085209 1.6e-06 9.6e-07 0.96 0.3 4.5 HK
+# 20240923175955 1.60e-06  0.93 0.42 4.5 Y
+
 
 #%%
 """
 ### working directory of the profile files
 """
 
-
-p_dir=('OPDs_PASSATA/OPD/WS/JQ1/20240515_163822',
+p_dir=( 'OPDs_PASSATA/OPD/WS/JQ1/20240515_163822',
         'OPDs_PASSATA/OPD/WS/JQ1/20240517_091216',
         'OPDs_PASSATA/OPD/WS/JQ1/20240517_100705',
         'OPDs_PASSATA/OPD/WS/JQ1/20240517_103452',
@@ -122,59 +133,63 @@ if slc:
 else:
     ptrn = 'L0toD_'
 
+once=True
 for dir_nb in range(len(p_dir)):
         
     cur_dir = Path(os.path.basename(p_dir[dir_nb])).stem
     res_dir = (fdir_res / cur_dir)
     print(cur_dir, res_dir)
     
-    
-    file_lst = os.listdir(res_dir)
-    file_psf = [x for x in file_lst if (
-        'contrast_profile_'+ptrn+cur_dir+'_ao_corr_psf_2') in x]
-    file_cro = [x for x in file_lst if (
-        'contrast_profile_'+ptrn+cur_dir+'_ao_corr_coro_psf_2') in x]
-    
-    print("psf :", file_psf)
-    print("psf coro :", file_cro)
-
-    Int_D0_prf_avg = fits.getdata(res_dir / file_psf[0])
-    Int_D_prf_avg  = fits.getdata(res_dir / file_cro[0])
-    
-    head_psf = fits.getheader(res_dir / file_psf[0])
-    
-    # lam_min = head_psf['LMIN']
-    # lam_stp = head_psf['LSTP']
-    # lam_itv = head_psf['LITV']
-    # lam_lst = np.arange(lam_min,lam_min+(lam_itv+1)*lam_stp,lam_stp)
-    # nL = len(lam_lst)
-    
-    # nImg = head_psf['NIMG']
-    # D = head_psf['DIAM']
-    # mB = head_psf['SFPM']
-    
-    # aS = np.arange(nImg//2)*(mas2rad * 58.393 / (D *1e9) ) # angular separation
-    
-    if dir_nb==0:
+    if os.path.isdir(res_dir):
         
-        lam_min = head_psf['LMIN']
-        lam_stp = head_psf['LSTP']
-        lam_itv = head_psf['LITV']
-        lam_lst = np.arange(lam_min,lam_min+(lam_itv+1)*lam_stp,lam_stp)
-        nL = len(lam_lst)
+        file_lst = os.listdir(res_dir)
+        file_psf = [x for x in file_lst if (
+            'contrast_profile_'+ptrn+cur_dir+'_ao_corr_psf_') in x]
+        file_cro = [x for x in file_lst if (
+            'contrast_profile_'+ptrn+cur_dir+'_ao_corr_coro_psf_') in x]
         
-        nImg = head_psf['NIMG']
-        D = head_psf['DIAM']
-        mB = head_psf['SFPM']
+        print("psf :", file_psf)
+        print("psf coro :", file_cro)
+    
+        Int_D0_prf_avg = fits.getdata(res_dir / file_psf[0])
+        Int_D_prf_avg  = fits.getdata(res_dir / file_cro[0])
         
-        aS = np.arange(nImg//2)*(mas2rad * 58.393 / (D *1e9) ) # angular sep.
-        prf_25mas = int(np.median(np.argmin(np.abs(aS[:]-25.))))
+        head_psf = fits.getheader(res_dir / file_psf[0])
         
-        gain = np.zeros((nL, len(p_dir)))
-        contrast = np.zeros((nL, len(p_dir)))
-
-    gain[:,dir_nb] = Int_D0_prf_avg[:,prf_25mas]/Int_D_prf_avg[:,prf_25mas]
-    contrast[:,dir_nb] = Int_D_prf_avg[:,prf_25mas]
+        # lam_min = head_psf['LMIN']
+        # lam_stp = head_psf['LSTP']
+        # lam_itv = head_psf['LITV']
+        # lam_lst = np.arange(lam_min,lam_min+(lam_itv+1)*lam_stp,lam_stp)
+        # nL = len(lam_lst)
+        
+        # nImg = head_psf['NIMG']
+        # D = head_psf['DIAM']
+        # mB = head_psf['SFPM']
+        
+        # aS = np.arange(nImg//2)*(mas2rad * 58.393 / (D *1e9) ) # angular sep.
+        
+        if once:
+            
+            lam_min = head_psf['LMIN']
+            lam_stp = head_psf['LSTP']
+            lam_itv = head_psf['LITV']
+            lam_lst = np.arange(lam_min,lam_min+(lam_itv+1)*lam_stp,lam_stp)
+            nL = len(lam_lst)
+            
+            nImg = head_psf['NIMG']
+            D = head_psf['DIAM']
+            mB = head_psf['SFPM']
+            
+            aS = np.arange(nImg//2)*(mas2rad * 58.393 / (D *1e9) ) # ang. sep.
+            prf_25mas = int(np.median(np.argmin(np.abs(aS[:]-as_oi))))
+            
+            gain = np.zeros((nL, len(p_dir)))
+            contrast = np.zeros((nL, len(p_dir)))
+            
+            once = not(once)
+    
+        gain[:,dir_nb] = Int_D0_prf_avg[:,prf_25mas]/Int_D_prf_avg[:,prf_25mas]
+        contrast[:,dir_nb] = Int_D_prf_avg[:,prf_25mas]
 
             
 #%%
@@ -195,23 +210,29 @@ plt.tight_layout()
 plt.xlabel(r'$\lambda$ (nm)')  #[$\lambda$/D]')
 plt.ylabel('Gain')
 plt.yscale('log')
-plt.title('Gain at 25 mas, windshake data')
+plt.title('Gain at '+as_str+' mas, windshake data')
 plt.grid(True)
+idx = []
+
 for i in range(5):
     
     idx = [j for j,item in enumerate(np.array(p_dir)) if jqs[i] in item]
-    g_avg = np.mean(gain[:,idx], axis=1)
-    g_std = np.std(gain[:,idx], axis=1)
-    plt.plot(lam_lst*1e9, g_avg, label=jqs[i]+': '+seings[jqs[i]])
-    plt.fill_between(lam_lst*1e9, g_avg - g_std, g_avg + g_std, alpha=0.2)
+    
+    if idx != []:
+
+        g_avg = np.mean(gain[:,idx], axis=1)
+        g_std = np.std(gain[:,idx], axis=1)
+        plt.plot(lam_lst*1e9, g_avg, label=jqs[i]+': '+seings[jqs[i]])
+        plt.fill_between(lam_lst*1e9, g_avg - g_std, g_avg + g_std, alpha=0.2)
 
 plt.ylim(0.5,1500)
-plt.legend(fontsize='small')
+# plt.legend(fontsize='small')
 
-# fname_gain_25mas = ('all_windshake_data_gain_25mas_asRatioOf_lbd2D_ringAvgdPrfs_vs_wvl_' +
-#                     os.path.basename(file_cro[0]).split('.')[0])
+# fname_gain_25mas = (
+#     'all_windshake_data_gain_25mas_asRatioOf_lbd2D_ringAvgdPrfs_vs_wvl_'
+#     + os.path.basename(file_cro[0]).split('.')[0])
 #if actual lambda/D
-fname_gain_25mas = ('all_windshake_data_gain_' + ptrn + 'JHK')
+fname_gain_25mas = ('all_windshake_data_gain_' + ptrn +'_'+as_str+'mas_'+ was_donow)
 fpath_gain_25mas_svg = fdir_plt / (fname_gain_25mas + '.svg')
 fpath_gain_25mas_pdf = fdir_plt / (fname_gain_25mas + '.pdf')
 plt.savefig(fpath_gain_25mas_svg)
@@ -232,23 +253,26 @@ plt.tight_layout()
 plt.xlabel(r'$\lambda$ (nm)')#[$\lambda$/D]')
 plt.ylabel('Contrast')
 plt.yscale('log')
-plt.title('contrast at 25 mas, windshake data')
+plt.title('contrast at '+as_str+' mas, windshake data')
 plt.grid(True)
 for i in range(5):
     
     idx = [j for j,item in enumerate(np.array(p_dir)) if jqs[i] in item]
-    g_avg = np.mean(contrast[:,idx], axis=1)
-    g_std = np.std(contrast[:,idx], axis=1)
-    plt.plot(lam_lst*1e9, g_avg, label=jqs[i]+': '+seings[jqs[i]])
-    plt.fill_between(lam_lst*1e9, g_avg - g_std, g_avg + g_std, alpha=0.2)
+    
+    if idx != []:
+    
+        g_avg = np.mean(contrast[:,idx], axis=1)
+        g_std = np.std(contrast[:,idx], axis=1)
+        plt.plot(lam_lst*1e9, g_avg, label=jqs[i]+': '+seings[jqs[i]])
+        plt.fill_between(lam_lst*1e9, g_avg - g_std, g_avg + g_std, alpha=0.2)
 
 plt.ylim(2e-5,2e-1)
-plt.legend(fontsize='small', loc=2)
+# plt.legend(fontsize='small', loc=2)
 
 # fname_contrast_25mas = ('all_windshake_data_contrast_25mas_asRatioOf_lbd2D_ringAvgdPrfs_vs_wvl_' +
 #                     os.path.basename(file_cro[0]).split('.')[0])
 #if actual lambda/D
-fname_contrast_25mas = ('all_windshake_data_contrast_' + ptrn + 'JHK')
+fname_contrast_25mas = ('all_windshake_data_contrast_' + ptrn +'_'+as_str+'mas_'+ was_donow)
 fpath_contrast_25mas_svg = fdir_plt / (fname_contrast_25mas + '.svg')
 fpath_contrast_25mas_pdf = fdir_plt / (fname_contrast_25mas + '.pdf')
 plt.savefig(fpath_contrast_25mas_svg)
