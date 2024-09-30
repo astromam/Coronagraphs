@@ -345,10 +345,10 @@ for dir_nb in range(len(opds_dir)):
         # pupil plane A
         Fld_AA = Pupil * 1.
         # focal plane B 
-        Fld_BB = mask2d*sft.sft(Fld_AA, nFPM, mB)
+        Fld_BB = mask2d*sft.sft(Fld_AA, nFPM, mB*lamC/lam)
         
         # pupil plane C before Lyot stop
-        Fld_CC = Fld_AA - sft.isft(Fld_BB, nPup, mB)
+        Fld_CC = Fld_AA - sft.isft(Fld_BB, nPup, mB*lamC/lam)
         
         # # pupil plane C after Lyot stop
         Fld_LL = Fld_CC*LyotStop2d
@@ -448,10 +448,10 @@ for dir_nb in range(len(opds_dir)):
                       * np.exp(1j * tilt * D * frq / (nPup * lam)))
             
             # focal plane B 
-            Fld_B = mask2d*sft.sft(Fld_A0, nFPM, mB)
+            Fld_B = mask2d*sft.sft(Fld_A0, nFPM, mB*lamC/lam)
             
             # pupil plane C before Lyot stop
-            Fld_C = Fld_A0 - sft.isft(Fld_B, nPup, mB)
+            Fld_C = Fld_A0 - sft.isft(Fld_B, nPup, mB*lamC/lam)
             
             # pupil plane C after Lyot stop
             Fld_L = Fld_C*LyotStop2d
