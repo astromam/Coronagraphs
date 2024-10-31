@@ -74,7 +74,8 @@ user = 'Alain'
 if user == 'Alain':
     fdir_res   = Path('D:/Andes/Data_corono/results/').resolve()  #  fits data
     fdir_plt   = Path('D:/Andes/Data_corono/plots/').resolve()   #  plots
-    was_donow = '20240729170321'
+
+    was_donow = '20241031105129'
     fdir_res = fdir_res / was_donow
     fdir_plt = fdir_plt / was_donow
 
@@ -92,6 +93,19 @@ elif user == 'Mamadou':
     fdir_res   = Path( fdir_base / 'results' ).resolve()
     fdir_plt   = Path( fdir_base / 'plots' ).resolve()
 
+
+#♠ ncpa nm rms with yjh 0mas/µ disp
+# 20241025140035 10
+# 20241028101351 20
+# 20241028161658 30
+# 20241029090244 40
+# 20241029131750 50
+# 20241029160850 60
+
+# 20241030082457  100
+# 20241030161024  200
+# 20241031105129  300
+# 20241030161219  400
 
 #%%
 """
@@ -151,6 +165,20 @@ opds_dir=('OPDs_PASSATA/OPD/WS/JQ1/20240515_163822',
           'OPDs_PASSATA/OPD/WS/JQ4/20240528_183130/JQ4/20240528_183130',
           'OPDs_PASSATA/OPD/WS/JQ4/20240528_185018/JQ4/20240528_185018',
           'OPDs_PASSATA/OPD/WS/JQ4/20240528_190906/JQ4/20240528_190906')
+# ,
+#           'perfect')
+opds_dir=('OPDs_PASSATA/OPD/WS/JQM/20240509_182041/20240509_182041.0',
+          'OPDs_PASSATA/OPD/WS/JQM/20240509_183915/20240509_183915.0',
+          'OPDs_PASSATA/OPD/WS/JQM/20240509_191620/20240509_191620.0',
+          'OPDs_PASSATA/OPD/WS/JQM/20240509_193453/20240509_193453.0',
+          'OPDs_PASSATA/OPD/WS/JQM/20240509_195327/20240509_195327.0',
+          'OPDs_PASSATA/OPD/WS/JQM/20240509_201200/20240509_201200.0',
+          'OPDs_PASSATA/OPD/WS/JQM/20240509_203033/20240509_203033.0',
+          'OPDs_PASSATA/OPD/WS/JQM/20240509_204907/20240509_204907.0',
+          'OPDs_PASSATA/OPD/WS/JQM/20240509_210742/20240509_210742.0')
+# ,
+#           'perfect')
+
 
 
 #%%
@@ -170,21 +198,34 @@ for dir_nb in range(len(opds_dir)):
     file_lst = sorted(
         recursive_search(fdir_res / opd_set), key=os.path.getmtime)
     # , reverse=True
-    file_psf = [x for x in file_lst if 'ao_corr_psf_202407' in x]
-    file_cro = [x for x in file_lst if 'ao_corr_coro_psf_202407' in x]
+
+    if opd_set != 'perfect':
+        
+        file_psf = [x for x in file_lst if 'ao_corr_psf_' in x]
+        file_cro = [x for x in file_lst if 'ao_corr_coro_psf_' in x]
+    
+    else:
+        
+        file_psf = [x for x in file_lst if 'wonoise_psf_' in x]
+        file_cro = [x for x in file_lst if 'wonoise_coro_psf_' in x]
     
     print("psf :", file_psf)
     print("psf coro :", file_cro)
 
-    base_psf = os.path.basename(file_psf[0]).split('.')[0]
-    base_cro = os.path.basename(file_cro[0]).split('.')[0]
+    file_psf = file_psf[np.argmin(
+        (lambda x:[len(i) for i in x])(file_psf))]
+    file_cro = file_cro[np.argmin(
+        (lambda x:[len(i) for i in x])(file_cro))]
+
+    base_psf = os.path.basename(file_psf).split('.')[0]
+    base_cro = os.path.basename(file_cro).split('.')[0]
     
-    Int_D0 = fits.getdata(fdir_res / opd_set / file_psf[0])
-    print(np.min(Int_D0), np.max(Int_D0))
-    Int_D  = fits.getdata(fdir_res / opd_set / file_cro[0])
-    print(np.min(Int_D), np.max(Int_D))
+    Int_D0 = fits.getdata(fdir_res / opd_set / file_psf)
+    # print(np.min(Int_D0), np.max(Int_D0))
+    Int_D  = fits.getdata(fdir_res / opd_set / file_cro)
+    # print(np.min(Int_D), np.max(Int_D))
     
-    head_psf = fits.getheader(fdir_res / opd_set / file_psf[0])
+    head_psf = fits.getheader(fdir_res / opd_set / file_psf)
     
     lam_min = head_psf['LMIN']
     lam_stp = head_psf['LSTP']
@@ -195,6 +236,7 @@ for dir_nb in range(len(opds_dir)):
     nImg = head_psf['NIMG']
     D = head_psf['DIAM']
     mB = head_psf['SFPM']
+    lam_c = head_psf['LMBD']
       
     # stackoveflow...
     a_ = np.linspace(-(np.floor(nImg-1)/2), np.floor(nImg-1)/2, nImg)
@@ -218,7 +260,7 @@ for dir_nb in range(len(opds_dir)):
     fpath_images_pdf = fdir_plt / opd_set / fname_images_pdf
     
     # index of wvl to display
-    iD = [0,nL//4,nL//2,nL*3//4,nL-1]
+    iD = [0,nL//4,nL//2-1,nL*3//4,nL-1]
     
     # boundaries for the images in log scale
     vmin0 = -5.5
