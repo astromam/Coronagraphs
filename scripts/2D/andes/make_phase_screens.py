@@ -36,7 +36,7 @@ elif user == 'Mamadou':
 
 #%%
 
-std_tgt = 5e-8 #☺ target std in meters
+std_tgt = 30e-8 #☺ target std in meters
 
 fdir_pupil = fdir_dat / 'Pupil'
 fname_elt = 'ELT_pupil_400.fits' # New pupil with new spider
