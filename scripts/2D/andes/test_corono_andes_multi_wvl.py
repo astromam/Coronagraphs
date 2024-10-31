@@ -56,7 +56,7 @@ as_oi = 25.
 nOPD = 2000
 
 # wavelengths in m
-lamC = 2200e-9  #  some wvl unique central value 1020/1240/1600/2200
+lamC = 1600e-9  #  some wvl unique central value 1020/1240/1600/2200
 lam_min = 960e-9  #  min value in range
 lam_max = 2450e-9  #  max value in range  #  2450e-9 // 1800e-9
 lam_itv = 18  #  nb of intervals in range --> nb+1 wvl's !  #  18 // 10
@@ -76,11 +76,6 @@ mas2rad = 1/rad2mas
 # plate scale in mas per pixel
 pscale = 0.3
 
-# FPM size in lam/D in the focal plane B
-# 4. with 'ELT_pupil_400.fits' bef. parameter exploration
-# 3.8 with 'Tel-Pupil.fits', old!
-mB = 4.3 # 1020nm/3.6 1240nm/3.6 1600nm/4.1 2200nm/4.3
-
 lamCD2mas = (lamC/D)*mas2rad
 
 """
@@ -88,14 +83,49 @@ lamCD2mas = (lamC/D)*mas2rad
 """
 # Focal plane mask
 mask2d = uniform_disk(nFPM, nFPM/2.)
+
+# lowest mean contrast value
+# 20240923175955 Y , lamc (nm): 1600
+# 25 mas: 0.9 0.37 4.5 0.7541064750311652 20240926153733 
+# 30 mas: 0.93 0.3 4.5
+# 35 mas: 0.94 0.32 4.5
+# 20240924100841 J , lamc (nm): 1600 20240924134749
+# 25 mas: 0.9 0.37 3.0 0.7541064750311652
+# 30 mas: 0.9 0.37 3.0
+# 35 mas: 0.88 0.3 3.0
+# 20240925112915H H , lamc (nm): 1600 
+# 25 mas: 0.88 0.32 4.1 0.7515215956588692 20240927090658 
+# 30 mas: 0.88 0.32 3.6
+# 35 mas: 0.91 0.39 3.6
+# 20240924115352 K , lamc (nm): 1600
+# 25 mas: 0.96 0.3 4.5 0.9313998680061597 20240924135554
+# 30 mas: 0.95 0.3 4.5
+# 35 mas: 0.89 0.3 4.5
+# 20240926114503 JH , lamc (nm): 1600 20240927132635 
+# 25 mas: 0.9 0.37 4.0 0.7541064750311652 
+# 30 mas: 0.9 0.37 3.6
+# 35 mas: 0.88 0.32 3.4
+# 20240926154034 HK , lamc (nm): 1600 20240923085209
+# 25 mas: 0.96 0.3 4.5 0.9313998680061597
+# 30 mas: 0.93 0.37 4.5
+# 35 mas: 0.9 0.37 4.5
+# 20240927090738 YJH , lamc (nm): 1600 20240926153733
+# 25 mas: 0.9 0.37 4.5 0.7541064750311652
+# 30 mas: 0.9 0.37 3.6
+# 35 mas: 0.94 0.3 3.0
+# 20240927105903 YJHK  , lamc (nm): 1600 20240927171148 
+# 25 mas: 0.96 0.34 4.5 0.9035161692454352 
+# 30 mas: 0.92 0.39 4.5
+# 35 mas: 0.89 0.34 4.5
+
+# FPM size in lam/D in the focal plane B
+# 4. with 'ELT_pupil_400.fits' bef. parameter exploration
+# 3.8 with 'Tel-Pupil.fits', old!
 # diam = 0.86 obs = 0.30 with 'ELT_pupil_400.fits'
-# diam = 0.90 obs = 0.38 with 'Tel-Pupil.fits'
-# diam = 0.88 obs = 0.32 with 'ELT_pupil_400.fits' "new" : 75% throughput
 
-diam = 0.88 # diameter of the pupil in fraction of the pupil size
-obst = 0.32 # diameter of the central obscuration in fraction of the pupil size
-
-# 2 sizes of spaxels 10 mas and 100 mas
+diam = 0.90 # diameter of the pupil in fraction of the pupil size
+obst = 0.37 # diameter of the central obscuration in fraction of the pupil size
+mB = 4.5
 
 # datetime of script execution
 donow = datetime.now().strftime("%Y%m%d%H%M%S")  #  asp, datetime of now
@@ -544,8 +574,8 @@ for dir_nb in range(len(opds_dir)):
         fits.setval(fpath,'NFPM',value=nFPM,comment='FP coro. sampling')
         fits.setval(fpath,'NIMG',value=nImg,comment='image size')
         fits.setval(fpath,'NOPD',value=nOPD,comment='number of OPD files')
-        fits.setval(fpath,'LMIN',value=lam_min,comment='central wvl in meters')
-        fits.setval(fpath,'LMBD',value=lamC,comment='wavelength in meters')
+        fits.setval(fpath,'LMIN',value=lam_min,comment='min. wvl in meters')
+        fits.setval(fpath,'LMBD',value=lamC,comment='central wvl in meters')
         #fits.setval(fpath,'LMAX',value=lam_max,comment='wavelength in meters')
         fits.setval(fpath,'LITV',value=lam_itv,comment='# of wvl intervals')
         fits.setval(fpath,'LSTP',value=lam_stp,comment='wvl step in meters')
