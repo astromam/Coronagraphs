@@ -1,3 +1,12 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+2023, 2024
+
+@author: mndiaye
+"""
+
+import numpy as np
 
 #%%
 def profile(img, ptype='mean', step=1, mask=None, center=None, rmax=0, clip=True, exact=False):
