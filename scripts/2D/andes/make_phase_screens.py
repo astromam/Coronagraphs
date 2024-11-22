@@ -36,7 +36,7 @@ elif user == 'Mamadou':
 
 #%%
 
-std_tgt = 30e-8 #☺ target std in meters
+std_tgt = 5e-8 #☺ target std in meters
 
 fdir_pupil = fdir_dat / 'Pupil'
 fname_elt = 'ELT_pupil_400.fits' # New pupil with new spider
@@ -57,9 +57,10 @@ ky = (np.arange(nMap)-nMap//2)/(nMap/2)
 kx2, ky2 = np.meshgrid(kx, ky)
 k = np.sqrt(kx2**2 + ky2**2)  # spatial fréquencies norm vector
 
-# DSP law in f^-pwr
+# DSP law in f^pwr
 # add epsilon to avoid zero division
 pwr=-2.
+pwr*=-1
 epsilon = 1e-15
 k_pwr = k**pwr
 dsp = 1./(np.where(k_pwr!=0,k_pwr,epsilon))
