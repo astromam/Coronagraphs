@@ -77,7 +77,8 @@ if user == 'Alain':
     fdir_plt   = Path('D:/Andes/Data_corono/plots/').resolve()   #  plots
     
     # dir name where to find results and plots of a common script run date
-    was_donow = '20241031105129'
+    was_donow = '20241121161633'
+    
     fdir_res = fdir_res / was_donow
     fdir_plt = fdir_plt / was_donow
 
@@ -96,10 +97,24 @@ elif user == 'Mamadou':
     fdir_plt   = Path( fdir_base / 'plots' ).resolve()
 
 
-# 20241007141137
-# 20241009164421
+# 20241007141137 yjh 0 disp, 0 ncpa, 0 tilt
 
-# 20241024101416 yjh 10mas/µ
+# offset in lambda central/D for psf to fpm + yjh
+
+# 20241112095915 0.05
+# 20241112100035 0.10
+# 20241112100137 0.15
+# 20241112100549 0.20
+# 20241112100648 0.25
+# 20241121163003 0.25 colineaire!
+# 20241112175847 0.50
+# 20241112175935 0.75
+# 20241112180014 1.00
+
+# disp + yjh
+# 20241106094210  5 mas/µ
+# 20241024101416 10 mas/µ
+# 20241106094322 15 mas/µ
 
 #yjh et hk avec erreur dans disp: 80 est 80/2.pi
 # 20241007141603
@@ -111,19 +126,17 @@ elif user == 'Mamadou':
 # 20241010140448
 # 20241011173119
 
-#♠ ncpa nm rms with yjh 0mas/µ disp
-# 20241025140035 10
-# 20241028101351 20
-# 20241028161658 30
-# 20241029090244 40
-# 20241029131750 50
-# 20241029160850 60
+# ncpa nm rms with yjh 0mas/µ disp
+# 20241105085056 10
+# 20241105131506 20
+# 20241105155837 30
+# 20241105155850 40
+# 20241105155859 50
 
-# 20241030082457  100
-# 20241030161024  200
-# 20241031105129  300
-# 20241030161219  400
-                   
+# 20241118143408 30 nm ncpa, 0.25 lamC/D et 5 mas/µ bw
+# 20241121161633 30 nm ncpa, 0.25 lamC/D et 5 mas/µ bw colineaires
+
+
 #%%
 """
 ### working directory of the OPD files
@@ -137,52 +150,52 @@ elif user == 'Mamadou':
 #               'OPDs_PASSATA/OPD/20240302_000411-003/20240302_000411.0',
 #               'OPDs_PASSATA/OPD/20240313_133532-004/20240313_133532.0',
 #               'OPDs_PASSATA/OPD/20240228_112033-002/20240228_112033.0')
-opds_dir=('OPDs_PASSATA/OPD/WS/JQ1/20240515_163822',
-          'OPDs_PASSATA/OPD/WS/JQ1/20240517_091216',
-          'OPDs_PASSATA/OPD/WS/JQ1/20240517_100705',
-          'OPDs_PASSATA/OPD/WS/JQ1/20240517_103452',
-          'OPDs_PASSATA/OPD/WS/JQ1/20240517_105822',
-          'OPDs_PASSATA/OPD/WS/JQ1/20240517_111658',
-          'OPDs_PASSATA/OPD/WS/JQ1/20240517_113534',
-          'OPDs_PASSATA/OPD/WS/JQ1/20240517_121247',
-          'OPDs_PASSATA/OPD/WS/JQ2/20240517_181033',
-          'OPDs_PASSATA/OPD/WS/JQ2/20240517_183817',
-          'OPDs_PASSATA/OPD/WS/JQ2/20240517_190418',
-          'OPDs_PASSATA/OPD/WS/JQ2/20240517_192251',
-          'OPDs_PASSATA/OPD/WS/JQ2/20240517_194126',
-          'OPDs_PASSATA/OPD/WS/JQ2/20240517_195959',
-          'OPDs_PASSATA/OPD/WS/JQ2/20240517_201835',
-          'OPDs_PASSATA/OPD/WS/JQ2/20240517_203708',
-          'OPDs_PASSATA/OPD/WS/JQM/20240509_182041/20240509_182041.0',
-          'OPDs_PASSATA/OPD/WS/JQM/20240509_183915/20240509_183915.0',
-          'OPDs_PASSATA/OPD/WS/JQM/20240509_191620/20240509_191620.0',
-          'OPDs_PASSATA/OPD/WS/JQM/20240509_193453/20240509_193453.0',
-          'OPDs_PASSATA/OPD/WS/JQM/20240509_195327/20240509_195327.0',
-          'OPDs_PASSATA/OPD/WS/JQM/20240509_201200/20240509_201200.0',
-          'OPDs_PASSATA/OPD/WS/JQM/20240509_203033/20240509_203033.0',
-          'OPDs_PASSATA/OPD/WS/JQM/20240509_204907/20240509_204907.0',
-          'OPDs_PASSATA/OPD/WS/JQM/20240509_210742/20240509_210742.0',
-          'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-001/JQ3/20240521_200540',
-          'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-004/JQ3/20240521_181105',
-          'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-002/JQ3/20240521_213115',
-          'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-005/JQ3/20240521_222747',
-          'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-003/JQ3/20240521_210334',
-          'OPDs_PASSATA/OPD/WS/JQ3/20240527_190439/JQ3/20240527_190439',
-          'OPDs_PASSATA/OPD/WS/JQ3/20240527_195648/JQ3/20240527_195648',
-          'OPDs_PASSATA/OPD/WS/JQ3/20240527_204843/JQ3/20240527_204843',
-          'OPDs_PASSATA/OPD/WS/JQ3/20240527_214043/JQ3/20240527_214043',
-          'OPDs_PASSATA/OPD/WS/JQ3/20240527_223245/JQ3/20240527_223245',
-          'OPDs_PASSATA/OPD/WS/JQ4/20240528_161522/JQ4/20240528_161522',
-          'OPDs_PASSATA/OPD/WS/JQ4/20240528_163416/JQ4/20240528_163416',
-          'OPDs_PASSATA/OPD/WS/JQ4/20240528_165414/JQ4/20240528_165414',
-          'OPDs_PASSATA/OPD/WS/JQ4/20240528_171307/JQ4/20240528_171307',
-          'OPDs_PASSATA/OPD/WS/JQ4/20240528_173157/JQ4/20240528_173157',
-          'OPDs_PASSATA/OPD/WS/JQ4/20240528_175246/JQ4/20240528_175246',
-          'OPDs_PASSATA/OPD/WS/JQ4/20240528_181244/JQ4/20240528_181244',
-          'OPDs_PASSATA/OPD/WS/JQ4/20240528_183130/JQ4/20240528_183130',
-          'OPDs_PASSATA/OPD/WS/JQ4/20240528_185018/JQ4/20240528_185018',
-          'OPDs_PASSATA/OPD/WS/JQ4/20240528_190906/JQ4/20240528_190906',
-          'perfect')
+# opds_dir=('OPDs_PASSATA/OPD/WS/JQ1/20240515_163822',
+#           'OPDs_PASSATA/OPD/WS/JQ1/20240517_091216',
+#           'OPDs_PASSATA/OPD/WS/JQ1/20240517_100705',
+#           'OPDs_PASSATA/OPD/WS/JQ1/20240517_103452',
+#           'OPDs_PASSATA/OPD/WS/JQ1/20240517_105822',
+#           'OPDs_PASSATA/OPD/WS/JQ1/20240517_111658',
+#           'OPDs_PASSATA/OPD/WS/JQ1/20240517_113534',
+#           'OPDs_PASSATA/OPD/WS/JQ1/20240517_121247',
+#           'OPDs_PASSATA/OPD/WS/JQ2/20240517_181033',
+#           'OPDs_PASSATA/OPD/WS/JQ2/20240517_183817',
+#           'OPDs_PASSATA/OPD/WS/JQ2/20240517_190418',
+#           'OPDs_PASSATA/OPD/WS/JQ2/20240517_192251',
+#           'OPDs_PASSATA/OPD/WS/JQ2/20240517_194126',
+#           'OPDs_PASSATA/OPD/WS/JQ2/20240517_195959',
+#           'OPDs_PASSATA/OPD/WS/JQ2/20240517_201835',
+#           'OPDs_PASSATA/OPD/WS/JQ2/20240517_203708',
+#           'OPDs_PASSATA/OPD/WS/JQM/20240509_182041/20240509_182041.0',
+#           'OPDs_PASSATA/OPD/WS/JQM/20240509_183915/20240509_183915.0',
+#           'OPDs_PASSATA/OPD/WS/JQM/20240509_191620/20240509_191620.0',
+#           'OPDs_PASSATA/OPD/WS/JQM/20240509_193453/20240509_193453.0',
+#           'OPDs_PASSATA/OPD/WS/JQM/20240509_195327/20240509_195327.0',
+#           'OPDs_PASSATA/OPD/WS/JQM/20240509_201200/20240509_201200.0',
+#           'OPDs_PASSATA/OPD/WS/JQM/20240509_203033/20240509_203033.0',
+#           'OPDs_PASSATA/OPD/WS/JQM/20240509_204907/20240509_204907.0',
+#           'OPDs_PASSATA/OPD/WS/JQM/20240509_210742/20240509_210742.0',
+#           'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-001/JQ3/20240521_200540',
+#           'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-004/JQ3/20240521_181105',
+#           'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-002/JQ3/20240521_213115',
+#           'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-005/JQ3/20240521_222747',
+#           'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-003/JQ3/20240521_210334',
+#           'OPDs_PASSATA/OPD/WS/JQ3/20240527_190439/JQ3/20240527_190439',
+#           'OPDs_PASSATA/OPD/WS/JQ3/20240527_195648/JQ3/20240527_195648',
+#           'OPDs_PASSATA/OPD/WS/JQ3/20240527_204843/JQ3/20240527_204843',
+#           'OPDs_PASSATA/OPD/WS/JQ3/20240527_214043/JQ3/20240527_214043',
+#           'OPDs_PASSATA/OPD/WS/JQ3/20240527_223245/JQ3/20240527_223245',
+#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_161522/JQ4/20240528_161522',
+#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_163416/JQ4/20240528_163416',
+#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_165414/JQ4/20240528_165414',
+#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_171307/JQ4/20240528_171307',
+#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_173157/JQ4/20240528_173157',
+#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_175246/JQ4/20240528_175246',
+#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_181244/JQ4/20240528_181244',
+#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_183130/JQ4/20240528_183130',
+#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_185018/JQ4/20240528_185018',
+#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_190906/JQ4/20240528_190906',
+#           'perfect')
 opds_dir=('OPDs_PASSATA/OPD/WS/JQM/20240509_182041/20240509_182041.0',
           'OPDs_PASSATA/OPD/WS/JQM/20240509_183915/20240509_183915.0',
           'OPDs_PASSATA/OPD/WS/JQM/20240509_191620/20240509_191620.0',
@@ -212,7 +225,7 @@ opds_dir=('OPDs_PASSATA/OPD/WS/JQM/20240509_182041/20240509_182041.0',
 for dir_nb in range(len(opds_dir)):
         
     opd_set = os.path.basename(fdir_res / opds_dir[dir_nb] ).split('.')[0]
-    # opd_set='toto'
+
     print(fdir_res / opd_set)
     
     cur_dir = Path(os.path.basename(opds_dir[dir_nb])).stem
@@ -281,6 +294,10 @@ for dir_nb in range(len(opds_dir)):
         Int_D_prf_avg = ratio_prf.copy()
         Int_D0_prf_std = ratio_prf.copy()
         Int_D_prf_std = ratio_prf.copy()
+        Int_D0_prf_min = ratio_prf.copy()
+        Int_D_prf_min = ratio_prf.copy()
+        Int_D0_prf_max = ratio_prf.copy()
+        Int_D_prf_max = ratio_prf.copy()
 
         for i in range(nL):
             
@@ -294,7 +311,11 @@ for dir_nb in range(len(opds_dir)):
                 Int_D_prf_avg[i,p] = np.mean(Int_D_psf_avg[i,:,:][ring_val])
                 Int_D0_prf_std[i,p] = np.std(Int_D0_psf_avg[i,:,:][ring_val])
                 Int_D_prf_std[i,p] = np.std(Int_D_psf_avg[i,:,:][ring_val])
-            
+                Int_D0_prf_min[i,p] = np.min(Int_D0_psf_avg[i,:,:][ring_val])
+                Int_D_prf_min[i,p] = np.min(Int_D_psf_avg[i,:,:][ring_val])
+                Int_D0_prf_max[i,p] = np.max(Int_D0_psf_avg[i,:,:][ring_val])
+                Int_D_prf_max[i,p] = np.max(Int_D_psf_avg[i,:,:][ring_val])
+           
         if slc:
             
             fname_psf_contrast = ('contrast_profile_Lbd2D_' + opd_set + '_' +
@@ -310,22 +331,30 @@ for dir_nb in range(len(opds_dir)):
                                   base_cro + '.fits')
         
         fpath_psf_contrast =  fdir_res / opd_set / fname_psf_contrast 
-        fits.writeto(fpath_psf_contrast, Int_D0_prf_avg, head_psf, overwrite=True)
+        fits.writeto(fpath_psf_contrast, Int_D0_prf_avg, head_psf,
+                     overwrite=True)
         fits.append(fpath_psf_contrast, Int_D0_prf_std, head_psf)
+        fits.append(fpath_psf_contrast, Int_D0_prf_min, head_psf)
+        fits.append(fpath_psf_contrast, Int_D0_prf_max, head_psf)
         
         fpath_cro_contrast =  fdir_res / opd_set / fname_cro_contrast 
-        fits.writeto(fpath_cro_contrast, Int_D_prf_avg, head_psf, overwrite=True)
+        fits.writeto(fpath_cro_contrast, Int_D_prf_avg, head_psf,
+                     overwrite=True)
         fits.append(fpath_cro_contrast, Int_D_prf_std, head_psf)
+        fits.append(fpath_cro_contrast, Int_D_prf_min, head_psf)
+        fits.append(fpath_cro_contrast, Int_D_prf_max, head_psf)
 
         prf_as_oi_mas = int(np.median(np.argmin(np.abs(aS[:]-as_oi))))
         
         file_psf_prf = [x for x in file_lst if 'ao_corr_psf_profile_' in x]
-        file_cro_prf = [x for x in file_lst if 'ao_corr_coro_psf_profile_' in x]
+        file_cro_prf = [x for x in file_lst
+                        if 'ao_corr_coro_psf_profile_' in x]
 
         if opd_set == 'perfect':
             
             file_psf_prf = [x for x in file_lst if 'wonoise_psf_profile_' in x]
-            file_cro_prf = [x for x in file_lst if 'wonoise_coro_psf_profile_' in x]
+            file_cro_prf = [x for x in file_lst
+                            if 'wonoise_coro_psf_profile_' in x]
 
         
         print("psf profile:", file_psf_prf)
