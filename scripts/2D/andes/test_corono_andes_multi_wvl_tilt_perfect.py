@@ -304,6 +304,9 @@ for fpath in fpath_psf_lst:
     fits.setval(fpath,'SFPM',value=mB,comment='FPM (lam/D), first focal plane')
     fits.setval(fpath,'FDIA',value=diam,comment='fractional pup. diameter')
     fits.setval(fpath,'OBST',value=obst,comment='fractional obscuration')
+    fits.setval(fpath,'DISP',value=0.,comment='achr. disp. in mas/m bw')
+    fits.setval(fpath,'NCPA',value=0.,comment='ncpa rms in meters')
+    fits.setval(fpath,'FDEC',value=0.,comment='psf to fpm offset in radians')
 
 
 
