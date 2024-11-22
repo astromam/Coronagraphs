@@ -55,10 +55,12 @@ nImg = 400  #*1.6 #  #  even/pair!
 # angular separation of interest in mas
 as_oi = 25.
 
-# # of phase screens
+# # of OPD phase screens
 nOPD = 2000
-ncpa = True
-ncpa_rms = 300  #  nm
+
+# ncpa phase screens
+ncpa = False
+ncpa_rms = 30  #  nm
 
 # wavelengths in m
 lamC = 1600e-9  #  some reference wvl unique value
@@ -99,13 +101,15 @@ obst = 0.37 # diameter of the central obscuration in fraction of the pupil size
 mB = 4.5 # 3.8  #  at 1600nm !!
 
 # dispersion mas/m
-disp = 0e7  #  e.g 8e7 = 80 mas / 1e-6 m
+disp = 5e6  #  e.g 8e7 ou 80e6 = 80 mas / 1e-6 m
+
+# psf to fpm decentering in lamC/D then radians
+fpm_dec = 0.25
+fpm_dec *= lamC/D
 
 # 2D array pupil slope for tilt
-frq = (np.transpose(
-    np.broadcast_to(np.arange(-nPup//2,nPup//2,1),(nPup,nPup)) + 0.5))
-
-# 2 sizes of spaxels 10 mas and 100 mas
+sf_x = np.broadcast_to(np.arange(-nPup//2,nPup//2,1),(nPup,nPup)) + 0.5
+sf_y = np.transpose(sf_x.copy())
 
 # datetime of script execution
 donow = datetime.now().strftime("%Y%m%d%H%M%S")  #  asp, datetime of now
@@ -427,8 +431,11 @@ for dir_nb in range(len(opds_dir)):
             
             # Field in the entrance pupil plane A
             Fld_A0 = (Pupil 
-                      * np.exp(1j*2*np.pi * (OPD_arr[iOPD]+ncpa_d[iOPD])/(lam))
-                      * np.exp(1j*2*np.pi * tilt * D * frq / (nPup * lam))
+                      * np.exp(1j*2*np.pi *
+                               (OPD_arr[iOPD] +
+                                ncpa_d[iOPD] +
+                                tilt * D * sf_y / nPup +
+                                fpm_dec * D * sf_x / nPup)/lam)
                       * LyotStop2d)
             
             # Field in the image plane D (no coronagraph)
@@ -459,8 +466,11 @@ for dir_nb in range(len(opds_dir)):
         for iOPD in range(nOPD):
             # pupil plane A
             Fld_A0 = (Pupil 
-                      * np.exp(1j*2*np.pi * (OPD_arr[iOPD]+ncpa_d[iOPD])/(lam))
-                      * np.exp(1j*2*np.pi * tilt * D * frq / (nPup * lam)))
+                      * np.exp(1j*2*np.pi * 
+                               (OPD_arr[iOPD] +
+                                ncpa_d[iOPD] +
+                                tilt * D * sf_y / nPup +
+                                fpm_dec * D * sf_x / nPup)/lam))
             
             # focal plane B 
             Fld_B = mask2d*sft.sft(Fld_A0, nFPM, mB*lamC/lam)
@@ -565,6 +575,7 @@ for dir_nb in range(len(opds_dir)):
         fits.setval(fpath,'OPDS',value=opd_set,comment='opd set creation date')
         fits.setval(fpath,'DISP',value=disp,comment='achr. disp. in mas/m bw')
         fits.setval(fpath,'NCPA',value=ncpa_rms,comment='ncpa rms in meters')
+        fits.setval(fpath,'FDEC',value=fpm_dec,comment='psf to fpm offset in radians')
 
 
     #%%
