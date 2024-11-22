@@ -79,6 +79,28 @@ elif wvl == 'Y':
     lam_max = 1070e-9  #  max value in range  
     lam_itv = 4  #  nb of intervals in range --> nb+1 wvl's !  
 
+elif wvl == 'JH': 
+
+    # wavelengths in m
+    lamC = 1600e-9  #  some wvl unique value
+    lam_min = 980e-9  #  min value in range
+    lam_max = 1770e-9  #  max value in range  
+    lam_itv = 14  #  
+    lam_lst = np.array([1.16e-06, 1.20e-06, 1.24e-06, 1.28e-06, 1.32e-06,
+                        1.44e-06, 1.52e-06, 1.60e-06, 1.68e-06, 1.76e-06])
+    lam_stp = np.median(np.diff(lam_lst))
+    
+elif wvl == 'HK': 
+
+    # wavelengths in m
+    lamC = 1600e-9  #  some wvl unique value
+    lam_min = 980e-9  #  min value in range
+    lam_max = 2460e-9  #  max value in range  
+    lam_itv = 20  #
+    lam_lst = np.array([1.44e-06, 1.52e-06, 1.60e-06, 1.68e-06, 1.76e-06,
+                        1.96e-06, 2.08e-06, 2.20e-06, 2.32e-06, 2.44e-06])
+    lam_stp = np.median(np.diff(lam_lst))
+    
 elif wvl == 'YJH': 
 
     # wavelengths in m
@@ -109,6 +131,8 @@ if len(wvl)==1:
     lam_stp = np.floor(np.ceil((lam_max-lam_min)*1e9/lam_itv)/10)*1e-8
     lam_lst = (np.arange(lam_min,lam_max,lam_stp) if lam_max != lam_min
                else [lamC])
+
+lamC = 1600e-9 # fix lam_c for all band(s)
 
 nL = len(lam_lst)
 
