@@ -5,7 +5,6 @@ Created on Thu Apr 25 15:35:14 2024
 @author: mndiaye
 """
 
-
 import numpy as np
 
 
@@ -13,6 +12,7 @@ import numpy as np
 """
 ### Functions
 """
+
 def sft(A2, NB, m, inv=False, CtrBtwnPix=False):
     """
     Slow Fourier Transform, using the theory described in [1]_. 
@@ -65,16 +65,18 @@ def sft(A2, NB, m, inv=False, CtrBtwnPix=False):
     
     X[0,:] = (1./NA)*(np.arange(NA)-NA/2.+val)
     U[0,:] =  (m/NB)*(np.arange(NB)-NB/2.+val)
-       
-    XU = 2.*np.pi* X.T.dot(U)
-    A3 = sign*1j*np.sin(XU)  +np.cos(XU)
+        
+    XU = np.float64( 2. * np.pi ) * X.T.dot(U)
+    A3 = sign * 1j * np.sin(XU) + np.cos(XU)
     A1 = A3.T
-    
-    B  = A1.dot(A2.dot(A3))
+
+    B  = A1.dot(A2.astype(np.complex128).dot(A3))
 
     return coeff*B
 
+
 #%%
+
 def isft(A2, NB, m, CtrBtwnPix=False):
     """
     Explicit inverse Slow Fourier Transform, using the theory described in [1].
