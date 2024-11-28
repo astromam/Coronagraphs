@@ -5,10 +5,13 @@ Created on Fri Mar 31 13:26:29 2023
 
 @authors: mndiaye, asimonnin, asp
 """
-# for multiple wavelengths compute normalized psf profiles intensity for coro 
-# and no coro, with or without residual opds/windshake including 
-# tilt/atmospheric dispersion
-# normalized to the peak intensity of the no coro, no opds pupil with lyot stop
+
+"""
+for multiple wavelengths compute normalized psf profiles intensity for coro 
+and no coro, with or without residual opds/windshake, including tilt, 
+atmospheric dispersion or ncpa, normalized to the peak intensity of the 
+aberration free not coronagraphic (no fpm) pupil with lyot stop
+"""
 
 #%%
 """
@@ -16,45 +19,39 @@ Created on Fri Mar 31 13:26:29 2023
 """
 
 import numpy as np
-# pythonpath to update possibly...
-import slow_fourier_transform as sft
-from uniform_disk import uniform_disk
-from psf_profile import profile
+from astropy.io import fits
 
 import matplotlib.pyplot as plt
-
-from astropy.io import fits
 
 import os
 import time
 from pathlib import Path
 from datetime import datetime  #  asp for datetime of now
 
+import slow_fourier_transform as sft
+from uniform_disk import uniform_disk
+from psf_profile import profile
+
 #fontsize to 15 for all plots
 plt.rcParams.update({'font.size': 14})  #♦  mdiaye 15!
+
+# datetime of script execution
+donow = datetime.now().strftime("%Y%m%d%H%M%S")  #  datetime of now
+print('date of script execution : ', donow)
 
 
 #%%
 """
 ### Parameters
 """
-# Pupil size
-nPup = 400  #  even/pair!
+# Pupil size in pixels
+nPup = 400  #  even
 
 # Sampling of the coronagraph focal plane mask
 nFPM = 100
 
-# field of view in mas
-f_o_v = 58.393
-
 # Image size
 nImg = 400  #*1.6 #  #  even/pair!
-
-# angular separation of interest in mas
-as_oi = 25.
-
-# # of OPD phase screens
-nOPD = 2000
 
 # wavelengths in m
 lamC = 1600e-9  #  some reference wvl unique value
@@ -76,6 +73,12 @@ mas2rad = 1/rad2mas
 
 # plate scale in mas per pixel
 pscale = 0.3
+
+# angular separation of interest in mas
+as_oi = 25.
+
+# # of OPD phase screens / beware, check for equal ncpa number of screens!
+nOPD = 2000
 
 lamCD2mas = (lamC/D)*mas2rad
 
@@ -100,20 +103,29 @@ mB = 4.5
 disp = 0.  #  e.g 8e7 ou 80e6 = 80 mas / 1e-6 m
 
 # psf to fpm decentering in lamC/D then radians
-fpm_dec = 0.25
+fpm_dec = 0.
 fpm_dec *= lamC/D
 
 # ncpa phase screens
 ncpa_rms = 0  #  nm
 
+# lyot stop angular position error in radians
+ls_ape = 0
+
 # 2D arrays for pupil slope with tilt/dispersion
 sf_x = np.broadcast_to(np.arange(-nPup//2,nPup//2,1),(nPup,nPup)) + 0.5
 sf_y = np.transpose(sf_x.copy())
 
-# datetime of script execution
-donow = datetime.now().strftime("%Y%m%d%H%M%S")  #  asp, datetime of now
-print('date of now : ', donow)
 
+# field of view
+# in mas
+fov_mas = nImg * pscale
+# in radians
+fov_rdn = fov_mas * rad2mas
+# in multiple of reference lambda (lamC) over D
+mD_ref = fov_rdn / ( lamC / D )
+
+# mD_ref = nfov / 2.
 
 #%%
 """
@@ -155,7 +167,7 @@ fdir_plt = fdir_plt / donow
 
 #%%
 """
-data cubes for all psfs and profiles
+data cubes for all psfs and intensity profiles
 """
 
 Int_DD0 = np.zeros([nL, nImg, nImg])
@@ -167,20 +179,24 @@ Int_D_prf_avg = np.zeros([nL, 2, nImg//2])
 
 
 #%%
+'''
+pupils
+'''
 
 # Filename and path for the ELT pupil  //  'Tel-Pupil.fits' <-- OLD
 fname_elt = 'ELT_pupil_400.fits' # New pupil with new spider
 fpath_elt = fdir_pupil / fname_elt
 
-"""
-### Read file
-"""
 # Read ELT pupil 
 Pupil = fits.getdata(fpath_elt,)
 
 # Lyot stop
 LyotStop2d = Pupil*(
     uniform_disk(nPup, diam*nPup/2)-uniform_disk(nPup, obst*nPup/2))
+
+if ls_ape != 0:
+    
+    print(ls_ape)
 
 
 #%%
@@ -254,18 +270,26 @@ opds_dir=('OPDs_PASSATA/OPD/WS/JQM/20240509_182041/20240509_182041.0',
           'OPDs_PASSATA/OPD/WS/JQM/20240509_203033/20240509_203033.0',
           'OPDs_PASSATA/OPD/WS/JQM/20240509_204907/20240509_204907.0',
           'OPDs_PASSATA/OPD/WS/JQM/20240509_210742/20240509_210742.0')
+
+
+#%%
+'''
+opd set for test
+'''
+
+opds_dir=('OPDs_PASSATA/OPD/WS/JQM/20240509_201200/20240509_201200.0',)
+
+
+#%%
+
 for dir_nb in range(len(opds_dir)):
 
     new_spider_flare = fdir_dat / opds_dir[dir_nb]
     fdir_opd   = new_spider_flare
 
-
-#%%%
-    
     opd_set = os.path.basename(fdir_opd).split('.')[0]
-    print(opd_set)
+    print('opd set: ', opd_set)
     
-    # opd_set='toto'
     os.makedirs(fdir_res / opd_set, exist_ok=True)
     os.makedirs(fdir_plt / opd_set, exist_ok=True)
     
@@ -289,20 +313,17 @@ for dir_nb in range(len(opds_dir)):
     ### Read OPD files
     """
     
-    t0 = time.time()
     # Read OPD maps for the nOPD files
     OPD_arr = np.asarray([fits.getdata(fpath_opd[i]) for i in range(nOPD)])
-    t1 = time.time()
-    print(f'OPD reading file time: {t1-t0:.3f}s')
-    
-    OPD_arr = OPD_arr*1e-9 # convert from nm `to m if new OPD with new pupil
+    # convert from nm `to m if new OPD with new pupil
+    OPD_arr = OPD_arr*1e-9 
     ncpa_d = np.zeros((nOPD,nImg,nImg))
     
     if ncpa_rms!=0:
         
         fnm = ('ncpa_pupil_new_'+str(ncpa_rms)+'nm.fits')
         ncpa_d = fits.getdata(fdir_dat/fnm)
-        print(type(ncpa_d))
+        print('enough ncpa frames?', nOPD<=ncpa_d.shape[3])
     
 
     #%%
@@ -317,8 +338,7 @@ for dir_nb in range(len(opds_dir)):
         # conversion lam/D to mas
         lamD2mas = (lam/D) * mas2rad
         
-        # FoV in lam/D in the final image plane D
-        mD = f_o_v * ( nImg / ( lam * 1e9 ) )
+        mD = mD_ref * lamC / lam  #  f_o_v * ( nImg / ( lam * 1e9 ) )
         
         print('lambda (nm):' ,np.round(lam*1e9,0), '. Field of view (lam/D):',
               np.round(mD,3))
@@ -433,9 +453,9 @@ for dir_nb in range(len(opds_dir)):
             # Intensity
             Int_D[i,:] += np.abs(Fld_D)**2    
     
-        t1 = time.time()       
+        t2 = time.time()       
         
-        print(f'Coro image computation time: {t1-t0:.3f}s')  
+        print(f'Coro image computation time: {t2-t1:.3f}s')  
         
         # Normalized intensity
         Int_D[i,:] /= nOPD
@@ -505,20 +525,25 @@ for dir_nb in range(len(opds_dir)):
         fits.setval(fpath,'NFPM',value=nFPM,comment='FP coro. sampling')
         fits.setval(fpath,'NIMG',value=nImg,comment='image size')
         fits.setval(fpath,'NOPD',value=nOPD,comment='number of OPD files')
-        fits.setval(fpath,'FOVS',value=f_o_v,comment='field of view in as')
+        fits.setval(fpath,'FOVS',value=nImg*pscale,comment='fov in mas')
         fits.setval(fpath,'LMIN',value=lam_min,comment='wavelength in meters')
         fits.setval(fpath,'LITV',value=lam_itv,comment='# of wvl intervals')
         fits.setval(fpath,'LSTP',value=lam_stp,comment='wvl step in meters')
         fits.setval(fpath,'LMBD',value=lamC,comment='reference wvl in meters')
         fits.setval(fpath,'DIAM',value=D,comment='pupil dimater in meters')
         fits.setval(fpath,'PSCL',value=pscale,comment='plate scale in mas')
-        fits.setval(fpath,'SFPM',value=mB,comment='FPM (lam/D), first focal plane')
+        fits.setval(fpath,'SFPM',value=mB,
+                    comment='FPM (lam/D), first focal plane')
         fits.setval(fpath,'FDIA',value=diam,comment='fractional pup. diameter')
         fits.setval(fpath,'OBST',value=obst,comment='fractional obscuration')
         fits.setval(fpath,'OPDS',value=opd_set,comment='opd set creation date')
         fits.setval(fpath,'DISP',value=disp,comment='achr. disp. in mas/m bw')
         fits.setval(fpath,'NCPA',value=ncpa_rms,comment='ncpa rms in meters')
-        fits.setval(fpath,'FDEC',value=fpm_dec,comment='psf to fpm offset in radians')
+        fits.setval(fpath,'FDEC',value=fpm_dec,
+                    comment='psf to fpm offset in radians')
+        fits.setval(fpath,'LSAE',value=ls_ape,
+                    comment='lyot stop angular position error in radians')
+
 
 
     #%%
