@@ -57,8 +57,8 @@ elif user == 'Mamadou':
 
 # 0 dispersion directory first
 #yjh 0, 5, 10, 15 mas/µ disp 
-was_donow = ('20241007141137','20241106094210',
-              '20241024101416','20241106094322')
+# was_donow = ('20241007141137','20241106094210',
+#               '20241024101416','20241106094322')
 
 # yjh 0, 10, 20, 30, 40, 50 nm rms ncpa
 # was_donow = ('20241007141137','20241105085056',
@@ -73,8 +73,8 @@ was_donow = ('20241007141137','20241106094210',
 #              '20241112100549','20241112100648')
 
 # 0 to 1, step 0.25
-# was_donow = ('20241007141137','20241112100648',
-#              '20241112175847','20241112175935','20241112180014')
+was_donow = ('20241007141137','20241112100648',
+              '20241112175847','20241112175935','20241112180014')
 
 as_oi = 25.
 
@@ -132,9 +132,11 @@ for was_d in was_donow:
     #[$\lambda$/D]')
     plt.ylabel(f'Contrast @ {int(as_oi)} mas')
     plt.yscale('log')
-    # plt.title(r'Impact of tilt, median condition (0"65)')
+
+    plt.title(r'Impact of tilt, median condition (0"65)')
     # plt.title(r'Impact of ncpa, median condition (0"65)')
-    plt.title(r'Impact of dispersion, median condition (0"65)')
+    # plt.title(r'Impact of dispersion, median condition (0"65)')
+
     plt.grid(True)
 
     if offset==0 and (disp==0 or disp==-1) and (ncpa==0 or ncpa==-1):
@@ -143,27 +145,33 @@ for was_d in was_donow:
         atmoNoCoro = data3[0,:]*data[0,:]                
             
     # plt.plot(lam_lst*1e9, data[0,:], label=str(disp))
-    # plt.plot(lam_lst*1e9, data[0,:], label=f'{offset*lamC*mas2rad/D:.1f} mas')
+    plt.plot(lam_lst*1e9, data[0,:], label=f'{offset*lamC*mas2rad/D:.1f} mas')
     # plt.plot(lam_lst*1e9, data[0,:], label=f'{ncpa} nm rms')
-    plt.plot(lam_lst*1e9, data[0,:], label=f'{disp} mas/µ')
+    # plt.plot(lam_lst*1e9, data[0,:], label=f'{disp} mas/µm')
 
     # plt.plot(lam_lst*1e9, data[0,:], label=f'{offset*lamC*mas2rad/D:.1f} mas')
     # plt.plot(lam_lst*1e9, data[0,:], label=f'{offset*lamC*mas2rad/D:.1f} mas')
     # plt.fill_between(lam_lst*1e9, data[0,:] - data2[0,:], data[0,:] + data2[0,:], alpha=0.2)
 
+
 bfiles = os.listdir((fdir_res2/'perfect'))
 bfile = bfiles[np.argmax((lambda x:[len(i) for i in x])(bfiles))]
-bdata = fits.getdata(fdir_res2/'perfect'/bfile)   
-plt.plot(lam_lst*1e9, bdata[:,pos_as_oi], color='black', label='no atmo., coro.')
+bdata = fits.getdata(fdir_res2/'perfect'/bfile)
+   
+plt.plot(lam_lst*1e9, bdata[:,pos_as_oi], color='black', ls=':')  #  , label='no atmo., coro.')
 # plt.plot(lam_lst*1e9, atmoNoCoro,color='black' , label='atmo., no coro.', ls='--')
 
 plt.ylim(3e-5,3e-1)
 plt.legend(fontsize='small', loc=2, ncol=1)
 
 plt.plot(lam_lst*1e9, atmoNoCoro,color='black' , ls='--')
+
 #♠, label='atmo., no coro.')
 bbox = dict(boxstyle='square', fc='w', alpha=0.125)
 plt.text(2000,1e-1,'--- atmo., no coro.', bbox=bbox)
+plt.text(2000,1e-4,'... no atmo., coro.', bbox=bbox)
+
+
 # fname_contrast_25mas = ('all_windshake_data_contrast_25mas_asRatioOf_lbd2D_ringAvgdPrfs_vs_wvl_' +
 #                     os.path.basename(file_cro[0]).split('.')[0])
 #if actual lambda/D
@@ -173,8 +181,11 @@ plt.text(2000,1e-1,'--- atmo., no coro.', bbox=bbox)
 # plt.savefig(fpath_contrast_25mas_svg)
 # plt.savefig(fpath_contrast_25mas_pdf)
 
-plt.savefig('C:/Users/asp/Desktop/disp.svg')
-plt.savefig('C:/Users/asp/Desktop/disp.pdf')
+plt.savefig('C:/Users/asp/Desktop/tilt.svg')
+plt.savefig('C:/Users/asp/Desktop/tilt.pdf')
+plt.savefig('C:/Users/asp/Desktop/tilt.png')
+
+
 plt.show()
     
     
