@@ -28,7 +28,7 @@ plt.rcParams.update({'font.size': 14})  #♦  mdiaye 15!
 rad2mas = np.pi/(180.*3600*1000)
 mas2rad = 1/rad2mas
 
-as_oi = 25.
+as_oi = 45.
 as_str = str(int(as_oi))
 
 #%%
@@ -153,6 +153,7 @@ p_dir=( 'OPDs_PASSATA/OPD/WS/JQM/20240509_182041/20240509_182041.0',
         'OPDs_PASSATA/OPD/WS/JQM/20240509_204907/20240509_204907.0',
         'OPDs_PASSATA/OPD/WS/JQM/20240509_210742/20240509_210742.0')
 
+p_dir=('OPDs_PASSATA/OPD/WS/JQM/20240509_182041/20240509_123456.0',)
 
 #%%
 
@@ -314,7 +315,7 @@ plt.xlabel(r'$\lambda$ (nm)')#[$\lambda$/D]')
 plt.ylabel(f'Contrast @ {int(as_oi)} mas')
 plt.yscale('log')
 tilt = np.round(fpm_dec*mas2rad,1)
-plt.title(f'tilt {tilt} mas, ncpa {int(ncpa_rms)} nm rms, disp. {int(disp*1e-6)} mas/µ, \n median condition (0"65)')
+plt.title(f'tilt {tilt} mas, ncpa {int(ncpa_rms)} nm rms, disp. {int(disp*1e-6)} mas/µm')
 plt.grid(True)
 for i in range(5):
     
@@ -329,7 +330,7 @@ for i in range(5):
         c_min = np.min(cont_min[:,idx], axis=1)
         c_max = np.max(cont_max[:,idx], axis=1)
 
-        plt.plot(lam_lst*1e9, c_avg, label=jqs[i]+': '+seings[jqs[i]])
+        plt.plot(lam_lst*1e9, c_avg, label=seings[jqs[i]] + ' seeing (' + jqs[i] + ')')
         plt.fill_between(lam_lst*1e9, c_min, c_max, alpha=0.2)
         
         if i==2:
@@ -345,24 +346,30 @@ for i in range(5):
                         overwrite=True)
            
 
-plt.plot(lam_lst*1e9, contrast_nncr, color='black', label='coro, no atmo.')
+plt.plot(lam_lst*1e9, contrast_nncr, color='black', ls=':')
 plt.plot(lam_lst*1e9, np.mean(gain[:,idxm]*contrast[:,idxm],axis=1),
           ls='--', color='black')
 # , label='median atm., no coro.')
 bbox = dict(boxstyle='square', fc='w', alpha=0.75)
 plt.text(1980,9e-2,'---- atmo., no coro.', bbox=bbox)
+plt.text(2000,5e-5,'... no atmo., coro.', bbox=bbox)
 
 plt.ylim(2e-5,2e-1)
 plt.legend(fontsize='small', loc=2)
 
-fname_contrast_25mas = (
-    f'all_windshake_data_contrast_{int(as_oi)}mas_asRatioOf_lbd2D_ringAvgdPrfs_vs_wvl_' +
-                    os.path.basename(file_cro[0]).split('.')[0])
-# fname_contrast_25mas = ('all_windshake_data_contrast_' + ptrn +'_'+as_str+'mas_'+ was_donow)
+# fname_contrast_25mas = (
+#     f'all_windshake_data_contrast_{int(as_oi)}mas_asRatioOf_lbd2D_ringAvgdPrfs_vs_wvl_' +
+#                     os.path.basename(file_cro[0]).split('.')[0])
+
+fname_contrast_25mas = ('median_condition_data_contrast_' + as_str +'mas_'+ was_donow)
+
 fpath_contrast_25mas_svg = fdir_plt / (fname_contrast_25mas + '.svg')
 fpath_contrast_25mas_pdf = fdir_plt / (fname_contrast_25mas + '.pdf')
+fpath_contrast_25mas_png = fdir_plt / (fname_contrast_25mas + '.png')
+
 plt.savefig(fpath_contrast_25mas_svg)
 plt.savefig(fpath_contrast_25mas_pdf)
+plt.savefig(fpath_contrast_25mas_png)
 
 
 plt.show()
