@@ -66,7 +66,7 @@ if True:
     CtrBtwnPix  = True
     CtrBtwnPix2 = True
     Pupil2dSym  = False # set it True only for optimization
-    LSRobustness = False
+    LSRobustness = True
 
     test_shift = True
     shift_x0 = 0
@@ -82,7 +82,7 @@ if True:
     
     #nlam
     bw   = 0.2
-    nlam = 1
+    nlam = 3
 
     # Lyot stop with dead actuators
     do_dead_act = True
@@ -102,7 +102,7 @@ if True:
     
     LSRobustness_coeff_qua2 = 0.5
     
-    LSRobustness_coeff_sev = 18.
+    LSRobustness_coeff_sev = 20.
 
     str_LSRcoeff_pre = ''
     str_LSRcoeff_bis = ''

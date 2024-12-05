@@ -83,23 +83,22 @@ CtrBtwnPix  = True
 CtrBtwnPix2 = True
 Pupil2dSym  = True
 ImPart      = True 
-LSRobustness = False # (new robustness approach using derivative of the field with respect to Lyot stop displacement)
+LSRobustness = True # (new robustness approach using derivative of the field with respect to Lyot stop displacement)
 # kwd_qrt = True
 
 
 #nlam
 bw   = 0.2
 nlam = 3
-
-shift_tot = np.sqrt(2.) #np.sqrt(shift_x**2+shift_y**2)
+shift_tot = 1. # np.sqrt(2.) #np.sqrt(shift_x**2+shift_y**2)
 alpha = 0 # np.pi/3 # np.arctan2(shift_x, shift_y)
 shift_y = shift_tot*np.cos(alpha)
 shift_x = shift_tot*np.sin(alpha)
 
-nalpha = 1
-alpha_t = np.pi/4 + (2.*np.pi/nalpha)*np.arange(nalpha)
+nalpha = 4
+alpha_t = (2.*np.pi/nalpha)*np.arange(nalpha)
 
-LSRobustness_coeff_sev = 19.
+LSRobustness_coeff_sev = 20.
 
 str_LSRcoeff_sev = ''
 if LSRobustness:
@@ -668,8 +667,22 @@ def compute_corono_field_2d_LSasym_LSrobustness_bis(Apod2d_qrt, Pupil2d_qrt, Lyo
                     
         field_Dtmp = np.zeros((corono.nlam,corono.nImg2d,corono.nImg2d), dtype=dtype0)
         field_Dtmp_shift_ana = np.zeros((corono.nlam,corono.nImg2d,corono.nImg2d), dtype=dtype0)
-        xidr = np.zeros((corono.nlam,2*corono.nPup,2*corono.nPup), dtype='float64')
-   
+        xidr = np.zeros((2*corono.nPup,2*corono.nPup), dtype='float64')
+
+        # dot product term insde the complex exponential to represent the shift in spatial domain
+        xidr = (2.*np.pi)*(yyp*(shift_tot*np.cos(alpha)/nDim0) + xxp*(shift_tot*np.sin(alpha)/nDim0))
+
+        # direct Fourier transform of the Lyot stop 
+        FT_LyotStop2d = coro.utils.sft(LyotStop2d, 2*nDim0, nDim0, 
+                  CtrBtwnPix=True)
+        
+        # FT of the Lyot stop multiplied by the exponential term to represent the shift in spatial domain
+        weighted_FT_LyotStop2d = FT_LyotStop2d*np.exp(-1j*xidr)
+        
+        # shifted Lyot stop using FTs
+        LyotStop2d_shift_ana = coro.utils.isft(weighted_FT_LyotStop2d, nDim0, nDim0, 
+                  CtrBtwnPix=True)
+
     
         for i in range(corono.nlam):                       
             field_B_qrt       = mask2d_qrt*sft_qrt(field_A_qrt, corono.nFPM, corono.mB_t[i], 
@@ -685,21 +698,7 @@ def compute_corono_field_2d_LSasym_LSrobustness_bis(Apod2d_qrt, Pupil2d_qrt, Lyo
             field_L       = field_C*LyotStop2d
             field_Dtmp[i] = coro.utils.sft(field_L, corono.nImg2d, corono.mD_t[i], 
                       CtrBtwnPix=True)
-
-            # dot product term insde the complex exponential to represent the shift in spatial domain
-            xidr[i] = (2.*np.pi/corono.lam_t[i])*(yyp*(shift_tot*np.cos(alpha)/nDim0) + xxp*(shift_tot*np.sin(alpha)/nDim0))
-
-            # direct Fourier transform of the Lyot stop 
-            FT_LyotStop2d = coro.utils.sft(LyotStop2d, 2*nDim0, nDim0, 
-                      CtrBtwnPix=True)
-            
-            # FT of the Lyot stop multiplied by the exponential term to represent the shift in spatial domain
-            weighted_FT_LyotStop2d = FT_LyotStop2d*np.exp(-1j*xidr[i])
-            
-            # shifted Lyot stop using FTs
-            LyotStop2d_shift_ana = coro.utils.isft(weighted_FT_LyotStop2d, nDim0, nDim0, 
-                      CtrBtwnPix=True)
-            
+       
             # electric field in the re-imaged pupil plane C after the shifted Lyot stop
             field_L_shift_ana = field_C*LyotStop2d_shift_ana #
             
