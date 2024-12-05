@@ -89,7 +89,7 @@ if True:
     
     #nlam
     bw   = 0.2
-    nlam = 1
+    nlam = 3
 
     # Lyot stop with dead actuators
     do_dead_act = True
@@ -124,7 +124,7 @@ if True:
     
     do_fits = False
 
-nlambis = 1    
+nlambis = 3    
 Fmax2dbis = 50      #50
 nImg2dbis = 500    #500
 
@@ -360,16 +360,7 @@ else:
 
 dtype0 = 'complex128'
 
-#%%
-xy = (corono0.nPup/(2*corono0.nPup))*(np.arange(2*corono0.nPup)-2*corono0.nPup//2+1/2)
-xx, yy  = np.meshgrid(xy, xy)
 
-            
-field_Dtmp = np.zeros((corono0.nlam,corono0.nImg2d,corono0.nImg2d), dtype=dtype0)
-field_Dtmp_shift_num = np.zeros((corono0.nlam,corono0.nImg2d,corono0.nImg2d), dtype=dtype0)
-field_Dtmp_shift_ana = np.zeros((corono0.nlam,corono0.nImg2d,corono0.nImg2d), dtype=dtype0)
-
-xidr = np.zeros((corono0.nlam,2*corono0.nPup,2*corono0.nPup), dtype='float64')
 
 #%%
 val = 1/2
@@ -379,12 +370,47 @@ sign = 1.
 alpha = np.arctan2(shift_x, shift_y)
 
 #%%
+"""
+### Electric field in the entrance pupil plane A
+"""
 #field_A    = Pupil2d*1.
 
-
 field_A = coro.utils.uniform_disk(nPup, nPup0//2, CtrBtwnPix=True)
+
+#%%
+"""
+### Lyot stop shift
+"""
 LyotStop2d = coro.utils.uniform_disk(nPup, nPupLS//2, CtrBtwnPix=True)
 LyotStop2d_shift_num = np.roll(np.roll(LyotStop2d, shift_y, axis=0), shift_x, axis=1)
+
+# computation of the analytical Lyot Stop shift
+xyp = (corono0.nPup/(2*corono0.nPup))*(np.arange(2*corono0.nPup)-2*corono0.nPup//2+1/2)
+xxp, yyp  = np.meshgrid(xyp, xyp)
+
+xidr = np.zeros((2*corono0.nPup,2*corono0.nPup), dtype='float64')
+
+# dot product term for the complex exponential to represent the shift in spatial domain
+xidr = (2.*np.pi)*(yyp*(shift_tot*np.cos(alpha)/nPup) + xxp*(shift_tot*np.sin(alpha)/nPup))
+
+# direct Fourier transform of the Lyot stop
+FT_LyotStop2d = coro.utils.sft(LyotStop2d, 2*corono0.nPup, corono0.nPup, 
+          CtrBtwnPix=True)
+
+# FT of the Lyot stop multiplied by the exponential term to represent the shift in spatial domain
+weighted_FT_LyotStop2d = FT_LyotStop2d*np.exp(-1j*xidr)
+
+# shifted Lyot stop using FTs
+LyotStop2d_shift_ana = coro.utils.isft(weighted_FT_LyotStop2d, corono0.nPup, corono0.nPup, 
+          CtrBtwnPix=True)
+
+#%%
+"""
+### Electric field in the final image plane D with or without Lyot stop shift
+"""        
+field_Dtmp = np.zeros((corono0.nlam,corono0.nImg2d,corono0.nImg2d), dtype=dtype0)
+field_Dtmp_shift_num = np.zeros((corono0.nlam,corono0.nImg2d,corono0.nImg2d), dtype=dtype0)
+field_Dtmp_shift_ana = np.zeros((corono0.nlam,corono0.nImg2d,corono0.nImg2d), dtype=dtype0)
 
 
 #%%
@@ -415,21 +441,7 @@ if do_FPM:
         # electric field in the final image plane D for the shifted Lyot stop case        
         field_Dtmp_shift_num[i] = coro.utils.sft(field_L_shift_num, corono0.nImg2d, corono0.mD_t[i]*(nPup/nPupLS), 
                   CtrBtwnPix=True) #
-        
-        # dot product term insde the complex exponential to represent the shift in spatial domain
-        xidr[i] = (2.*np.pi/corono0.lam_t[i])*(yy*(shift_tot*np.cos(alpha)/nPup) + xx*(shift_tot*np.sin(alpha)/nPup))
-
-        # direct Fourier transform of the Lyot stop 
-        FT_LyotStop2d = coro.utils.sft(LyotStop2d, 2*corono0.nPup, corono0.nPup, 
-                  CtrBtwnPix=True)
-        
-        # FT of the Lyot stop multiplied by the exponential term to represent the shift in spatial domain
-        weighted_FT_LyotStop2d = FT_LyotStop2d*np.exp(-1j*xidr[i])
-        
-        # shifted Lyot stop using FTs
-        LyotStop2d_shift_ana = coro.utils.isft(weighted_FT_LyotStop2d, corono0.nPup, corono0.nPup, 
-                  CtrBtwnPix=True)
-        
+                
         # electric field in the re-imaged pupil plane C after the shifted Lyot stop
         field_L_shift_ana = field_C*LyotStop2d_shift_ana #
         
@@ -454,48 +466,44 @@ else:
         # electric field in the final image plane D for the shifted Lyot stop case 
         field_Dtmp_shift_num[i] = coro.utils.sft(field_L_shift_num, corono0.nImg2d, corono0.mD_t[i]*(nPup/nPupLS), 
                   CtrBtwnPix=True)
-        
-        # dot product term for the complex exponential to represent the shift in spatial domain
-        xidr[i] = (2.*np.pi/corono0.lam_t[i])*(yy*(shift_tot*np.cos(alpha)/nPup) + xx*(shift_tot*np.sin(alpha)/nPup))
-
-        # direct Fourier transform of the Lyot stop
-        FT_LyotStop2d = coro.utils.sft(LyotStop2d, 2*corono0.nPup, corono0.nPup, 
-                  CtrBtwnPix=True)
-        
-        # FT of the Lyot stop multiplied by the exponential term to represent the shift in spatial domain
-        weighted_FT_LyotStop2d = FT_LyotStop2d*np.exp(-1j*xidr[i])
-        
-        # shifted Lyot stop using FTs
-        LyotStop2d_shift_ana = coro.utils.isft(weighted_FT_LyotStop2d, corono0.nPup, corono0.nPup, 
-                  CtrBtwnPix=True)
-        
+               
         # electric field in the re-imaged pupil plane C after the shifted Lyot stop
         field_L_shift_ana = field_A*LyotStop2d_shift_ana
         
         # electric field in the final image plane D after the shifted Lyot stop
         field_Dtmp_shift_ana[i] = coro.utils.sft(field_L_shift_ana, corono0.nImg2d, corono0.mD_t[i]*(nPup/nPupLS), 
                   CtrBtwnPix=True) 
-        
-        
+               
 
 #%%
 var0 = [shift_y, shift_x]
 
+
 if do_FPM: 
-    def fct_field_Dtmp_shift_dif(var=var0):
+    def fct_field_Dtmp_mono_shift_dif(var=var0):
         
         field_Dtmp_shift_dif = np.zeros((corono0.nImg2d, corono0.nImg2d), dtype=dtype0)
-        LyotStop2d_shift_v = np.roll(np.roll(LyotStop2d, int(var[0]), axis=0), int(var[1]), axis=1)
-                                  
+        
         field_B_v       = corono0.mask2d*coro.utils.sft(field_A, corono0.nFPM, corono0.mB_t[0]*(nPup/nPup0), 
                                         CtrBtwnPix=True)
         field_C_v       = field_A - coro.utils.isft(field_B_v, corono0.nPup, corono0.mB_t[0]*(nPup/nPup0), 
                                       CtrBtwnPix=True)
+
+        # dot product term insde the complex exponential to represent the shift in spatial domain
+        xidr0 = (2.*np.pi)*(yyp*(var[0]/nPup) + xxp*(var[1]/nPup))
+
+        # direct Fourier transform of the Lyot stop 
+        FT_LyotStop2d_v = coro.utils.sft(LyotStop2d, 2*corono0.nPup, corono0.nPup, 
+                  CtrBtwnPix=True)
         
-        # field_C_v       = coro.utils.isft(field_B_v, corono0.nPup, corono0.mB_t[0]*(nPup/nPup0), 
-        #                               CtrBtwnPix=True)
+        # FT of the Lyot stop multiplied by the exponential term to represent the shift in spatial domain
+        weighted_FT_LyotStop2d_v = FT_LyotStop2d_v*np.exp(-1j*xidr0)
         
-        field_L_shift_v = field_C_v*LyotStop2d_shift_v
+        # shifted Lyot stop using FTs
+        LyotStop2d_shift_ana_v = coro.utils.isft(weighted_FT_LyotStop2d_v, corono0.nPup, corono0.nPup, 
+                  CtrBtwnPix=True)
+                        
+        field_L_shift_v = field_C_v*LyotStop2d_shift_ana_v
         
         field_Dtmp_shift_dif = coro.utils.sft(field_L_shift_v, corono0.nImg2d, corono0.mD_t[0]*(nPup/nPupLS), 
                   CtrBtwnPix=True)
@@ -503,12 +511,25 @@ if do_FPM:
         return np.abs(field_Dtmp_shift_dif)
     
 else:
-    def fct_field_Dtmp_shift_dif(var=var0):
+    def fct_field_Dtmp_mono_shift_dif(var=var0):
         
         field_Dtmp_shift_dif = np.zeros((corono0.nImg2d, corono0.nImg2d), dtype=dtype0)
-        LyotStop2d_shift_v = np.roll(np.roll(LyotStop2d, int(var[0]), axis=0), int(var[1]), axis=1)
-                                      
-        field_L_shift_v = field_A*LyotStop2d_shift_v
+
+        # dot product term for the complex exponential to represent the shift in spatial domain
+        xidr0 = (2.*np.pi)*(yyp*(var[0]/nPup) + xxp*(var[1]/nPup))
+
+        # direct Fourier transform of the Lyot stop
+        FT_LyotStop2d_v = coro.utils.sft(LyotStop2d, 2*corono0.nPup, corono0.nPup, 
+                  CtrBtwnPix=True)
+        
+        # FT of the Lyot stop multiplied by the exponential term to represent the shift in spatial domain
+        weighted_FT_LyotStop2d_v = FT_LyotStop2d_v*np.exp(-1j*xidr0)
+        
+        # shifted Lyot stop using FTs
+        LyotStop2d_shift_ana_v = coro.utils.isft(weighted_FT_LyotStop2d_v, corono0.nPup, corono0.nPup, 
+                  CtrBtwnPix=True)
+
+        field_L_shift_v = field_A*LyotStop2d_shift_ana_v
         
         field_Dtmp_shift_dif = coro.utils.sft(field_L_shift_v, corono0.nImg2d, corono0.mD_t[0]*(nPup/nPupLS), 
                   CtrBtwnPix=True)
@@ -516,62 +537,66 @@ else:
         return np.abs(field_Dtmp_shift_dif)
 
 
-
+#%%
+"""
+### Selected wavelength for the plots
+"""
+ilam0 = 2 # corono0.nlam//2
 
 #%%
 plt.figure(10, (9, 9))
 plt.clf()
 plt.subplot(331)
-plt.imshow(np.log10(np.abs(field_Dtmp[corono0.nlam//2])**2), cmap='inferno', vmin=vmin0, vmax=vmax0)
+plt.imshow(np.log10(np.abs(field_Dtmp[ilam0])**2), cmap='inferno', vmin=vmin0, vmax=vmax0)
 plt.title(r'$|\Psi_D|^2$')
 plt.subplot(332)
-plt.imshow(np.log10(np.abs(field_Dtmp_shift_num[corono0.nlam//2])**2), cmap='inferno', vmin=vmin0, vmax=vmax0)
+plt.imshow(np.log10(np.abs(field_Dtmp_shift_num[ilam0])**2), cmap='inferno', vmin=vmin0, vmax=vmax0)
 plt.title(r'$|\Psi_{Dnum}^{dr}|^2$')
 plt.subplot(333)
-plt.imshow(np.log10(np.abs(field_Dtmp[corono0.nlam//2]-field_Dtmp_shift_num[corono0.nlam//2])**2), cmap='inferno', vmin=vmin0, vmax=vmax0)
+plt.imshow(np.log10(np.abs(field_Dtmp[ilam0]-field_Dtmp_shift_num[ilam0])**2), cmap='inferno', vmin=vmin0, vmax=vmax0)
 plt.title(r'$|\Psi_{Dnum}^{dr}-\Psi_D|^2$')
 plt.subplot(335)
-plt.imshow(np.log10(np.abs(field_Dtmp_shift_ana[corono0.nlam//2])**2), cmap='inferno', vmin=vmin0, vmax=vmax0)
+plt.imshow(np.log10(np.abs(field_Dtmp_shift_ana[ilam0])**2), cmap='inferno', vmin=vmin0, vmax=vmax0)
 plt.title(r'$|\Psi_{Dana}^{dr}|^2$')
 plt.subplot(336)
-plt.imshow(np.log10(np.abs(field_Dtmp[corono0.nlam//2]-field_Dtmp_shift_ana[corono0.nlam//2])**2), cmap='inferno', vmin=vmin0, vmax=vmax0)
+plt.imshow(np.log10(np.abs(field_Dtmp[ilam0]-field_Dtmp_shift_ana[ilam0])**2), cmap='inferno', vmin=vmin0, vmax=vmax0)
 plt.title(r'$|\Psi_{Dana}^{dr}-\Psi_D|^2$')
 plt.subplot(338)
-plt.imshow(np.log10(np.abs(field_Dtmp_shift_num[corono0.nlam//2]-field_Dtmp_shift_ana[corono0.nlam//2])**2), cmap='inferno', vmin=vmin0, vmax=vmax0)
+plt.imshow(np.log10(np.abs(field_Dtmp_shift_num[ilam0]-field_Dtmp_shift_ana[ilam0])**2), cmap='inferno', vmin=vmin0, vmax=vmax0)
 plt.title(r'$|\Psi_{Dnum}^{dr}-\Psi_{Dana}^{dr}|^2$')
 
 #%%
 plt.figure(11, (9, 9))
 plt.clf()
 plt.subplot(331)
-plt.imshow(np.log10(np.abs(field_Dtmp_shift_num[corono0.nlam//2])**2), cmap='inferno', vmin=vmin0, vmax=vmax0)
+plt.imshow(np.log10(np.abs(field_Dtmp_shift_num[ilam0])**2), cmap='inferno', vmin=vmin0, vmax=vmax0)
 plt.title(r'$|\Psi_{Dnum}^{dr}|^2$')
 plt.subplot(332)
-plt.imshow(np.log10(np.abs(np.real(field_Dtmp_shift_num[corono0.nlam//2]))**2), cmap='inferno', vmin=vmin0, vmax=vmax0)
+plt.imshow(np.log10(np.abs(np.real(field_Dtmp_shift_num[ilam0]))**2), cmap='inferno', vmin=vmin0, vmax=vmax0)
 plt.title(r'$|Re(\Psi_{Dnum}^{dr})|^2$')
 plt.subplot(333)
-plt.imshow(np.log10(np.abs(np.imag(field_Dtmp_shift_num[corono0.nlam//2]))**2), cmap='inferno', vmin=vmin0, vmax=vmax0)
+plt.imshow(np.log10(np.abs(np.imag(field_Dtmp_shift_num[ilam0]))**2), cmap='inferno', vmin=vmin0, vmax=vmax0)
 plt.title(r'$|Im(\Psi_{Dnum}^{dr})|^2$')
 
 plt.subplot(334)
-plt.imshow(np.log10(np.abs(field_Dtmp_shift_ana[corono0.nlam//2])**2), cmap='inferno', vmin=vmin0, vmax=vmax0)
+plt.imshow(np.log10(np.abs(field_Dtmp_shift_ana[ilam0])**2), cmap='inferno', vmin=vmin0, vmax=vmax0)
 plt.title(r'$|\Psi_{Dana}^{dr}|^2$')
 plt.subplot(335)
-plt.imshow(np.log10(np.abs(np.real(field_Dtmp_shift_ana[corono0.nlam//2]))**2), cmap='inferno', vmin=vmin0, vmax=vmax0)
+plt.imshow(np.log10(np.abs(np.real(field_Dtmp_shift_ana[ilam0]))**2), cmap='inferno', vmin=vmin0, vmax=vmax0)
 plt.title(r'$|Re(\Psi_{Dana}^{dr})|^2$')
 plt.subplot(336)
-plt.imshow(np.log10(np.abs(np.imag(field_Dtmp_shift_ana[corono0.nlam//2]))**2), cmap='inferno', vmin=vmin0, vmax=vmax0)
+plt.imshow(np.log10(np.abs(np.imag(field_Dtmp_shift_ana[ilam0]))**2), cmap='inferno', vmin=vmin0, vmax=vmax0)
 plt.title(r'$|Im(\Psi_{Dana}^{dr})|^2$')
 
 
 plt.subplot(337)
-plt.imshow(np.log10(np.abs(field_Dtmp_shift_num[corono0.nlam//2]-field_Dtmp_shift_ana[corono0.nlam//2])**2), cmap='inferno', vmin=vmin0, vmax=vmax0)
+plt.imshow(np.log10(np.abs(field_Dtmp_shift_num[ilam0]-field_Dtmp_shift_ana[ilam0])**2), cmap='inferno', vmin=vmin0, vmax=vmax0)
 plt.title(r'$|\Psi_{Dnum}^{dr}-\Psi_{Dana}^{dr}|^2$')
 plt.subplot(338)
-plt.imshow(np.log10(np.abs(np.real(field_Dtmp_shift_num[corono0.nlam//2])-np.real(field_Dtmp_shift_ana[corono0.nlam//2]))**2), cmap='inferno', vmin=vmin0, vmax=vmax0)
+plt.imshow(np.log10(np.abs(np.real(field_Dtmp_shift_num[ilam0])-np.real(field_Dtmp_shift_ana[ilam0]))**2), cmap='inferno', vmin=vmin0, vmax=vmax0)
 plt.title(r'$|Re(\Psi_{Dnum}^{dr}-\Psi_{Dana}^{dr})|^2$')
 plt.subplot(339)
-plt.imshow(np.log10(np.abs(np.imag(field_Dtmp_shift_num[corono0.nlam//2])-np.imag(field_Dtmp_shift_ana[corono0.nlam//2]))**2), cmap='inferno', vmin=vmin0, vmax=vmax0)
+plt.imshow(np.log10(np.abs(np.imag(field_Dtmp_shift_num[ilam0])-np.imag(field_Dtmp_shift_ana[ilam0]))**2), cmap='inferno', vmin=vmin0, vmax=vmax0)
 plt.title(r'$|Im(\Psi_{Dnum}^{dr}-\Psi_{Dana}^{dr})|^2$')
 
 
@@ -636,7 +661,7 @@ if do_gradient:
     var1 = [shift_y, shift_x]
     
     t0 = time.time()
-    grad1 = nd.Gradient(fct_field_Dtmp_shift_dif)([shift_y, shift_x])
+    grad1 = nd.Gradient(fct_field_Dtmp_mono_shift_dif)([shift_y, shift_x])
     t1 = time.time() 
     
     print(f'time: {t1-t0:.2f}s')
