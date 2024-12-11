@@ -20,6 +20,7 @@ aberration free not coronagraphic (no fpm) pupil with lyot stop
 
 import numpy as np
 from astropy.io import fits
+from scipy import ndimage
 
 import matplotlib.pyplot as plt
 
@@ -77,7 +78,7 @@ pscale = 0.3
 # angular separation of interest in mas
 as_oi = 25.
 
-# # of OPD phase screens / beware, check for equal ncpa number of screens!
+# # of OPD phase screens
 nOPD = 2000
 
 lamCD2mas = (lamC/D)*mas2rad
@@ -107,15 +108,14 @@ fpm_dec = 0.
 fpm_dec *= lamC/D
 
 # ncpa phase screens
-ncpa_rms = 0  #  nm
+ncpa_rms = 100e-9  # e.g if 30 nm rms then 30e-9 m
 
-# lyot stop angular position error in radians
-ls_ape = 0
+# lyot stop angular position error in degres
+ls_ape = 0.
 
 # 2D arrays for pupil slope with tilt/dispersion
 sf_x = np.broadcast_to(np.arange(-nPup//2,nPup//2,1),(nPup,nPup)) + 0.5
 sf_y = np.transpose(sf_x.copy())
-
 
 # field of view
 # in mas
@@ -125,7 +125,6 @@ fov_rdn = fov_mas * rad2mas
 # in multiple of reference lambda (lamC) over D
 mD_ref = fov_rdn / ( lamC / D )
 
-# mD_ref = nfov / 2.
 
 #%%
 """
@@ -191,12 +190,73 @@ fpath_elt = fdir_pupil / fname_elt
 Pupil = fits.getdata(fpath_elt,)
 
 # Lyot stop
-LyotStop2d = Pupil*(
-    uniform_disk(nPup, diam*nPup/2)-uniform_disk(nPup, obst*nPup/2))
+LyotStop2d = Pupil*(uniform_disk(nPup, diam*nPup/2) -
+                    uniform_disk(nPup, obst*nPup/2))
+ls2d = LyotStop2d.copy()
 
 if ls_ape != 0:
     
-    print(ls_ape)
+    pup_rot = ndimage.rotate(Pupil,ls_ape, reshape=False)
+    pup_rot = pup_rot > 0.5
+    LyotStop2d = pup_rot*(uniform_disk(nPup, diam*nPup/2) -
+                          uniform_disk(nPup, obst*nPup/2))
+    # plt.imshow(LyotStop2d-ls2d)
+    # plt.show()
+
+ncpa_d = np.zeros((nOPD,nPup,nPup))
+
+
+#%%
+'''
+ncpa
+'''
+ncpa_d = np.zeros((nOPD,nPup,nPup))
+# power for power law of ncpa's dsp
+pwr=-2.
+
+if ncpa_rms!=0:
+    
+    ncpa_d += 1.
+
+    # image dimensions, even, twice the pupil size, even too...    
+    nMap = nPup * 2  #  same as Pupil.shape[0] * 2
+    
+    # 2D frequency space
+    kx = (np.arange(nMap)-nMap//2)/(nMap/2)
+    ky = (np.arange(nMap)-nMap//2)/(nMap/2)
+    kx2, ky2 = np.meshgrid(kx, ky)
+    k = np.sqrt(kx2**2 + ky2**2)
+    
+    # DSP law in f^pwr / add epsilon to avoid zero division
+    pwr*=-1
+    epsilon = 1e-15
+    k_pwr = k**pwr
+    dsp = 1./(np.where(k_pwr!=0,k_pwr,epsilon))
+    amplitude = np.sqrt(dsp)
+
+    # uniform random phase generation then complex valued field
+    # amplitude.shape = tuple : *amplitude.shape tuple elements...
+    random = np.random.uniform(low=-0.5,high=0.5,size=amplitude.shape)
+    ncpa_field = amplitude * np.exp(1j*2.*np.pi*random)
+    ncpa = np.real(sft.isft(ncpa_field,nMap,nMap//2))
+    
+    N = nMap//2
+    hlf = N//2
+    rnd=np.random.randn(nOPD)
+    rnd /= 2.
+    xi=np.round(rnd*hlf/np.max([-np.min(rnd),np.max(rnd)])).astype(int)
+    rnd = rnd[::-1]
+    yi=np.round(rnd*hlf/np.max([-np.min(rnd),np.max(rnd)])).astype(int)
+    ncpa_d *= Pupil[None,:,:].copy()
+    iok = np.nonzero(Pupil.copy())
+    
+    for n in np.arange(nOPD):
+        
+        temp = ((ncpa[hlf+xi[n]:hlf+N+xi[n],
+                               hlf+yi[n]:hlf+N+yi[n]]).copy())
+        ncpa_d[n,:,:] *= temp
+        ncpa_d[n,:,:] -= np.mean(ncpa_d[n,:,:][iok])
+        ncpa_d[n,:,:] *= ncpa_rms/np.std(ncpa_d[n,:,:][iok])
 
 
 #%%
@@ -210,12 +270,12 @@ if ls_ape != 0:
 # New set of OPDs from PASSATA 
 
 # opds_dir=('OPDs_PASSATA/OPD/20231124_090126.0/',
-#               'OPDs_PASSATA/OPD/20231122_142204.0/',
-#               'OPDs_PASSATA/OPD/20240227_234849-007/20240227_234849.0',
-#               'OPDs_PASSATA/OPD/20240228_053027-001/20240228_053027.0',
-#               'OPDs_PASSATA/OPD/20240302_000411-003/20240302_000411.0',
-#               'OPDs_PASSATA/OPD/20240313_133532-004/20240313_133532.0',
-#               'OPDs_PASSATA/OPD/20240228_112033-002/20240228_112033.0')
+#           'OPDs_PASSATA/OPD/20231122_142204.0/',
+#           'OPDs_PASSATA/OPD/20240227_234849-007/20240227_234849.0',
+#           'OPDs_PASSATA/OPD/20240228_053027-001/20240228_053027.0',
+#           'OPDs_PASSATA/OPD/20240302_000411-003/20240302_000411.0',
+#           'OPDs_PASSATA/OPD/20240313_133532-004/20240313_133532.0',
+#           'OPDs_PASSATA/OPD/20240228_112033-002/20240228_112033.0')
 # opds_dir=('OPDs_PASSATA/OPD/WS/JQ1/20240515_163822',
 #           'OPDs_PASSATA/OPD/WS/JQ1/20240517_091216',
 #           'OPDs_PASSATA/OPD/WS/JQ1/20240517_100705',
@@ -293,9 +353,6 @@ for dir_nb in range(len(opds_dir)):
     os.makedirs(fdir_res / opd_set, exist_ok=True)
     os.makedirs(fdir_plt / opd_set, exist_ok=True)
     
-    
-    #%%
-    
     # Filename and path for the OPD maps
     flist_opd = os.listdir(fdir_opd) 
     nof = len(flist_opd)
@@ -317,13 +374,6 @@ for dir_nb in range(len(opds_dir)):
     OPD_arr = np.asarray([fits.getdata(fpath_opd[i]) for i in range(nOPD)])
     # convert from nm `to m if new OPD with new pupil
     OPD_arr = OPD_arr*1e-9 
-    ncpa_d = np.zeros((nOPD,nImg,nImg))
-    
-    if ncpa_rms!=0:
-        
-        fnm = ('ncpa_pupil_new_'+str(ncpa_rms)+'nm.fits')
-        ncpa_d = fits.getdata(fdir_dat/fnm)
-        print('enough ncpa frames?', nOPD<=ncpa_d.shape[3])
     
 
     #%%
@@ -542,7 +592,7 @@ for dir_nb in range(len(opds_dir)):
         fits.setval(fpath,'FDEC',value=fpm_dec,
                     comment='psf to fpm offset in radians')
         fits.setval(fpath,'LSAE',value=ls_ape,
-                    comment='lyot stop angular position error in radians')
+                    comment='lyot stop angular position error in degrees')
 
 
 
