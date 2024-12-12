@@ -114,7 +114,7 @@ if True:
     LSRobustness_coeff_qua = 0.3    
     LSRobustness_coeff_qua2 = 0.5
     
-    LSRobustness_coeff_sev = 22.
+    LSRobustness_coeff_sev = 23.
     
     LSRobustness_coeff_v8 = 0.1*np.sqrt(2.)/nPup
     LSRobustness_coeff_v9 = 1.0

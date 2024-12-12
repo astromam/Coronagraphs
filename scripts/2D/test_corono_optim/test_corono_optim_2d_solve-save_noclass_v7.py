@@ -99,7 +99,7 @@ nalpha = 4
 alpha_t = (2.*np.pi/nalpha)*np.arange(nalpha)
 shift_tot_t = [1, np.sqrt(2.)]
 
-LSRobustness_coeff_sev = 23.
+LSRobustness_coeff_sev = 24.
 
 str_LSRcoeff_sev = ''
 if LSRobustness:
@@ -1187,8 +1187,11 @@ for k in range(nProgRef):
         if LSRobustness:
             if ImPart:
                 for ishift_tot, shift_tot_val in enumerate(shift_tot_t):
+                    alpha_val0 = 0
+                    if ishift_tot != 0:
+                        alpha_val0 = np.pi/4.
                     for ialpha, alpha_val in enumerate(alpha_t):
-                        PsiD_LSshift_re[0:npp,0:nPsiD], PsiD_LSshift_im[0:npp,0:nPsiD] = compute_response_matrices_qrt_LSrobustness_bis(idx_pup, idx_dz, npp, ndz, shift_tot_val, alpha_val, corono0)
+                        PsiD_LSshift_re[0:npp,0:nPsiD], PsiD_LSshift_im[0:npp,0:nPsiD] = compute_response_matrices_qrt_LSrobustness_bis(idx_pup, idx_dz, npp, ndz, shift_tot_val, alpha_val+alpha_val0, corono0)
     
                         model.addConstr( (PsiD_LSshift_re + PsiD_LSshift_im).T @ Apo - Psi0 <= 0)
                         model.addConstr( (PsiD_LSshift_re - PsiD_LSshift_im).T @ Apo - Psi0 <= 0)
@@ -1196,6 +1199,9 @@ for k in range(nProgRef):
                         model.addConstr((-PsiD_LSshift_re - PsiD_LSshift_im).T @ Apo - Psi0 <= 0)    
             else:
                 for ishift_tot, shift_tot_val in enumerate(shift_tot_t):
+                    alpha_val0 = 0
+                    if ishift_tot != 0:
+                        alpha_val0 = np.pi/4.
                     for ialpha, alpha_val in enumerate(alpha_t):
                         PsiD_LSshift_re[0:npp,0:nPsiD] = compute_response_matrices_qrt_LSrobustness_bis(idx_pup, idx_dz, npp, ndz, shift_tot_val, alpha_val, corono0) 
     
