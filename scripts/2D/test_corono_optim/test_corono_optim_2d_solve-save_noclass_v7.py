@@ -152,17 +152,28 @@ File reading for Pupil and Lyot stop
 """
 #fdir = Path('../../../data/2D/pupils/').resolve()
 fdir = Path('/Users/mndiaye/scratch/data/Coronagraphs/data/2D/pupils/').resolve()
-if user == 'mndiaye' or user == 'ndiaye':
+if user == 'mndiaye':
     if syst == 'darwin':
         fdir = Path('/Users/mndiaye/scratch/data/Coronagraphs/data/2D/pupils/').expanduser()
         fdir_sav = Path('/Users/mndiaye/scratch/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
         sim_case = 'test' # 'test' or 'server'
     elif syst == 'linux':
-        fdir = Path('/scratch/ndiaye/data/Coronagraphs/data/2D/pupils/').resolve()
-        fdir_sav = Path('/scratch/ndiaye/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
+        fdir = Path('/scratch/mndiaye/data/Coronagraphs/data/2D/pupils/').resolve()
+        fdir_sav = Path('/scratch/mndiaye/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
         sim_case = 'server' # 'test' or 'server'            
     else:
         raise ValueError('Unknown operating system {0}'.format(user))
+elif user == 'ndiaye':
+    if syst == 'darwin':
+        fdir = Path('/Users/mndiaye/scratch/data/Coronagraphs/data/2D/pupils/').expanduser()
+        fdir_sav = Path('/Users/mndiaye/scratch/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
+        sim_case = 'test' # 'test' or 'server'
+    elif syst == 'linux':
+        fdir = Path('/home/ndiaye/scratch/data/Coronagraphs/data/2D/pupils/').resolve()
+        fdir_sav = Path('/home/ndiaye/scratch/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
+        sim_case = 'server' # 'test' or 'server'            
+    else:
+        raise ValueError('Unknown operating system {0}'.format(user))    
 else:
     raise ValueError('Unknown user {0}'.format(user))
 

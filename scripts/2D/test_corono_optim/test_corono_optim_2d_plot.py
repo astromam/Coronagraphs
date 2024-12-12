@@ -164,7 +164,7 @@ if True:
 #    fdir = Path('../../../data/2D/pupils/').resolve()
 #    fdir = Path('/Users/mndiaye/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs/data/2D/pupils/').resolve()
 
-    if user == 'mndiaye' or user == 'ndiaye':
+    if user == 'mndiaye':
         if syst == 'darwin':
             fdir_dat = Path('/Users/mndiaye/scratch/data/Coronagraphs/data/2D/pupils/').expanduser()
             fdir_res = Path('/Users/mndiaye/scratch/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
