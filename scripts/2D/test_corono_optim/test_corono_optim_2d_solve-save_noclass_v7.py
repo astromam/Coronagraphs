@@ -95,9 +95,9 @@ alpha = 0 # np.pi/3 # np.arctan2(shift_x, shift_y)
 shift_y = shift_tot*np.cos(alpha)
 shift_x = shift_tot*np.sin(alpha)
 
-nalpha = 6
+nalpha = 4
 alpha_t = (2.*np.pi/nalpha)*np.arange(nalpha)
-shift_tot_t = [1, np.sqrt(2)]
+shift_tot_t = [1]
 
 LSRobustness_coeff_sev = 22.
 
