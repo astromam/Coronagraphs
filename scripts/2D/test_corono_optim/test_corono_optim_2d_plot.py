@@ -42,10 +42,15 @@ if True:
     FirstDerGlobalLim = 1.
     
     #nPup = corono0.params['nPup']
-    nPup = 100
+    nPup0 = 100
+    nExt = 10
+    nPup = nPup0 + nExt
     nFPM = 50
     Fmax2d = 50
     nImg2d = 500
+    
+    LS_OD = 1.0#0.96
+    nPupLS = int(LS_OD*nPup0)
     
     # mask radius in lam0/D unit
     # rMask = 1.766 # ALC1 at 1.593um (145mas) 
@@ -69,8 +74,13 @@ if True:
     LSRobustness = True
 
     test_shift = True
-    shift_x0 = 0
-    shift_y0 = 1
+    shift_tot = 1. #np.sqrt(shift_x**2+shift_y**2)
+    alpha0 = 0 # np.pi/3 # np.arctan2(shift_x, shift_y)
+    shift_y0 = shift_tot*np.cos(alpha0)
+    shift_x0 = shift_tot*np.sin(alpha0)
+
+    # shift_x0 = 0
+    # shift_y0 = 1
     test_flip_x = False
     test_flip_y = False
     
@@ -82,7 +92,7 @@ if True:
     
     #nlam
     bw   = 0.2
-    nlam = 3
+    nlam = 1
 
     # Lyot stop with dead actuators
     do_dead_act = True
@@ -94,21 +104,31 @@ if True:
     LSRobustness_bis = False
     LSRobustness_qua = False
     LSRobustness_qua2 = False
-    LSRobustness_sev = True
+    
+    LSRobustness_sev = False
+    LSRobustness_v8 = False
+    LSRobustness_v9 = True
 
     LSRobustness_coeff_pre = 10 #0.05
     LSRobustness_coeff_bis = 1.0
-    LSRobustness_coeff_qua = 0.3
-    
+    LSRobustness_coeff_qua = 0.3    
     LSRobustness_coeff_qua2 = 0.5
     
-    LSRobustness_coeff_sev = 20.
+    LSRobustness_coeff_sev = 22.
+    
+    LSRobustness_coeff_v8 = 0.1*np.sqrt(2.)/nPup
+    LSRobustness_coeff_v9 = 1.0
+
+
 
     str_LSRcoeff_pre = ''
     str_LSRcoeff_bis = ''
     str_LSRcoeff_qua = ''
     str_LSRcoeff_qua2 = ''
     str_LSRcoeff_sev = ''
+    str_LSRcoeff_v8 = ''
+    str_LSRcoeff_v9 = ''
+    
     if LSRobustness:
         if LSRobustness_pre:
             str_LSRcoeff_pre = f'LSRcoeff={int(np.round(LSRobustness_coeff_pre*1e3)):05d}'
@@ -120,11 +140,16 @@ if True:
             str_LSRcoeff_qua2 = f'LSRcoeff_qua2={int(np.round(LSRobustness_coeff_qua2*1e3)):05d}'
         if LSRobustness_sev:
             str_LSRcoeff_sev = f'LSRcoeff_sev={int(np.round(LSRobustness_coeff_sev*1e3)):05d}'
+        if LSRobustness_v8:
+            str_LSRcoeff_v8 = f'LSRcoeff_v8={int(np.round(LSRobustness_coeff_v8*1e3)):05d}'
+        if LSRobustness_v9:
+            str_LSRcoeff_v9 = f'LSRcoeff_v9={int(np.round(LSRobustness_coeff_v9*1e3)):05d}'
+
 
     
     do_fits = False
 
-nlambis = 5
+nlambis = 1
 Fmax2dbis = 50
 nImg2dbis = 500    
 
@@ -156,18 +181,30 @@ if True:
         raise ValueError('Unknown user {0}'.format(user))
 
     if pupil_name == 'lvr':
-        fname_pup = 'ATLAST_Aperture_nPup={0}.fits'.format(nPup,)
-        fname_lys = 'ATLAST_LyotStop_nPup={0}.fits'.format(nPup,)
+        fname_pup = 'ATLAST_Aperture_nPup={0}.fits'.format(nPup0,)
+        fname_lys = 'ATLAST_LyotStop_nPup={0}.fits'.format(nPup0,)
     else:
-        fname_pup = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
-        fname_lys = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
+        fname_pup = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup0,)
+        fname_lys = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup0,)
         if do_dead_act:
-            fname_lys = f'sphere_stop_ST_ALC2_nPup{nPup:04d}.fits'
+            fname_lys = f'sphere_stop_ST_ALC2_nPup{nPup0:04d}.fits'
     
     fpath_pup = fdir_dat / fname_pup
     fpath_lys = fdir_dat / fname_lys
-    Pupil2d    = fits.getdata(fpath_pup)
-    LyotStop2d = fits.getdata(fpath_lys)
+    Pupil2d0    = fits.getdata(fpath_pup)
+    LyotStop2d0 = fits.getdata(fpath_lys)
+
+    if nPup0 != nPup:
+        Pupil2d = np.zeros((nPup, nPup))
+        LyotStop2d = np.zeros((nPup, nPup))
+        ini = (nPup-nPup0)//2
+        end = (nPup+nPup0)//2
+        Pupil2d[ini:end, ini:end] = Pupil2d0
+        LyotStop2d[ini:end, ini:end] = LyotStop2d0
+    else:
+        Pupil2d = Pupil2d0*1.
+        LyotStop2d = LyotStop2d0*1. 
+
     
     if test_flip_x:
         LyotStop2d = np.fliplr(LyotStop2d)
@@ -233,7 +270,8 @@ else:
 ### Read files
 """
 fname_gen = problem1.get_filename()
-fname     = fname_gen + f'{str_dead_act}' + str_LSRcoeff_pre + str_LSRcoeff_bis + str_LSRcoeff_qua + str_LSRcoeff_qua2 + str_LSRcoeff_sev +'.fits'
+fname     = fname_gen + f'{str_dead_act}' + str_LSRcoeff_pre + str_LSRcoeff_bis + str_LSRcoeff_qua + str_LSRcoeff_qua2 + str_LSRcoeff_sev + str_LSRcoeff_v8 + str_LSRcoeff_v9 + '.fits'
+fname     = fname.replace(f'N={nPup:04d}', f'N={nPup0:04d}') 
 fpath     = fdir_res / fname
 print(fpath)
 
@@ -262,6 +300,15 @@ if test_gurobi is True:
         
 else:    
     Apod_pyth = fits.getdata(fpath,)
+    
+if nPup0 != nPup:
+    Apod2d = np.zeros((nPup, nPup))
+    ini = (nPup-nPup0)//2
+    end = (nPup+nPup0)//2
+    Apod2d[ini:end, ini:end] = Apod_pyth
+else:
+    Apod2d = Apod_pyth*1. 
+    
 
 #%% Display of the apodizer
 """
@@ -281,7 +328,7 @@ fpath = fdir_pdf / fname
 
 fig = plt.figure(1)
 plt.clf()
-im = plt.imshow(Apod_pyth*corono0.Pupil2d, vmin=0, vmax=1, cmap = cm.Greys_r)
+im = plt.imshow(Apod2d*corono0.Pupil2d, vmin=0, vmax=1, cmap = cm.Greys_r)
 plt.title(f'Apod 1 transmission - {problem_name} problem - {solver}')
 #plt.savefig(str(fpath))
 
@@ -295,7 +342,7 @@ plt.savefig(str(fpath))
 
 # fig = plt.figure(2)
 # plt.clf()
-# im = plt.imshow((Apod_pyth-np.flipud(Apod_pyth))*corono0.Pupil2d, vmin=0, vmax=1, cmap = cm.Greys_r)
+# im = plt.imshow((Apod2d-np.flipud(Apod2d))*corono0.Pupil2d, vmin=0, vmax=1, cmap = cm.Greys_r)
 # plt.title(f'Apod 1 transmission - {problem_name} problem - {solver}')
 # plt.savefig(str(fpath))
 
@@ -309,7 +356,7 @@ plt.savefig(str(fpath))
 
 # fig = plt.figure(3)
 # plt.clf()
-# im = plt.imshow((Apod_pyth-np.fliplr(Apod_pyth))*corono0.Pupil2d, vmin=0, vmax=1, cmap = cm.Greys_r)
+# im = plt.imshow((Apod2d-np.fliplr(Apod2d))*corono0.Pupil2d, vmin=0, vmax=1, cmap = cm.Greys_r)
 # plt.title(f'Apod 1 transmission - {problem_name} problem - {solver}')
 # plt.savefig(str(fpath))
 
@@ -340,7 +387,7 @@ plt.savefig(str(fpath))
 ### Computation of the direct and coronagraphic images
 """
 fname_gen  = problem1.get_filename(nlam=nlambis)
-params2    = coro.update_params(params, nlam=nlambis, Fmax2d = Fmax2dbis, nImg2d = nImg2dbis) 
+params2    = coro.update_params(params, rMask= rMask*(nPup/nPup0), nlam=nlambis, Fmax2d = Fmax2dbis*(nPup/nPupLS), nImg2d = nImg2dbis) 
 
 if corono_name == 'SP':
     corono0 = coro.design.SP2d(**params2)
@@ -350,10 +397,10 @@ else:
     raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
 
 if corono_name == 'APLC':
-    poly_direct_image1 = corono0.compute_direct_intensity_2d(Apod_pyth)
+    poly_direct_image1 = corono0.compute_direct_intensity_2d(Apod2d)
 else:
     poly_direct_image1 = corono0.compute_direct_intensity_2d(corono0.Pupil2d)
-poly_corono_image1 = corono0.compute_corono_intensity_2d(Apod_pyth)
+poly_corono_image1 = corono0.compute_corono_intensity_2d(Apod2d)
 
 #%%
 """
@@ -381,7 +428,7 @@ if test_shift:
     
             LyotStop2d_shift = np.roll(np.roll(LyotStop2d, shift_x, axis=0), shift_y, axis=1)
             
-            params_shift    = coro.update_params(params, nlam=nlambis, Fmax2d = Fmax2dbis, nImg2d = nImg2dbis, LyotStop2d = LyotStop2d_shift)
+            params_shift    = coro.update_params(params, rMask = rMask*(nPup/nPup0), nlam=nlambis, Fmax2d = Fmax2dbis*(nPup/nPupLS), nImg2d = nImg2dbis, LyotStop2d = LyotStop2d_shift)
             if corono_name == 'SP':
                 corono0_shift = coro.design.SP2d(**params_shift)
             elif corono_name == 'APLC':
@@ -390,10 +437,10 @@ if test_shift:
                 raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
         
             if corono_name == 'APLC':
-                poly_direct_image1_shift[ishift_all] = corono0_shift.compute_direct_intensity_2d(Apod_pyth)
+                poly_direct_image1_shift[ishift_all] = corono0_shift.compute_direct_intensity_2d(Apod2d)
             else:
                 poly_direct_image1_shift[ishift_all] = corono0_shift.compute_direct_intensity_2d(corono0.Pupil2d)
-            poly_corono_image1_shift[ishift_all] = corono0_shift.compute_corono_intensity_2d(Apod_pyth)
+            poly_corono_image1_shift[ishift_all] = corono0_shift.compute_corono_intensity_2d(Apod2d)
            
             poly_direct_image1_shift_peak = np.max(poly_direct_image1_shift[ishift_all])
         
@@ -404,12 +451,12 @@ if test_shift:
 """
 ### normalization of the direct and coronagraphic image in monochromatic light
 """
-mono_direct_image1 = corono0.compute_direct_intensity_2d(Apod_pyth, poly=False)
-mono_corono_image1 = corono0.compute_corono_intensity_2d(Apod_pyth, poly=False)
+mono_direct_image1 = corono0.compute_direct_intensity_2d(Apod2d, poly=False)
+mono_corono_image1 = corono0.compute_corono_intensity_2d(Apod2d, poly=False)
 
 # if test_shift:
-#     mono_direct_image1_shift = corono0_shift.compute_direct_intensity_2d(Apod_pyth, poly=False)
-#     mono_corono_image1_shift = corono0_shift.compute_corono_intensity_2d(Apod_pyth, poly=False)
+#     mono_direct_image1_shift = corono0_shift.compute_direct_intensity_2d(Apod2d, poly=False)
+#     mono_corono_image1_shift = corono0_shift.compute_corono_intensity_2d(Apod2d, poly=False)
 
 #%%
 """
