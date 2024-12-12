@@ -152,7 +152,7 @@ File reading for Pupil and Lyot stop
 """
 #fdir = Path('../../../data/2D/pupils/').resolve()
 fdir = Path('/Users/mndiaye/scratch/data/Coronagraphs/data/2D/pupils/').resolve()
-if user == 'mndiaye':
+if user == 'mndiaye' or user == 'ndiaye':
     if syst == 'darwin':
         fdir = Path('/Users/mndiaye/scratch/data/Coronagraphs/data/2D/pupils/').expanduser()
         fdir_sav = Path('/Users/mndiaye/scratch/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
