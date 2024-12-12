@@ -47,7 +47,7 @@ if True:
     FirstDerGlobalLim = 1.
     
     #nPup = corono0.params['nPup']
-    nPup0 = 200
+    nPup0 = 100
     nPup = nPup0 + 10
     nFPM = 100
     Fmax2d = 50

@@ -55,7 +55,7 @@ if True:
     
     # mask radius in lam0/D unit
     # rMask = 1.766 # ALC1 at 1.593um (145mas) 
-    rMask = 10 #2.252 # ALC2 at 1.593um (185mas)
+    rMask = 2.252 # ALC2 at 1.593um (185mas)
     
     # dark zone bounds (inner and outer edges) in lam0/D unit
     rho0 =  0.0
@@ -75,12 +75,12 @@ if True:
     LSRobustness = True
 
     test_shift = True
-    shift_x = 1
-    shift_y = 0
+    shift_x = 2
+    shift_y = 2
     do_FPM = True
     do_gradient = False
     
-    LS_OD = 0.9
+    LS_OD = 0.96
     nPupLS = int(nPup0*LS_OD)
     
     shift_tot = np.sqrt(shift_x**2+shift_y**2)
@@ -169,20 +169,29 @@ if True:
         fname_lys = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup0,)
         if do_dead_act:
             fname_lys = f'sphere_stop_ST_ALC2_nPup{nPup0:04d}.fits'
+            
+    fdir_apo  = Path('/Users/mndiaye/scratch/data/Coronagraphs/results/2D/dat_pyth/vlt_btw/').resolve()
     
+    fname_apo = 'vlt_btw_APLC_obs=0.14_lsid=0.28_lsod=1.00_IWA=0.0_OWA=20.0_BW=0.20_nlam=01_1D_N=0100_nFPM=50.000000_rMask=2.252MaxContrastL1_tau=0.756_LSRobustness=1_gurobipy_deadactLSRcoeff_sev=21000.fits'
+            
+    fpath_apo = fdir_apo / fname_apo
     fpath_pup = fdir_dat / fname_pup
     fpath_lys = fdir_dat / fname_lys
+    Apod2d0     = fits.getdata(fpath_apo)
     Pupil2d0    = fits.getdata(fpath_pup)
     LyotStop2d0 = fits.getdata(fpath_lys)
     
     if nPup0 != nPup:
+        Apod2d = np.zeros((nPup, nPup))
         Pupil2d = np.zeros((nPup, nPup))
         LyotStop2d = np.zeros((nPup, nPup))
         ini = (nPup-nPup0)//2
         end = (nPup+nPup0)//2
+        Apod2d[ini:end, ini:end] = Apod2d0
         Pupil2d[ini:end, ini:end] = Pupil2d0
         LyotStop2d[ini:end, ini:end] = LyotStop2d0
     else:
+        Apod2d = Apod2d0*1.
         Pupil2d = Pupil2d0*1.
         LyotStop2d = LyotStop2d0*1. 
     
@@ -363,8 +372,6 @@ dtype0 = 'complex128'
 
 
 #%%
-val = 1/2
-sign = 1.
 
 #alpha = np.arctan2(np.abs(shift_x), np.abs(shift_y))
 alpha = np.arctan2(shift_x, shift_y)
@@ -374,14 +381,15 @@ alpha = np.arctan2(shift_x, shift_y)
 ### Electric field in the entrance pupil plane A
 """
 #field_A    = Pupil2d*1.
+field_A = Pupil2d*Apod2d
 
-field_A = coro.utils.uniform_disk(nPup, nPup0//2, CtrBtwnPix=True)
+# field_A = coro.utils.uniform_disk(nPup, nPup0//2, CtrBtwnPix=True)
 
 #%%
 """
 ### Lyot stop shift
 """
-LyotStop2d = coro.utils.uniform_disk(nPup, nPupLS//2, CtrBtwnPix=True)
+#LyotStop2d = coro.utils.uniform_disk(nPup, nPupLS//2, CtrBtwnPix=True)
 LyotStop2d_shift_num = np.roll(np.roll(LyotStop2d, shift_y, axis=0), shift_x, axis=1)
 
 # computation of the analytical Lyot Stop shift
@@ -541,7 +549,7 @@ else:
 """
 ### Selected wavelength for the plots
 """
-ilam0 = 2 # corono0.nlam//2
+ilam0 = 0 # corono0.nlam//2
 
 #%%
 plt.figure(10, (9, 9))
@@ -615,15 +623,18 @@ plt.imshow(LyotStop2d_shift_num-LyotStop2d, cmap='inferno')
 plt.title(r'LS-LS$^{dr}$')
 
 #%%
-plt.figure(13, (13, 4.5))
+plt.figure(13, (17, 4.5))
 plt.clf()
-plt.subplot(131)
+plt.subplot(141)
+plt.imshow(np.abs(field_C), cmap='inferno')
+plt.title(r'|$\Psi_C$|')
+plt.subplot(142)
 plt.imshow(np.abs(field_L), cmap='inferno')
 plt.title(r'|$\Psi_L$|')
-plt.subplot(132)
+plt.subplot(143)
 plt.imshow(np.abs(field_L_shift_num), cmap='inferno')
 plt.title(r'|$\Psi^{dr}_L$|')
-plt.subplot(133)
+plt.subplot(144)
 plt.imshow(np.abs(field_L-field_L_shift_num), cmap='inferno')
 plt.title(r'|$\Psi_L$-$\Psi^{dr}_L$|')
 
