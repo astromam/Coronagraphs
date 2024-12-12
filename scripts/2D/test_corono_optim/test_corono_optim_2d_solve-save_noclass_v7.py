@@ -52,13 +52,13 @@ BinarityReg       = 0.1
 
 #nPup = corono0.params['nPup']
 nPup0 = 100#512
-nExt0 = 0
+nExt0 = 50
 nDim0 = nPup0 + nExt0
 nFPM = 50
 Fmax2d = 45#22.5
 nImg2d = 90#45
 
-LS_OD = 0.96
+LS_OD = 1.0#0.96
 nPupLS = int(nPup0*LS_OD)
 
 # number of progressive refinement
@@ -83,22 +83,23 @@ CtrBtwnPix  = True
 CtrBtwnPix2 = True
 Pupil2dSym  = True
 ImPart      = True 
-LSRobustness = True # (new robustness approach using derivative of the field with respect to Lyot stop displacement)
+LSRobustness = True 
 # kwd_qrt = True
 
 
 #nlam
 bw   = 0.2
-nlam = 3
+nlam = 1
 shift_tot = 1. # np.sqrt(2.) #np.sqrt(shift_x**2+shift_y**2)
 alpha = 0 # np.pi/3 # np.arctan2(shift_x, shift_y)
 shift_y = shift_tot*np.cos(alpha)
 shift_x = shift_tot*np.sin(alpha)
 
-nalpha = 4
+nalpha = 6
 alpha_t = (2.*np.pi/nalpha)*np.arange(nalpha)
+shift_tot_t = [1, np.sqrt(2)]
 
-LSRobustness_coeff_sev = 20.
+LSRobustness_coeff_sev = 22.
 
 str_LSRcoeff_sev = ''
 if LSRobustness:
@@ -157,8 +158,8 @@ if user == 'mndiaye':
         fdir_sav = Path('/Users/mndiaye/scratch/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
         sim_case = 'test' # 'test' or 'server'
     elif syst == 'linux':
-        fdir = Path('/scratch/mndiaye/data/Coronagraphs/data/2D/pupils/').resolve()
-        fdir_sav = Path('/scratch/mndiaye/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
+        fdir = Path('/scratch/ndiaye/data/Coronagraphs/data/2D/pupils/').resolve()
+        fdir_sav = Path('/scratch/ndiaye/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
         sim_case = 'server' # 'test' or 'server'            
     else:
         raise ValueError('Unknown operating system {0}'.format(user))
@@ -703,7 +704,7 @@ def compute_corono_field_2d_LSasym_LSrobustness_bis(Apod2d_qrt, Pupil2d_qrt, Lyo
             field_L_shift_ana = field_C*LyotStop2d_shift_ana #
             
             # electric field in the final image plane D after the shifted Lyot stop
-            field_Dtmp_shift_ana[i] = coro.utils.sft(field_L_shift_ana, corono0.nImg2d, corono0.mD_t[i], 
+            field_Dtmp_shift_ana[i] = coro.utils.sft(field_L_shift_ana, corono.nImg2d, corono.mD_t[i], 
                       CtrBtwnPix=True) 
                             
         return field_Dtmp_shift_ana
@@ -882,12 +883,12 @@ for k in range(nProgRef):
     LyotStop2d_qrt = LyotStop2d[nDim//2:,nDim//2:]
     
     
-    params0 = coro.to_dict(nPup=nDim, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
-                     rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau, 
+    params0 = coro.to_dict(nPup=nDim, Fmax2d = Fmax2d*(nDim0/nPupLS), nImg2d=nImg2d, nFPM = nFPM,
+                     rho0=rho0*(nDim0/nPupLS), rho1=rho1*(nDim0/nPupLS), cDarkHole=cDarkHole, tau=tau, 
                      CtrBtwnPix=CtrBtwnPix, CtrBtwnPix2 = CtrBtwnPix2,
                      nlam=nlam, bw=bw,
                      Pupil2d = Pupil2d, LyotStop2d = LyotStop2d,
-                     Pupil2dSym = Pupil2dSym, rMask=rMask,
+                     Pupil2dSym = Pupil2dSym, rMask=rMask*(nDim0/nPup0),
                      problem_name = problem_name, 
                      solver = solver, 
                      corono_name = corono_name, pupil_name = pupil_name,
@@ -958,9 +959,9 @@ for k in range(nProgRef):
     
     dz2d, rad2d = corono0.generate_area()
     
-    xx,yy  = np.meshgrid(np.arange(nImg2d)-nImg2d//2+1/2, 
-                         np.arange(nImg2d)-nImg2d//2+1/2)
-    dist2d = (Fmax2d/nImg2d)*np.hypot(yy,xx)
+    xx,yy  = np.meshgrid(np.arange(corono0.nImg2d)-corono0.nImg2d//2+1/2, 
+                         np.arange(corono0.nImg2d)-corono0.nImg2d//2+1/2)
+    dist2d = (corono0.Fmax2d/corono0.nImg2d)*np.hypot(yy,xx)
     
     xyp = (nDim0/(2*nDim0))*(np.arange(2*nDim0)-2*nDim0//2+1/2)
     xxp, yyp  = np.meshgrid(xyp, xyp)
@@ -970,14 +971,14 @@ for k in range(nProgRef):
     ### Point selection in the image plane
     """
     if ImPart == True:
-        dist2d_hlf = dist2d[:nImg2d//2, :] 
-        dz2d_hlf  = dz2d[:nImg2d//2, :] 
+        dist2d_hlf = dist2d[:corono0.nImg2d//2, :] 
+        dz2d_hlf  = dz2d[:corono0.nImg2d//2, :] 
         dz        = np.reshape(dz2d_hlf, (corono0.nImg2d*corono0.nImg2d//2))
         aaa       = np.arange(corono0.nImg2d*corono0.nImg2d//2)
         dist      = np.reshape(dist2d_hlf, (corono0.nImg2d*corono0.nImg2d//2))
     else:
-        dist2d_qrt = dist2d[nImg2d//2:,nImg2d//2:] 
-        dz2d_qrt = dz2d[nImg2d//2:,nImg2d//2:] 
+        dist2d_qrt = dist2d[corono0.nImg2d//2:,corono0.nImg2d//2:] 
+        dz2d_qrt = dz2d[corono0.nImg2d//2:,corono0.nImg2d//2:] 
         dz       = np.reshape(dz2d_qrt, ((corono0.nImg2d//2)**2))
         aaa      = np.arange((corono0.nImg2d//2)**2)
         dist     = np.reshape(dist2d_qrt, (corono0.nImg2d//2)**2)
@@ -1131,20 +1132,22 @@ for k in range(nProgRef):
         # Add contraint of robustness to Lyot Stop misalignment
         if LSRobustness:
             if ImPart:
-                for ialpha, alpha_val in enumerate(alpha_t):
-                    PsiD_LSshift_re[0:npp,0:nPsiD], PsiD_LSshift_im[0:npp,0:nPsiD] = compute_response_matrices_qrt_LSrobustness_bis(idx_pup, idx_dz, npp, ndz, shift_tot, alpha_val, corono0)
-
-                    model.addConstr( (PsiD_LSshift_re + PsiD_LSshift_im).T @ Apo + (PsiD0bis.real + PsiD0bis.imag) - Eps <= 0)
-                    model.addConstr( (PsiD_LSshift_re - PsiD_LSshift_im).T @ Apo + (PsiD0bis.real - PsiD0bis.imag) - Eps <= 0)
-                    model.addConstr((-PsiD_LSshift_re + PsiD_LSshift_im).T @ Apo +(-PsiD0bis.real + PsiD0bis.imag) - Eps <= 0)
-                    model.addConstr((-PsiD_LSshift_re - PsiD_LSshift_im).T @ Apo +(-PsiD0bis.real - PsiD0bis.imag) - Eps <= 0)
+                for ishift_tot, shift_tot_val in enumerate(shift_tot_t):
+                    for ialpha, alpha_val in enumerate(alpha_t):
+                        PsiD_LSshift_re[0:npp,0:nPsiD], PsiD_LSshift_im[0:npp,0:nPsiD] = compute_response_matrices_qrt_LSrobustness_bis(idx_pup, idx_dz, npp, ndz, shift_tot_val, alpha_val, corono0)
+    
+                        model.addConstr( (PsiD_LSshift_re + PsiD_LSshift_im).T @ Apo + (PsiD0bis.real + PsiD0bis.imag) - Eps <= 0)
+                        model.addConstr( (PsiD_LSshift_re - PsiD_LSshift_im).T @ Apo + (PsiD0bis.real - PsiD0bis.imag) - Eps <= 0)
+                        model.addConstr((-PsiD_LSshift_re + PsiD_LSshift_im).T @ Apo +(-PsiD0bis.real + PsiD0bis.imag) - Eps <= 0)
+                        model.addConstr((-PsiD_LSshift_re - PsiD_LSshift_im).T @ Apo +(-PsiD0bis.real - PsiD0bis.imag) - Eps <= 0)
             
             else:
-                for ialpha, alpha_val in enumerate(alpha_t):
-                    PsiD_LSshift_re[0:npp,0:nPsiD] = compute_response_matrices_qrt_LSrobustness_bis(idx_pup, idx_dz, npp, ndz, shift_tot, alpha_val, corono0) 
-                 
-                    model.addConstr( PsiD_LSshift_re.T @ Apo + PsiD0bis.real - Eps <= 0)
-                    model.addConstr(-PsiD_LSshift_re.T @ Apo - PsiD0bis.real - Eps <= 0)
+                for ishift_tot, shift_tot_val in enumerate(shift_tot_t):
+                    for ialpha, alpha_val in enumerate(alpha_t):
+                        PsiD_LSshift_re[0:npp,0:nPsiD] = compute_response_matrices_qrt_LSrobustness_bis(idx_pup, idx_dz, npp, ndz, shift_tot_val, alpha_val, corono0) 
+                     
+                        model.addConstr( PsiD_LSshift_re.T @ Apo + PsiD0bis.real - Eps <= 0)
+                        model.addConstr(-PsiD_LSshift_re.T @ Apo - PsiD0bis.real - Eps <= 0)
         
     else:
         # Create a new model  
@@ -1172,19 +1175,21 @@ for k in range(nProgRef):
         # Add contraint of robustness to Lyot Stop misalignment
         if LSRobustness:
             if ImPart:
-                for ialpha, alpha_val in enumerate(alpha_t):
-                    PsiD_LSshift_re[0:npp,0:nPsiD], PsiD_LSshift_im[0:npp,0:nPsiD] = compute_response_matrices_qrt_LSrobustness_bis(idx_pup, idx_dz, npp, ndz, shift_tot, alpha_val, corono0)
-
-                    model.addConstr( (PsiD_LSshift_re + PsiD_LSshift_im).T @ Apo - Psi0 <= 0)
-                    model.addConstr( (PsiD_LSshift_re - PsiD_LSshift_im).T @ Apo - Psi0 <= 0)
-                    model.addConstr((-PsiD_LSshift_re + PsiD_LSshift_im).T @ Apo - Psi0 <= 0)
-                    model.addConstr((-PsiD_LSshift_re - PsiD_LSshift_im).T @ Apo - Psi0 <= 0)    
+                for ishift_tot, shift_tot_val in enumerate(shift_tot_t):
+                    for ialpha, alpha_val in enumerate(alpha_t):
+                        PsiD_LSshift_re[0:npp,0:nPsiD], PsiD_LSshift_im[0:npp,0:nPsiD] = compute_response_matrices_qrt_LSrobustness_bis(idx_pup, idx_dz, npp, ndz, shift_tot_val, alpha_val, corono0)
+    
+                        model.addConstr( (PsiD_LSshift_re + PsiD_LSshift_im).T @ Apo - Psi0 <= 0)
+                        model.addConstr( (PsiD_LSshift_re - PsiD_LSshift_im).T @ Apo - Psi0 <= 0)
+                        model.addConstr((-PsiD_LSshift_re + PsiD_LSshift_im).T @ Apo - Psi0 <= 0)
+                        model.addConstr((-PsiD_LSshift_re - PsiD_LSshift_im).T @ Apo - Psi0 <= 0)    
             else:
-                for ialpha, alpha_val in enumerate(alpha_t):
-                    PsiD_LSshift_re[0:npp,0:nPsiD] = compute_response_matrices_qrt_LSrobustness_bis(idx_pup, idx_dz, npp, ndz, shift_tot, alpha_val, corono0) 
-
-                    model.addConstr( PsiD_LSshift_re.T @ Apo - Psi0 <= 0)
-                    model.addConstr(-PsiD_LSshift_re.T @ Apo - Psi0 <= 0)
+                for ishift_tot, shift_tot_val in enumerate(shift_tot_t):
+                    for ialpha, alpha_val in enumerate(alpha_t):
+                        PsiD_LSshift_re[0:npp,0:nPsiD] = compute_response_matrices_qrt_LSrobustness_bis(idx_pup, idx_dz, npp, ndz, shift_tot_val, alpha_val, corono0) 
+    
+                        model.addConstr( PsiD_LSshift_re.T @ Apo - Psi0 <= 0)
+                        model.addConstr(-PsiD_LSshift_re.T @ Apo - Psi0 <= 0)
             
             
     # Update model
@@ -1272,10 +1277,16 @@ for k in range(nProgRef):
         os.makedirs(fdir_sav)
         
     fname_sav = get_filename(corono0) + f'{str_dead_act}' + str_LSRcoeff_sev + '.fits'
+    fname_sav = fname_sav.replace(f'N={nDim:04d}', f'N={nPup:04d}') 
+    fname_sav = fname_sav.replace(f'rMask={rMask*(nDim0/nPup0):.3f}', f'rMask={rMask:.3f}')
+    fname_sav = fname_sav.replace(f'IWA={rho0*(nDim0/nPupLS):.1f}', f'IWA={rho0:.1f}')
+    fname_sav = fname_sav.replace(f'OWA={rho1*(nDim0/nPupLS):.1f}', f'OWA={rho1:.1f}')
+    
     fpath_sav = fdir_sav / fname_sav
     
     if do_fits is True:
-        fits.writeto(fpath_sav, Apod1_2d, overwrite=True)
+        
+        fits.writeto(fpath_sav, Apod1_2d[nIni:nEnd, nIni:nEnd], overwrite=True)
 
 
 #%%

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Sep  4 15:06:12 2024
+Created on Thu Sep 12 21:33:33 2024
 
 @author: mndiaye
 """
@@ -83,12 +83,24 @@ ImPart      = False
 LSRobustness = True # (new robustness approach using derivative of the field with respect to Lyot stop displacement)
 # kwd_qrt = True
 
+
 #nlam
 bw   = 0.2
 nlam = 1
 
 # LS robustness
-LSRobustness_coeff = 0. #0.05
+LSRobustness_coeff = 0.1 #0.05
+str_LSRcoeff = ''
+if LSRobustness:
+    str_LSRcoeff = f'LSRcoeff={int(np.round(LSRobustness_coeff*1e3)):05d}'
+
+
+LSRobustness_coeff_bis = 1.0
+str_LSRcoeff_bis = ''
+if LSRobustness:
+    str_LSRcoeff_bis = f'LSRcoeff_bis={int(np.round(LSRobustness_coeff_bis*1e3)):05d}'
+
+print(str_LSRcoeff_bis)
 
 # Lyot stop with dead actuators
 str_dead_act = ''
@@ -97,15 +109,9 @@ if do_dead_act:
     Pupil2dSym = False
     ImPart = True
     str_dead_act = '_deadact'
-
-str_LSRcoeff = ''
-if LSRobustness:
-    str_LSRcoeff = f'LSRcoeff={int(np.round(LSRobustness_coeff*1e3)):05d}'
     
 
 do_fits = True
-
-
 
 #%%
 """
@@ -771,6 +777,195 @@ def compute_response_matrices_qrt_LSrobustness(idx_pup, idx_dz, npp, ndz,corono=
             return corono_field_re_t
 
 
+#%%
+
+def compute_corono_field_2d_qrt_LSrobustness_bis(Apod2d_qrt, Pupil2d_qrt, LyotStop2d_qrt, dist2d, corono=None):
+    """
+    Computes the coronagraph electric field for a classical Lyot coronagraph
+    with four planes (A: entrance pupil, B: intermediate focal plane, 
+    C: relayed pupil before stop, L: relayed pupil after stop, 
+    D: final image plane).
+    Resolution element are given in :math:`\lambda_0/D` where 
+    :math:`\lambda_0` and :math:`D` denote the central and the telescope 
+    diameter.
+
+    Parameters
+    ---------- 
+    Apod2d : array_like 
+        Entrance pupil apodization :math:`\Phi`
+        
+    Returns    
+    ----------    
+    field_Dtmp : array_like
+        Coronagraphic electric field :math:`\Psi_D` in the final image plane
+        at all the wavelengths
+        
+    """        
+    if corono is None:
+        pass
+    else:
+        field_A_qrt    = Apod2d_qrt*Pupil2d_qrt
+                    
+        field_Dtmp_qrt = np.zeros((corono.nlam,corono.nImg2d//2,corono.nImg2d//2), dtype=dtype0)
+        field_Ftmp_qrt = np.zeros((corono.nlam,corono.nImg2d//2,corono.nImg2d//2), dtype=dtype0)
+    
+    
+        for i in range(corono.nlam):                       
+            field_B_qrt       = mask2d_qrt*sft_qrt(field_A_qrt, corono.nFPM, corono.mB_t[i], 
+                                            CtrBtwnPix=True)
+            field_C_qrt       = field_A_qrt - isft_qrt(field_B_qrt, corono.nPup, corono.mB_t[i], 
+                                           CtrBtwnPix=True)
+            field_L_qrt       = field_C_qrt*LyotStop2d_qrt
+            field_Dtmp_qrt[i] = sft_qrt(field_L_qrt, corono.nImg2d, corono.mD_t[i], 
+                      CtrBtwnPix=True)
+            field_Ftmp_qrt[i] = field_Dtmp_qrt[i]*(np.exp((1j*2.*np.pi/corono.lam_t[i])*dist2d))
+            
+                         
+        # return (lam0/lam_t[:,None,None])*field_Dtmp (in mathematica)
+        return field_Ftmp_qrt
+
+
+#%%    
+def compute_corono_field_2d_LSasym_LSrobustness_bis(Apod2d_qrt, Pupil2d_qrt, LyotStop2d, dist2d, corono=None):
+    """
+    Computes the coronagraph electric field for a classical Lyot coronagraph
+    with four planes (A: entrance pupil, B: intermediate focal plane, 
+    C: relayed pupil before stop, L: relayed pupil after stop, 
+    D: final image plane).
+    Resolution element are given in :math:`\lambda_0/D` where 
+    :math:`\lambda_0` and :math:`D` denote the central and the telescope 
+    diameter.
+
+    Parameters
+    ---------- 
+    Apod2d : array_like 
+        Entrance pupil apodization :math:`\Phi`
+        
+    Returns    
+    ----------    
+    field_Dtmp : array_like
+        Coronagraphic electric field :math:`\Psi_D` in the final image plane
+        at all the wavelengths
+        
+    """        
+    if corono is None:
+        pass
+    else:
+        field_A_qrt    = Apod2d_qrt*Pupil2d_qrt
+                    
+        field_Dtmp = np.zeros((corono.nlam,corono.nImg2d,corono.nImg2d), dtype=dtype0)
+        field_Ftmp = np.zeros((corono.nlam,corono.nImg2d,corono.nImg2d), dtype=dtype0)
+#        field_Dhlf = np.zeros((corono.nlam,corono.nImg2d//2,corono.nImg2d), dtype=dtype0)    
+    
+        for i in range(corono.nlam):                       
+            field_B_qrt       = mask2d_qrt*sft_qrt(field_A_qrt, corono.nFPM, corono.mB_t[i], 
+                                            CtrBtwnPix=True)
+            field_C_qrt       = field_A_qrt - isft_qrt(field_B_qrt, corono.nPup, corono.mB_t[i], 
+                                           CtrBtwnPix=True)
+            
+            field_C           = np.zeros((corono.nPup, corono.nPup))
+            field_C[corono.nPup//2:, corono.nPup//2:] = field_C_qrt
+            field_C[:corono.nPup//2, corono.nPup//2:] = np.flip(field_C_qrt, axis=0)
+            field_C[:, :corono.nPup//2]               = np.flip(field_C[:, corono.nPup//2:], axis=1)
+            
+            field_L       = field_C*LyotStop2d
+            field_Dtmp[i] = coro.utils.sft(field_L, corono.nImg2d, corono.mD_t[i], 
+                      CtrBtwnPix=True)
+            # field_Dhlf[i] = sft_hlf(field_L, corono.nImg2d, corono.mD_t[i], 
+            #           CtrBtwnPix=True)
+            field_Ftmp[i] = field_Dtmp[i]*(np.exp((1j*2.*np.pi/corono.lam_t[i])*dist2d))           
+                         
+        # return (lam0/lam_t[:,None,None])*field_Dtmp (in mathematica)
+        # return field_Dhlf    
+        return field_Ftmp
+
+
+#%%
+def compute_response_matrices_qrt_LSrobustness_bis(idx_pup, idx_dz, npp, ndz,corono=None):
+    r"""
+    Computes the response matrix for the coronagraph with and without 
+    the focal plane mask.
+    
+    Notes
+    -----        
+    corono_field_re_t_tmp, corono_field_im_t_tmp : array_like, array_like
+        Real and imaginary parts of the coronagraphic response matrix
+        for all the points in the pupil :math:`P_0` and at all the wavelengths
+
+    corono_field_re_t, corono_field_im_t : array_like, array_like
+        Real and imaginary parts of the coronagraphic response matrix
+        for all the points in the pupil :math:`P_0` and at all the wavelengths.
+        These arrays are sliced from corono_field_re_t_tmp, corono_field_im_t_tmp 
+        for the points inside the region of interest in the final image plane.
+
+    corono_field_t : array_like
+        Concatenation of the real and imaginary parts of the coronagraphic 
+        response matrix for all the points in the pupil :math:`P_0` and 
+        at all the wavelengths
+            
+    """        
+    if corono is None:
+        pass
+    else:
+
+        Pupil2d_qrt = corono.Pupil2d[corono.nPup//2:,corono.nPup//2:]
+        Apod2d_qrt = np.zeros((corono.nPup//2, corono.nPup//2))         
+
+        if ImPart is True:
+            corono_field_re_t_tmp = np.empty((npp, corono.nlam, 
+                                                   corono.nImg2d**2))             
+            corono_field_im_t_tmp = np.empty((npp, corono.nlam, 
+                                               corono.nImg2d**2))
+
+            for i, val in enumerate(idx_pup):
+                (i0,j0) = np.unravel_index(val, (corono.nPup//2, corono.nPup//2))
+                Apod2d_qrt[i0,j0] = 1            
+                test = (1./4)*compute_corono_field_2d_LSasym_LSrobustness_bis(Apod2d_qrt, Pupil2d_qrt, corono.LyotStop2d, dist2d, corono)
+                corono_field_re_t_tmp[i] = np.reshape(test.real, (nlam, nImg2d**2))
+                corono_field_im_t_tmp[i] = np.reshape(test.imag, (nlam, nImg2d**2))
+                Apod2d_qrt[i0,j0] = 0 
+                
+            corono_field_re_t = np.reshape(
+                    corono_field_re_t_tmp[:,:, idx_dz], 
+                    (npp, corono.nlam*ndz))
+            
+            corono_field_re_t_tmp = None
+            del corono_field_re_t_tmp
+        
+            corono_field_im_t = np.reshape(
+                corono_field_im_t_tmp[:,:, idx_dz], 
+                (npp, corono.nlam*ndz))
+
+            corono_field_im_t_tmp = None
+            del corono_field_im_t_tmp
+            
+            return corono_field_re_t, corono_field_im_t
+
+        else:
+            corono_field_re_t_tmp = np.empty((npp, corono.nlam, 
+                                                   (corono.nImg2d//2)**2))
+            LyotStop2d_qrt = corono.LyotStop2d[corono.nPup//2:,corono.nPup//2:]
+
+            
+            for i, val in enumerate(idx_pup):
+                (i0,j0) = np.unravel_index(val, (corono.nPup//2, corono.nPup//2))
+                Apod2d_qrt[i0,j0] = 1
+                test_qrt = (1./4)*compute_corono_field_2d_qrt_LSrobustness_bis(Apod2d_qrt, Pupil2d_qrt, LyotStop2d_qrt, corono)
+                corono_field_re_t_tmp[i] = \
+                np.reshape(test_qrt, (corono.nlam, (corono.nImg2d//2)**2))
+                # corono.compute_corono_field_2d_real_vec(Apod2d)
+                Apod2d_qrt[i0,j0] = 0 
+                
+            corono_field_re_t = np.reshape(
+                    corono_field_re_t_tmp[:,:, idx_dz], 
+                    (npp, corono.nlam*ndz))
+            
+            corono_field_re_t_tmp = None
+            del corono_field_re_t_tmp
+
+            return corono_field_re_t
+
+
 
 #%%
 def get_filename(corono=None):
@@ -1034,7 +1229,6 @@ for k in range(nProgRef):
 
     if LSRobustness:
 
-        print('new code to write')
         PsiE_re = np.empty_like(PsiD_im) 
         PsiE_im = np.empty_like(PsiD_re) 
         # if ImPart:
@@ -1046,6 +1240,20 @@ for k in range(nProgRef):
             PsiE_re[0:npp,0:nPsiD], PsiD_im[0:npp,0:nPsiD] = compute_response_matrices_qrt_LSrobustness(idx_pup, idx_dz, npp, ndz, corono0)
         else:
             PsiE_re[0:npp,0:nPsiD] = compute_response_matrices_qrt_LSrobustness(idx_pup, idx_dz, npp, ndz,corono0) 
+        
+
+        print('new code to write')
+        PsiF_re = np.empty_like(PsiD_im) 
+        PsiF_im = np.empty_like(PsiD_re) 
+        # if ImPart:
+        #     PsiE_re = - PsiD_im*idx_dist[None, :]
+        #     PsiE_im =   PsiD_re*idx_dist[None, :]
+        # else:
+        #     PsiE_im =   PsiD_re*idx_dist[None, :]
+        if ImPart:
+            PsiF_re[0:npp,0:nPsiD], PsiD_im[0:npp,0:nPsiD] = compute_response_matrices_qrt_LSrobustness_bis(idx_pup, idx_dz, npp, ndz, corono0)
+        else:
+            PsiF_re[0:npp,0:nPsiD] = compute_response_matrices_qrt_LSrobustness_bis(idx_pup, idx_dz, npp, ndz,corono0) 
     
     PsiD0bis = 0
     PsiD0bis_t = np.zeros((ncorono))
@@ -1066,8 +1274,8 @@ for k in range(nProgRef):
     print(f'dimensions PsiD_im: {np.shape(PsiD_im)}')
     print(f'PsiD axis-0: {np.shape(PsiD_re)[0]}')
     if LSRobustness:
-        print(f'dimensions PsiE_re: {np.shape(PsiE_re)}')
-        print(f'dimensions PsiE_im: {np.shape(PsiE_im)}')
+        print(f'dimensions PsiF_re: {np.shape(PsiF_re)}')
+        print(f'dimensions PsiF_im: {np.shape(PsiF_im)}')
     if ImPart:
         print(f'PsiD axis-1: {np.shape(PsiD_im)[1]}\n')
     
@@ -1116,7 +1324,7 @@ for k in range(nProgRef):
 
         
         model.addConstr(-Apo.sum() - ApoCst  <= -tau*TR)
-        
+
         # Add contraint of robustness to Lyot Stop misalignment
         if LSRobustness:
             if ImPart:
@@ -1128,6 +1336,19 @@ for k in range(nProgRef):
             else:
                 model.addConstr( PsiE_im.T @ Apo + PsiD0bis.real*LSRobustness_coeff - LSRobustness_coeff*Eps <= 0)
                 model.addConstr(-PsiE_im.T @ Apo - PsiD0bis.real*LSRobustness_coeff - LSRobustness_coeff*Eps <= 0)
+
+        
+        # Add contraint of robustness to Lyot Stop misalignment
+        if LSRobustness:
+            if ImPart:
+                model.addConstr( (PsiF_re + PsiF_im).T @ Apo + (PsiD0bis.real + PsiD0bis.imag)*LSRobustness_coeff_bis - Eps*LSRobustness_coeff_bis <= 0)
+                model.addConstr( (PsiF_re - PsiF_im).T @ Apo + (PsiD0bis.real - PsiD0bis.imag)*LSRobustness_coeff_bis - Eps*LSRobustness_coeff_bis <= 0)
+                model.addConstr((-PsiF_re + PsiF_im).T @ Apo +(-PsiD0bis.real + PsiD0bis.imag)*LSRobustness_coeff_bis - Eps*LSRobustness_coeff_bis <= 0)
+                model.addConstr((-PsiF_re - PsiF_im).T @ Apo +(-PsiD0bis.real - PsiD0bis.imag)*LSRobustness_coeff_bis - Eps*LSRobustness_coeff_bis <= 0)
+            
+            else:
+                model.addConstr( PsiF_im.T @ Apo + PsiD0bis.real*LSRobustness_coeff_bis - Eps*LSRobustness_coeff_bis <= 0)
+                model.addConstr(-PsiF_im.T @ Apo - PsiD0bis.real*LSRobustness_coeff_bis - Eps*LSRobustness_coeff_bis <= 0)
         
     else:
         # Create a new model  
@@ -1152,6 +1373,7 @@ for k in range(nProgRef):
             model.addConstr( PsiD_re.T @ Apo - Psi0 <= 0)
             model.addConstr(-PsiD_re.T @ Apo - Psi0 <= 0)
         
+        
         # Add contraint of robustness to Lyot Stop misalignment
         if LSRobustness:            
             if ImPart:
@@ -1162,6 +1384,17 @@ for k in range(nProgRef):
             else:
                 model.addConstr( PsiE_im.T @ Apo - LSRobustness_coeff*Psi0 <= 0)
                 model.addConstr(-PsiE_im.T @ Apo - LSRobustness_coeff*Psi0 <= 0)
+
+        # Add contraint of robustness to Lyot Stop misalignment
+        if LSRobustness:
+            if ImPart:
+                model.addConstr( (PsiF_re + PsiF_im).T @ Apo - Psi0*LSRobustness_coeff_bis <= 0)
+                model.addConstr( (PsiF_re - PsiF_im).T @ Apo - Psi0*LSRobustness_coeff_bis <= 0)
+                model.addConstr((-PsiF_re + PsiF_im).T @ Apo - Psi0*LSRobustness_coeff_bis <= 0)
+                model.addConstr((-PsiF_re - PsiF_im).T @ Apo - Psi0*LSRobustness_coeff_bis <= 0)    
+            else:
+                model.addConstr( PsiF_im.T @ Apo - Psi0*LSRobustness_coeff_bis <= 0)
+                model.addConstr(-PsiF_im.T @ Apo - Psi0*LSRobustness_coeff_bis <= 0)
             
             
     # Update model
@@ -1248,7 +1481,7 @@ for k in range(nProgRef):
     if not os.path.exists(fdir_sav):
         os.makedirs(fdir_sav)
         
-    fname_sav = get_filename(corono0) + f'{str_dead_act}' + str_LSRcoeff + '.fits'
+    fname_sav = get_filename(corono0) + f'{str_dead_act}' + str_LSRcoeff + str_LSRcoeff_bis + '.fits'
     fpath_sav = fdir_sav / fname_sav
     
     if do_fits is True:
