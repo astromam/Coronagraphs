@@ -97,9 +97,9 @@ shift_x = shift_tot*np.sin(alpha)
 
 nalpha = 4
 alpha_t = (2.*np.pi/nalpha)*np.arange(nalpha)
-shift_tot_t = [1]
+shift_tot_t = [1, np.sqrt(2.)]
 
-LSRobustness_coeff_sev = 22.
+LSRobustness_coeff_sev = 23.
 
 str_LSRcoeff_sev = ''
 if LSRobustness:
