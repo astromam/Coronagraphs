@@ -1154,15 +1154,15 @@ for k in range(nProgRef):
         
         # Add contraint of robustness to Lyot Stop misalignment
         if LSRobustness:
-            model.addConstr( (PsiD_grad_x_re + PsiD_grad_x_im).T @ Apo + (PsiD0bis.real + PsiD0bis.imag) - Eps/shift_tot <= 0)
-            model.addConstr( (PsiD_grad_x_re - PsiD_grad_x_im).T @ Apo + (PsiD0bis.real - PsiD0bis.imag) - Eps/shift_tot <= 0)
-            model.addConstr((-PsiD_grad_x_re + PsiD_grad_x_im).T @ Apo +(-PsiD0bis.real + PsiD0bis.imag) - Eps/shift_tot <= 0)
-            model.addConstr((-PsiD_grad_x_re - PsiD_grad_x_im).T @ Apo +(-PsiD0bis.real - PsiD0bis.imag) - Eps/shift_tot <= 0)
+            model.addConstr( (PsiD_grad_x_re + PsiD_grad_x_im).T @ Apo + (PsiD0bis.real + PsiD0bis.imag) - Eps/(shift_tot/corono0.nPup) <= 0)
+            model.addConstr( (PsiD_grad_x_re - PsiD_grad_x_im).T @ Apo + (PsiD0bis.real - PsiD0bis.imag) - Eps/(shift_tot/corono0.nPup) <= 0)
+            model.addConstr((-PsiD_grad_x_re + PsiD_grad_x_im).T @ Apo +(-PsiD0bis.real + PsiD0bis.imag) - Eps/(shift_tot/corono0.nPup) <= 0)
+            model.addConstr((-PsiD_grad_x_re - PsiD_grad_x_im).T @ Apo +(-PsiD0bis.real - PsiD0bis.imag) - Eps/(shift_tot/corono0.nPup) <= 0)
 
-            model.addConstr( (PsiD_grad_y_re + PsiD_grad_y_im).T @ Apo + (PsiD0bis.real + PsiD0bis.imag) - Eps/shift_tot <= 0)
-            model.addConstr( (PsiD_grad_y_re - PsiD_grad_y_im).T @ Apo + (PsiD0bis.real - PsiD0bis.imag) - Eps/shift_tot <= 0)
-            model.addConstr((-PsiD_grad_y_re + PsiD_grad_y_im).T @ Apo +(-PsiD0bis.real + PsiD0bis.imag) - Eps/shift_tot <= 0)
-            model.addConstr((-PsiD_grad_y_re - PsiD_grad_y_im).T @ Apo +(-PsiD0bis.real - PsiD0bis.imag) - Eps/shift_tot <= 0)
+            model.addConstr( (PsiD_grad_y_re + PsiD_grad_y_im).T @ Apo + (PsiD0bis.real + PsiD0bis.imag) - Eps/(shift_tot/corono0.nPup) <= 0)
+            model.addConstr( (PsiD_grad_y_re - PsiD_grad_y_im).T @ Apo + (PsiD0bis.real - PsiD0bis.imag) - Eps/(shift_tot/corono0.nPup) <= 0)
+            model.addConstr((-PsiD_grad_y_re + PsiD_grad_y_im).T @ Apo +(-PsiD0bis.real + PsiD0bis.imag) - Eps/(shift_tot/corono0.nPup) <= 0)
+            model.addConstr((-PsiD_grad_y_re - PsiD_grad_y_im).T @ Apo +(-PsiD0bis.real - PsiD0bis.imag) - Eps/(shift_tot/corono0.nPup) <= 0)
 
          
     else:
@@ -1190,15 +1190,15 @@ for k in range(nProgRef):
         
         # Add contraint of robustness to Lyot Stop misalignment
         if LSRobustness:
-            model.addConstr( (PsiD_grad_x_re + PsiD_grad_x_im).T @ Apo - Psi0/shift_tot <= 0)
-            model.addConstr( (PsiD_grad_x_re - PsiD_grad_x_im).T @ Apo - Psi0/shift_tot <= 0)
-            model.addConstr((-PsiD_grad_x_re + PsiD_grad_x_im).T @ Apo - Psi0/shift_tot <= 0)
-            model.addConstr((-PsiD_grad_x_re - PsiD_grad_x_im).T @ Apo - Psi0/shift_tot <= 0)    
+            model.addConstr( (PsiD_grad_x_re + PsiD_grad_x_im).T @ Apo - Psi0/(shift_tot/corono0.nPup) <= 0)
+            model.addConstr( (PsiD_grad_x_re - PsiD_grad_x_im).T @ Apo - Psi0/(shift_tot/corono0.nPup) <= 0)
+            model.addConstr((-PsiD_grad_x_re + PsiD_grad_x_im).T @ Apo - Psi0/(shift_tot/corono0.nPup) <= 0)
+            model.addConstr((-PsiD_grad_x_re - PsiD_grad_x_im).T @ Apo - Psi0/(shift_tot/corono0.nPup) <= 0)    
 
-            model.addConstr( (PsiD_grad_y_re + PsiD_grad_y_im).T @ Apo - Psi0/shift_tot <= 0)
-            model.addConstr( (PsiD_grad_y_re - PsiD_grad_y_im).T @ Apo - Psi0/shift_tot <= 0)
-            model.addConstr((-PsiD_grad_y_re + PsiD_grad_y_im).T @ Apo - Psi0/shift_tot <= 0)
-            model.addConstr((-PsiD_grad_y_re - PsiD_grad_y_im).T @ Apo - Psi0/shift_tot <= 0)    
+            model.addConstr( (PsiD_grad_y_re + PsiD_grad_y_im).T @ Apo - Psi0/(shift_tot/corono0.nPup) <= 0)
+            model.addConstr( (PsiD_grad_y_re - PsiD_grad_y_im).T @ Apo - Psi0/(shift_tot/corono0.nPup) <= 0)
+            model.addConstr((-PsiD_grad_y_re + PsiD_grad_y_im).T @ Apo - Psi0/(shift_tot/corono0.nPup) <= 0)
+            model.addConstr((-PsiD_grad_y_re - PsiD_grad_y_im).T @ Apo - Psi0/(shift_tot/corono0.nPup) <= 0)    
             
             
     # Update model

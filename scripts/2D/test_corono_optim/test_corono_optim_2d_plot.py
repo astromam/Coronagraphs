@@ -42,7 +42,7 @@ if True:
     FirstDerGlobalLim = 1.
     
     #nPup = corono0.params['nPup']
-    nPup0 = 200
+    nPup0 = 100
     nExt = 10
     nPup = nPup0 + nExt
     nFPM = 50
@@ -92,7 +92,7 @@ if True:
     
     #nlam
     bw   = 0.2
-    nlam = 3
+    nlam = 1
 
     # Lyot stop with dead actuators
     do_dead_act = True
@@ -105,9 +105,9 @@ if True:
     LSRobustness_qua = False
     LSRobustness_qua2 = False
     
-    LSRobustness_sev = True
+    LSRobustness_sev = False
     LSRobustness_v8 = False
-    LSRobustness_v9 = False
+    LSRobustness_v9 = True
 
     LSRobustness_coeff_pre = 10 #0.05
     LSRobustness_coeff_bis = 1.0
@@ -149,7 +149,7 @@ if True:
     
     do_fits = False
 
-nlambis = 5
+nlambis = 1
 Fmax2dbis = 50
 nImg2dbis = 500    
 
