@@ -95,10 +95,7 @@ alpha = 0 # np.pi/3 # np.arctan2(shift_x, shift_y)
 shift_y = shift_tot*np.cos(alpha)
 shift_x = shift_tot*np.sin(alpha)
 
-nalpha = 4
-alpha_t = (2.*np.pi/nalpha)*np.arange(nalpha)
-
-LSRobustness_coeff_v9 = 1.0
+LSRobustness_coeff_v9 = shift_tot*1.
 
 str_LSRcoeff_v9 = ''
 if LSRobustness:
@@ -638,7 +635,7 @@ def compute_corono_field_2d_qrt_LSrobustness_bis(Apod2d_qrt, Pupil2d_qrt, LyotSt
 
 
 #%%    
-def compute_corono_field_2d_LSasym_LSrobustness_bis(Apod2d_qrt, Pupil2d_qrt, LyotStop2d, dist2d, shift_tot, alpha, corono=None):
+def compute_corono_field_2d_LSasym_LSrobustness_bis(Apod2d_qrt, Pupil2d_qrt, LyotStop2d, dist2d, str_axis, corono=None):
     """
     Computes the coronagraph electric field for a classical Lyot coronagraph
     with four planes (A: entrance pupil, B: intermediate focal plane, 
@@ -665,24 +662,27 @@ def compute_corono_field_2d_LSasym_LSrobustness_bis(Apod2d_qrt, Pupil2d_qrt, Lyo
     else:
         field_A_qrt    = Apod2d_qrt*Pupil2d_qrt
                     
-        field_Dtmp = np.zeros((corono.nlam,corono.nImg2d,corono.nImg2d), dtype=dtype0)
-        field_Dtmp_shift_ana = np.zeros((corono.nlam,corono.nImg2d,corono.nImg2d), dtype=dtype0)
+        # field_Dtmp = np.zeros((corono.nlam,corono.nImg2d,corono.nImg2d), dtype=dtype0)
+        field_Dtmp_shift_grad_xy = np.zeros((corono.nlam,corono.nImg2d,corono.nImg2d), dtype=dtype0)
         
-        
-        xidr = np.zeros((2*corono.nPup,2*corono.nPup), dtype='float64')
+         # dot product term insde the complex exponential to represent the shift in spatial domain
+        if str_axis == 'x':
+            xixy = (2.*np.pi)*xxp
+        elif str_axis == 'y':
+            xixy = (2.*np.pi)*yyp
+        else:
+            raise NameError(f'str_axis is {str_axis}, should be x or y')
 
-        # dot product term insde the complex exponential to represent the shift in spatial domain
-        xidr = (2.*np.pi)*(yyp*(shift_tot*np.cos(alpha)/nDim0) + xxp*(shift_tot*np.sin(alpha)/nDim0))
 
         # direct Fourier transform of the Lyot stop 
         FT_LyotStop2d = coro.utils.sft(LyotStop2d, 2*nDim0, nDim0, 
                   CtrBtwnPix=True)
         
         # FT of the Lyot stop multiplied by the exponential term to represent the shift in spatial domain
-        weighted_FT_LyotStop2d = FT_LyotStop2d*np.exp(-1j*xidr)
+        weighted_FT_LyotStop2d_xy = FT_LyotStop2d*(-1j*xixy)
         
         # shifted Lyot stop using FTs
-        LyotStop2d_shift_ana = coro.utils.isft(weighted_FT_LyotStop2d, nDim0, nDim0, 
+        LyotStop2d_shift_ana_xy = coro.utils.isft(weighted_FT_LyotStop2d_xy, nDim0, nDim0, 
                   CtrBtwnPix=True)
 
     
@@ -702,17 +702,17 @@ def compute_corono_field_2d_LSasym_LSrobustness_bis(Apod2d_qrt, Pupil2d_qrt, Lyo
             #           CtrBtwnPix=True)
        
             # electric field in the re-imaged pupil plane C after the shifted Lyot stop
-            field_L_shift_ana = field_C*LyotStop2d_shift_ana #
+            field_L_shift_ana_xy = field_C*LyotStop2d_shift_ana_xy
             
             # electric field in the final image plane D after the shifted Lyot stop
-            field_Dtmp_shift_ana[i] = coro.utils.sft(field_L_shift_ana, corono0.nImg2d, corono0.mD_t[i], 
+            field_Dtmp_shift_grad_xy[i] = coro.utils.sft(field_L_shift_ana_xy, corono0.nImg2d, corono0.mD_t[i], 
                       CtrBtwnPix=True) 
                             
-        return field_Dtmp_shift_ana
+        return field_Dtmp_shift_grad_xy
 
 
 #%%
-def compute_response_matrices_qrt_LSrobustness_bis(idx_pup, idx_dz, npp, ndz, shift_tot, alpha, corono=None):
+def compute_response_matrices_qrt_LSrobustness_bis(idx_pup, idx_dz, npp, ndz, str_axis, corono=None):
     r"""
     Computes the response matrix for the coronagraph with and without 
     the focal plane mask.
@@ -752,8 +752,7 @@ def compute_response_matrices_qrt_LSrobustness_bis(idx_pup, idx_dz, npp, ndz, sh
                 (i0,j0) = np.unravel_index(val, (corono.nPup//2, corono.nPup//2))
                 Apod2d_qrt[i0,j0] = 1
                 test = 0
-                test = (1./4)*compute_corono_field_2d_LSasym_LSrobustness_bis(Apod2d_qrt, Pupil2d_qrt, corono.LyotStop2d, dist2d, shift_tot, alpha, corono)
-                #test *= 1./nalpha    
+                test = (1./4)*compute_corono_field_2d_LSasym_LSrobustness_bis(Apod2d_qrt, Pupil2d_qrt, corono.LyotStop2d, dist2d, str_axis, corono)    
                 corono_field_re_t_tmp[i] = np.reshape(test.real, (nlam, nImg2d**2))
                 corono_field_im_t_tmp[i] = np.reshape(test.imag, (nlam, nImg2d**2))
                 Apod2d_qrt[i0,j0] = 0 
@@ -1066,12 +1065,16 @@ for k in range(nProgRef):
     if LSRobustness:
         
         print('LS constraints')
-        PsiD_LSdiff_re = np.empty_like(PsiD_im) 
-        PsiD_LSdiff_im = np.empty_like(PsiD_re) 
-        # if ImPart:
-        #     PsiD_LSdiff_re[0:npp,0:nPsiD], PsiD_LSdiff_im[0:npp,0:nPsiD] = compute_response_matrices_qrt_LSrobustness_bis(idx_pup, idx_dz, npp, ndz, shift_tot, alpha_t, corono0)
-        # else:
-        #     PsiD_LSdiff_re[0:npp,0:nPsiD] = compute_response_matrices_qrt_LSrobustness_bis(idx_pup, idx_dz, npp, ndz, shift_tot, alpha_t, corono0)
+        PsiD_grad_x_re = np.empty_like(PsiD_im) 
+        PsiD_grad_x_im = np.empty_like(PsiD_re) 
+        PsiD_grad_y_re = np.empty_like(PsiD_im) 
+        PsiD_grad_y_im = np.empty_like(PsiD_re) 
+        if ImPart:
+            PsiD_grad_x_re[0:npp,0:nPsiD], PsiD_grad_x_im[0:npp,0:nPsiD] = compute_response_matrices_qrt_LSrobustness_bis(idx_pup, idx_dz, npp, ndz, 'x', corono0)
+            PsiD_grad_y_re[0:npp,0:nPsiD], PsiD_grad_y_im[0:npp,0:nPsiD] = compute_response_matrices_qrt_LSrobustness_bis(idx_pup, idx_dz, npp, ndz, 'y', corono0)
+        else:
+            PsiD_grad_x_re[0:npp,0:nPsiD] = compute_response_matrices_qrt_LSrobustness_bis(idx_pup, idx_dz, npp, ndz, 'x', corono0)
+            PsiD_grad_y_re[0:npp,0:nPsiD] = compute_response_matrices_qrt_LSrobustness_bis(idx_pup, idx_dz, npp, ndz, 'y', corono0)
 
     
     PsiD0bis = 0
@@ -1090,8 +1093,10 @@ for k in range(nProgRef):
     print(f'dimensions PsiD_im: {np.shape(PsiD_im)}')
     print(f'PsiD axis-0: {np.shape(PsiD_re)[0]}')
     if LSRobustness:
-        print(f'dimensions PsiD_LSdiff_re: {np.shape(PsiD_LSdiff_re)}')
-        print(f'dimensions PsiD_LSdiff_im: {np.shape(PsiD_LSdiff_im)}')
+        print(f'dimensions PsiD_grad_x_re: {np.shape(PsiD_grad_x_re)}')
+        print(f'dimensions PsiD_grad_x_im: {np.shape(PsiD_grad_x_im)}')
+        print(f'dimensions PsiD_grad_y_re: {np.shape(PsiD_grad_y_re)}')
+        print(f'dimensions PsiD_grad_y_im: {np.shape(PsiD_grad_y_im)}')
     if ImPart:
         print(f'PsiD axis-1: {np.shape(PsiD_im)[1]}\n')
     
@@ -1139,16 +1144,15 @@ for k in range(nProgRef):
         
         # Add contraint of robustness to Lyot Stop misalignment
         if LSRobustness:
-#            model.addConstr( PsiD_LSdiff_re.T @ Apo - PsiD0bis.real - Eps/(shift_tot/corono0.nPup) <= 0)
-            PsiD_LSdiff_total = 0
-            for ialpha, alpha_val in enumerate(alpha_t):
-                PsiD_LSdiff_re[0:npp,0:nPsiD], PsiD_LSdiff_im[0:npp,0:nPsiD] = compute_response_matrices_qrt_LSrobustness_bis(idx_pup, idx_dz, npp, ndz, shift_tot, alpha, corono0)
-                
-                PsiD_LSdiff_total += np.abs(PsiD_LSdiff_re.T)
-            PsiD_LSdiff_total /= nalpha
-            
-            #model.addConstr( PsiD_LSdiff_re.T @ Apo - PsiD0bis.real - Eps <= 0)
-            model.addConstr( PsiD_LSdiff_total@Apo - PsiD0bis.real - Eps <= 0)
+            model.addConstr( (PsiD_grad_x_re + PsiD_grad_x_im).T @ Apo + (PsiD0bis.real + PsiD0bis.imag) - Eps/shift_tot <= 0)
+            model.addConstr( (PsiD_grad_x_re - PsiD_grad_x_im).T @ Apo + (PsiD0bis.real - PsiD0bis.imag) - Eps/shift_tot <= 0)
+            model.addConstr((-PsiD_grad_x_re + PsiD_grad_x_im).T @ Apo +(-PsiD0bis.real + PsiD0bis.imag) - Eps/shift_tot <= 0)
+            model.addConstr((-PsiD_grad_x_re - PsiD_grad_x_im).T @ Apo +(-PsiD0bis.real - PsiD0bis.imag) - Eps/shift_tot <= 0)
+
+            model.addConstr( (PsiD_grad_y_re + PsiD_grad_y_im).T @ Apo + (PsiD0bis.real + PsiD0bis.imag) - Eps/shift_tot <= 0)
+            model.addConstr( (PsiD_grad_y_re - PsiD_grad_y_im).T @ Apo + (PsiD0bis.real - PsiD0bis.imag) - Eps/shift_tot <= 0)
+            model.addConstr((-PsiD_grad_y_re + PsiD_grad_y_im).T @ Apo +(-PsiD0bis.real + PsiD0bis.imag) - Eps/shift_tot <= 0)
+            model.addConstr((-PsiD_grad_y_re - PsiD_grad_y_im).T @ Apo +(-PsiD0bis.real - PsiD0bis.imag) - Eps/shift_tot <= 0)
 
          
     else:
@@ -1176,7 +1180,15 @@ for k in range(nProgRef):
         
         # Add contraint of robustness to Lyot Stop misalignment
         if LSRobustness:
-            model.addConstr( PsiD_LSdiff_re.T @ Apo - Psi0 <= 0)
+            model.addConstr( (PsiD_grad_x_re + PsiD_grad_x_im).T @ Apo - Psi0/shift_tot <= 0)
+            model.addConstr( (PsiD_grad_x_re - PsiD_grad_x_im).T @ Apo - Psi0/shift_tot <= 0)
+            model.addConstr((-PsiD_grad_x_re + PsiD_grad_x_im).T @ Apo - Psi0/shift_tot <= 0)
+            model.addConstr((-PsiD_grad_x_re - PsiD_grad_x_im).T @ Apo - Psi0/shift_tot <= 0)    
+
+            model.addConstr( (PsiD_grad_y_re + PsiD_grad_y_im).T @ Apo - Psi0/shift_tot <= 0)
+            model.addConstr( (PsiD_grad_y_re - PsiD_grad_y_im).T @ Apo - Psi0/shift_tot <= 0)
+            model.addConstr((-PsiD_grad_y_re + PsiD_grad_y_im).T @ Apo - Psi0/shift_tot <= 0)
+            model.addConstr((-PsiD_grad_y_re - PsiD_grad_y_im).T @ Apo - Psi0/shift_tot <= 0)    
             
             
     # Update model
