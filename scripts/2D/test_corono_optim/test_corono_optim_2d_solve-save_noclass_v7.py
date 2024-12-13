@@ -89,7 +89,7 @@ LSRobustness = True
 
 #nlam
 bw   = 0.2
-nlam = 1
+nlam = 3
 shift_tot = 1. # np.sqrt(2.) #np.sqrt(shift_x**2+shift_y**2)
 alpha = 0 # np.pi/3 # np.arctan2(shift_x, shift_y)
 shift_y = shift_tot*np.cos(alpha)
