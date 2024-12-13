@@ -412,6 +412,20 @@ weighted_FT_LyotStop2d = FT_LyotStop2d*np.exp(-1j*xidr)
 LyotStop2d_shift_ana = coro.utils.isft(weighted_FT_LyotStop2d, corono0.nPup, corono0.nPup, 
           CtrBtwnPix=True)
 
+# tests for first order derivation of the electric field after the shifted Lyot Stop
+xixx = (2.*np.pi)*xxp
+xiyy = (2.*np.pi)*yyp
+
+# FT of the Lyot stop multiplied by the exponential term to represent the shift in spatial domain
+weighted_FT_LyotStop2d_x = FT_LyotStop2d*(-1j*xixx)
+weighted_FT_LyotStop2d_y = FT_LyotStop2d*(-1j*xiyy)
+
+LyotStop2d_shift_ana_x = coro.utils.isft(weighted_FT_LyotStop2d_x, corono0.nPup, corono0.nPup, 
+          CtrBtwnPix=True)
+LyotStop2d_shift_ana_y = coro.utils.isft(weighted_FT_LyotStop2d_y, corono0.nPup, corono0.nPup, 
+          CtrBtwnPix=True)
+
+
 #%%
 """
 ### Electric field in the final image plane D with or without Lyot stop shift
@@ -419,7 +433,8 @@ LyotStop2d_shift_ana = coro.utils.isft(weighted_FT_LyotStop2d, corono0.nPup, cor
 field_Dtmp = np.zeros((corono0.nlam,corono0.nImg2d,corono0.nImg2d), dtype=dtype0)
 field_Dtmp_shift_num = np.zeros((corono0.nlam,corono0.nImg2d,corono0.nImg2d), dtype=dtype0)
 field_Dtmp_shift_ana = np.zeros((corono0.nlam,corono0.nImg2d,corono0.nImg2d), dtype=dtype0)
-
+field_Dtmp_shift_grad_x = np.zeros((corono0.nlam,corono0.nImg2d,corono0.nImg2d), dtype=dtype0)
+field_Dtmp_shift_grad_y = np.zeros((corono0.nlam,corono0.nImg2d,corono0.nImg2d), dtype=dtype0)
 
 #%%
 """
@@ -457,6 +472,18 @@ if do_FPM:
         field_Dtmp_shift_ana[i] = coro.utils.sft(field_L_shift_ana, corono0.nImg2d, corono0.mD_t[i]*(nPup/nPupLS), 
                   CtrBtwnPix=True) 
 
+        # tests for first order derivation of the electric field after the shifted Lyot Stop                                                 
+        field_L_shift_ana_x = field_C*LyotStop2d_shift_ana_x
+        field_L_shift_ana_y = field_C*LyotStop2d_shift_ana_y
+        
+        field_Dtmp_shift_grad_x[i] = coro.utils.sft(field_L_shift_ana_x, corono0.nImg2d, corono0.mD_t[i]*(nPup/nPupLS), 
+                  CtrBtwnPix=True) 
+        field_Dtmp_shift_grad_y[i] = coro.utils.sft(field_L_shift_ana_y, corono0.nImg2d, corono0.mD_t[i]*(nPup/nPupLS), 
+                  CtrBtwnPix=True) 
+        
+#        field_Dtmp_shift_grad_x[i] = field_Dtmp[i] + ((shift_tot*np.cos(alpha)/nPup0)*grad_y + (shift_tot*np.sin(alpha)/nPup0)*grad_x) 
+
+
         
 else:
     for i in range(corono0.nlam):
@@ -481,6 +508,16 @@ else:
         # electric field in the final image plane D after the shifted Lyot stop
         field_Dtmp_shift_ana[i] = coro.utils.sft(field_L_shift_ana, corono0.nImg2d, corono0.mD_t[i]*(nPup/nPupLS), 
                   CtrBtwnPix=True) 
+
+        # tests for first order derivation of the electric field after the shifted Lyot Stop                                                 
+        field_L_shift_ana_x = field_A*LyotStop2d_shift_ana_x
+        field_L_shift_ana_y = field_A*LyotStop2d_shift_ana_y
+        
+        field_Dtmp_shift_grad_x[i] = coro.utils.sft(field_L_shift_ana_x, corono0.nImg2d, corono0.mD_t[i]*(nPup/nPupLS), 
+                  CtrBtwnPix=True) 
+        field_Dtmp_shift_grad_y[i] = coro.utils.sft(field_L_shift_ana_y, corono0.nImg2d, corono0.mD_t[i]*(nPup/nPupLS), 
+                  CtrBtwnPix=True) 
+
                
 
 #%%
@@ -660,6 +697,32 @@ plt.title(r'Im(shifted LS$_{num}$)')
 plt.subplot(236)
 plt.imshow(np.imag(LyotStop2d_shift_ana-LyotStop2d_shift_num))
 plt.title(r'diff')
+
+#%%
+"""
+### Display plots for gradient
+"""
+plt.figure(60, (9, 9))
+plt.clf()
+plt.subplot(331)
+plt.imshow(np.log10(np.abs(field_Dtmp[ilam0])**2), cmap='inferno', vmin=-7, vmax=0)
+plt.title(r'$|\Psi_D|^2$')
+plt.subplot(332)
+plt.imshow(np.log10(np.abs(field_Dtmp_shift_num[ilam0])**2), cmap='inferno', vmin=-7, vmax=0)
+plt.title(r'$|\Psi_{Dnum}^{dr}|^2$')
+plt.subplot(333)
+plt.imshow(np.log10(np.abs(field_Dtmp[ilam0]-field_Dtmp_shift_num[ilam0])**2), cmap='inferno', vmin=-7, vmax=0)
+plt.title(r'$|\Psi_{Dnum}^{dr}-\Psi_D|^2$')
+plt.subplot(335)
+plt.imshow(np.log10(np.abs(field_Dtmp_shift_grad_x[ilam0])**2), cmap='inferno', vmin=-7, vmax=0)
+plt.title(r'$|\Psi_{Dgradx}^{dr}|^2$')
+plt.subplot(336)
+plt.imshow(np.log10(np.abs(field_Dtmp_shift_grad_y[ilam0])**2), cmap='inferno', vmin=-7, vmax=0)
+plt.title(r'$|\Psi_{Dgrady}^{dr}|^2$')
+# plt.subplot(338)
+# plt.imshow(np.log10(np.abs(field_Dtmp_shift_num[ilam0]-field_Dtmp_shift_grad_x[ilam0])**2), cmap='inferno', vmin=-7, vmax=0)
+# plt.title(r'$|\Psi_{Dnum}^{dr}-\Psi_{Dgradx}^{dr}|^2$')
+
 
 #%%
 """

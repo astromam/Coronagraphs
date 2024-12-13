@@ -92,7 +92,7 @@ if True:
     
     #nlam
     bw   = 0.2
-    nlam = 1
+    nlam = 3
 
     # Lyot stop with dead actuators
     do_dead_act = True
@@ -149,7 +149,7 @@ if True:
     
     do_fits = False
 
-nlambis = 1
+nlambis = 5
 Fmax2dbis = 50
 nImg2dbis = 500    
 
