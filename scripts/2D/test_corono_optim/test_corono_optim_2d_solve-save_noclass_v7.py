@@ -83,7 +83,7 @@ CtrBtwnPix  = True
 CtrBtwnPix2 = True
 Pupil2dSym  = True
 ImPart      = True 
-LSRobustness = True 
+LSRobustness = False 
 # kwd_qrt = True
 
 
