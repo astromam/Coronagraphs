@@ -51,7 +51,7 @@ FirstDerGlobalLim = 100.
 BinarityReg       = 0.1
 
 #nPup = corono0.params['nPup']
-nPup0 = 200#512
+nPup0 = 400#512
 nExt0 = 0
 nDim0 = nPup0 + nExt0
 nFPM = 50
@@ -90,7 +90,7 @@ LSRobustness = True # (new robustness approach using derivative of the field wit
 #nlam
 bw   = 0.2
 nlam = 3
-shift_tot = np.sqrt(2.) #np.sqrt(shift_x**2+shift_y**2)
+shift_tot = 2. #np.sqrt(shift_x**2+shift_y**2)
 alpha = 0 # np.pi/3 # np.arctan2(shift_x, shift_y)
 shift_y = shift_tot*np.cos(alpha)
 shift_x = shift_tot*np.sin(alpha)
