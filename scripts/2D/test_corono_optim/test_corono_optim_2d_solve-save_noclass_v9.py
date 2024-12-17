@@ -685,14 +685,14 @@ def compute_corono_field_2d_LSasym_LSrobustness_bis(Apod2d_qrt, Pupil2d_qrt, Lyo
 
 
         # direct Fourier transform of the Lyot stop 
-        FT_LyotStop2d = coro.utils.sft(LyotStop2d, 2*nDim0, nDim0, 
+        FT_LyotStop2d = coro.utils.sft(LyotStop2d, 2*nDim, nDim, 
                   CtrBtwnPix=True)
         
         # FT of the Lyot stop multiplied by the exponential term to represent the shift in spatial domain
         weighted_FT_LyotStop2d_xy = FT_LyotStop2d*(-1j*xixy)
         
         # shifted Lyot stop using FTs
-        LyotStop2d_shift_ana_xy = coro.utils.isft(weighted_FT_LyotStop2d_xy, nDim0, nDim0, 
+        LyotStop2d_shift_ana_xy = coro.utils.isft(weighted_FT_LyotStop2d_xy, nDim, nDim, 
                   CtrBtwnPix=True)
 
     
@@ -715,7 +715,7 @@ def compute_corono_field_2d_LSasym_LSrobustness_bis(Apod2d_qrt, Pupil2d_qrt, Lyo
             field_L_shift_ana_xy = field_C*LyotStop2d_shift_ana_xy
             
             # electric field in the final image plane D after the shifted Lyot stop
-            field_Dtmp_shift_grad_xy[i] = coro.utils.sft(field_L_shift_ana_xy, corono0.nImg2d, corono0.mD_t[i], 
+            field_Dtmp_shift_grad_xy[i] = coro.utils.sft(field_L_shift_ana_xy, corono.nImg2d, corono.mD_t[i], 
                       CtrBtwnPix=True) 
                             
         return field_Dtmp_shift_grad_xy
@@ -976,7 +976,7 @@ for k in range(nProgRef):
                          np.arange(nImg2d)-nImg2d//2+1/2)
     dist2d = (Fmax2d/nImg2d)*np.hypot(yy,xx)
     
-    xyp = (nDim0/(2*nDim0))*(np.arange(2*nDim0)-2*nDim0//2+1/2)
+    xyp = (nDim/(2*nDim))*(np.arange(2*nDim)-2*nDim//2+1/2)
     xxp, yyp  = np.meshgrid(xyp, xyp)
     
     #%%
