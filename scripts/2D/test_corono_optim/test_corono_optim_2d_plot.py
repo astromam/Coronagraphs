@@ -42,8 +42,8 @@ if True:
     FirstDerGlobalLim = 1.
     
     #nPup = corono0.params['nPup']
-    nPup0 = 200
-    nExt = 10
+    nPup0 = 400
+    nExt = 20
     nPup = nPup0 + nExt
     nFPM = 50
     Fmax2d = 50
@@ -74,7 +74,7 @@ if True:
     LSRobustness = True
 
     test_shift = True
-    shift_tot = 1. #np.sqrt(shift_x**2+shift_y**2)
+    shift_tot = 2 #np.sqrt(shift_x**2+shift_y**2)
     alpha0 = 0 # np.pi/3 # np.arctan2(shift_x, shift_y)
     shift_y0 = shift_tot*np.cos(alpha0)
     shift_x0 = shift_tot*np.sin(alpha0)
@@ -117,7 +117,7 @@ if True:
     LSRobustness_coeff_sev = 24.
     
     LSRobustness_coeff_v8 = 0.1*np.sqrt(2.)/nPup
-    LSRobustness_coeff_v9 = np.sqrt(2.) #
+    LSRobustness_coeff_v9 = 2. #
 
 
 
