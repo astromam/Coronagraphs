@@ -51,7 +51,7 @@ FirstDerGlobalLim = 100.
 BinarityReg       = 0.1
 
 #nPup = corono0.params['nPup']
-nPup0 = 100#512
+nPup0 = 200#512
 nExt0 = 0
 nDim0 = nPup0 + nExt0
 nFPM = 50
@@ -90,12 +90,12 @@ LSRobustness = True # (new robustness approach using derivative of the field wit
 #nlam
 bw   = 0.2
 nlam = 1
-shift_tot0 = 2. #np.sqrt(shift_x**2+shift_y**2)
+shift_tot0 = 1. #np.sqrt(shift_x**2+shift_y**2)
 alpha = 0 # np.pi/3 # np.arctan2(shift_x, shift_y)
 shift_y = shift_tot0*np.cos(alpha)
 shift_x = shift_tot0*np.sin(alpha)
 
-LSRobustness_coeff_v9 = shift_tot0*2**nProgRef+1
+LSRobustness_coeff_v9 = shift_tot0*(2**(nProgRef-1))
 
 str_LSRcoeff_v9 = ''
 if LSRobustness:
@@ -872,7 +872,7 @@ for k in range(nProgRef):
     
     nDim = nDim0*2**k
     nPup = nPup0*2**k
-    shift_tot = shift_tot0*2**k
+    shift_tot = shift_tot0*(2**k)
     if pupil_name == 'lvr':
         fname_pup = f'ATLAST_Aperture_nPup={nPup}.fits'
         fname_lys = f'ATLAST_LyotStop_nPup={nPup}.fits'

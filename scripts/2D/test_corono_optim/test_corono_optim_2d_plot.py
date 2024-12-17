@@ -92,7 +92,7 @@ if True:
     
     #nlam
     bw   = 0.2
-    nlam = 3
+    nlam = 1
 
     # Lyot stop with dead actuators
     do_dead_act = True
@@ -117,7 +117,7 @@ if True:
     LSRobustness_coeff_sev = 24.
     
     LSRobustness_coeff_v8 = 0.1*np.sqrt(2.)/nPup
-    LSRobustness_coeff_v9 = 2. #
+    LSRobustness_coeff_v9 = 2*2**3+1 #
 
 
 
@@ -149,7 +149,7 @@ if True:
     
     do_fits = False
 
-nlambis = 5
+nlambis = 1
 Fmax2dbis = 50
 nImg2dbis = 500    
 
