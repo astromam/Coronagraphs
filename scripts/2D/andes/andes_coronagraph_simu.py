@@ -29,9 +29,10 @@ import time
 from pathlib import Path
 from datetime import datetime  #  asp for datetime of now
 
-import slow_fourier_transform as sft
+from slow_fourier_transform import sft, isft
 from uniform_disk import uniform_disk
 from psf_profile import profile
+from ncpa import ncpa
 
 #fontsize to 15 for all plots
 plt.rcParams.update({'font.size': 14})  #♦  mdiaye 15!
@@ -140,13 +141,13 @@ elif user == 'Adrien':
     # File directory
     fdir_dat = Path(
         '/Users/asimonnin/Desktop/PhD/Andes/Data_corono/data/').resolve()
+    
     # Directory for the OPD with the corresponding seed value
     fdir_res   = Path(
         '/Users/asimonnin/Desktop/PhD/Andes/Data_corono/results/').resolve()
     # Directory for the OPD with the corresponding seed value
     fdir_plt   = Path(
         '/Users/asimonnin/Desktop/PhD/Andes/Data_corono/plots/').resolve()
-
 elif user == 'Mamadou':
     fdir_base = ("/Users/mndiaye/Library/CloudStorage/"\
                  "OneDrive-UniversitéNiceSophiaAntipolis/data/andes")
@@ -157,9 +158,9 @@ elif user == 'Mamadou':
     # Directory for the OPD with the corresponding seed value
     fdir_plt   = Path( fdir_base / 'plots' ).resolve()
 
-# Directory for the pupils
-fdir_pupil = fdir_dat / 'Pupil'
-
+# Directory for the pupils, opds; results, plots
+fdir_pup = fdir_dat / 'Pupil'
+fdir_opd = fdir_dat / 'OPDs_PASSATA' / 'OPD'
 fdir_res = fdir_res / donow
 fdir_plt = fdir_plt / donow
 
@@ -184,7 +185,7 @@ pupils
 
 # Filename and path for the ELT pupil  //  'Tel-Pupil.fits' <-- OLD
 fname_elt = 'ELT_pupil_400.fits' # New pupil with new spider
-fpath_elt = fdir_pupil / fname_elt
+fpath_elt = fdir_pup / fname_elt
 
 # Read ELT pupil 
 Pupil = fits.getdata(fpath_elt,)
@@ -210,59 +211,51 @@ ncpa_d = np.zeros((nOPD,nPup,nPup))
 '''
 ncpa
 '''
-ncpa_d = np.zeros((nOPD,nPup,nPup))
 # power for power law of ncpa's dsp
 pwr=-2.
 
+ncpa_d = np.zeros((nOPD,nPup,nPup))
+
 if ncpa_rms!=0:
     
-    ncpa_d += 1.
-
-    # image dimensions, even, twice the pupil size, even too...    
-    nMap = nPup * 2  #  same as Pupil.shape[0] * 2
-    
-    # 2D frequency space
-    kx = (np.arange(nMap)-nMap//2)/(nMap/2)
-    ky = (np.arange(nMap)-nMap//2)/(nMap/2)
-    kx2, ky2 = np.meshgrid(kx, ky)
-    k = np.sqrt(kx2**2 + ky2**2)
-    
-    # DSP law in f^pwr / add epsilon to avoid zero division
-    pwr*=-1
-    epsilon = 1e-15
-    k_pwr = k**pwr
-    dsp = 1./(np.where(k_pwr!=0,k_pwr,epsilon))
-    amplitude = np.sqrt(dsp)
-
-    # uniform random phase generation then complex valued field
-    # amplitude.shape = tuple : *amplitude.shape tuple elements...
-    random = np.random.uniform(low=-0.5,high=0.5,size=amplitude.shape)
-    ncpa_field = amplitude * np.exp(1j*2.*np.pi*random)
-    ncpa = np.real(sft.isft(ncpa_field,nMap,nMap//2))
-    
-    N = nMap//2
-    hlf = N//2
-    rnd=np.random.randn(nOPD)
-    rnd /= 2.
-    xi=np.round(rnd*hlf/np.max([-np.min(rnd),np.max(rnd)])).astype(int)
-    rnd = rnd[::-1]
-    yi=np.round(rnd*hlf/np.max([-np.min(rnd),np.max(rnd)])).astype(int)
-    ncpa_d *= Pupil[None,:,:].copy()
-    iok = np.nonzero(Pupil.copy())
-    
-    for n in np.arange(nOPD):
-        
-        temp = ((ncpa[hlf+xi[n]:hlf+N+xi[n],
-                               hlf+yi[n]:hlf+N+yi[n]]).copy())
-        ncpa_d[n,:,:] *= temp
-        ncpa_d[n,:,:] -= np.mean(ncpa_d[n,:,:][iok])
-        ncpa_d[n,:,:] *= ncpa_rms/np.std(ncpa_d[n,:,:][iok])
+    ncpa_d = ncpa(ncpa_rms, nOPD, nPup, Pupil, pwr)
 
 
 #%%
 """
-### working directory of the OPD files
+### location of the set of OPD files
 """
+opds_dir={'set0':('20231124_090126.0','20231122_142204.0'),
+          'set1':('20240227_234849.0','20240228_053027.0','20240302_000411.0',
+                  '20240313_133532.0','20240228_112033.0'),
+          'JQ1':('20240515_163822','20240517_091216','20240517_100705',
+                 '20240517_103452','20240517_105822','20240517_111658',
+                 '20240517_113534','20240517_121247'),
+          'JQ2':('20240517_181033','20240517_183817','20240517_190418',
+                 '20240517_192251','20240517_194126','20240517_195959',
+                 '20240517_201835','20240517_203708'),
+          'JQM':('20240509_182041.0','20240509_183915.0','20240509_191620.0',
+                 '20240509_193453.0','20240509_195327.0','20240509_201200.0',
+                 '20240509_203033.0','20240509_204907.0','20240509_210742.0'),
+          'JQ3':('20240521_200540','20240521_181105','20240521_213115',
+                 '20240521_222747','20240521_210334','20240527_190439',
+                 '20240527_195648','20240527_204843','20240527_214043',
+                 '20240527_223245'),
+          'JQ4':('20240528_161522','20240528_163416','20240528_165414',
+                 '20240528_171307','20240528_173157','20240528_175246',
+                 '20240528_181244','20240528_183130','20240528_185018',
+                 '20240528_190906'),
+          'JQM_test':('20240509_201200.0',)}
+
+opd_set = ('JQM_test',)  # tuple, one or more set to choose
+
+dirs=[]
+
+for j in range(len(opd_set)):
+    for i in opds_dir.items():
+        if i[0] == opd_set[j]:
+            dirs.extend(i[1])
+
 # Directory for the OPDs with the corresponding seed value 
 # (from HARMONI simulation)
 # fdir_opd   = fdir_dat / 'OPD_Harmoni' / str(seed)
@@ -321,15 +314,15 @@ if ncpa_rms!=0:
 #           'OPDs_PASSATA/OPD/WS/JQ4/20240528_183130/JQ4/20240528_183130',
 #           'OPDs_PASSATA/OPD/WS/JQ4/20240528_185018/JQ4/20240528_185018',
 #           'OPDs_PASSATA/OPD/WS/JQ4/20240528_190906/JQ4/20240528_190906')
-opds_dir=('OPDs_PASSATA/OPD/WS/JQM/20240509_182041/20240509_182041.0',
-          'OPDs_PASSATA/OPD/WS/JQM/20240509_183915/20240509_183915.0',
-          'OPDs_PASSATA/OPD/WS/JQM/20240509_191620/20240509_191620.0',
-          'OPDs_PASSATA/OPD/WS/JQM/20240509_193453/20240509_193453.0',
-          'OPDs_PASSATA/OPD/WS/JQM/20240509_195327/20240509_195327.0',
-          'OPDs_PASSATA/OPD/WS/JQM/20240509_201200/20240509_201200.0',
-          'OPDs_PASSATA/OPD/WS/JQM/20240509_203033/20240509_203033.0',
-          'OPDs_PASSATA/OPD/WS/JQM/20240509_204907/20240509_204907.0',
-          'OPDs_PASSATA/OPD/WS/JQM/20240509_210742/20240509_210742.0')
+# opds_dir=('OPDs_PASSATA/OPD/WS/JQM/20240509_182041/20240509_182041.0',
+#           'OPDs_PASSATA/OPD/WS/JQM/20240509_183915/20240509_183915.0',
+#           'OPDs_PASSATA/OPD/WS/JQM/20240509_191620/20240509_191620.0',
+#           'OPDs_PASSATA/OPD/WS/JQM/20240509_193453/20240509_193453.0',
+#           'OPDs_PASSATA/OPD/WS/JQM/20240509_195327/20240509_195327.0',
+#           'OPDs_PASSATA/OPD/WS/JQM/20240509_201200/20240509_201200.0',
+#           'OPDs_PASSATA/OPD/WS/JQM/20240509_203033/20240509_203033.0',
+#           'OPDs_PASSATA/OPD/WS/JQM/20240509_204907/20240509_204907.0',
+#           'OPDs_PASSATA/OPD/WS/JQM/20240509_210742/20240509_210742.0')
 
 
 #%%
@@ -341,6 +334,8 @@ opds_dir=('OPDs_PASSATA/OPD/WS/JQM/20240509_201200/20240509_201200.0',)
 
 
 #%%
+
+all_files = os.walk(fdir_opd)
 
 for dir_nb in range(len(opds_dir)):
 
@@ -403,7 +398,7 @@ for dir_nb in range(len(opds_dir)):
         Fld_AA0 = Pupil * 1.*LyotStop2d
         
         # Field in the image plane D (no coronagraph)
-        Fld_DD0 = sft.sft(Fld_AA0, nImg, mD*diam)
+        Fld_DD0 = sft(Fld_AA0, nImg, mD*diam)
         
         # Intensity 
         Int_DD0[i,:] = np.abs(Fld_DD0)**2
@@ -421,16 +416,16 @@ for dir_nb in range(len(opds_dir)):
         # pupil plane A
         Fld_AA = Pupil * 1.
         # focal plane B 
-        Fld_BB = mask2d*sft.sft(Fld_AA, nFPM, mB*lamC/lam)
+        Fld_BB = mask2d*sft(Fld_AA, nFPM, mB*lamC/lam)
         
         # pupil plane C before Lyot stop
-        Fld_CC = Fld_AA - sft.isft(Fld_BB, nPup, mB*lamC/lam)
+        Fld_CC = Fld_AA - isft(Fld_BB, nPup, mB*lamC/lam)
         
         # # pupil plane C after Lyot stop
         Fld_LL = Fld_CC*LyotStop2d
         
         # image plane D 
-        Fld_DD = sft.sft(Fld_LL, nImg, mD*diam)
+        Fld_DD = sft(Fld_LL, nImg, mD*diam)
         
         # Intensity
         Int_DD[i,:] = np.abs(Fld_DD)**2
@@ -458,7 +453,7 @@ for dir_nb in range(len(opds_dir)):
                       * LyotStop2d)
             
             # Field in the image plane D (no coronagraph)
-            Fld_D0 = sft.sft(Fld_A0, nImg, mD*diam) ## with Lyot stop
+            Fld_D0 = sft(Fld_A0, nImg, mD*diam) ## with Lyot stop
             
             # Intensity 
             Int_D0[i,:] += np.abs(Fld_D0)**2 ## with Lyot stop
@@ -489,16 +484,16 @@ for dir_nb in range(len(opds_dir)):
                                 fpm_dec * D * sf_y / nPup)/lam))
             
             # focal plane B 
-            Fld_B = mask2d*sft.sft(Fld_A0, nFPM, mB*lamC/lam)
+            Fld_B = mask2d*sft(Fld_A0, nFPM, mB*lamC/lam)
             
             # pupil plane C before Lyot stop
-            Fld_C = Fld_A0 - sft.isft(Fld_B, nPup, mB*lamC/lam)
+            Fld_C = Fld_A0 - isft(Fld_B, nPup, mB*lamC/lam)
             
             # pupil plane C after Lyot stop
             Fld_L = Fld_C*LyotStop2d
             
             # image plane D 
-            Fld_D = sft.sft(Fld_L, nImg, mD*diam)
+            Fld_D = sft(Fld_L, nImg, mD*diam)
             
             # Intensity
             Int_D[i,:] += np.abs(Fld_D)**2    
