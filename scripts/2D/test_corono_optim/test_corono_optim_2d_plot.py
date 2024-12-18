@@ -42,8 +42,8 @@ if True:
     FirstDerGlobalLim = 1.
     
     #nPup = corono0.params['nPup']
-    nPup0 = 800
-    nExt = 20
+    nPup0 = 200
+    nExt = int(0.05*nPup0)
     nPup = nPup0 + nExt
     nFPM = 50
     Fmax2d = 50
@@ -92,7 +92,7 @@ if True:
     
     #nlam
     bw   = 0.2
-    nlam = 1
+    nlam = 3
 
     # Lyot stop with dead actuators
     do_dead_act = True
@@ -117,7 +117,7 @@ if True:
     LSRobustness_coeff_sev = 24.
     
     LSRobustness_coeff_v8 = 0.1*np.sqrt(2.)/nPup
-    LSRobustness_coeff_v9 = 4 #
+    LSRobustness_coeff_v9 = np.sqrt(2.)*int(0.005*nPup0) #4 #
 
 
 
@@ -149,7 +149,7 @@ if True:
     
     do_fits = False
 
-nlambis = 1
+nlambis = 5
 Fmax2dbis = 50
 nImg2dbis = 500    
 
@@ -824,10 +824,10 @@ if test_shift:
     plt.clf()
     im = plt.imshow(np.log10(poly_corono_image1_shift_all), vmin = -8, vmax = -3, cmap = cm.inferno)
     plt.title('Apod1 - apodized image (shift)')
-    cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.70])
+    cbar_ax = fig.add_axes([0.80, 0.15, 0.05, 0.70])
     fig.colorbar(im, cax=cbar_ax, label='Normalized intensity in log scale')
     plt.tight_layout()
-    plt.savefig(str(fpath))
+    plt.savefig(str(fpath), bbox_inches='tight')
 
 
 
