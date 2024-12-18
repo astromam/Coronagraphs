@@ -44,16 +44,27 @@ print('date of script execution : ', donow)
 
 #%%
 """
-### Parameters
+### various parameters
 """
-# Pupil size in pixels
-# nPup = 400  #  even
-
 # Sampling of the coronagraph focal plane mask
 nFPM = 100
+# Focal plane mask
+mask2d = uniform_disk(nFPM, nFPM/2.)
 
 # Image size
 nImg = 400  #*1.6 #  #  even/pair!
+
+# Pupil diameter in m 
+D = 38.54
+
+# plate scale in mas per pixel
+pscale = 0.3
+
+# angular separation of interest in mas
+as_oi = 25.
+
+# # of OPD phase screens
+nOPD = 2000
 
 # wavelengths in m
 lamC = 1600e-9  #  some reference wvl unique value
@@ -66,59 +77,11 @@ nL = len(lam_lst)
 
 print(nL, lam_stp, lam_lst, lamC)
 
-# Pupil diameter in m 
-D = 38.54
-
-# conversion l radian to mas
+# conversions
 rad2mas = np.pi/(180.*3600*1000)
 mas2rad = 1/rad2mas
 
-# plate scale in mas per pixel
-pscale = 0.3
-
-# angular separation of interest in mas
-as_oi = 25.
-
-# # of OPD phase screens
-nOPD = 2000
-
 lamCD2mas = (lamC/D)*mas2rad
-
-
-#%%
-"""
-### Coronagraphic components & aberrations
-"""
-# Focal plane mask
-mask2d = uniform_disk(nFPM, nFPM/2.)
-# diam = 0.90 obs = 0.37, mB = 4.5 with 'ELT_pupil_400.fits' YJH
-# diam = 0.96 obs = 0.30, mB = 4.5 with 'ELT_pupil_400.fits' HK
-# diam = 0.90 obs = 0.38 with 'Tel-Pupil.fits'
-diam = 0.90 # diameter of the pupil in fraction of the pupil size
-obst = 0.37 # diameter of the central obscuration in fraction of the pupil size
-
-# FPM size in lam/D in the focal plane B
-# 3.8 with 'Tel-Pupil.fits', old!
-mB = 4.5
-
-# dispersion mas/m
-disp = 0.  #  e.g 8e7 ou 80e6 = 80 mas / 1e-6 m
-
-# psf to fpm decentering in lamC/D then radians
-fpm_dec = 0.
-fpm_dec *= lamC/D
-
-# ncpa rms in meters for phase screens
-ncpa_rms = 100e-9  # e.g if 30 nm rms then 30e-9 m
-# power for power law of ncpa's dsp
-pwr=-2.
-
-# lyot stop angular position error in degres
-ls_ape = 0.
-
-# 2D arrays for pupil slope with tilt/dispersion
-sf_x = np.broadcast_to(np.arange(-nPup//2,nPup//2,1),(nPup,nPup)) + 0.5
-sf_y = np.transpose(sf_x.copy())
 
 # field of view
 # in mas
@@ -131,33 +94,56 @@ mD_ref = fov_rdn / ( lamC / D )
 
 #%%
 """
+### Coronagraphic components & aberrations
+"""
+
+# config tag: pupil fits filename, diam and obst in fraction of D, mB in lamc/D
+configs = {'H_23':('Tel-Pupil.fits',0.9,0.38,3.8),
+           'YJH_24':('ELT_pupil_400.fits',0.9,0.37,4.5),
+           'HK_24':('ELT_pupil_400.fits',0.96,0.3,4.5)}
+
+config = 'YJH_24'
+diam = configs[config][1]  # lyot pupil diameter in fraction of D
+obst = configs[config][2]  # lyot central obscuration in fraction of D
+mB = configs[config][3]  # FPM size in lamC/D in the focal plane B
+fname_elt = configs[config][0]  # input pupil fits filename
+
+# dispersion mas/m
+disp = 0.  #  e.g 8e7 ou 80e6 = 80 mas / 1e-6 m
+
+# psf to fpm decentering in lamC/D then radians
+fpm_dec = 0.
+fpm_dec *= lamC/D
+
+# ncpa rms in meters for phase screens
+ncpa_rms = 0.  # e.g if 30 nm rms then 30e-9 m
+# power for power law of ncpa's dsp
+pwr=-2.
+
+# lyot stop angular position error in degres
+ls_ape = 0.
+
+#%%
+"""
 ### Working directories
 """
 user = 'Alain'
 if user == 'Alain':
-    fdir_dat = Path("D:/Andes/Data_corono/data/").resolve()  # opd's seed value
-    fdir_res   = Path('D:/Andes/Data_corono/results/').resolve()  #  fits data
+    fdir_dat = Path("D:/Andes/Data_corono/data/").resolve()  # wfe data
+    fdir_res   = Path('D:/Andes/Data_corono/results/').resolve()  #  fits files
     fdir_plt   = Path('D:/Andes/Data_corono/plots/').resolve()   #  plots
 
 elif user == 'Adrien':
     # File directory
-    fdir_dat = Path(
-        '/Users/asimonnin/Desktop/PhD/Andes/Data_corono/data/').resolve()
-    
-    # Directory for the OPD with the corresponding seed value
-    fdir_res   = Path(
-        '/Users/asimonnin/Desktop/PhD/Andes/Data_corono/results/').resolve()
-    # Directory for the OPD with the corresponding seed value
-    fdir_plt   = Path(
-        '/Users/asimonnin/Desktop/PhD/Andes/Data_corono/plots/').resolve()
+    fdir_base = ("/Users/asimonnin/Desktop/PhD/Andes/Data_corono")
+    fdir_dat = Path(fdir_base / 'data/').resolve()
+    fdir_res   = Path(fdir_base / 'results/').resolve()
+    fdir_plt   = Path(fdir_base / 'plots/').resolve()
 elif user == 'Mamadou':
     fdir_base = ("/Users/mndiaye/Library/CloudStorage/"\
                  "OneDrive-UniversitéNiceSophiaAntipolis/data/andes")
-    # File directory
     fdir_dat = Path( fdir_base / 'data' ).resolve()
-    # Directory for the OPD with the corresponding seed value
     fdir_res   = Path( fdir_base / 'results' ).resolve()
-    # Directory for the OPD with the corresponding seed value
     fdir_plt   = Path( fdir_base / 'plots' ).resolve()
 
 # Directory for the pupils, opds; results, plots
@@ -184,14 +170,15 @@ Int_D_prf_avg = np.zeros([nL, 2, nImg//2])
 '''
 pupils
 '''
-
-# Filename and path for the ELT pupil  //  'Tel-Pupil.fits' <-- OLD
-fname_elt = 'ELT_pupil_400.fits' # New pupil with new spider
 fpath_elt = fdir_pup / fname_elt
 
 # Read ELT pupil 
 Pupil = fits.getdata(fpath_elt,)
 nPup = Pupil.shape[0]
+
+# 2D arrays for pupil slope with tilt/dispersion
+sf_x = np.broadcast_to(np.arange(-nPup//2,nPup//2,1),(nPup,nPup)) + 0.5
+sf_y = np.transpose(sf_x.copy())
 
 # Lyot stop
 LyotStop2d = Pupil*(uniform_disk(nPup, diam*nPup/2) -
@@ -488,6 +475,8 @@ for dir_nb in range(len(opds_dirs)):
                     fpath_Prf_D0, fpath_Prf_D)
     
     for fpath in fpath_psf_lst:
+        fits.setval(fpath,'CCFG',value=config,comment='coro config')
+        fits.setval(fpath,'PFNM',value=fname_elt,comment='elt pupil file name')
         fits.setval(fpath,'NPUP',value=nPup,comment='pupil size')
         fits.setval(fpath,'NFPM',value=nFPM,comment='FP coro. sampling')
         fits.setval(fpath,'NIMG',value=nImg,comment='image size')
@@ -500,7 +489,7 @@ for dir_nb in range(len(opds_dirs)):
         fits.setval(fpath,'DIAM',value=D,comment='pupil dimater in meters')
         fits.setval(fpath,'PSCL',value=pscale,comment='plate scale in mas')
         fits.setval(fpath,'SFPM',value=mB,
-                    comment='FPM (lam/D), first focal plane')
+                    comment='FPM (in LMBD/DIAM), first focal plane')
         fits.setval(fpath,'FDIA',value=diam,comment='fractional pup. diameter')
         fits.setval(fpath,'OBST',value=obst,comment='fractional obscuration')
         fits.setval(fpath,'OPDS',value=opd_set,comment='opd set creation date')
@@ -510,6 +499,7 @@ for dir_nb in range(len(opds_dirs)):
                     comment='psf to fpm offset in radians')
         fits.setval(fpath,'LSAE',value=ls_ape,
                     comment='lyot stop angular position error in degrees')
+        fits.setval(fpath,'DNOW',value=donow,comment='date of script exec.')
 
 
 
