@@ -9,8 +9,8 @@ Created on Fri Mar 31 13:26:29 2023
 """
 for multiple wavelengths compute normalized psf profiles intensity for coro 
 and no coro, with or without residual opds/windshake, including tilt, 
-atmospheric dispersion or ncpa, normalized to the peak intensity of the 
-aberration free not coronagraphic (no fpm) pupil with lyot stop
+atmospheric dispersion or ncpa. the output is normalized to the peak intensity 
+of the aberration free not coronagraphic (no fpm) pupil with lyot stop
 """
 
 #%%
@@ -47,7 +47,7 @@ print('date of script execution : ', donow)
 ### Parameters
 """
 # Pupil size in pixels
-nPup = 400  #  even
+# nPup = 400  #  even
 
 # Sampling of the coronagraph focal plane mask
 nFPM = 100
@@ -108,8 +108,10 @@ disp = 0.  #  e.g 8e7 ou 80e6 = 80 mas / 1e-6 m
 fpm_dec = 0.
 fpm_dec *= lamC/D
 
-# ncpa phase screens
+# ncpa rms in meters for phase screens
 ncpa_rms = 100e-9  # e.g if 30 nm rms then 30e-9 m
+# power for power law of ncpa's dsp
+pwr=-2.
 
 # lyot stop angular position error in degres
 ls_ape = 0.
@@ -189,6 +191,7 @@ fpath_elt = fdir_pup / fname_elt
 
 # Read ELT pupil 
 Pupil = fits.getdata(fpath_elt,)
+nPup = Pupil.shape[0]
 
 # Lyot stop
 LyotStop2d = Pupil*(uniform_disk(nPup, diam*nPup/2) -
@@ -201,157 +204,76 @@ if ls_ape != 0:
     pup_rot = pup_rot > 0.5
     LyotStop2d = pup_rot*(uniform_disk(nPup, diam*nPup/2) -
                           uniform_disk(nPup, obst*nPup/2))
-    # plt.imshow(LyotStop2d-ls2d)
-    # plt.show()
-
-ncpa_d = np.zeros((nOPD,nPup,nPup))
 
 
 #%%
 '''
 ncpa
 '''
-# power for power law of ncpa's dsp
-pwr=-2.
-
-ncpa_d = np.zeros((nOPD,nPup,nPup))
+ncpa_d = np.zeros((nOPD*2,nPup,nPup))
 
 if ncpa_rms!=0:
     
-    ncpa_d = ncpa(ncpa_rms, nOPD, nPup, Pupil, pwr)
+    ncpa_d = ncpa(ncpa_rms, nOPD*2, nPup, Pupil, pwr)
 
 
 #%%
 """
-### location of the set of OPD files
+### from subdirectoies name of the set of OPD files to paths of OPD data
 """
-opds_dir={'set0':('20231124_090126.0','20231122_142204.0'),
-          'set1':('20240227_234849.0','20240228_053027.0','20240302_000411.0',
-                  '20240313_133532.0','20240228_112033.0'),
-          'JQ1':('20240515_163822','20240517_091216','20240517_100705',
-                 '20240517_103452','20240517_105822','20240517_111658',
-                 '20240517_113534','20240517_121247'),
-          'JQ2':('20240517_181033','20240517_183817','20240517_190418',
-                 '20240517_192251','20240517_194126','20240517_195959',
-                 '20240517_201835','20240517_203708'),
-          'JQM':('20240509_182041.0','20240509_183915.0','20240509_191620.0',
-                 '20240509_193453.0','20240509_195327.0','20240509_201200.0',
-                 '20240509_203033.0','20240509_204907.0','20240509_210742.0'),
-          'JQ3':('20240521_200540','20240521_181105','20240521_213115',
-                 '20240521_222747','20240521_210334','20240527_190439',
-                 '20240527_195648','20240527_204843','20240527_214043',
-                 '20240527_223245'),
-          'JQ4':('20240528_161522','20240528_163416','20240528_165414',
-                 '20240528_171307','20240528_173157','20240528_175246',
-                 '20240528_181244','20240528_183130','20240528_185018',
-                 '20240528_190906'),
-          'JQM_test':('20240509_201200.0',)}
+sets={'set0':('20231124_090126.0','20231122_142204.0'),
+      'set1':('20240227_234849.0','20240228_053027.0','20240302_000411.0',
+              '20240313_133532.0','20240228_112033.0'),
+      'JQ1':('20240515_163822','20240517_091216','20240517_100705',
+             '20240517_103452','20240517_105822','20240517_111658',
+             '20240517_113534','20240517_121247'),
+      'JQ2':('20240517_181033','20240517_183817','20240517_190418',
+             '20240517_192251','20240517_194126','20240517_195959',
+             '20240517_201835','20240517_203708'),
+      'JQM':('20240509_182041.0','20240509_183915.0','20240509_191620.0',
+             '20240509_193453.0','20240509_195327.0','20240509_201200.0',
+             '20240509_203033.0','20240509_204907.0','20240509_210742.0'),
+      'JQ3':('20240521_200540','20240521_181105','20240521_213115',
+             '20240521_222747','20240521_210334','20240527_190439',
+             '20240527_195648','20240527_204843','20240527_214043',
+             '20240527_223245'),
+      'JQ4':('20240528_161522','20240528_163416','20240528_165414',
+             '20240528_171307','20240528_173157','20240528_175246',
+             '20240528_181244','20240528_183130','20240528_185018',
+             '20240528_190906'),
+      'JQM_test':('20240509_201200.0',)}
 
-opd_set = ('JQM_test',)  # tuple, one or more set to choose
+opd_sets = ('JQM_test',)  # tuple, select one or more sets
 
-dirs=[]
+roots = []
+for root, subdirs, files in os.walk(fdir_opd):
+    roots.append(root)
 
-for j in range(len(opd_set)):
-    for i in opds_dir.items():
-        if i[0] == opd_set[j]:
-            dirs.extend(i[1])
+opds_dirs = []    
+for o_s in range(len(opd_sets)):
+    for s_i in sets.items():
+        if s_i[0] == opd_sets[o_s]:
+            for s_v in s_i[1][:]:
+                # should be one subdir only, the last/longest path if not ...
+                opds_dirs.append([s for s in roots if s_v in s][-1])
 
-# Directory for the OPDs with the corresponding seed value 
-# (from HARMONI simulation)
-# fdir_opd   = fdir_dat / 'OPD_Harmoni' / str(seed)
-
-# New set of OPDs from PASSATA 
-
-# opds_dir=('OPDs_PASSATA/OPD/20231124_090126.0/',
-#           'OPDs_PASSATA/OPD/20231122_142204.0/',
-#           'OPDs_PASSATA/OPD/20240227_234849-007/20240227_234849.0',
-#           'OPDs_PASSATA/OPD/20240228_053027-001/20240228_053027.0',
-#           'OPDs_PASSATA/OPD/20240302_000411-003/20240302_000411.0',
-#           'OPDs_PASSATA/OPD/20240313_133532-004/20240313_133532.0',
-#           'OPDs_PASSATA/OPD/20240228_112033-002/20240228_112033.0')
-# opds_dir=('OPDs_PASSATA/OPD/WS/JQ1/20240515_163822',
-#           'OPDs_PASSATA/OPD/WS/JQ1/20240517_091216',
-#           'OPDs_PASSATA/OPD/WS/JQ1/20240517_100705',
-#           'OPDs_PASSATA/OPD/WS/JQ1/20240517_103452',
-#           'OPDs_PASSATA/OPD/WS/JQ1/20240517_105822',
-#           'OPDs_PASSATA/OPD/WS/JQ1/20240517_111658',
-#           'OPDs_PASSATA/OPD/WS/JQ1/20240517_113534',
-#           'OPDs_PASSATA/OPD/WS/JQ1/20240517_121247',
-#           'OPDs_PASSATA/OPD/WS/JQ2/20240517_181033',
-#           'OPDs_PASSATA/OPD/WS/JQ2/20240517_183817',
-#           'OPDs_PASSATA/OPD/WS/JQ2/20240517_190418',
-#           'OPDs_PASSATA/OPD/WS/JQ2/20240517_192251',
-#           'OPDs_PASSATA/OPD/WS/JQ2/20240517_194126',
-#           'OPDs_PASSATA/OPD/WS/JQ2/20240517_195959',
-#           'OPDs_PASSATA/OPD/WS/JQ2/20240517_201835',
-#           'OPDs_PASSATA/OPD/WS/JQ2/20240517_203708',
-#           'OPDs_PASSATA/OPD/WS/JQM/20240509_182041/20240509_182041.0',
-#           'OPDs_PASSATA/OPD/WS/JQM/20240509_183915/20240509_183915.0',
-#           'OPDs_PASSATA/OPD/WS/JQM/20240509_191620/20240509_191620.0',
-#           'OPDs_PASSATA/OPD/WS/JQM/20240509_193453/20240509_193453.0',
-#           'OPDs_PASSATA/OPD/WS/JQM/20240509_195327/20240509_195327.0',
-#           'OPDs_PASSATA/OPD/WS/JQM/20240509_201200/20240509_201200.0',
-#           'OPDs_PASSATA/OPD/WS/JQM/20240509_203033/20240509_203033.0',
-#           'OPDs_PASSATA/OPD/WS/JQM/20240509_204907/20240509_204907.0',
-#           'OPDs_PASSATA/OPD/WS/JQM/20240509_210742/20240509_210742.0',
-#           'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-001/JQ3/20240521_200540',
-#           'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-004/JQ3/20240521_181105',
-#           'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-002/JQ3/20240521_213115',
-#           'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-005/JQ3/20240521_222747',
-#           'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-003/JQ3/20240521_210334',
-#           'OPDs_PASSATA/OPD/WS/JQ3/20240527_190439/JQ3/20240527_190439',
-#           'OPDs_PASSATA/OPD/WS/JQ3/20240527_195648/JQ3/20240527_195648',
-#           'OPDs_PASSATA/OPD/WS/JQ3/20240527_204843/JQ3/20240527_204843',
-#           'OPDs_PASSATA/OPD/WS/JQ3/20240527_214043/JQ3/20240527_214043',
-#           'OPDs_PASSATA/OPD/WS/JQ3/20240527_223245/JQ3/20240527_223245',
-#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_161522/JQ4/20240528_161522',
-#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_163416/JQ4/20240528_163416',
-#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_165414/JQ4/20240528_165414',
-#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_171307/JQ4/20240528_171307',
-#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_173157/JQ4/20240528_173157',
-#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_175246/JQ4/20240528_175246',
-#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_181244/JQ4/20240528_181244',
-#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_183130/JQ4/20240528_183130',
-#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_185018/JQ4/20240528_185018',
-#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_190906/JQ4/20240528_190906')
-# opds_dir=('OPDs_PASSATA/OPD/WS/JQM/20240509_182041/20240509_182041.0',
-#           'OPDs_PASSATA/OPD/WS/JQM/20240509_183915/20240509_183915.0',
-#           'OPDs_PASSATA/OPD/WS/JQM/20240509_191620/20240509_191620.0',
-#           'OPDs_PASSATA/OPD/WS/JQM/20240509_193453/20240509_193453.0',
-#           'OPDs_PASSATA/OPD/WS/JQM/20240509_195327/20240509_195327.0',
-#           'OPDs_PASSATA/OPD/WS/JQM/20240509_201200/20240509_201200.0',
-#           'OPDs_PASSATA/OPD/WS/JQM/20240509_203033/20240509_203033.0',
-#           'OPDs_PASSATA/OPD/WS/JQM/20240509_204907/20240509_204907.0',
-#           'OPDs_PASSATA/OPD/WS/JQM/20240509_210742/20240509_210742.0')
-
-
-#%%
-'''
-opd set for test
-'''
-
-opds_dir=('OPDs_PASSATA/OPD/WS/JQM/20240509_201200/20240509_201200.0',)
-
-
+print(opds_dirs)
 #%%
 
-all_files = os.walk(fdir_opd)
+for dir_nb in range(len(opds_dirs)):
 
-for dir_nb in range(len(opds_dir)):
+    opds_dir   = opds_dirs[dir_nb]
 
-    new_spider_flare = fdir_dat / opds_dir[dir_nb]
-    fdir_opd   = new_spider_flare
-
-    opd_set = os.path.basename(fdir_opd).split('.')[0]
+    opd_set = os.path.basename(opds_dir).split('.')[0]
     print('opd set: ', opd_set)
     
     os.makedirs(fdir_res / opd_set, exist_ok=True)
     os.makedirs(fdir_plt / opd_set, exist_ok=True)
     
     # Filename and path for the OPD maps
-    flist_opd = os.listdir(fdir_opd) 
+    flist_opd = os.listdir(opds_dir) 
     nof = len(flist_opd)
-    fpath_opd = [fdir_opd / flist_opd[i] for i in range(nof)]
+    fpath_opd = [(opds_dir+'/'+flist_opd[i]) for i in range(nof)]
     fpath_opd = sorted(fpath_opd)
     nW = int(np.floor((nof/nOPD)+1))
     if nW>2:
