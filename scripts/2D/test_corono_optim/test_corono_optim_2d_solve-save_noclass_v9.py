@@ -89,8 +89,8 @@ LSRobustness = True # (new robustness approach using derivative of the field wit
 
 #nlam
 bw   = 0.2
-nlam = 1
-shift_tot0 = 1. #np.sqrt(shift_x**2+shift_y**2)
+nlam = 3
+shift_tot0 = int(0.005*nPup0) #np.sqrt(shift_x**2+shift_y**2)
 alpha = 0 # np.pi/3 # np.arctan2(shift_x, shift_y)
 shift_y = shift_tot0*np.cos(alpha)
 shift_x = shift_tot0*np.sin(alpha)
