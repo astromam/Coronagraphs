@@ -42,7 +42,7 @@ if True:
     FirstDerGlobalLim = 1.
     
     #nPup = corono0.params['nPup']
-    nPup0 = 800
+    nPup0 = 200
     nExt = int(0.05*nPup0)
     nPup = nPup0 + nExt
     nFPM = 50
@@ -105,9 +105,9 @@ if True:
     LSRobustness_qua = False
     LSRobustness_qua2 = False
     
-    LSRobustness_sev = False
+    LSRobustness_sev = True
     LSRobustness_v8 = False
-    LSRobustness_v9 = True
+    LSRobustness_v9 = False
 
     LSRobustness_coeff_pre = 10 #0.05
     LSRobustness_coeff_bis = 1.0
@@ -117,7 +117,7 @@ if True:
     LSRobustness_coeff_sev = 24.
     
     LSRobustness_coeff_v8 = 0.1*np.sqrt(2.)/nPup
-    LSRobustness_coeff_v9 = int(0.005*nPup0)# np.sqrt(2.)*int(0.005*nPup0) #4 #
+    LSRobustness_coeff_v9 = np.sqrt(2.)*int(0.005*nPup0) #int(0.005*nPup0)#  #4 #
 
 
 
