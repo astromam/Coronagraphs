@@ -10,6 +10,7 @@ License: MIT license
 """
 import numpy as np
 import matplotlib.pyplot as plt
+plt.rcParams.update({'font.size': 16})
 #import pylab as plt
 from pathlib import Path
 
@@ -42,7 +43,7 @@ if True:
     FirstDerGlobalLim = 1.
     
     #nPup = corono0.params['nPup']
-    nPup0 = 200
+    nPup0 = 800
     nExt = int(0.05*nPup0)
     nPup = nPup0 + nExt
     nFPM = 50
@@ -74,19 +75,21 @@ if True:
     LSRobustness = True
 
     test_shift = True
-    shift_tot = int(0.005*nPup0) #np.sqrt(shift_x**2+shift_y**2)
+    shift_tot0 = 1.0 #int(0.005*nPup0) #np.sqrt(shift_x**2+shift_y**2)
     alpha0 = 0 # np.pi/3 # np.arctan2(shift_x, shift_y)
-    shift_y0 = shift_tot*np.cos(alpha0)
-    shift_x0 = shift_tot*np.sin(alpha0)
+    shift_y0 = shift_tot0*np.cos(alpha0)
+    shift_x0 = shift_tot0*np.sin(alpha0)
 
     # shift_x0 = 0
     # shift_y0 = 1
     test_flip_x = False
     test_flip_y = False
     
-    nshift = 5
-    shift_x_t = int(0.005*nPup0)*(np.arange(nshift)-nshift//2)
-    shift_y_t = int(0.005*nPup0)*(np.arange(nshift)-nshift//2)
+    nshift = 9
+    shift_max = 1.
+    shift_xy_t = (shift_max/(nshift//2))*(np.arange(nshift)-nshift//2)
+    shift_x_t = shift_xy_t*1 #int(0.005*nPup0)*(np.arange(nshift)-nshift//2)
+    shift_y_t = shift_xy_t*1 #int(0.005*nPup0)*(np.arange(nshift)-nshift//2)
     
     ishift_all0 = nshift*np.where(shift_x_t == shift_x0)[0][0] + np.where(shift_x_t == shift_y0)[0][0]
     
@@ -105,9 +108,9 @@ if True:
     LSRobustness_qua = False
     LSRobustness_qua2 = False
     
-    LSRobustness_sev = True
+    LSRobustness_sev = False
     LSRobustness_v8 = False
-    LSRobustness_v9 = False
+    LSRobustness_v9 = True
 
     LSRobustness_coeff_pre = 10 #0.05
     LSRobustness_coeff_bis = 1.0
@@ -117,7 +120,7 @@ if True:
     LSRobustness_coeff_sev = 24.
     
     LSRobustness_coeff_v8 = 0.1*np.sqrt(2.)/nPup
-    LSRobustness_coeff_v9 = np.sqrt(2.)*int(0.005*nPup0) #int(0.005*nPup0)#  #4 #
+    LSRobustness_coeff_v9 = 2*np.sqrt(2.)*int(0.005*nPup0) # np.sqrt(2.)*int(0.005*nPup0) #  int(0.005*nPup0)#  #4 #
 
 
 
@@ -421,14 +424,35 @@ if test_shift:
     poly_direct_image1_shift = np.zeros((nshift**2, nImg2dbis, nImg2dbis))
     poly_corono_image1_shift = np.zeros((nshift**2, nImg2dbis, nImg2dbis))
     
+    xidr = np.zeros((2*nPup,2*nPup), dtype='float64')
+    xyp = (nPup/(2*nPup))*(np.arange(2*nPup)-2*nPup//2+1/2)
+    xxp, yyp  = np.meshgrid(xyp, xyp)
+    
     for ishift_x, shift_x in enumerate(shift_x_t):
         for ishift_y, shift_y in enumerate(shift_y_t):
             
             ishift_all = nshift*ishift_x + ishift_y
     
-            LyotStop2d_shift = np.roll(np.roll(LyotStop2d, shift_x, axis=0), shift_y, axis=1)
+#            LyotStop2d_shift = np.roll(np.roll(LyotStop2d, shift_x, axis=0), shift_y, axis=1)
+            shift_tot = np.sqrt(shift_x**2+shift_y**2)
+            alpha = np.arctan2(shift_x, shift_y)
+
+            # dot product term insde the complex exponential to represent the shift in spatial domain
+            xidr = (2.*np.pi)*(yyp*(shift_tot*np.cos(alpha)/nPup) + xxp*(shift_tot*np.sin(alpha)/nPup))
+    
+            # direct Fourier transform of the Lyot stop 
+            FT_LyotStop2d = coro.utils.sft(LyotStop2d, 2*nPup, nPup, 
+                      CtrBtwnPix=True)
             
-            params_shift    = coro.update_params(params, rMask = rMask*(nPup/nPup0), nlam=nlambis, Fmax2d = Fmax2dbis*(nPup/nPupLS), nImg2d = nImg2dbis, LyotStop2d = LyotStop2d_shift)
+            # FT of the Lyot stop multiplied by the exponential term to represent the shift in spatial domain
+            weighted_FT_LyotStop2d = FT_LyotStop2d*np.exp(-1j*xidr)
+            
+            # shifted Lyot stop using FTs
+            LyotStop2d_shift_ana = coro.utils.isft(weighted_FT_LyotStop2d, nPup, nPup, 
+                      CtrBtwnPix=True)
+
+            
+            params_shift    = coro.update_params(params, rMask = rMask*(nPup/nPup0), nlam=nlambis, Fmax2d = Fmax2dbis*(nPup/nPupLS), nImg2d = nImg2dbis, LyotStop2d = LyotStop2d_shift_ana)
             if corono_name == 'SP':
                 corono0_shift = coro.design.SP2d(**params_shift)
             elif corono_name == 'APLC':
@@ -820,11 +844,19 @@ if test_shift:
     fpath = fdir_pdf / fname
     
     
-    fig = plt.figure(40, (12, 9))
+    shift_x_t_str = [f'{i:.2f}' for i in shift_x_t]
+    shift_y_t_str = [f'{i:.2f}' for i in shift_y_t]
+    
+    fig = plt.figure(40, (14, 9))
     plt.clf()
-    im = plt.imshow(np.log10(poly_corono_image1_shift_all), vmin = -8, vmax = -3, cmap = cm.inferno)
-    plt.title('Apod1 - apodized image (shift)')
-    cbar_ax = fig.add_axes([0.80, 0.15, 0.05, 0.70])
+    im = plt.imshow(np.log10(poly_corono_image1_shift_all), vmin = -8, vmax = -3, cmap = cm.inferno, origin='lower')
+    plt.xticks(nImg2dbis//2+nImg2dbis*np.arange(len(shift_x_t)), labels=shift_x_t_str)
+    plt.yticks(nImg2dbis//2+nImg2dbis*np.arange(len(shift_y_t)), labels=shift_y_t_str)
+    plt.xlabel('Lyot stop shift in % of pupil diameter along x-axis')
+    plt.ylabel('Lyot stop shift in % of pupil diameter along y-axis')
+    plt.vlines(x=nImg2dbis*np.arange(len(shift_x_t)), ymin=0, ymax=poly_corono_image1_shift_all.shape[0]-1, colors='w') 
+    plt.hlines(y=nImg2dbis*np.arange(len(shift_x_t)), xmin=0, xmax=poly_corono_image1_shift_all.shape[0]-1, colors='w') 
+    cbar_ax = fig.add_axes([0.82, 0.15, 0.03, 0.70])
     fig.colorbar(im, cax=cbar_ax, label='Normalized intensity in log scale')
     plt.tight_layout()
     plt.savefig(str(fpath), bbox_inches='tight')
