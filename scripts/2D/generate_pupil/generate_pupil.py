@@ -28,10 +28,10 @@ import xaosim
 pupil_name = 'vlt_btw'
 do_dead_act = False
 nPup= 384
-do_fits = True
+do_fits = False
 
-do_zeropad = True
-do_fits_zeropad = True
+do_zeropad = False
+do_fits_zeropad = False
 nArr = 384
 
 
