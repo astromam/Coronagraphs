@@ -151,3 +151,13 @@ data/2D/turbulence/Obs-Sequence-Parameters.csv
 *.txt
 *.dat
 *.dat
+
+scripts/2D/andes/sanstitre1.py
+
+scripts/2D/andes/sanstitre0.py
+
+scripts/2D/andes/pipo.py
+
+scripts/2D/andes/contrastValueExtraction.py
+
+scripts/2D/andes/contastAtLamC4JQs.py
