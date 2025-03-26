@@ -45,7 +45,7 @@ nImg = 400
 # lam_max = 2460e-9  #  max value in range
 # lam_itv = 4  #  nb of intervals in range --> nb+1 wvl's !
 
-wvl = 'YJHK'
+wvl = 'K'
 
 if wvl == 'K' : 
 
@@ -137,6 +137,10 @@ lamC = 1600e-9 # fix lam_c for all band(s)
 nL = len(lam_lst)
 
 print(nL, lam_stp, lam_lst)
+
+
+# if lambda of interest / D
+rW_mas = 10.  #  (lamC / D) * mas2rad
     
 # Pupil diameter in m 
 D = 38.54
@@ -263,9 +267,6 @@ rad_mas = rad_pix * (mas2rad * 58.393 / (D * 1e9) )
 
 #  angular separation
 aS = np.arange(nImg//2) * (mas2rad * 58.393 / (D * 1e9) )
-
-# if lambda of interest / D
-rW_mas = (lamC / D) * mas2rad
 
 ### Loop over the parameters
 for i in np.arange(nL):
