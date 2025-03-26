@@ -16,6 +16,8 @@ Created on Fri Mar 31 13:26:29 2023
 """
 
 import numpy as np
+from scipy import ndimage
+
 # pythonpath to update possibly...
 import slow_fourier_transform as sft
 from uniform_disk import uniform_disk
@@ -41,13 +43,13 @@ plt.rcParams.update({'font.size': 14})  #♦  mdiaye 15!
 ### Parameters
 """
 # Pupil size
-nPup = 400  #  even/pair!
+# nPup = 400  #  even/pair!
 
 # Sampling of the coronagraph focal plane mask
 nFPM = 100
 
-# field of view in mas
-f_o_v = 58.393
+# "field of view" in mas, not the real fov but some legacy nIMG*pscale/2...
+# f_o_v = 58.393
 
 # Image size
 nImg = 400  #*1.6 #  #  even/pair!
@@ -57,10 +59,6 @@ as_oi = 25.
 
 # # of OPD phase screens
 nOPD = 2000
-
-# ncpa phase screens
-ncpa = False
-ncpa_rms = 30  #  nm
 
 # wavelengths in m
 lamC = 1600e-9  #  some reference wvl unique value
@@ -84,32 +82,50 @@ mas2rad = 1/rad2mas
 pscale = 0.3
 
 lamCD2mas = (lamC/D)*mas2rad
+# field of view
+# in mas
+fov_mas = nImg * pscale
+# in radians
+fov_rdn = fov_mas * rad2mas
+# in multiple of reference lambda (lamC) over D
+mD_ref = fov_rdn / ( lamC / D )
 
 """
 ### Coronagraphic components
 """
 # Focal plane mask
 mask2d = uniform_disk(nFPM, nFPM/2.)
-# diam = 0.90 obs = 0.37, mB = 4.5 with 'ELT_pupil_400.fits' YJH
-# diam = 0.96 obs = 0.30, mB = 4.5 with 'ELT_pupil_400.fits' HK
+# diam = 0.90 obs = 0.37, mB = 4. with 'ELT_pupil_400.fits' YJH
+# diam = 0.96 obs = 0.30, mB = 4.5 with 'ELT_pupil_400.fits' K
 # diam = 0.90 obs = 0.38 with 'Tel-Pupil.fits'
 diam = 0.90 # diameter of the pupil in fraction of the pupil size
 obst = 0.37 # diameter of the central obscuration in fraction of the pupil size
 # FPM size in lam/D in the focal plane B
 # 4. with 'ELT_pupil_400.fits'
 # 3.8 with 'Tel-Pupil.fits', old!
-mB = 4.5 # 3.8  #  at 1600nm !!
+mB = 4. # 3.8  #  at 1600nm !!
 
 # dispersion mas/m
-disp = 5e6  #  e.g 8e7 ou 80e6 = 80 mas / 1e-6 m
+disp = 0.  #  e.g 8e7 ou 80e6 = 80 mas / 1e-6 m
 
-# psf to fpm decentering in lamC/D then radians
-fpm_dec = 0.25
-fpm_dec *= lamC/D
+# psf to fpm decentering in mas then for legacy in radians
+fpm_dec_mas = 0.
+fpm_dec = fpm_dec_mas * rad2mas
 
-# 2D array pupil slope for tilt
-sf_x = np.broadcast_to(np.arange(-nPup//2,nPup//2,1),(nPup,nPup)) + 0.5
-sf_y = np.transpose(sf_x.copy())
+# lyot stop angular position error in degres
+ls_ape = 0.
+# lyot stop vertical - elevation - offset error in pixels
+ls_voe = 0
+# lyot stop horizontal - azimut - offset error in pixels
+ls_hoe = 0
+
+# ncpa phase screens
+ncpa_rms = 0  #  nm
+
+# defocus at fpm in nm RMS for reference wvl
+fpm_dfe_elt = 0
+# fpm_dfe = -1 if fpm_dfe_elt = 0., computed dynamicaly otherwise
+fpm_dfe = fpm_dfe_elt - 1.
 
 # datetime of script execution
 donow = datetime.now().strftime("%Y%m%d%H%M%S")  #  asp, datetime of now
@@ -168,31 +184,80 @@ Int_D_prf_avg = np.zeros([nL, 2, nImg//2])
 
 
 #%%
-
+"""
+ncpa's, pupils, ncpa, defocus
+"""
 # Filename and path for the ELT pupil  //  'Tel-Pupil.fits' <-- OLD
 fname_elt = 'ELT_pupil_400.fits' # New pupil with new spider
 fpath_elt = fdir_pupil / fname_elt
-
-"""
-### Read file
-"""
 # Read ELT pupil 
 Pupil = fits.getdata(fpath_elt,)
+nPup = Pupil.shape[0]
+ipup = np.nonzero(Pupil)
 
-# plt.figure(0)
-# plt.clf()
-# plt.imshow(Pupil)
-# plt.title('ELT pupil')
-# plt.show()
-# plt.savefig(fdir_plt / 'New_ELT_pupil.png', dpi=300)
-# plt.show()
-# plt.close()
+# 2D array pupil slope for tilt
+sf_x = np.broadcast_to(np.arange(-nPup//2,nPup//2,1),(nPup,nPup)) + 0.5
+sf_y = np.transpose(sf_x.copy())
 
+#2D array for distance to center pixel in pupil, in [0,1]
+kx = (np.arange(nPup)-nPup//2)/(nPup/2)
+ky = (np.arange(nPup)-nPup//2)/(nPup/2)
+kx2, ky2 = np.meshgrid(kx, ky)
+rho = np.sqrt(kx2**2 + ky2**2)
+
+ncpa_d = np.zeros((nOPD,nPup,nPup))
+if ncpa_rms != 0:
+    print("NCPA [nm RMS]:",ncpa_rms)
+    # ncpa_d = np.zeros((nOPD,nImg,nImg))
+    fnm = ('ncpa_pupil_new_'+str(ncpa_rms)+'nm.fits')
+    ncpa_d = fits.getdata(fdir_dat/fnm)
+
+
+dfc = np.zeros((nPup,nPup))
+if fpm_dfe != 0:
+    
+    dfc = uniform_disk(nPup,nPup//2)
+    iok = np.nonzero(dfc)
+    dfc[iok] = np.sqrt(3.)*(rho[iok]*rho[iok]-1.)
+
+    dfc_temp = dfc.copy()
+    dfc_temp *= Pupil.copy()
+    mp = np.mean(dfc_temp[ipup])
+    dfc_temp -= mp
+    sp = np.std(dfc_temp[ipup])
+    dfc_temp /= sp
+    dfc_temp *= fpm_dfe_elt * 1e-9
+    dfc -= mp
+    dfc /= sp
+    dfc *= fpm_dfe_elt * 1e-9
+    dfc -= np.mean(dfc[iok])
+    fpm_dfe = np.std(dfc[iok]) * 1e9
+    dfc = dfc_temp.copy()    
+    
+    print('elt pupil circumcircle input defocus:', np.round(fpm_dfe,3),\
+          ',\nelt pupil input defocus:', np.round(fpm_dfe_elt,3))
+
+
+#%%
+'''
+rotate then shift Lyot Stop and defocus
+'''
 # Lyot stop
-LyotStop2d = Pupil*(
-    uniform_disk(nPup, diam*nPup/2)-uniform_disk(nPup, obst*nPup/2))
+LyotStop2d = Pupil*(uniform_disk(nPup, diam*nPup/2) -
+                    uniform_disk(nPup, obst*nPup/2))
 
+if ls_ape != 0:
+    
+    pup_rot = ndimage.rotate(Pupil,ls_ape, reshape=False)
+    pup_rot = pup_rot > 0.5
+    LyotStop2d = pup_rot*(uniform_disk(nPup, diam*nPup/2) -
+                          uniform_disk(nPup, obst*nPup/2))
 
+if ls_voe != 0 or ls_hoe != 0:
+    
+    LyotStop2d = np.roll(LyotStop2d,(ls_hoe,ls_voe),(1,0))
+
+    
 #%%
 """
 ### working directory of the OPD files
@@ -211,22 +276,51 @@ LyotStop2d = Pupil*(
 #               'OPDs_PASSATA/OPD/20240313_133532-004/20240313_133532.0',
 #               'OPDs_PASSATA/OPD/20240228_112033-002/20240228_112033.0')
 # opds_dir=('OPDs_PASSATA/OPD/WS/JQ1/20240515_163822',
-#           'OPDs_PASSATA/OPD/WS/JQ1/20240517_091216',
-#           'OPDs_PASSATA/OPD/WS/JQ1/20240517_100705',
-#           'OPDs_PASSATA/OPD/WS/JQ1/20240517_103452',
-#           'OPDs_PASSATA/OPD/WS/JQ1/20240517_105822',
-#           'OPDs_PASSATA/OPD/WS/JQ1/20240517_111658',
-#           'OPDs_PASSATA/OPD/WS/JQ1/20240517_113534',
-#           'OPDs_PASSATA/OPD/WS/JQ1/20240517_121247',
-#           'OPDs_PASSATA/OPD/WS/JQ2/20240517_181033',
-#           'OPDs_PASSATA/OPD/WS/JQ2/20240517_183817',
-#           'OPDs_PASSATA/OPD/WS/JQ2/20240517_190418',
-#           'OPDs_PASSATA/OPD/WS/JQ2/20240517_192251',
-#           'OPDs_PASSATA/OPD/WS/JQ2/20240517_194126',
-#           'OPDs_PASSATA/OPD/WS/JQ2/20240517_195959',
-#           'OPDs_PASSATA/OPD/WS/JQ2/20240517_201835',
-#           'OPDs_PASSATA/OPD/WS/JQ2/20240517_203708',
-#           'OPDs_PASSATA/OPD/WS/JQM/20240509_182041/20240509_182041.0',
+          # 'OPDs_PASSATA/OPD/WS/JQ1/20240517_091216',
+          # 'OPDs_PASSATA/OPD/WS/JQ1/20240517_100705',
+          # 'OPDs_PASSATA/OPD/WS/JQ1/20240517_103452',
+          # 'OPDs_PASSATA/OPD/WS/JQ1/20240517_105822',
+          # 'OPDs_PASSATA/OPD/WS/JQ1/20240517_111658',
+          # 'OPDs_PASSATA/OPD/WS/JQ1/20240517_113534',
+          # 'OPDs_PASSATA/OPD/WS/JQ1/20240517_121247',
+          # 'OPDs_PASSATA/OPD/WS/JQ2/20240517_181033',
+          # 'OPDs_PASSATA/OPD/WS/JQ2/20240517_183817',
+          # 'OPDs_PASSATA/OPD/WS/JQ2/20240517_190418',
+          # 'OPDs_PASSATA/OPD/WS/JQ2/20240517_192251',
+          # 'OPDs_PASSATA/OPD/WS/JQ2/20240517_194126',
+          # 'OPDs_PASSATA/OPD/WS/JQ2/20240517_195959',
+          # 'OPDs_PASSATA/OPD/WS/JQ2/20240517_201835',
+          # 'OPDs_PASSATA/OPD/WS/JQ2/20240517_203708',
+          # 'OPDs_PASSATA/OPD/WS/JQM/20240509_182041/20240509_182041.0',
+          # 'OPDs_PASSATA/OPD/WS/JQM/20240509_183915/20240509_183915.0',
+          # 'OPDs_PASSATA/OPD/WS/JQM/20240509_191620/20240509_191620.0',
+          # 'OPDs_PASSATA/OPD/WS/JQM/20240509_193453/20240509_193453.0',
+          # 'OPDs_PASSATA/OPD/WS/JQM/20240509_195327/20240509_195327.0',
+          # 'OPDs_PASSATA/OPD/WS/JQM/20240509_201200/20240509_201200.0',
+          # 'OPDs_PASSATA/OPD/WS/JQM/20240509_203033/20240509_203033.0',
+          # 'OPDs_PASSATA/OPD/WS/JQM/20240509_204907/20240509_204907.0',
+          # 'OPDs_PASSATA/OPD/WS/JQM/20240509_210742/20240509_210742.0',
+          # 'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-001/JQ3/20240521_200540',
+          # 'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-004/JQ3/20240521_181105',
+          # 'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-002/JQ3/20240521_213115',
+          # 'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-005/JQ3/20240521_222747',
+          # 'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-003/JQ3/20240521_210334',
+          # 'OPDs_PASSATA/OPD/WS/JQ3/20240527_190439/JQ3/20240527_190439',
+          # 'OPDs_PASSATA/OPD/WS/JQ3/20240527_195648/JQ3/20240527_195648',
+          # 'OPDs_PASSATA/OPD/WS/JQ3/20240527_204843/JQ3/20240527_204843',
+          # 'OPDs_PASSATA/OPD/WS/JQ3/20240527_214043/JQ3/20240527_214043',
+          # 'OPDs_PASSATA/OPD/WS/JQ3/20240527_223245/JQ3/20240527_223245',
+          # 'OPDs_PASSATA/OPD/WS/JQ4/20240528_161522/JQ4/20240528_161522',
+          # 'OPDs_PASSATA/OPD/WS/JQ4/20240528_163416/JQ4/20240528_163416',
+          # 'OPDs_PASSATA/OPD/WS/JQ4/20240528_165414/JQ4/20240528_165414',
+          # 'OPDs_PASSATA/OPD/WS/JQ4/20240528_171307/JQ4/20240528_171307',
+          # 'OPDs_PASSATA/OPD/WS/JQ4/20240528_173157/JQ4/20240528_173157',
+          # 'OPDs_PASSATA/OPD/WS/JQ4/20240528_175246/JQ4/20240528_175246',
+          # 'OPDs_PASSATA/OPD/WS/JQ4/20240528_181244/JQ4/20240528_181244',
+          # 'OPDs_PASSATA/OPD/WS/JQ4/20240528_183130/JQ4/20240528_183130',
+          # 'OPDs_PASSATA/OPD/WS/JQ4/20240528_185018/JQ4/20240528_185018',
+          # 'OPDs_PASSATA/OPD/WS/JQ4/20240528_190906/JQ4/20240528_190906')
+# opds_dir=('OPDs_PASSATA/OPD/WS/JQM/20240509_182041/20240509_182041.0',
 #           'OPDs_PASSATA/OPD/WS/JQM/20240509_183915/20240509_183915.0',
 #           'OPDs_PASSATA/OPD/WS/JQM/20240509_191620/20240509_191620.0',
 #           'OPDs_PASSATA/OPD/WS/JQM/20240509_193453/20240509_193453.0',
@@ -234,43 +328,18 @@ LyotStop2d = Pupil*(
 #           'OPDs_PASSATA/OPD/WS/JQM/20240509_201200/20240509_201200.0',
 #           'OPDs_PASSATA/OPD/WS/JQM/20240509_203033/20240509_203033.0',
 #           'OPDs_PASSATA/OPD/WS/JQM/20240509_204907/20240509_204907.0',
-#           'OPDs_PASSATA/OPD/WS/JQM/20240509_210742/20240509_210742.0',
-#           'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-001/JQ3/20240521_200540',
-#           'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-004/JQ3/20240521_181105',
-#           'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-002/JQ3/20240521_213115',
-#           'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-005/JQ3/20240521_222747',
-#           'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-003/JQ3/20240521_210334',
-#           'OPDs_PASSATA/OPD/WS/JQ3/20240527_190439/JQ3/20240527_190439',
-#           'OPDs_PASSATA/OPD/WS/JQ3/20240527_195648/JQ3/20240527_195648',
-#           'OPDs_PASSATA/OPD/WS/JQ3/20240527_204843/JQ3/20240527_204843',
-#           'OPDs_PASSATA/OPD/WS/JQ3/20240527_214043/JQ3/20240527_214043',
-#           'OPDs_PASSATA/OPD/WS/JQ3/20240527_223245/JQ3/20240527_223245',
-#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_161522/JQ4/20240528_161522',
-#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_163416/JQ4/20240528_163416',
-#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_165414/JQ4/20240528_165414',
-#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_171307/JQ4/20240528_171307',
-#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_173157/JQ4/20240528_173157',
-#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_175246/JQ4/20240528_175246',
-#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_181244/JQ4/20240528_181244',
-#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_183130/JQ4/20240528_183130',
-#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_185018/JQ4/20240528_185018',
-#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_190906/JQ4/20240528_190906')
-opds_dir=('OPDs_PASSATA/OPD/WS/JQM/20240509_182041/20240509_182041.0',
-          'OPDs_PASSATA/OPD/WS/JQM/20240509_183915/20240509_183915.0',
-          'OPDs_PASSATA/OPD/WS/JQM/20240509_191620/20240509_191620.0',
-          'OPDs_PASSATA/OPD/WS/JQM/20240509_193453/20240509_193453.0',
-          'OPDs_PASSATA/OPD/WS/JQM/20240509_195327/20240509_195327.0',
-          'OPDs_PASSATA/OPD/WS/JQM/20240509_201200/20240509_201200.0',
-          'OPDs_PASSATA/OPD/WS/JQM/20240509_203033/20240509_203033.0',
-          'OPDs_PASSATA/OPD/WS/JQM/20240509_204907/20240509_204907.0',
-          'OPDs_PASSATA/OPD/WS/JQM/20240509_210742/20240509_210742.0')
+#           'OPDs_PASSATA/OPD/WS/JQM/20240509_210742/20240509_210742.0')
+# opds_dir=('OPDs_PASSATA/OPD/WS/JQ1/20240515_163822',
+#           'OPDs_PASSATA/OPD/WS/JQM/20240509_201200/20240509_201200.0')
+opds_dir=('OPDs_PASSATA/OPD/WS/JQM/20240509_201200/20240509_201200.0',)
+# opds_dir=('OPDs_PASSATA/OPD/WS/JQ1/20240515_163822',)
+opds_dir=('OPDs_PASSATA/OPD/WS/ASI_staticVib',)
+
+#%%
 for dir_nb in range(len(opds_dir)):
 
     new_spider_flare = fdir_dat / opds_dir[dir_nb]
     fdir_opd   = new_spider_flare
-
-
-#%%%
     
     opd_set = os.path.basename(fdir_opd).split('.')[0]
     print(opd_set)
@@ -283,10 +352,10 @@ for dir_nb in range(len(opds_dir)):
     #%%
     
     # Filename and path for the OPD maps
-    flist_opd = os.listdir(fdir_opd) 
+    flist_opd = sorted(os.listdir(fdir_opd),key=len) 
     nof = len(flist_opd)
     fpath_opd = [fdir_opd / flist_opd[i] for i in range(nof)]
-    fpath_opd = sorted(fpath_opd)
+    # fpath_opd = sorted(fpath_opd)
     nW = int(np.floor((nof/nOPD)+1))
     if nW>2:
         fpath_opd = [fpath_opd[i] for i in range(1,nof,nW)]
@@ -302,29 +371,19 @@ for dir_nb in range(len(opds_dir)):
     t0 = time.time()
     # Read OPD maps for the nOPD files
     OPD_arr = np.asarray([fits.getdata(fpath_opd[i]) for i in range(nOPD)])
+
+    # pour jeu fichier fits unique, e.g: OPDs_PASSATA/OPD/WS/ASI_*
+    OPD_arr = OPD_arr[0,:,:,500:]
+    OPD_arr = np.transpose(OPD_arr,(2,0,1))
+    nOPD = OPD_arr.shape[0]
+
     t1 = time.time()
     print(f'OPD reading file time: {t1-t0:.3f}s')
     
-    OPD_arr = OPD_arr*1e-9 # convert OPD from nm `to m if new OPD with new pupil
-    ncpa_d = np.zeros((nOPD,nImg,nImg))
-    # print(OPD_arr.shape, OPD_arr[0].shape)
+    OPD_arr *= 1e-9 # convert OPD from nm `to m if new OPD with new pupil
+
     
-    if ncpa==True:
-        
-        fnm = ('ncpa_pupil_new_'+str(ncpa_rms)+'nm.fits')
-        ncpa_d = fits.getdata(fdir_dat/fnm)
-    
-    # plt.figure(2)
-    # plt.clf()
-    # plt.imshow(OPD_arr[200]*Pupil)
-    # plt.colorbar()
-    # plt.show()
-    
-    # opd_std = np.std(OPD_arr,axis=0)
-    # print(np.mean(opd_std[:]), np.std(opd_std[:]))
-    
-    # exit() # quit()?
-    #%%
+        #%%
     
     for i in np.arange(nL):
         
@@ -337,7 +396,8 @@ for dir_nb in range(len(opds_dir)):
         lamD2mas = (lam/D)*mas2rad
         
         # FoV in lam/D in the final image plane D
-        mD = f_o_v*(nImg/(lam*1e9))
+        # mD = f_o_v*(nImg/(lam*1e9))
+        mD = mD_ref * lamC / lam
         
         print('lambda (nm):' ,np.round(lam*1e9,0), '. Field of view (lam/D):',
               np.round(mD,3))
@@ -389,25 +449,7 @@ for dir_nb in range(len(opds_dir)):
         
         
         # pdb.set_trace()
-        #%%
-        
-        # plt.figure(3)
-        # plt.clf()
-        # plt.subplot(131)
-        # plt.imshow(np.abs(Fld_CC)**2)
-        # plt.title('bef. Lyot stop')
-        # plt.subplot(132)
-        # plt.imshow(np.log10(Int_DD0[i,:]), vmax =0, vmin = -5, cmap ='inferno')
-        # plt.title('perfect psf')
-        # plt.subplot(133)
-        # plt.imshow(np.log10(Int_DD[i,:]), vmax =0, vmin = -5, cmap ='inferno')
-        # plt.title('perf. coro. psf')
-        # plt_fnm = 'coronagraphic_image_lyotstop_'+str(int(lam*1e9))+'nm.png'
-        # plt.savefig(fdir_plt / opd_set / plt_fnm, dpi=300)
-        # plt.suptitle(f'lambda: $\lambda$={lam*1e6:.3f}$\mu$m')
-        # plt.show()
-        # plt.close()
-        
+                
         
     #%%    
         # computation of the averaged intensity profiles of the images  
@@ -435,7 +477,8 @@ for dir_nb in range(len(opds_dir)):
                                (OPD_arr[iOPD] +
                                 ncpa_d[iOPD] +
                                 tilt * D * sf_y / nPup +
-                                fpm_dec * D * sf_x / nPup)/lam)
+                                fpm_dec * D * sf_y / nPup +
+                                dfc)/lam)
                       * LyotStop2d)
             
             # Field in the image plane D (no coronagraph)
@@ -470,7 +513,8 @@ for dir_nb in range(len(opds_dir)):
                                (OPD_arr[iOPD] +
                                 ncpa_d[iOPD] +
                                 tilt * D * sf_y / nPup +
-                                fpm_dec * D * sf_x / nPup)/lam))
+                                fpm_dec * D * sf_y / nPup +
+                                dfc)/lam))
             
             # focal plane B 
             Fld_B = mask2d*sft.sft(Fld_A0, nFPM, mB*lamC/lam)
@@ -562,20 +606,35 @@ for dir_nb in range(len(opds_dir)):
         fits.setval(fpath,'NFPM',value=nFPM,comment='FP coro. sampling')
         fits.setval(fpath,'NIMG',value=nImg,comment='image size')
         fits.setval(fpath,'NOPD',value=nOPD,comment='number of OPD files')
-        fits.setval(fpath,'FOVS',value=f_o_v,comment='field of view in as')
+        fits.setval(fpath,'FOVS',value=fov_mas,comment='field of view in mas')
         fits.setval(fpath,'LMIN',value=lam_min,comment='wavelength in meters')
         fits.setval(fpath,'LITV',value=lam_itv,comment='# of wvl intervals')
         fits.setval(fpath,'LSTP',value=lam_stp,comment='wvl step in meters')
         fits.setval(fpath,'LMBD',value=lamC,comment='reference wvl in meters')
         fits.setval(fpath,'DIAM',value=D,comment='pupil dimater in meters')
         fits.setval(fpath,'PSCL',value=pscale,comment='plate scale in mas')
-        fits.setval(fpath,'SFPM',value=mB,comment='FPM (lam/D), first focal plane')
+        fits.setval(fpath,'SFPM',value=mB,
+                    comment='FPM (LMBD/D), first focal plane')
         fits.setval(fpath,'FDIA',value=diam,comment='fractional pup. diameter')
         fits.setval(fpath,'OBST',value=obst,comment='fractional obscuration')
         fits.setval(fpath,'OPDS',value=opd_set,comment='opd set creation date')
         fits.setval(fpath,'DISP',value=disp,comment='achr. disp. in mas/m bw')
         fits.setval(fpath,'NCPA',value=ncpa_rms,comment='ncpa rms in meters')
-        fits.setval(fpath,'FDEC',value=fpm_dec,comment='psf to fpm offset in radians')
+        fits.setval(fpath,'FDEC',value=fpm_dec,
+                    comment='psf to fpm offset in radians')
+        fits.setval(fpath,'FTLT',value=fpm_dec_mas,
+                    comment='psf to fpm offset in mas')
+        fits.setval(fpath,'LSAE',value=ls_ape,
+                    comment='lyot stop angular position error in degrees')
+        fits.setval(fpath,'LSVE',value=ls_voe,
+                    comment='lyot stop vertical offset error in pixels')
+        fits.setval(fpath,'LSHE',value=ls_hoe,
+                    comment='lyot stop horizontal offset error in pixels')
+        fits.setval(fpath,'ELT_DFOC',value=fpm_dfe_elt,
+                    comment='elt pupil input defocus in nm RMS\
+                        for reference wvl')
+        fits.setval(fpath,'DIAM_DFC',value=np.round(fpm_dfe,3),
+                    comment='pupil circumcircle input defocus nm RMS ref. wvl')
 
 
     #%%
