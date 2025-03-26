@@ -51,8 +51,8 @@ FirstDerGlobalLim = 100.
 BinarityReg       = 0.1
 
 #nPup = corono0.params['nPup']
-nPup0 = 514#512
-nExt0 = 50
+nPup0 = 1030 #512
+nExt0 = 0
 nDim0 = nPup0 + nExt0
 nFPM = 50
 Fmax2d = 45#22.5
@@ -62,7 +62,7 @@ LS_OD = 0.96
 nPupLS = int(nPup0*LS_OD)
 
 # number of progressive refinement
-nProgRef = 2
+nProgRef = 1
 
 # mask radius in lam0/D units
 #rMask = 1.766 # ALC1 at 1.593um (145mas) 
