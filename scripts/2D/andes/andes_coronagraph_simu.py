@@ -19,20 +19,19 @@ of the aberration free not coronagraphic (no fpm) pupil with lyot stop
 """
 
 import numpy as np
-from astropy.io import fits
 from scipy import ndimage
-
+from astropy.io import fits
 import matplotlib.pyplot as plt
 
 import os
+import sys
 import time
 from pathlib import Path
-from datetime import datetime  #  asp for datetime of now
+from datetime import datetime
 
 from slow_fourier_transform import sft, isft
 from uniform_disk import uniform_disk
 from psf_profile import profile
-from ncpa import ncpa
 
 #fontsize to 15 for all plots
 plt.rcParams.update({'font.size': 14})  #♦  mdiaye 15!
@@ -44,7 +43,7 @@ print('date of script execution : ', donow)
 
 #%%
 """
-### various parameters
+### various parameters related to scales
 """
 # Sampling of the coronagraph focal plane mask
 nFPM = 100
@@ -54,7 +53,7 @@ mask2d = uniform_disk(nFPM, nFPM/2.)
 # Image size
 nImg = 400  #*1.6 #  #  even/pair!
 
-# Pupil diameter in m 
+# ELT Pupil diameter in m 
 D = 38.54
 
 # plate scale in mas per pixel
@@ -63,11 +62,8 @@ pscale = 0.3
 # angular separation of interest in mas
 as_oi = 25.
 
-# # of OPD phase screens
-nOPD = 2000
-
 # wavelengths in m
-lamC = 1600e-9  #  some reference wvl unique value
+lamC = 1600e-9  #  reference wvl/ fixed / unique value
 lam_min = 960e-9  #  min value in range
 lam_max = 2450e-9  #  max value in range  #  2450e-9 // 1800e-9
 lam_itv = 18  #  nb of intervals in range --> nb+1 wvl's !  #  18 // 10
@@ -98,15 +94,15 @@ mD_ref = fov_rdn / ( lamC / D )
 """
 
 # config tag: pupil fits filename, diam and obst in fraction of D, mB in lamc/D
-configs = {'H_23':('Tel-Pupil.fits',0.9,0.38,3.8),
-           'YJH_24':('ELT_pupil_400.fits',0.9,0.37,4.5),
-           'HK_24':('ELT_pupil_400.fits',0.96,0.3,4.5)}
+configs = {'H_2023':('Tel-Pupil.fits',0.9,0.38,3.8),
+           'YJH_2024':('ELT_pupil_400.fits',0.9,0.37,4.),
+           'HK_2024':('ELT_pupil_400.fits',0.96,0.3,4.5)}
 
-config = 'YJH_24'
+config = 'YJH_2024'
+fname_elt = configs[config][0]  # input pupil fits filename
 diam = configs[config][1]  # lyot pupil diameter in fraction of D
 obst = configs[config][2]  # lyot central obscuration in fraction of D
 mB = configs[config][3]  # FPM size in lamC/D in the focal plane B
-fname_elt = configs[config][0]  # input pupil fits filename
 
 # dispersion mas/m
 disp = 0.  #  e.g 8e7 ou 80e6 = 80 mas / 1e-6 m
@@ -116,41 +112,50 @@ fpm_dec = 0.
 fpm_dec *= lamC/D
 
 # ncpa rms in meters for phase screens
-ncpa_rms = 0.  # e.g if 30 nm rms then 30e-9 m
-# power for power law of ncpa's dsp
-pwr=-2.
+ncpa = 0.  # e.g if 30 nm rms then 30e-9 m
 
 # lyot stop angular position error in degres
 ls_ape = 0.
 
+# lyot stop vertical - elevation - offset error in pixels
+ls_voe = 0
+# lyot stop horizontal - azimut - offset error in pixels
+ls_hoe = 0
+
+# defocus at fpm in nm RMS for reference wvl
+fpm_dfe_elt = 0.
+# fpm_dfe = -1 if fpm_dfe_elt = 0., computed dynamicaly otherwise
+fpm_dfe = fpm_dfe_elt - 1.
+
+
 #%%
 """
-### Working directories
+### Working directories, paths
 """
-user = 'Alain'
-if user == 'Alain':
-    fdir_dat = Path("D:/Andes/Data_corono/data/").resolve()  # wfe data
-    fdir_res   = Path('D:/Andes/Data_corono/results/').resolve()  #  fits files
-    fdir_plt   = Path('D:/Andes/Data_corono/plots/').resolve()   #  plots
+users={'Alain':"D:/Andes/Data_corono/",
+       'Adrien':"/Users/asimonnin/Desktop/PhD/Andes/Data_corono",
+       'Mamadou':("/Users/mndiaye/Library/CloudStorage/"\
+                  "OneDrive-UniversitéNiceSophiaAntipolis/data/andes")}
 
-elif user == 'Adrien':
-    # File directory
-    fdir_base = ("/Users/asimonnin/Desktop/PhD/Andes/Data_corono")
-    fdir_dat = Path(fdir_base / 'data/').resolve()
-    fdir_res   = Path(fdir_base / 'results/').resolve()
-    fdir_plt   = Path(fdir_base / 'plots/').resolve()
-elif user == 'Mamadou':
-    fdir_base = ("/Users/mndiaye/Library/CloudStorage/"\
-                 "OneDrive-UniversitéNiceSophiaAntipolis/data/andes")
-    fdir_dat = Path( fdir_base / 'data' ).resolve()
-    fdir_res   = Path( fdir_base / 'results' ).resolve()
-    fdir_plt   = Path( fdir_base / 'plots' ).resolve()
+user = 'Alain'
+
+fdir_dat = Path(users[user]+'/data').resolve()  # wfe data
+fdir_res = Path(users[user]+'/results').resolve()  #  fits files
+fdir_plt = Path(users[user]+'/plots').resolve()   #  plots
 
 # Directory for the pupils, opds; results, plots
 fdir_pup = fdir_dat / 'Pupil'
 fdir_opd = fdir_dat / 'OPDs_PASSATA' / 'OPD'
-fdir_res = fdir_res / donow
-fdir_plt = fdir_plt / donow
+fdir_res = fdir_res / config
+fdir_plt = fdir_plt / config
+fdir_res_ref = fdir_res / 'reference'
+fdir_plt_ref = fdir_plt / 'reference'
+
+os.makedirs(fdir_res_ref, exist_ok=True)
+os.makedirs(fdir_plt_ref, exist_ok=True)
+
+# # of OPD phase screens
+nOPD = 2000
 
 
 #%%
@@ -159,55 +164,102 @@ data cubes for all psfs and intensity profiles
 """
 
 Int_DD0 = np.zeros([nL, nImg, nImg])
-Int_DD = np.zeros([nL, nImg, nImg])
-Int_D0 = np.zeros([nL, nImg, nImg])
-Int_D = np.zeros([nL, nImg, nImg])
+Int_DD  = np.zeros([nL, nImg, nImg])
+Int_D0  = np.zeros([nL, nImg, nImg])
+Int_D   = np.zeros([nL, nImg, nImg])
 Int_D0_prf_avg = np.zeros([nL, 2, nImg//2])
-Int_D_prf_avg = np.zeros([nL, 2, nImg//2])
+Int_D_prf_avg  = np.zeros([nL, 2, nImg//2])
 
 
 #%%
 '''
-pupils
+pupils, ncpa, FPM defocus
 '''
-fpath_elt = fdir_pup / fname_elt
 
 # Read ELT pupil 
+fpath_elt = fdir_pup / fname_elt
 Pupil = fits.getdata(fpath_elt,)
 nPup = Pupil.shape[0]
+ipup = np.nonzero(Pupil)
 
 # 2D arrays for pupil slope with tilt/dispersion
 sf_x = np.broadcast_to(np.arange(-nPup//2,nPup//2,1),(nPup,nPup)) + 0.5
 sf_y = np.transpose(sf_x.copy())
 
+#2D array for distance to center pixel in pupil, in [0,1]
+kx = (np.arange(nPup)-nPup//2)/(nPup/2)
+ky = (np.arange(nPup)-nPup//2)/(nPup/2)
+kx2, ky2 = np.meshgrid(kx, ky)
+rho = np.sqrt(kx2**2 + ky2**2)
+
+
+ncpa_d = np.zeros((nOPD,nPup,nPup))
+if ncpa!=0:
+
+        pup = fpath_elt.stem
+        fnm = ('ncpa_'+pup+'_'+str(int(np.round(ncpa*1e9,0)))+'nm.fits')
+        try:
+            ncpa_d = fits.getdata(fdir_dat/fnm)
+            ncpa_shape = ncpa_d.shape
+            print('sample size of ncpa files:', ncpa_shape[0])
+
+        except:
+            print(fnm,' exists?')
+            sys.exit(1)
+
+dfc = np.zeros((nPup,nPup))
+if fpm_dfe != 0:
+    
+    dfc = uniform_disk(nPup,nPup//2)
+    iok = np.nonzero(dfc)
+    dfc[iok] = np.sqrt(3.)*(rho[iok]*rho[iok]-1.)
+
+    dfc_temp = dfc.copy()
+    dfc_temp *= Pupil.copy()
+    mp = np.mean(dfc_temp[ipup])
+    dfc_temp -= mp
+    sp = np.std(dfc_temp[ipup])
+    dfc_temp /= sp
+    dfc_temp *= fpm_dfe_elt * 1e-9
+    dfc -= mp
+    dfc /= sp
+    dfc *= fpm_dfe_elt * 1e-9
+    dfc -= np.mean(dfc[iok])
+    fpm_dfe = np.std(dfc[iok]) * 1e9    
+    dfc = dfc_temp.copy()    
+    
+    print('elt pupil circumcircle input defocus:', np.round(fpm_dfe,1),\
+          ',\nelt pupil input defocus:', np.round(fpm_dfe_elt,1))
+
+
+
+#%%
+'''
+rotate then shift Lyot Stop and defocus
+'''
 # Lyot stop
 LyotStop2d = Pupil*(uniform_disk(nPup, diam*nPup/2) -
                     uniform_disk(nPup, obst*nPup/2))
-ls2d = LyotStop2d.copy()
 
 if ls_ape != 0:
     
     pup_rot = ndimage.rotate(Pupil,ls_ape, reshape=False)
     pup_rot = pup_rot > 0.5
+    iok = np.nonzero(pup_rot)
+
     LyotStop2d = pup_rot*(uniform_disk(nPup, diam*nPup/2) -
                           uniform_disk(nPup, obst*nPup/2))
 
-
-#%%
-'''
-ncpa
-'''
-ncpa_d = np.zeros((nOPD*2,nPup,nPup))
-
-if ncpa_rms!=0:
+if ls_voe != 0 or ls_hoe != 0:
     
-    ncpa_d = ncpa(ncpa_rms, nOPD*2, nPup, Pupil, pwr)
+    LyotStop2d = np.roll(LyotStop2d,(ls_hoe,ls_voe),(1,0))
 
 
 #%%
 """
 ### from subdirectoies name of the set of OPD files to paths of OPD data
 """
+# full sets or user defined sets
 sets={'set0':('20231124_090126.0','20231122_142204.0'),
       'set1':('20240227_234849.0','20240228_053027.0','20240302_000411.0',
               '20240313_133532.0','20240228_112033.0'),
@@ -245,17 +297,25 @@ for o_s in range(len(opd_sets)):
                 opds_dirs.append([s for s in roots if s_v in s][-1])
 
 print(opds_dirs)
+
+
 #%%
 
-for dir_nb in range(len(opds_dirs)):
-
-    opds_dir   = opds_dirs[dir_nb]
+for i_d, opds_dir in enumerate(opds_dirs):
 
     opd_set = os.path.basename(opds_dir).split('.')[0]
     print('opd set: ', opd_set)
     
-    os.makedirs(fdir_res / opd_set, exist_ok=True)
-    os.makedirs(fdir_plt / opd_set, exist_ok=True)
+    for s_k in sets.keys():
+        for s_v in sets[s_k]:
+            if s_v.split('.')[0] == opd_set:
+                set_dir = s_k
+                
+    fdir_res_abe = fdir_res / 'aberrated' / set_dir / opd_set
+    fdir_plt_abe = fdir_plt / 'aberrated' / set_dir / opd_set
+    
+    os.makedirs(fdir_res_abe, exist_ok=True)
+    os.makedirs(fdir_plt_abe, exist_ok=True)
     
     # Filename and path for the OPD maps
     flist_opd = os.listdir(opds_dir) 
@@ -267,17 +327,19 @@ for dir_nb in range(len(opds_dirs)):
         fpath_opd = [fpath_opd[i] for i in range(1,nof,nW)]
     nOPD = len(fpath_opd)
     print('sample size of OPD files:', nOPD)
-    
+    if ncpa_shape[0] < nOPD:
+        print('too small sample size of ncpa files')
+        continue
+        
     
     #%%
     """
     ### Read OPD files
     """
-    
-    # Read OPD maps for the nOPD files
+
     OPD_arr = np.asarray([fits.getdata(fpath_opd[i]) for i in range(nOPD)])
     # convert from nm `to m if new OPD with new pupil
-    OPD_arr = OPD_arr*1e-9 
+    OPD_arr *= 1e-9 
     
 
     #%%
@@ -358,7 +420,8 @@ for dir_nb in range(len(opds_dirs)):
                                (OPD_arr[iOPD] +
                                 ncpa_d[iOPD] +
                                 tilt * D * sf_y / nPup +
-                                fpm_dec * D * sf_y / nPup)/lam)
+                                fpm_dec * D * sf_y / nPup +
+                                dfc)/lam)
                       * LyotStop2d)
             
             # Field in the image plane D (no coronagraph)
@@ -390,7 +453,8 @@ for dir_nb in range(len(opds_dirs)):
                                (OPD_arr[iOPD] +
                                 ncpa_d[iOPD] +
                                 tilt * D * sf_y / nPup +
-                                fpm_dec * D * sf_y / nPup)/lam))
+                                fpm_dec * D * sf_y / nPup +
+                                dfc)/lam))
             
             # focal plane B 
             Fld_B = mask2d*sft(Fld_A0, nFPM, mB*lamC/lam)
@@ -421,8 +485,10 @@ for dir_nb in range(len(opds_dirs)):
         ### Compute the radial intensity profiles of the images
         """
         # computation of the averaged intensity profiles of the images   
-        Int_D0_prf_avg[i,1,:], rad_D0_prf_avg = profile(Int_D0[i,:], ptype='mean')
-        Int_D_prf_avg[i,1,:], rad_D_prf_avg = profile(Int_D[i,:], ptype='mean')
+        Int_D0_prf_avg[i,1,:], rad_D0_prf_avg = (
+            profile(Int_D0[i,:], ptype='mean'))
+        Int_D_prf_avg[i,1,:], rad_D_prf_avg = (
+            profile(Int_D[i,:], ptype='mean'))
         
         # convert pixel scale into lam/D scale for the x-axis
         rad_D0_prf_avg_lamD = rad_D0_prf_avg * mD/nImg
@@ -440,30 +506,31 @@ for dir_nb in range(len(opds_dirs)):
     """
     
     # filename for the direct and coronagraphic images and profiles
-    fname_Int_DD0 = 'wonoise_psf_'+donow+'.fits'
-    fname_Int_DD = 'wonoise_coro_psf_'+donow+'.fits'
-    fname_Int_D0 = 'ao_corr_psf_'+donow+'.fits'
-    fname_Int_D = 'ao_corr_coro_psf_'+donow+'.fits'
-    fname_Prf_D0 = 'ao_corr_psf_profile_'+donow+'.fits'
-    fname_Prf_D = 'ao_corr_coro_psf_profile_'+donow+'.fits'
+    fnm_start = donow + '_' + opd_set
+    fname_Int_DD0 = donow + '_psf.fits'
+    fname_Int_DD  = donow + '_coro_psf.fits'
+    fname_Int_D0  = fnm_start + '_ao_corr_psf.fits'
+    fname_Int_D   = fnm_start + '_ao_corr_coro_psf.fits'
+    fname_Prf_D0  = fnm_start + '_ao_corr_psf_profile.fits'
+    fname_Prf_D   = fnm_start + '_ao_corr_coro_psf_profile.fits'
     
     
     # filepath for the direct and coronagraphic images
-    fpath_Int_DD0 = fdir_res / fname_Int_DD0
-    fpath_Int_DD  = fdir_res / fname_Int_DD
-    fpath_Int_D0 = fdir_res / opd_set / fname_Int_D0
-    fpath_Int_D  = fdir_res / opd_set / fname_Int_D
-    fpath_Prf_D0 = fdir_res / opd_set / fname_Prf_D0
-    fpath_Prf_D  = fdir_res / opd_set / fname_Prf_D
+    fpath_Int_DD0 = fdir_res_ref / fname_Int_DD0
+    fpath_Int_DD  = fdir_res_ref / fname_Int_DD
+    fpath_Int_D0  = fdir_res_abe / fname_Int_D0
+    fpath_Int_D   = fdir_res_abe / fname_Int_D
+    fpath_Prf_D0  = fdir_res_abe / fname_Prf_D0
+    fpath_Prf_D   = fdir_res_abe / fname_Prf_D
     
     
     # save the direct and coronagraphic images
     fits.writeto(fpath_Int_DD0, Int_DD0, overwrite=True)
-    fits.writeto(fpath_Int_DD, Int_DD, overwrite=True)
-    fits.writeto(fpath_Int_D0, Int_D0, overwrite=True)
-    fits.writeto(fpath_Int_D, Int_D, overwrite=True)
-    fits.writeto(fpath_Prf_D0, Int_D0_prf_avg, overwrite=True)
-    fits.writeto(fpath_Prf_D, Int_D_prf_avg, overwrite=True)
+    fits.writeto(fpath_Int_DD , Int_DD , overwrite=True)
+    fits.writeto(fpath_Int_D0 , Int_D0 , overwrite=True)
+    fits.writeto(fpath_Int_D  , Int_D  , overwrite=True)
+    fits.writeto(fpath_Prf_D0 , Int_D0_prf_avg, overwrite=True)
+    fits.writeto(fpath_Prf_D  , Int_D_prf_avg , overwrite=True)
     
     if os.path.isfile(fpath_Int_DD0):
         
@@ -494,13 +561,22 @@ for dir_nb in range(len(opds_dirs)):
         fits.setval(fpath,'OBST',value=obst,comment='fractional obscuration')
         fits.setval(fpath,'OPDS',value=opd_set,comment='opd set creation date')
         fits.setval(fpath,'DISP',value=disp,comment='achr. disp. in mas/m bw')
-        fits.setval(fpath,'NCPA',value=ncpa_rms,comment='ncpa rms in meters')
+        fits.setval(fpath,'NCPA',value=ncpa,comment='ncpa rms in meters')
         fits.setval(fpath,'FDEC',value=fpm_dec,
                     comment='psf to fpm offset in radians')
         fits.setval(fpath,'LSAE',value=ls_ape,
                     comment='lyot stop angular position error in degrees')
+        fits.setval(fpath,'LSVE',value=ls_voe,
+                    comment='lyot stop vertical offset error in pixels')
+        fits.setval(fpath,'LSHE',value=ls_hoe,
+                    comment='lyot stop horizontal offset error in pixels')
+        fits.setval(fpath,'ELT_DFOC',value=fpm_dfe_elt,
+                    comment='elt pupil input defocus in nm RMS\
+                        for reference wvl')
+        fits.setval(fpath,'DIAM_DFC',value=np.round(fpm_dfe,3),
+                    comment='elt pupil circumcircle input defocus in nm RMS\
+                        for reference wvl')
         fits.setval(fpath,'DNOW',value=donow,comment='date of script exec.')
-
 
 
     #%%
