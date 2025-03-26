@@ -37,7 +37,7 @@ syst = sys.platform
 ### Parameters
 """
 # spatial sampling
-nPup   = 514   # pupil
+nPup   = 1012   # pupil
 
 # save file
 do_sav = False
