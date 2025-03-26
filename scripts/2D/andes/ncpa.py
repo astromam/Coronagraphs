@@ -6,7 +6,7 @@ Created on Tue Dec 17 13:55:41 2024
 """
 
 import numpy as np
-from slow_fourier_transform import sft, isft
+from slow_fourier_transform import isft
 
 def ncpa(ncpa_rms, nOPD, nPup, Pupil, pwr):
     
