@@ -87,12 +87,15 @@ mask2d = uniform_disk(nFPM, nFPM/2.)
 # diam = 0.90 obs = 0.37, mB = 4.5 with 'ELT_pupil_400.fits' YJH
 # diam = 0.96 obs = 0.30, mB = 4.5 with 'ELT_pupil_400.fits' HK
 # diam = 0.90 obs = 0.38 with 'Tel-Pupil.fits'
-diam = 0.96 # diameter of the pupil in fraction of the pupil size
-obst = 0.30 # diameter of the central obscuration in fraction of the pupil size
+# diam = 0.90 # diameter of the pupil in fraction of the pupil size
+# obst = 0.37 # diameter of the central obscuration in fraction of the pupil size
+diam = 1.0
+obst = 0.0
+mB = 0.
 # FPM size in lam/D in the focal plane B
 # 4. with 'ELT_pupil_400.fits'
 # 3.8 with 'Tel-Pupil.fits', old!
-mB = 4.5 # 3.8  #  at 1600nm !!
+# mB = 4. # 3.8  #  at 1600nm !!
 
 # dispersion mas/m
 disp = 0e7  #  e.g 8e7 = 80 mas / 1e-6 m
@@ -205,7 +208,7 @@ for i in np.arange(nL):
     """
     
     # Field in the entrance pupil plane A
-    Fld_AA0 = Pupil * 1.*LyotStop2d
+    Fld_AA0 = Pupil * 1. #*LyotStop2d
     
     # Field in the image plane D (no coronagraph)
     Fld_DD0 = sft.sft(Fld_AA0, nImg, mD*diam)
@@ -229,10 +232,10 @@ for i in np.arange(nL):
     Fld_BB = mask2d*sft.sft(Fld_AA, nFPM, mB*lamC/lam)
     
     # pupil plane C before Lyot stop
-    Fld_CC = Fld_AA - sft.isft(Fld_BB, nPup, mB*lamC/lam)
+    Fld_CC = Fld_AA # - sft.isft(Fld_BB, nPup, mB*lamC/lam)
     
     # # pupil plane C after Lyot stop
-    Fld_LL = Fld_CC*LyotStop2d
+    Fld_LL = Fld_CC #*LyotStop2d
     
     # image plane D 
     Fld_DD = sft.sft(Fld_LL, nImg, mD*diam)
