@@ -36,11 +36,12 @@ elif user == 'Mamadou':
 
 #%%
 
-std_tgt = 5e-8 #☺ target std in meters
+std_tgt = 6e-8 #☺ target std in meters
 
 fdir_pupil = fdir_dat / 'Pupil'
 fname_elt = 'ELT_pupil_400.fits' # New pupil with new spider
 fpath_elt = fdir_pupil / fname_elt
+pup = fpath_elt.stem
 
 """
 ### Read pupil file
@@ -100,7 +101,7 @@ for n in np.arange(nb_ncpa):
     ncpa[:,:,n] *= std_tgt/np.std(ncpa[:,:,n][iok])
 
 fits.writeto(
-    (fdir_dat/('ncpa_pupil_new_'+str(int(np.rint(std_tgt*1e9)))+"nm.fits")),
+    (fdir_dat/('ncpa_'+pup+'_'+str(int(np.rint(std_tgt*1e9)))+"nm.fits")),
     np.transpose(ncpa,(2,0,1)), overwrite=True)
 
 
