@@ -25,34 +25,6 @@ plt.rcParams.update({'font.size': 14})  #♦  mdiaye 15!
 
 #%%
 """
-stackoverflow...
-"""
-
-def recursive_search(path: str) -> "list[str]":
-    """get all files from an absolute path
-
-    :param path: absolute path of the directory to search
-    :type path: str
-    :return: a list of all files
-    :rtype: list[str]
-    """
-    found_files = []
-    # if not os.path.isdir(path):
-    #     raise RuntimeError(f"'{path}' is not a directory")
-    if os.path.isdir(path):
- 
-        for item in os.listdir(path):
-            full_path = os.path.join(path, item)
-            if os.path.isfile(full_path):
-                found_files.append(full_path)
-            elif os.path.isdir(full_path):
-                found_files.extend(recursive_search(full_path))
-
-    return found_files
-
-
-#%%
-"""
 ### scaling
 """
 
@@ -76,12 +48,6 @@ if user == 'Alain':
     fdir_res   = Path('D:/Andes/Data_corono/results/').resolve()  #  fits data
     fdir_plt   = Path('D:/Andes/Data_corono/plots/').resolve()   #  plots
     
-    # dir name where to find results and plots of a common script run date
-    was_donow = '20241121161633'
-    
-    fdir_res = fdir_res / was_donow
-    fdir_plt = fdir_plt / was_donow
-
 elif user == 'Adrien':
     # Directory for the OPD with the corresponding seed value
     fdir_res   = Path(
@@ -96,10 +62,83 @@ elif user == 'Mamadou':
     fdir_res   = Path( fdir_base / 'results' ).resolve()
     fdir_plt   = Path( fdir_base / 'plots' ).resolve()
 
+# dir name where to find results and plots of a common script run date
+wvl = 'YJH'
+was_donow = '20250319083224'
 
-# 20241007141137 yjh 0 disp, 0 ncpa, 0 tilt
+fdir_res = fdir_res / was_donow
+fdir_plt = fdir_plt / was_donow
 
-# offset in lambda central/D for psf to fpm + yjh
+# 20250317172539 perfect 2nd order with lyotstop
+# 20250318154752 perfect 2nd order with lyotstop + TT, JQ1 scaled 90%
+# 20250318154814 perfect 2nd order with lyotstop + TT, JQ1 scaled 80%
+# 20250318154832 perfect 2nd order with lyotstop + TT, JQ1 scaled 70%
+# 20250319083152 perfect 2nd order with lyotstop + TT, JQ1 scaled 60%
+# 20250319083224 perfect 2nd order with lyotstop + TT, JQ1 scaled 50%
+# 20250317172808 perfect 2nd order with lyotstop + petalling corr
+
+# 20250310155522 20250312085754 perfect coro 2nd order full elt pupil
+# 20250312094239 psf no TT corr, coro TT corr
+# 20250313135902 perfect 2nd order coro + petalling corr
+
+# 20250121142815 yjh 0.9/0.37/4.0  0 disp,0 ncpa,0,tilt perfect: 20250122140220
+
+# lyot stop horizontal offset in pixels
+# 20250214100537 1
+# 20250214100614 2
+# 20250214100649 4
+# 20250214100716 8
+
+# lyot stop angular position error
+# 20250214100748 0.5
+# 20250214100828 1.0
+# 20250214100857 2.0
+
+# lyot stop vertical offset in pixels
+# 20250130104616 1
+# 20250130104747 2
+# 20250130104759 4
+# 20250130104809 8
+
+# fpm defocus in nm RMS
+# 20250210175500 10
+# 20250210175517 20
+# 20250210175531 30
+# 20250210175546 40
+# 20250210175606 50
+
+# ncpa nm rms with yjh 0mas/µ disp
+# 20250122183859 10
+# 20250122184044 20
+# 20250122184053 30
+# 20250122184101 40
+# 20250122184109 50
+
+# disp + yjh
+# 20250124135415 5
+# 20250124135527 10
+# 20250124135557 15
+
+# offset/tilt in mas for psf to fpm
+# 20250217154848 1
+# 20250217155004 2
+# 20250217155048 3
+# 20250217155138 4
+# 20250217155355 20
+
+# 20241009164421 k 0 0.96/0.3/4.5  0 disp,0 ncpa,0 tilt perfect: 20241021142027
+
+# erroneous
+# 20241007141137 yjh 0.9/0.37/4.5! 0 disp,0 ncpa,0,tilt perfect: 20241016110318
+
+# lyot stop angular position error
+# 20241204133939 0.5
+# 20241204134054 1.0
+# 20241204134125 1.5
+# 20241204134159 2.0
+# 20241205132015 30.
+
+# offset/tilt in lambda central/D for psf to fpm + yjh
 
 # 20241112095915 0.05
 # 20241112100035 0.10
@@ -150,23 +189,58 @@ elif user == 'Mamadou':
 #               'OPDs_PASSATA/OPD/20240302_000411-003/20240302_000411.0',
 #               'OPDs_PASSATA/OPD/20240313_133532-004/20240313_133532.0',
 #               'OPDs_PASSATA/OPD/20240228_112033-002/20240228_112033.0')
-# opds_dir=('OPDs_PASSATA/OPD/WS/JQ1/20240515_163822',
-#           'OPDs_PASSATA/OPD/WS/JQ1/20240517_091216',
-#           'OPDs_PASSATA/OPD/WS/JQ1/20240517_100705',
-#           'OPDs_PASSATA/OPD/WS/JQ1/20240517_103452',
-#           'OPDs_PASSATA/OPD/WS/JQ1/20240517_105822',
-#           'OPDs_PASSATA/OPD/WS/JQ1/20240517_111658',
-#           'OPDs_PASSATA/OPD/WS/JQ1/20240517_113534',
-#           'OPDs_PASSATA/OPD/WS/JQ1/20240517_121247',
-#           'OPDs_PASSATA/OPD/WS/JQ2/20240517_181033',
-#           'OPDs_PASSATA/OPD/WS/JQ2/20240517_183817',
-#           'OPDs_PASSATA/OPD/WS/JQ2/20240517_190418',
-#           'OPDs_PASSATA/OPD/WS/JQ2/20240517_192251',
-#           'OPDs_PASSATA/OPD/WS/JQ2/20240517_194126',
-#           'OPDs_PASSATA/OPD/WS/JQ2/20240517_195959',
-#           'OPDs_PASSATA/OPD/WS/JQ2/20240517_201835',
-#           'OPDs_PASSATA/OPD/WS/JQ2/20240517_203708',
-#           'OPDs_PASSATA/OPD/WS/JQM/20240509_182041/20240509_182041.0',
+opds_dir=('OPDs_PASSATA/OPD/WS/JQ1/20240515_163822',
+          'OPDs_PASSATA/OPD/WS/JQ1/20240517_091216',
+          'OPDs_PASSATA/OPD/WS/JQ1/20240517_100705',
+          'OPDs_PASSATA/OPD/WS/JQ1/20240517_103452',
+          'OPDs_PASSATA/OPD/WS/JQ1/20240517_105822',
+          'OPDs_PASSATA/OPD/WS/JQ1/20240517_111658',
+          'OPDs_PASSATA/OPD/WS/JQ1/20240517_113534',
+          'OPDs_PASSATA/OPD/WS/JQ1/20240517_121247',
+          'OPDs_PASSATA/OPD/WS/JQ2/20240517_181033',
+          'OPDs_PASSATA/OPD/WS/JQ2/20240517_183817',
+          'OPDs_PASSATA/OPD/WS/JQ2/20240517_190418',
+          'OPDs_PASSATA/OPD/WS/JQ2/20240517_192251',
+          'OPDs_PASSATA/OPD/WS/JQ2/20240517_194126',
+          'OPDs_PASSATA/OPD/WS/JQ2/20240517_195959',
+          'OPDs_PASSATA/OPD/WS/JQ2/20240517_201835',
+          'OPDs_PASSATA/OPD/WS/JQ2/20240517_203708',
+          'OPDs_PASSATA/OPD/WS/JQM/20240509_182041/20240509_182041.0',
+          'OPDs_PASSATA/OPD/WS/JQM/20240509_183915/20240509_183915.0',
+          'OPDs_PASSATA/OPD/WS/JQM/20240509_191620/20240509_191620.0',
+          'OPDs_PASSATA/OPD/WS/JQM/20240509_193453/20240509_193453.0',
+          'OPDs_PASSATA/OPD/WS/JQM/20240509_195327/20240509_195327.0',
+          'OPDs_PASSATA/OPD/WS/JQM/20240509_201200/20240509_201200.0',
+          'OPDs_PASSATA/OPD/WS/JQM/20240509_203033/20240509_203033.0',
+          'OPDs_PASSATA/OPD/WS/JQM/20240509_204907/20240509_204907.0',
+          'OPDs_PASSATA/OPD/WS/JQM/20240509_210742/20240509_210742.0')#,
+          # 'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-001/JQ3/20240521_200540',
+          # 'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-004/JQ3/20240521_181105',
+          # 'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-002/JQ3/20240521_213115',
+          # 'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-005/JQ3/20240521_222747',
+          # 'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-003/JQ3/20240521_210334',
+          # 'OPDs_PASSATA/OPD/WS/JQ3/20240527_190439/JQ3/20240527_190439',
+          # 'OPDs_PASSATA/OPD/WS/JQ3/20240527_195648/JQ3/20240527_195648',
+          # 'OPDs_PASSATA/OPD/WS/JQ3/20240527_204843/JQ3/20240527_204843',
+          # 'OPDs_PASSATA/OPD/WS/JQ3/20240527_214043/JQ3/20240527_214043',
+          # 'OPDs_PASSATA/OPD/WS/JQ3/20240527_223245/JQ3/20240527_223245',
+          # 'OPDs_PASSATA/OPD/WS/JQ4/20240528_161522/JQ4/20240528_161522',
+          # 'OPDs_PASSATA/OPD/WS/JQ4/20240528_163416/JQ4/20240528_163416',
+          # 'OPDs_PASSATA/OPD/WS/JQ4/20240528_165414/JQ4/20240528_165414',
+          # 'OPDs_PASSATA/OPD/WS/JQ4/20240528_171307/JQ4/20240528_171307',
+          # 'OPDs_PASSATA/OPD/WS/JQ4/20240528_173157/JQ4/20240528_173157',
+          # 'OPDs_PASSATA/OPD/WS/JQ4/20240528_175246/JQ4/20240528_175246',
+          # 'OPDs_PASSATA/OPD/WS/JQ4/20240528_181244/JQ4/20240528_181244',
+          # 'OPDs_PASSATA/OPD/WS/JQ4/20240528_183130/JQ4/20240528_183130',
+          # 'OPDs_PASSATA/OPD/WS/JQ4/20240528_185018/JQ4/20240528_185018',
+          # 'OPDs_PASSATA/OPD/WS/JQ4/20240528_190906/JQ4/20240528_190906')
+
+# opds_dir=('OPDs_PASSATA/OPD/WS/ASI',)
+
+
+#,
+#          'perfect')
+# opds_dir=('OPDs_PASSATA/OPD/WS/JQM/20240509_182041/20240509_182041.0',
 #           'OPDs_PASSATA/OPD/WS/JQM/20240509_183915/20240509_183915.0',
 #           'OPDs_PASSATA/OPD/WS/JQM/20240509_191620/20240509_191620.0',
 #           'OPDs_PASSATA/OPD/WS/JQM/20240509_193453/20240509_193453.0',
@@ -175,38 +249,16 @@ elif user == 'Mamadou':
 #           'OPDs_PASSATA/OPD/WS/JQM/20240509_203033/20240509_203033.0',
 #           'OPDs_PASSATA/OPD/WS/JQM/20240509_204907/20240509_204907.0',
 #           'OPDs_PASSATA/OPD/WS/JQM/20240509_210742/20240509_210742.0',
-#           'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-001/JQ3/20240521_200540',
-#           'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-004/JQ3/20240521_181105',
-#           'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-002/JQ3/20240521_213115',
-#           'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-005/JQ3/20240521_222747',
-#           'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-003/JQ3/20240521_210334',
-#           'OPDs_PASSATA/OPD/WS/JQ3/20240527_190439/JQ3/20240527_190439',
-#           'OPDs_PASSATA/OPD/WS/JQ3/20240527_195648/JQ3/20240527_195648',
-#           'OPDs_PASSATA/OPD/WS/JQ3/20240527_204843/JQ3/20240527_204843',
-#           'OPDs_PASSATA/OPD/WS/JQ3/20240527_214043/JQ3/20240527_214043',
-#           'OPDs_PASSATA/OPD/WS/JQ3/20240527_223245/JQ3/20240527_223245',
-#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_161522/JQ4/20240528_161522',
-#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_163416/JQ4/20240528_163416',
-#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_165414/JQ4/20240528_165414',
-#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_171307/JQ4/20240528_171307',
-#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_173157/JQ4/20240528_173157',
-#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_175246/JQ4/20240528_175246',
-#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_181244/JQ4/20240528_181244',
-#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_183130/JQ4/20240528_183130',
-#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_185018/JQ4/20240528_185018',
-#           'OPDs_PASSATA/OPD/WS/JQ4/20240528_190906/JQ4/20240528_190906',
-#           'perfect')
-opds_dir=('OPDs_PASSATA/OPD/WS/JQM/20240509_182041/20240509_182041.0',
-          'OPDs_PASSATA/OPD/WS/JQM/20240509_183915/20240509_183915.0',
-          'OPDs_PASSATA/OPD/WS/JQM/20240509_191620/20240509_191620.0',
-          'OPDs_PASSATA/OPD/WS/JQM/20240509_193453/20240509_193453.0',
-          'OPDs_PASSATA/OPD/WS/JQM/20240509_195327/20240509_195327.0',
-          'OPDs_PASSATA/OPD/WS/JQM/20240509_201200/20240509_201200.0',
-          'OPDs_PASSATA/OPD/WS/JQM/20240509_203033/20240509_203033.0',
-          'OPDs_PASSATA/OPD/WS/JQM/20240509_204907/20240509_204907.0',
-          'OPDs_PASSATA/OPD/WS/JQM/20240509_210742/20240509_210742.0',
-          'perfect',)
+#           'perfect',)
+# opds_dir=('OPDs_PASSATA/OPD/WS/JQM/20240509_201200/20240509_201200.0',
+#           'perfect',)
 
+# remove .split[0] at opd_set = ...
+# 20241016110318 diam_0.9-obst_0.37_FPM_lcToD_4.5
+# 20241016111736 diam_0.96-obst_0.3_FPM_lcToD_4.5
+# opds_dir=('perfect',)
+
+# opds_dir=('OPDs_PASSATA/OPD/WS/JQM/20240509_182041/20240509_123456.0',)
 #%%
 
 # """
@@ -271,23 +323,24 @@ for dir_nb in range(len(opds_dir)):
         nL = len(lam_lst)
         
         nImg = head_psf['NIMG']
+        pscale = head_psf['PSCL']
         D = head_psf['DIAM']
-        mB = head_psf['SFPM']
+        mB = head_psf['SFPM'] # - 0.5
         lam_c = head_psf['LMBD']
         # print(lam_c)
-          
+        hlf_fov = nImg * pscale / 2.
         # stackoveflow...
         a_ = np.linspace(-(np.floor(nImg-1)/2), np.floor(nImg-1)/2, nImg)
         b_ = a_.copy()
         aa, bb = np.meshgrid(a_, b_)
         rad_pix = np.sqrt(aa**2 + bb**2)
-        rad_mas = rad_pix * (mas2rad * 58.393 / (D * 1e9) )
+        rad_mas = rad_pix * (mas2rad * hlf_fov / (D * 1e9) )
         
         #  angular separation
-        aS = np.arange(nImg//2) * (mas2rad * 58.393 / (D * 1e9) )
+        aS = np.arange(nImg//2) * (mas2rad * hlf_fov / (D * 1e9) )
         
         # if lambda of interest / D
-        rW_mas = (lam_c / D) * mas2rad
+        rW_mas = 10.  #  (lam_c / D) * mas2rad
         
         ratio_prf = np.zeros([nL, nImg//2])
         Int_D0_prf_avg = ratio_prf.copy()
@@ -302,7 +355,7 @@ for dir_nb in range(len(opds_dir)):
         for i in range(nL):
             
             if slc:
-                rW_mas = (lam_lst[i] / D) * mas2rad
+                rW_mas = 10.  #  (lam_lst[i] / D) * mas2rad
             
             for p in range(nImg//2):
                 
@@ -346,22 +399,24 @@ for dir_nb in range(len(opds_dir)):
 
         prf_as_oi_mas = int(np.median(np.argmin(np.abs(aS[:]-as_oi))))
         
-        file_psf_prf = [x for x in file_lst if 'ao_corr_psf_profile_' in x]
-        file_cro_prf = [x for x in file_lst
-                        if 'ao_corr_coro_psf_profile_' in x]
-
-        if opd_set == 'perfect':
+        if opd_set != 'perfect':
             
-            file_psf_prf = [x for x in file_lst if 'wonoise_psf_profile_' in x]
+            file_psf_prf = [x for x in file_lst if 'ao_corr_psf_profile_' in x]
             file_cro_prf = [x for x in file_lst
-                            if 'wonoise_coro_psf_profile_' in x]
-
-        
-        print("psf profile:", file_psf_prf)
-        print("psf coro profile:", file_cro_prf)
+                            if 'ao_corr_coro_psf_profile_' in x]
     
-        # Int_D0_psf_prf = fits.getdata(fdir_res / opd_set / file_psf_prf[0])
-        # Int_D_psf_prf  = fits.getdata(fdir_res / opd_set / file_cro_prf[0])
+            if opd_set == 'perfect':
+                
+                file_psf_prf = [x for x in file_lst if 'wonoise_psf_profile_' in x]
+                file_cro_prf = [x for x in file_lst
+                                if 'wonoise_coro_psf_profile_' in x]
+    
+            
+            print("psf profile:", file_psf_prf)
+            print("psf coro profile:", file_cro_prf)
+        
+            Int_D0_psf_prf = fits.getdata(fdir_res / opd_set / file_psf_prf[0])
+            Int_D_psf_prf  = fits.getdata(fdir_res / opd_set / file_cro_prf[0])
         
                 
         #%%
@@ -369,111 +424,72 @@ for dir_nb in range(len(opds_dir)):
         plot profiles
         """
         
-        # plot of the gain vs wvl
-        plt.figure(1, (8, 4.5))
-        plt.tight_layout()
-        plt.xlabel('wavelength (nm)')#[$\lambda$/D]')
-        plt.ylabel('gain (log)')
-        plt.yscale('log')
-        plt.title('gain at 25 mas vs wvl')
-        plt.grid(True)
-        plt.ylim(9e-1, 2e3)
+        # # plot of the gain vs wvl
+        # plt.figure(1, (8, 4.5))
+        # plt.tight_layout()
+        # plt.xlabel('wavelength (nm)')#[$\lambda$/D]')
+        # plt.ylabel('gain (log)')
+        # plt.yscale('log')
+        # plt.title('gain at 25 mas vs wvl')
+        # plt.grid(True)
+        # plt.ylim(9e-1, 2e3)
     
-        g_val = Int_D0_prf_avg[:,prf_as_oi_mas]/Int_D_prf_avg[:,prf_as_oi_mas]
-        print(np.min(g_val), np.max(g_val))    
-        plt.plot(lam_lst*1e9, g_val)
+        # g_val = Int_D0_prf_avg[:,prf_as_oi_mas]/Int_D_prf_avg[:,prf_as_oi_mas]
+        # print(np.min(g_val), np.max(g_val))    
+        # plt.plot(lam_lst*1e9, g_val)
         
-        if slc:
-            fname_gain_as_oi_mas = (
-                'gain_'+str(int(as_oi))+'mas_Lbd2D_' + base_cro)
-        else:
-            fname_gain_as_oi_mas = (
-                'gain_'+str(int(as_oi))+'mas_L0toD_' + base_cro)
+        # if slc:
+        #     fname_gain_as_oi_mas = (
+        #         'gain_'+str(int(as_oi))+'mas_Lbd2D_' + base_cro)
+        # else:
+        #     fname_gain_as_oi_mas = (
+        #         'gain_'+str(int(as_oi))+'mas_L0toD_' + base_cro)
         
-        fpath_gain_as_oi_mas_svg = (fdir_plt / opd_set /
-                                    (fname_gain_as_oi_mas + '.svg'))
-        fpath_gain_as_oi_mas_pdf = (fdir_plt / opd_set /
-                                    (fname_gain_as_oi_mas + '.pdf'))
-        plt.savefig(fpath_gain_as_oi_mas_svg)
-        plt.savefig(fpath_gain_as_oi_mas_pdf)
-        plt.show()
+        # fpath_gain_as_oi_mas_svg = (fdir_plt / opd_set /
+        #                             (fname_gain_as_oi_mas + '.svg'))
+        # fpath_gain_as_oi_mas_pdf = (fdir_plt / opd_set /
+        #                             (fname_gain_as_oi_mas + '.pdf'))
+        # plt.savefig(fpath_gain_as_oi_mas_svg)
+        # plt.savefig(fpath_gain_as_oi_mas_pdf)
+        # plt.show()
         
         #%%
         # fix mask radius before plots
-        rW_mas = (lam_c / D) * mas2rad
+        lamCD2mas = (lam_c / D) * mas2rad
         
-        # plot of the contrast vs radial distance
-        colors = plt.cm.rainbow(np.linspace(0,1,nL))
-        plt.figure(2, (8, 4.5))
-        plt.tight_layout()
-        plt.xlabel('Angular separation [mas]')#[$\lambda$/D]')
-        plt.ylabel('contrast')
-        plt.yscale('log')
-        plt.title('contrasts(wvl) vs radial distance')
-        plt.grid(True)
-        plt.ylim(1e-5, 2e0)
-    
-        for i in range(nL):
-        
-            # AO corrected psf 
-            plt.plot(aS, Int_D0_prf_avg[i,:], color=colors[i], alpha=0.5)
-            
-            # AO corrected coronagraphic psf 
-            plt.plot(aS, Int_D_prf_avg[i,:], label=str(int(lam_lst[i]*1e9))+'nm',
-                      color=colors[i])
-            
-        # Focal plane mask boundary
-        x = np.arange(0.0, mB/2, 0.01)
-        plt.axvline(as_oi, color='k', ls='--')
-        plt.legend(fontsize='xx-small', ncols=5)
-        # Focal plane mask grey area
-        plt.fill_between(x *rW_mas, 0, mB/2/ 38.54*lam_c/rad2mas, color='gray',
-                          alpha=0.3)
-        
-        if slc:
-            fname_contrast_profile = ('contrast_profile_Lbd2D_' + base_cro)
-            
-        else:
-            fname_contrast_profile = ('contrast_profile_L0toD_' + base_cro)
-        fpath_contrast_profile_svg = (fdir_plt / opd_set /
-                                      (fname_contrast_profile + '.svg'))
-        fpath_contrast_profile_pdf = (fdir_plt / opd_set /
-                                      (fname_contrast_profile + '.pdf'))
-        plt.savefig(fpath_contrast_profile_svg)
-        plt.savefig(fpath_contrast_profile_pdf)
-        plt.show()
-    
-         #%%   
-        # plot of the radial profiles
+        # # plot of the contrast vs radial distance
         # colors = plt.cm.rainbow(np.linspace(0,1,nL))
-        # plt.figure(3, (8, 4.5))
+        # plt.figure(2, (8, 4.5))
         # plt.tight_layout()
-        # plt.ylim(1e-5, 2e0)
         # plt.xlabel('Angular separation [mas]')#[$\lambda$/D]')
-        # plt.ylabel('intensity')
+        # plt.ylabel('contrast')
         # plt.yscale('log')
-        # # plt.title('intensities(wvl) vs radial distance')
+        # plt.title('contrasts(wvl) vs radial distance')
         # plt.grid(True)
-       
-        # for i in range(0,nL,2):
+        # plt.ylim(1e-5, 2e0)
+    
+        # for i in range(nL):
         
         #     # AO corrected psf 
-        #     plt.plot(aS, Int_D0_psf_prf[i,1,:], color=colors[i], alpha=0.5,
-        #              ls='--')
+        #     plt.plot(aS, Int_D0_prf_avg[i,:], color=colors[i], alpha=0.5)
             
         #     # AO corrected coronagraphic psf 
-        #     plt.plot(aS, Int_D_psf_prf[i,1,:], label=str(int(lam_lst[i]*1e9))+'nm',
-        #              color=colors[i])
+        #     plt.plot(aS, Int_D_prf_avg[i,:], label=str(int(lam_lst[i]*1e9))+'nm',
+        #               color=colors[i])
             
         # # Focal plane mask boundary
         # x = np.arange(0.0, mB/2, 0.01)
         # plt.axvline(as_oi, color='k', ls='--')
         # plt.legend(fontsize='xx-small', ncols=5)
         # # Focal plane mask grey area
-        # plt.fill_between(x *rW_mas, 0, mB/2/ 38.54*lam_c/rad2mas, color='gray',
-        #                  alpha=0.3)
+        # plt.fill_between(x *lamCD2mas, 0, mB/2/ 38.54*lam_c/rad2mas, color='gray',
+        #                   alpha=0.3)
         
-        # fname_contrast_profile = ('intensities_profiles_' + base_cro)
+        # if slc:
+        #     fname_contrast_profile = ('contrast_profile_Lbd2D_' + base_cro)
+            
+        # else:
+        #     fname_contrast_profile = ('contrast_profile_L0toD_' + base_cro)
         # fpath_contrast_profile_svg = (fdir_plt / opd_set /
         #                               (fname_contrast_profile + '.svg'))
         # fpath_contrast_profile_pdf = (fdir_plt / opd_set /
@@ -482,46 +498,88 @@ for dir_nb in range(len(opds_dir)):
         # plt.savefig(fpath_contrast_profile_pdf)
         # plt.show()
 
+        #%%
 
-        # # plot of the radial profiles
-        # colors = plt.cm.rainbow(np.linspace(0,1,nL))
-        # plt.figure(4, (8, 8))
-        # plt.title('intensity@1600nm with/without coro. vs radial distance')
-        # plt.tight_layout()
-        # plt.xlim(1e0,1e2)
-        # plt.ylim(1e-5, 2e0)
-        # plt.xlabel('Angular separation [mas]')#[$\lambda$/D]')
-        # plt.ylabel('intensity')
-        # plt.yscale('log')
-        # plt.xscale('log')
-        # # plt.title('intensities(wvl) vs radial distance')
-        # plt.grid(True)
-       
-        # if True:
+        if opd_set != 'perfect':
             
-        #     i=np.argmin(np.abs(lam_lst-lam_c))
-        #     # AO corrected psf 
-        #     plt.plot(aS, Int_D0_psf_prf[i,1,:],
-        #              label='no coro', color=colors[0])
+            # plot of the radial profiles
+            colors = plt.cm.rainbow(np.linspace(0,1,nL))
+            plt.figure(3, (8, 4.5))
+            plt.tight_layout()
+            plt.ylim(1e-5, 2e0)
+            plt.xlabel('Angular separation [mas]')#[$\lambda$/D]')
+            plt.ylabel('Intensity in log scale')
+            plt.yscale('log')
+            plt.title(f'Coronagraph configuration in {wvl} band')
+            plt.grid(True)
+           
+            for i in range(0,nL,2):
             
-        #     # AO corrected coronagraphic psf 
-        #     plt.plot(aS, Int_D_psf_prf[i,1,:],
-        #              label='with coro', color=colors[-1])
+                # AO corrected psf 
+                plt.plot(aS, Int_D0_psf_prf[i,1,:], color=colors[i], alpha=0.5,
+                          ls='--')
+                
+                # AO corrected coronagraphic psf 
+                plt.plot(aS, Int_D_psf_prf[i,1,:], label=str(int(lam_lst[i]*1e9))+'nm',
+                          color=colors[i])
+                
+            # Focal plane mask boundary
+            x = np.arange(0.0, mB/2, 0.01)
+            plt.axvline(as_oi, color='k', ls='--')
+            plt.legend(fontsize='xx-small', ncols=5)
+            # Focal plane mask grey area
+            plt.fill_between(x *lamCD2mas, 0, mB/2/ 38.54*lam_c/rad2mas, color='gray',
+                              alpha=0.3)
             
-        # # Focal plane mask boundary
-        # x = np.arange(0.0, mB/2, 0.01)
-        # plt.axvline(as_oi, color='k', ls='--')
-        # plt.legend(fontsize='xx-small', ncols=5)
-        # # Focal plane mask grey area
-        # fill_max=mB/2/ 38.54*lam_c/rad2mas
-        # plt.fill_between(x*rW_mas, 1e-5, fill_max, color='gray', alpha=0.3)
-        
-        # fname_contrast_profile = ('intensities_profiles_1600nmOnly_'+base_cro)
-        # fpath_contrast_profile_svg = (fdir_plt / opd_set /
-        #                               (fname_contrast_profile + '.svg'))
-        # fpath_contrast_profile_pdf = (fdir_plt / opd_set /
-        #                               (fname_contrast_profile + '.pdf'))
-        # plt.savefig(fpath_contrast_profile_svg)
-        # plt.savefig(fpath_contrast_profile_pdf)
-        # plt.show()
+            fname_contrast_profile = ('intensities_profiles_' + base_cro)
+            fpath_contrast_profile_svg = (fdir_plt / opd_set /
+                                          (fname_contrast_profile + '.svg'))
+            fpath_contrast_profile_pdf = (fdir_plt / opd_set /
+                                          (fname_contrast_profile + '.pdf'))
+            plt.savefig(fpath_contrast_profile_svg)
+            plt.savefig(fpath_contrast_profile_pdf, bbox_inches='tight', pad_inches=0.1)
+            plt.show()
+    
+    
+            # plot of the radial profiles
+            colors = plt.cm.rainbow(np.linspace(0,1,nL))
+            plt.figure(4, (8, 8))
+            # plt.title('intensity@1600nm with/without coro. vs radial distance')
+            plt.tight_layout()
+            plt.xlim(1e0,1e2)
+            plt.ylim(1e-5, 2e0)
+            plt.xlabel('Angular separation [mas]')#[$\lambda$/D]')
+            plt.ylabel('intensity')
+            plt.yscale('log')
+            plt.xscale('log')
+            plt.title('intensities(wvl) vs radial distance')
+            plt.grid(True)
+           
+            if True:
+                
+                i=np.argmin(np.abs(lam_lst-lam_c))
+                # AO corrected psf 
+                plt.plot(aS, Int_D0_psf_prf[i,1,:],
+                          label='no coro', color=colors[0])
+                
+                # AO corrected coronagraphic psf 
+                plt.plot(aS, Int_D_psf_prf[i,1,:],
+                          label='with coro', color=colors[-1])
+                
+            # Focal plane mask boundary
+            x = np.arange(0.0, mB/2, 0.01)
+            plt.axvline(as_oi, color='k', ls='--')
+            plt.legend(fontsize='xx-small', ncols=5)
+            # Focal plane mask grey area
+            fill_max=mB/2/ 38.54*lam_c/rad2mas
+            plt.fill_between(x*lamCD2mas, 1e-5, fill_max, color='gray', alpha=0.3)
+            
+            fname_contrast_profile = ('intensities_profiles_1600nmOnly_'+base_cro)
+            fpath_contrast_profile_svg = (fdir_plt / opd_set /
+                                          (fname_contrast_profile + '.svg'))
+            fpath_contrast_profile_pdf = (fdir_plt / opd_set /
+                                          (fname_contrast_profile + '.pdf'))
+            plt.savefig(fpath_contrast_profile_svg)
+            plt.savefig(fpath_contrast_profile_pdf)
+            plt.show()
         
