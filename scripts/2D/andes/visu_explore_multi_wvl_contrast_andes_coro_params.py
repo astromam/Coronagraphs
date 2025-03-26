@@ -21,14 +21,14 @@ rad2mas = np.pi/(180.*3600*1000)
 mas2rad = 1/rad2mas
 
 # field radius of interest in mas
-f_rad = 35.
+f_rad = 25.
 
 
 #%%
-res_dirs=("d:/Andes/Data_corono/results/20240801100039",)
+res_dirs=("d:/Andes/Data_corono/results/20240927090738",)
 # 20240801100039 , 20240801112122 , 20240801134347 , 20240801145829
 # wvl in Y, J, H, K
-wvl = 'Y'
+wvl = 'YJH'
 
 #%%
 
