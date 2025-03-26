@@ -125,7 +125,7 @@ mask2d = uniform_disk(nFPM, nFPM/2.)
 
 diam = 0.90 # diameter of the pupil in fraction of the pupil size
 obst = 0.37 # diameter of the central obscuration in fraction of the pupil size
-mB = 4.5
+mB = 4.
 
 # datetime of script execution
 donow = datetime.now().strftime("%Y%m%d%H%M%S")  #  asp, datetime of now
