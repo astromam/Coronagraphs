@@ -43,8 +43,8 @@ if True:
     FirstDerGlobalLim = 1.
     
     #nPup = corono0.params['nPup']
-    nPup0 = 800
-    nExt = int(0.05*nPup0)
+    nPup0 = 1028
+    nExt = 50 #int(0.05*nPup0)
     nPup = nPup0 + nExt
     nFPM = 50
     Fmax2d = 50
@@ -75,7 +75,7 @@ if True:
     LSRobustness = True
 
     test_shift = True
-    shift_tot0 = 1.0 #int(0.005*nPup0) #np.sqrt(shift_x**2+shift_y**2)
+    shift_tot0 = 1.0 #(np.sqrt(2.)/0.5)*int(0.005*nPup0) #1.0 #int(0.005*nPup0) #np.sqrt(shift_x**2+shift_y**2)
     alpha0 = 0 # np.pi/3 # np.arctan2(shift_x, shift_y)
     shift_y0 = shift_tot0*np.cos(alpha0)
     shift_x0 = shift_tot0*np.sin(alpha0)
@@ -86,7 +86,7 @@ if True:
     test_flip_y = False
     
     nshift = 9
-    shift_max = 1.
+    shift_max = 1. #(np.sqrt(2.)/0.5)*int(0.005*nPup0) #1.
     shift_xy_t = (shift_max/(nshift//2))*(np.arange(nshift)-nshift//2)
     shift_x_t = shift_xy_t*1 #int(0.005*nPup0)*(np.arange(nshift)-nshift//2)
     shift_y_t = shift_xy_t*1 #int(0.005*nPup0)*(np.arange(nshift)-nshift//2)
@@ -120,7 +120,7 @@ if True:
     LSRobustness_coeff_sev = 24.
     
     LSRobustness_coeff_v8 = 0.1*np.sqrt(2.)/nPup
-    LSRobustness_coeff_v9 = 2*np.sqrt(2.)*int(0.005*nPup0) # np.sqrt(2.)*int(0.005*nPup0) #  int(0.005*nPup0)#  #4 #
+    LSRobustness_coeff_v9 = 4*np.sqrt(2.)*int(0.005*nPup0/2) # np.sqrt(2.)*int(0.005*nPup0) #  int(0.005*nPup0)#  #4 #
 
 
 
@@ -275,6 +275,7 @@ else:
 fname_gen = problem1.get_filename()
 fname     = fname_gen + f'{str_dead_act}' + str_LSRcoeff_pre + str_LSRcoeff_bis + str_LSRcoeff_qua + str_LSRcoeff_qua2 + str_LSRcoeff_sev + str_LSRcoeff_v8 + str_LSRcoeff_v9 + '.fits'
 fname     = fname.replace(f'N={nPup:04d}', f'N={nPup0:04d}') 
+#fname     = fname.replace(f'N={nPup:04d}', f'N={nPup:04d}') 
 fpath     = fdir_res / fname
 print(fpath)
 
