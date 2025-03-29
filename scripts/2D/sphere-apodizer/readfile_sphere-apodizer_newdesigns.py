@@ -19,6 +19,13 @@ from astropy.io import fits
 
 #%%
 """
+### Parameters
+"""
+do_sav = False
+
+
+#%%
+"""
 ### Directory
 """
 
@@ -82,7 +89,8 @@ cbar_ax = f0.add_axes([0.80, 0.05, 0.05, 0.9])
 cbar    = f0.colorbar(im, cax=cbar_ax)
 cbar.ax.set_ylabel('Normalized amplitude', rotation=270, labelpad = 20)
 plt.tight_layout()
-plt.savefig(fpath_res)
+if do_sav:
+    plt.savefig(fpath_res)
 plt.show() 
 
 
@@ -100,7 +108,8 @@ cbar_ax = f1.add_axes([0.80, 0.05, 0.05, 0.9])
 cbar    = f1.colorbar(im, cax=cbar_ax)
 cbar.ax.set_ylabel('Normalized amplitude', rotation=270, labelpad = 20)
 plt.tight_layout()
-plt.savefig(fpath_res)
+if do_sav:
+    plt.savefig(fpath_res)
 plt.show() 
 
 #%%
@@ -112,6 +121,7 @@ plt.clf()
 im = plt.imshow(lyotstop, cmap='inferno', extent=[-0.5,0.5,-0.5,0.5])
 plt.title('LYOT STOP')
 
-plt.savefig(fpath_res)
+if do_sav:
+    plt.savefig(fpath_res)
 plt.show() 
 

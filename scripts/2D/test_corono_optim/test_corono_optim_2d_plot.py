@@ -10,7 +10,7 @@ License: MIT license
 """
 import numpy as np
 import matplotlib.pyplot as plt
-plt.rcParams.update({'font.size': 16})
+#plt.rcParams.update({'font.size': 16})
 #import pylab as plt
 from pathlib import Path
 
@@ -43,7 +43,7 @@ if True:
     FirstDerGlobalLim = 1.
     
     #nPup = corono0.params['nPup']
-    nPup0 = 1028
+    nPup0 = 506
     nExt = 50 #int(0.05*nPup0)
     nPup = nPup0 + nExt
     nFPM = 50

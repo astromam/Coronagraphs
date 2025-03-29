@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Tue Jul  4 00:11:17 2023
+Created on Sat Mar 29 16:05:49 2025
 
 @author: mndiaye
 
@@ -10,9 +10,9 @@ License: MIT license
 """
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 ftsz = 16 
-pl.rcParams.update({'font.size': ftsz})
+plt.rcParams.update({'font.size': ftsz})
 from matplotlib.patches import Circle
 
 from pathlib import Path
@@ -27,10 +27,18 @@ from skimage.transform import resize as imresize
 
 import time
 
+import sys
+import pwd
+
+user = pwd.getpwuid(os.getuid())[0]
+syst = sys.platform
+
+
 #%% parameters
 """
-Parameters
+### Parameters
 """
+plt.close('all')
 
 wv_min = 1.92e-6
 wv_max = 2.35e-6
@@ -42,47 +50,68 @@ wv = 1.593e-6#wv_min*(1 - asym_ratio) + wv_max*asym_ratio
 dAper     = 8
 mas2rad   = np.pi/(180.*3600)
 
-pl.close('all')
+
+test_gurobi = False
 if True:
     # Telescope name
     corono_name  = 'APLC' # 'SP' or 'APLC'
-    pupil_name   = 'vlt_btw' # 'vlt' or 'sbr' or 'lvr'
-    problem_name = 'MaxContrastL1' # 'MaxTau' # , 'MaxContrastL1' # 'MaxContrastLinf' # #  
+    pupil_name   = 'vlt_btw' #'vlt_btw' # 'vlt' or 'sbr' or 'lvr'
+    problem_name = 'MaxContrastL1' #'MaxContrastLinf' # 'MaxTau' # ,  'MaxContrastLinf' # #  
     solver       = 'gurobipy' # 'stdgrb' #  'gurobipy', 'scipy.linprog'
     
     MinIsland   = False
     FirstDerGlobalLim = 1.
     
     #nPup = corono0.params['nPup']
-    nPup = 512
+    nPup0 = 506
+    nExt = 0 #int(0.05*nPup0)
+    nPup = nPup0 + nExt
     nFPM = 50
-    Fmax2d = 22.5
-    nImg2d = 45
+    Fmax2d = 50
+    nImg2d = 500
+    
+    LS_OD = 1.0#0.96
+    nPupLS = int(LS_OD*nPup0)
     
     # mask radius in lam0/D unit
-    rMask = 2.252
+    # rMask = 1.766 # ALC1 at 1.593um (145mas) 
+    rMask = 2.252 # ALC2 at 1.593um (185mas)
     
     # dark zone bounds (inner and outer edges) in lam0/D unit
     rho0 =  0.0
     rho1 = 20.0
     
     # contrast in the dark region
-    cDarkHole = 6.0
+    cDarkHole = 10.0
     
     # tau (integrated Pupil transmission)
-    tau   = 0.756#0.6
+    tau   = 0.756 #0.756
     
     # CtrBtwnPix2
 
     CtrBtwnPix  = True
     CtrBtwnPix2 = True
     Pupil2dSym  = False # set it True only for optimization
-    LSRobustness = False
+    LSRobustness = True
+
     test_shift = True
-    shift_x = 0
-    shift_y = 0
+    shift_tot0 = 1.0 #(np.sqrt(2.)/0.5)*int(0.005*nPup0) #1.0 #int(0.005*nPup0) #np.sqrt(shift_x**2+shift_y**2)
+    alpha0 = 0 # np.pi/3 # np.arctan2(shift_x, shift_y)
+    shift_y0 = shift_tot0*np.cos(alpha0)
+    shift_x0 = shift_tot0*np.sin(alpha0)
+
+    # shift_x0 = 0
+    # shift_y0 = 1
     test_flip_x = False
-    test_flip_y = True
+    test_flip_y = False
+    
+    nshift = 9
+    shift_max = 1. #(np.sqrt(2.)/0.5)*int(0.005*nPup0) #1.
+    shift_xy_t = (shift_max/(nshift//2))*(np.arange(nshift)-nshift//2)
+    shift_x_t = shift_xy_t*1 #int(0.005*nPup0)*(np.arange(nshift)-nshift//2)
+    shift_y_t = shift_xy_t*1 #int(0.005*nPup0)*(np.arange(nshift)-nshift//2)
+    
+    ishift_all0 = nshift*np.where(shift_x_t == shift_x0)[0][0] + np.where(shift_x_t == shift_y0)[0][0]
     
     #nlam
     bw   = 0.2
@@ -94,7 +123,61 @@ if True:
     if do_dead_act:
         str_dead_act = '_deadact'
     
+    LSRobustness_pre = False
+    LSRobustness_bis = False
+    LSRobustness_qua = False
+    LSRobustness_qua2 = False
+    
+    LSRobustness_sev = False
+    LSRobustness_v8 = False
+    LSRobustness_v9 = True
+
+    LSRobustness_coeff_pre = 10 #0.05
+    LSRobustness_coeff_bis = 1.0
+    LSRobustness_coeff_qua = 0.3    
+    LSRobustness_coeff_qua2 = 0.5
+    
+    LSRobustness_coeff_sev = 24.
+    
+    LSRobustness_coeff_v8 = 0.1*np.sqrt(2.)/nPup
+    LSRobustness_coeff_v9 = 4*np.sqrt(2.)*int(0.005*nPup0/2) # np.sqrt(2.)*int(0.005*nPup0) #  int(0.005*nPup0)#  #4 #
+
+
+
+    str_LSRcoeff_pre = ''
+    str_LSRcoeff_bis = ''
+    str_LSRcoeff_qua = ''
+    str_LSRcoeff_qua2 = ''
+    str_LSRcoeff_sev = ''
+    str_LSRcoeff_v8 = ''
+    str_LSRcoeff_v9 = ''
+    
+    if LSRobustness:
+        if LSRobustness_pre:
+            str_LSRcoeff_pre = f'LSRcoeff={int(np.round(LSRobustness_coeff_pre*1e3)):05d}'
+        if LSRobustness_bis:
+            str_LSRcoeff_bis = f'LSRcoeff_bis={int(np.round(LSRobustness_coeff_bis*1e3)):05d}'
+        if LSRobustness_qua:
+            str_LSRcoeff_qua = f'LSRcoeff_qua={int(np.round(LSRobustness_coeff_qua*1e3)):05d}'
+        if LSRobustness_qua2:
+            str_LSRcoeff_qua2 = f'LSRcoeff_qua2={int(np.round(LSRobustness_coeff_qua2*1e3)):05d}'
+        if LSRobustness_sev:
+            str_LSRcoeff_sev = f'LSRcoeff_sev={int(np.round(LSRobustness_coeff_sev*1e3)):05d}'
+        if LSRobustness_v8:
+            str_LSRcoeff_v8 = f'LSRcoeff_v8={int(np.round(LSRobustness_coeff_v8*1e3)):05d}'
+        if LSRobustness_v9:
+            str_LSRcoeff_v9 = f'LSRcoeff_v9={int(np.round(LSRobustness_coeff_v9*1e3)):05d}'
+
+
+    
     do_fits = False
+
+nlambis = 5
+Fmax2dbis = 50
+nImg2dbis = 500    
+
+ylim_min0 = 1e-8
+ylim_max0 = 1e-3
 
 do_plot = True    
 
@@ -114,40 +197,111 @@ if nImg2dbis%2 == 0:
 
 #%%
 """
-File reading for Pupil and Lyot stop
+### File reading for Pupil and Lyot stop
 """
 if True:
-#    fdir = Path('../../data/2D/pupils/').resolve()
-    fdir = Path('/Users/mndiaye/scratch/data/Coronagraphs/data/2D/pupils/').resolve()
-    if pupil_name == 'lvr':
-        fname_pup = 'ATLAST_Aperture_nPup={0}.fits'.format(nPup,)
-        fname_lys = 'ATLAST_LyotStop_nPup={0}.fits'.format(nPup,)
-    elif pupil_name == 'vlt':
-        fname_pup = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
-        fname_lys = 'SPHERE/sphere_stop_ST_ALC2.fits' 
+#    fdir = Path('../../../data/2D/pupils/').resolve()
+#    fdir = Path('/Users/mndiaye/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs/data/2D/pupils/').resolve()
+
+    if user == 'mndiaye':
+        if syst == 'darwin':
+            fdir_dat = Path('/Users/mndiaye/scratch/data/Coronagraphs/data/2D/pupils/').expanduser()
+            fdir_res = Path('/Users/mndiaye/scratch/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
+            fdir_pdf = Path('/Users/mndiaye/scratch/data/Coronagraphs/results/2D/plots/').resolve()
+            sim_case = 'test' # 'test' or 'server'
+        elif syst == 'linux':
+            fdir_dat = Path('/scratch/mndiaye/data/Coronagraphs/data/2D/pupils/').resolve()
+            fdir_res = Path('/scratch/mndiaye/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
+            fdir_pdf = Path('/scratch/mndiaye/data/Coronagraphs/results/2D/plots/').resolve()
+            sim_case = 'server' # 'test' or 'server'            
+        else:
+            raise ValueError('Unknown operating system {0}'.format(user))
     else:
-        fname_pup = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
-        fname_lys = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
+        raise ValueError('Unknown user {0}'.format(user))
+
+    if pupil_name == 'lvr':
+        fname_pup = 'ATLAST_Aperture_nPup={0}.fits'.format(nPup0,)
+        fname_lys = 'ATLAST_LyotStop_nPup={0}.fits'.format(nPup0,)
+    else:
+        fname_pup = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup0,)
+        fname_lys = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup0,)
         if do_dead_act:
-            fname_lys = f'sphere_stop_ST_ALC2_nPup{nPup:04d}.fits'
+            fname_lys = f'sphere_stop_ST_ALC2_nPup{nPup0:04d}.fits'
+    
+    fpath_pup = fdir_dat / fname_pup
+    fpath_lys = fdir_dat / fname_lys
+    Pupil2d0    = fits.getdata(fpath_pup)
+    LyotStop2d0 = fits.getdata(fpath_lys)
+
+    if nPup0 != nPup:
+        Pupil2d = np.zeros((nPup, nPup))
+        LyotStop2d = np.zeros((nPup, nPup))
+        ini = (nPup-nPup0)//2
+        end = (nPup+nPup0)//2
+        Pupil2d[ini:end, ini:end] = Pupil2d0
+        LyotStop2d[ini:end, ini:end] = LyotStop2d0
+    else:
+        Pupil2d = Pupil2d0*1.
+        LyotStop2d = LyotStop2d0*1. 
 
     
-    fpath_pup = fdir / fname_pup
-    fpath_lys = fdir / fname_lys
-    Pupil2d    = fits.getdata(fpath_pup)
-    LyotStop2d = fits.getdata(fpath_lys)
-
-    if test_shift:
-        LyotStop2d = np.roll(np.roll(LyotStop2d, shift_x, axis=0), shift_y, axis=1)
-        
     if test_flip_x:
         LyotStop2d = np.fliplr(LyotStop2d)
         
     if test_flip_y:
-        LyotStop2d = np.flipud(LyotStop2d)
+        LyotStop2d = np.flipud(LyotStop2d)  
     
     if solver != 'gurobipy' and solver != 'stdgrb':
         solver = 'scipy'
+
+params = coro.to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
+                 rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau, 
+                 CtrBtwnPix=CtrBtwnPix, CtrBtwnPix2 = CtrBtwnPix2,
+                 nlam=nlam, bw=bw,
+                 Pupil2d = Pupil2d, LyotStop2d = LyotStop2d,
+                 Pupil2dSym = Pupil2dSym, rMask=rMask,
+                 problem_name = problem_name, 
+                 solver = solver, 
+                 corono_name = corono_name, pupil_name = pupil_name,
+                 MinIsland = MinIsland, FirstDerGlobalLim = FirstDerGlobalLim,
+                 LSRobustness = LSRobustness)
+
+#%%
+"""
+File reading for Pupil and Lyot stop
+"""
+# if True:
+# #    fdir = Path('../../data/2D/pupils/').resolve()
+#     fdir = Path('/Users/mndiaye/scratch/data/Coronagraphs/data/2D/pupils/').resolve()
+#     if pupil_name == 'lvr':
+#         fname_pup = 'ATLAST_Aperture_nPup={0}.fits'.format(nPup,)
+#         fname_lys = 'ATLAST_LyotStop_nPup={0}.fits'.format(nPup,)
+#     elif pupil_name == 'vlt':
+#         fname_pup = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
+#         fname_lys = 'SPHERE/sphere_stop_ST_ALC2.fits' 
+#     else:
+#         fname_pup = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
+#         fname_lys = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup,)
+#         if do_dead_act:
+#             fname_lys = f'sphere_stop_ST_ALC2_nPup{nPup:04d}.fits'
+
+    
+#     fpath_pup = fdir / fname_pup
+#     fpath_lys = fdir / fname_lys
+#     Pupil2d    = fits.getdata(fpath_pup)
+#     LyotStop2d = fits.getdata(fpath_lys)
+
+#     if test_shift:
+#         LyotStop2d = np.roll(np.roll(LyotStop2d, shift_x, axis=0), shift_y, axis=1)
+        
+#     if test_flip_x:
+#         LyotStop2d = np.fliplr(LyotStop2d)
+        
+#     if test_flip_y:
+#         LyotStop2d = np.flipud(LyotStop2d)
+    
+#     if solver != 'gurobipy' and solver != 'stdgrb':
+#         solver = 'scipy'
 
 #%%
 """
@@ -198,17 +352,17 @@ fpath_corono_mono_prf_std_t = fdir_plots / fname_corono_mono_prf_std_t
 """ 
 Coronagraph defintion
 """
-params = coro.to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
-                 rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau, 
-                 CtrBtwnPix=CtrBtwnPix, CtrBtwnPix2 = CtrBtwnPix2,
-                 nlam=nlam, bw=bw,
-                 Pupil2d = Pupil2d, LyotStop2d = LyotStop2d,
-                 Pupil2dSym = Pupil2dSym, rMask=rMask,
-                 problem_name = problem_name, 
-                 solver = solver, 
-                 corono_name = corono_name, pupil_name = pupil_name,
-                 MinIsland = MinIsland, FirstDerGlobalLim = FirstDerGlobalLim,
-                 LSRobustness = LSRobustness)
+# params = coro.to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
+#                  rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau, 
+#                  CtrBtwnPix=CtrBtwnPix, CtrBtwnPix2 = CtrBtwnPix2,
+#                  nlam=nlam, bw=bw,
+#                  Pupil2d = Pupil2d, LyotStop2d = LyotStop2d,
+#                  Pupil2dSym = Pupil2dSym, rMask=rMask,
+#                  problem_name = problem_name, 
+#                  solver = solver, 
+#                  corono_name = corono_name, pupil_name = pupil_name,
+#                  MinIsland = MinIsland, FirstDerGlobalLim = FirstDerGlobalLim,
+#                  LSRobustness = LSRobustness)
 
 
 if corono_name == 'SP':
@@ -239,8 +393,12 @@ else:
 Read files
 """
 fname_gen = problem1.get_filename()
-fname     = fname_gen + f'{str_dead_act}.fits'
-fpath     = fdir / fname
+fname     = fname_gen + f'{str_dead_act}' + str_LSRcoeff_pre + str_LSRcoeff_bis + str_LSRcoeff_qua + str_LSRcoeff_qua2 + str_LSRcoeff_sev + str_LSRcoeff_v8 + str_LSRcoeff_v9 + '.fits'
+fname     = fname.replace(f'N={nPup:04d}', f'N={nPup0:04d}') 
+#fname     = fname.replace(f'N={nPup:04d}', f'N={nPup:04d}') 
+fpath     = fdir_res / fname
+print(fpath)
+
 
 Apod2d = fits.getdata(fpath,)
 
@@ -248,10 +406,10 @@ Apod2d = fits.getdata(fpath,)
 """
 Plot display of the apodizers
 """
-pl.figure(4)
-pl.clf()
-pl.imshow(corono00.Pupil2d, cmap = 'inferno')
-pl.title('Pupil transmission')
+plt.figure(4)
+plt.clf()
+plt.imshow(corono00.Pupil2d, cmap = 'inferno')
+plt.title('Pupil transmission')
 
 #fname = fname_gen + '_apodisation_ampl_nPup={0}.pdf'.format(nPup)
 fname = 'vlt_newAPLC_apod_nPup={0:04d}.pdf'.format(nPup)
@@ -263,13 +421,13 @@ fpath = fdir_plots / fname
 #pl.title('Apod 1 transmission - MaxTau problem - '+ solver)
 #pl.savefig(str(fpath))
 
-pl.figure(2, figsize=(5,5))
-pl.clf()
-pl.imshow(Apod2d*corono00.Pupil2d, cmap = 'inferno')
-pl.title('Apodization')
-pl.tight_layout()
+plt.figure(2, figsize=(5,5))
+plt.clf()
+plt.imshow(Apod2d*corono00.Pupil2d, cmap = 'inferno')
+plt.title('Apodization')
+plt.tight_layout()
 if do_plot is True:
-    pl.savefig(str(fpath), transparent=True)
+    plt.savefig(str(fpath), transparent=True)
 
 
 
@@ -404,19 +562,19 @@ eta_N = np.sum(circ_aper*direct_poly_img_N/direct_poly_img_N_peak)/np.sum(circ_a
 fname_image_plane_f_disp = f'corono_poly_bw_throughput_nPup={nPup}_tau={tau:.3f}_disp.pdf'.format(nPup)
 fpath_image_plane_f_disp = fdir_plots / fname_image_plane_f_disp
 
-pl.figure(40, (8, 4.5))
-pl.clf()
-pl.plot(sep_arr, eta_P, color='C1', label='new APLC')
-pl.xlabel(f'Angular separation in $\lambda_0$/D ($\lambda_0={wv*1e6}\mu$m)')
-pl.ylabel(r'Planet throughput $\eta_P$')
-pl.xlim(-1, 31)
-pl.ylim(-0.01, 0.41)
-pl.axvline(x=rMask, ymin=0, ymax =1, linewidth=1, color='r', linestyle='--')
-pl.grid()
-pl.legend(loc=4)
-pl.tight_layout()
+plt.figure(40, (8, 4.5))
+plt.clf()
+plt.plot(sep_arr, eta_P, color='C1', label='new APLC')
+plt.xlabel(f'Angular separation in $\lambda_0$/D ($\lambda_0={wv*1e6}\mu$m)')
+plt.ylabel(r'Planet throughput $\eta_P$')
+plt.xlim(-1, 31)
+plt.ylim(-0.01, 0.41)
+plt.axvline(x=rMask, ymin=0, ymax =1, linewidth=1, color='r', linestyle='--')
+plt.grid()
+plt.legend(loc=4)
+plt.tight_layout()
 if do_plot is True:
-    pl.savefig(str(fpath_image_plane_f_disp), transparent=True)
+    plt.savefig(str(fpath_image_plane_f_disp), transparent=True)
 
 
 #%%

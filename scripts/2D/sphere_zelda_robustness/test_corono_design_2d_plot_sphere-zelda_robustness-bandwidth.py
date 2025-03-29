@@ -393,7 +393,7 @@ pl.axvline(x=rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
 pl.axvline(x=rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
 pl.axhline(10**(-cDarkHole), xmin=corono00.xi2d.min(), xmax=corono00.xi2d.max(), 
            linewidth=1, color='k', linestyle='--')
-pl.xlabel(f'Angular separation in $\lambda_0$/D (($\lambda_0={wv*1e6}\mu$m))')
+pl.xlabel(f'Angular separation in $\lambda_0$/D ($\lambda_0={wv*1e6}\mu$m)')
 pl.ylabel(r'1$\sigma$ normalized intensity in log scale')
 pl.ylim(3e-8, 3e-4)
 pl.legend(loc=1)
