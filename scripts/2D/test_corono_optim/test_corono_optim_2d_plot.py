@@ -10,7 +10,7 @@ License: MIT license
 """
 import numpy as np
 import matplotlib.pyplot as plt
-#plt.rcParams.update({'font.size': 16})
+plt.rcParams.update({'font.size': 16})
 #import pylab as plt
 from pathlib import Path
 
