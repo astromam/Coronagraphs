@@ -161,3 +161,7 @@ scripts/2D/andes/pipo.py
 scripts/2D/andes/contrastValueExtraction.py
 
 scripts/2D/andes/contastAtLamC4JQs.py
+
+scripts/2D/andes/readResultsFitsHeader.py
+
+scripts/2D/andes/visu_means_multi_wvl_contrast_andes_coro_params.py
