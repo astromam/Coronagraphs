@@ -36,7 +36,7 @@ from datetime import datetime  #  asp for datetime of now
 #  import pdb
 
 #fontsize to 15 for all plots
-plt.rcParams.update({'font.size': 14})  #♦  mdiaye 15!
+plt.rcParams.update({'font.size': 14})  #  mdiaye 15!
 
 
 #%%
@@ -353,7 +353,7 @@ opds_dir=('OPDs_PASSATA/OPD/WS/JQ1/20240515_163822',)
 # opds_dir=('OPDs_PASSATA/OPD/WS/JQ1/20240515_163822','OPDs_PASSATA/OPD/WS/JQ1/20240517_100705')
 # opds_dir=('OPDs_PASSATA/OPD/WS/JQM/20240509_201200/20240509_201200.0',)
 # opds_dir=('OPDs_PASSATA/OPD/WS/JQ1/20240515_163822',)
-opds_dir=('OPDs_PASSATA/OPD/WS/ASI_staticVib',)
+# opds_dir=('OPDs_PASSATA/OPD/WS/ASI_staticVib',)
 # opds_dir=('OPDs_PASSATA/OPD/WS/ASI_M1M4err',)
 
 
@@ -396,8 +396,8 @@ for dir_nb in range(len(opds_dir)):
     OPD_arr = np.asarray([fits.getdata(fpath_opd[i]) for i in range(nOPD)])
 
     # pour jeu fichier fits unique: opds_dir=('OPDs_PASSATA/OPD/WS/ASI',)
-    OPD_arr = OPD_arr[0,:,:,500:]
-    OPD_arr = np.transpose(OPD_arr,(2,0,1))
+    # OPD_arr = OPD_arr[0,:,:,500:]
+    # OPD_arr = np.transpose(OPD_arr,(2,0,1))
     nOPD = OPD_arr.shape[0]
     
     t1 = time.time()
@@ -502,6 +502,9 @@ for dir_nb in range(len(opds_dir)):
         for iOPD in range(nOPD):
             
             opd_tmp = OPD_arr[iOPD,:,:].copy() * Pupil * LyotStop2d
+            # plt.imshow(opd_tmp)
+            # stop
+            
             # opd_tmp[i_ls] = 0.
 
             if iOPD == 0:
@@ -662,6 +665,9 @@ for dir_nb in range(len(opds_dir)):
             Fld_D = (sft.sft(
                 Fld_A0 - np.sqrt(strehl[iOPD]) * Pupil * LyotStop2d,
                 nImg, mD*diam))
+            # Fld_D = (sft.sft(
+            #     Fld_A0 - Pupil * LyotStop2d,
+            #     nImg, mD*diam))
             
             # Intensity
             Int_D[i,:] += np.abs(Fld_D)**2    
@@ -806,6 +812,7 @@ for dir_nb in range(len(opds_dir)):
     #                  alpha=0.3)
     plt.xlim(-0.05,np.max(rad_D_prf_avg_mas)+0.05)
     plt.ylim(1e-5, 2e0)  #  (2e-5, 2e0)
+    # plt.ylim(1e-40, 2e0)  #  (2e-5, 2e0)
 
     plt.savefig(fpath_prf_svg)
     plt.savefig(fpath_prf_pdf)
