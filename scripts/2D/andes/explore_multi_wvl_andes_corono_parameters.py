@@ -19,7 +19,7 @@ from astropy.io import fits
 import slow_fourier_transform as sft
 from uniform_disk import uniform_disk
 from psf_profile import profile
-from draw_vanes import six_vanes
+# from draw_vanes import six_arms
 
 import os
 from pathlib import Path
@@ -45,15 +45,15 @@ nImg = 400
 # lam_max = 2460e-9  #  max value in range
 # lam_itv = 4  #  nb of intervals in range --> nb+1 wvl's !
 
-wvl = 'K'
+wvl = 'HsJ'
 
-if wvl == 'K' : 
+# if wvl == 'K' : 
 
-    # wavelengths in m
-    lamC = 2200e-9  #  some wvl unique value
-    lam_min = 1960e-9  #  min value in range
-    lam_max = 2460e-9  #  max value in range
-    lam_itv = 4  #  nb of intervals in range --> nb+1 wvl's !
+#     # wavelengths in m
+#     lamC = 2200e-9  #  some wvl unique value
+#     lam_min = 1960e-9  #  min value in range
+#     lam_max = 2460e-9  #  max value in range
+#     lam_itv = 4  #  nb of intervals in range --> nb+1 wvl's !
 
 if wvl == 'H' : 
 
@@ -63,13 +63,40 @@ if wvl == 'H' :
     lam_max = 1770e-9  #  max value in range  
     lam_itv = 4  #  nb of intervals in range --> nb+1 wvl's ! 
 
+elif wvl == 'Y2H': 
+
+    # wavelengths in m
+    lamC = 1600e-9  #  some wvl unique value
+    lam_min = 950e-9  #  min value in range
+    lam_max = 1800e-9  #  max value in range  
+    lam_itv = 18  #  
+    lam_lst = np.array(
+        [9.50e-07, 1.00e-06, 1.05e-06, 1.10e-06, 1.15e-06, 1.20e-06,
+         1.25e-06, 1.30e-06, 1.35e-06, 1.40e-06, 1.45e-06, 1.50e-06,
+         1.55e-06, 1.60e-06, 1.65e-06, 1.70e-06, 1.75e-06, 1.80e-06])
+    lam_stp = 50e-9 # np.median(np.diff(lam_lst))
+
+elif wvl == 'HsJ': 
+
+    # wavelengths in m
+    lamC = 1600e-9  #  some wvl unique value
+    lam_min = 950e-9  #  min value in range
+    lam_max = 1800e-9  #  max value in range  
+    lam_itv = 12  #  
+    lam_lst = np.array(
+        [1.15e-06, 1.20e-06,1.25e-06, 1.30e-06, 1.35e-06, 1.40e-06,
+         1.45e-06, 1.50e-06,1.55e-06, 1.60e-06, 1.65e-06, 1.70e-06])
+    lam_stp = 50e-9 # np.median(np.diff(lam_lst))
+
 elif wvl == 'J' :
 
     # wavelengths in m
     lamC = 1240e-9  #  some wvl unique value
     lam_min = 1160e-9  #  min value in range
-    lam_max = 1340e-9  #  max value in range  
+    lam_max = 1340e-9  #  max value in range
+    lam_stp = 80e-9
     lam_itv = 4  #  nb of intervals in range --> nb+1 wvl's !  
+    lam_lst = np.arange(lam_min,lam_min+(lam_itv)*lam_stp+1e-9,lam_stp)
 
 elif wvl == 'Y': 
 
@@ -78,6 +105,7 @@ elif wvl == 'Y':
     lam_min = 980e-9  #  min value in range
     lam_max = 1070e-9  #  max value in range  
     lam_itv = 4  #  nb of intervals in range --> nb+1 wvl's !  
+    lam_lst = np.arange(lam_min,lam_min+(lam_itv)*lam_stp+1e-9,lam_stp)
 
 elif wvl == 'JH': 
 
@@ -85,21 +113,21 @@ elif wvl == 'JH':
     lamC = 1600e-9  #  some wvl unique value
     lam_min = 980e-9  #  min value in range
     lam_max = 1770e-9  #  max value in range  
-    lam_itv = 14  #  
+    lam_itv = 10  #  
     lam_lst = np.array([1.16e-06, 1.20e-06, 1.24e-06, 1.28e-06, 1.32e-06,
                         1.44e-06, 1.52e-06, 1.60e-06, 1.68e-06, 1.76e-06])
     lam_stp = np.median(np.diff(lam_lst))
     
-elif wvl == 'HK': 
+# elif wvl == 'HK': 
 
-    # wavelengths in m
-    lamC = 1600e-9  #  some wvl unique value
-    lam_min = 980e-9  #  min value in range
-    lam_max = 2460e-9  #  max value in range  
-    lam_itv = 20  #
-    lam_lst = np.array([1.44e-06, 1.52e-06, 1.60e-06, 1.68e-06, 1.76e-06,
-                        1.96e-06, 2.08e-06, 2.20e-06, 2.32e-06, 2.44e-06])
-    lam_stp = np.median(np.diff(lam_lst))
+#     # wavelengths in m
+#     lamC = 1600e-9  #  some wvl unique value
+#     lam_min = 980e-9  #  min value in range
+#     lam_max = 2460e-9  #  max value in range  
+#     lam_itv = 20  #
+#     lam_lst = np.array([1.44e-06, 1.52e-06, 1.60e-06, 1.68e-06, 1.76e-06,
+#                         1.96e-06, 2.08e-06, 2.20e-06, 2.32e-06, 2.44e-06])
+#     lam_stp = np.median(np.diff(lam_lst))
     
 elif wvl == 'YJH': 
 
@@ -113,18 +141,18 @@ elif wvl == 'YJH':
                         1.44e-06, 1.52e-06, 1.60e-06, 1.68e-06, 1.76e-06])
     lam_stp = np.median(np.diff(lam_lst))
 
-elif wvl == 'YJHK': 
+# elif wvl == 'YJHK': 
 
-    # wavelengths in m
-    lamC = 1600e-9  #  some wvl unique value
-    lam_min = 980e-9  #  min value in range
-    lam_max = 2460e-9  #  max value in range  
-    lam_itv = 20  #
-    lam_lst = np.array([9.80e-07, 1.00e-06, 1.02e-06, 1.04e-06, 1.06e-06,
-                        1.16e-06, 1.20e-06, 1.24e-06, 1.28e-06, 1.32e-06,
-                        1.44e-06, 1.52e-06, 1.60e-06, 1.68e-06, 1.76e-06,
-                        1.96e-06, 2.08e-06, 2.20e-06, 2.32e-06, 2.44e-06])
-    lam_stp = np.median(np.diff(lam_lst))
+#     # wavelengths in m
+#     lamC = 1600e-9  #  some wvl unique value
+#     lam_min = 980e-9  #  min value in range
+#     lam_max = 2460e-9  #  max value in range  
+#     lam_itv = 20  #
+#     lam_lst = np.array([9.80e-07, 1.00e-06, 1.02e-06, 1.04e-06, 1.06e-06,
+#                         1.16e-06, 1.20e-06, 1.24e-06, 1.28e-06, 1.32e-06,
+#                         1.44e-06, 1.52e-06, 1.60e-06, 1.68e-06, 1.76e-06,
+#                         1.96e-06, 2.08e-06, 2.20e-06, 2.32e-06, 2.44e-06])
+#     lam_stp = np.median(np.diff(lam_lst))
 
 if len(wvl)==1:
 
@@ -140,14 +168,14 @@ print(nL, lam_stp, lam_lst)
 
 
 # if lambda of interest / D
-rW_mas = 10.  #  (lamC / D) * mas2rad
+rW_mas = 7.  # spaxel of 7 mas (05/2025->) / 10. -> 03/2025
     
 # Pupil diameter in m 
 D = 38.54
 
 # lyot mask vane width in pixels
 v_width = 3.  #  3. pour fichier ELT_pupil_400.fits non modifie
-vanes = six_vanes(nPup, v_width)
+# vanes = six_arms(nPup, v_width) -> 03/2025
 
 donow = datetime.now().strftime("%Y%m%d%H%M%S")  #  asp, datetime of now
 print(donow, wvl)
@@ -159,7 +187,6 @@ print(donow, wvl)
 user = 'Alain'
 if user == 'Alain':
     fdir_dat = Path("D:/Andes/Data_corono/data/").resolve()  # opd's seed value
-    fdir_plt   = Path('D:/Andes/Data_corono/plots/').resolve()   #  plots
     fdir_res   = Path('D:/Andes/Data_corono/results/').resolve()  #  fits files
     fdir_res = (fdir_res / donow)
     os.makedirs(fdir_res, exist_ok=True)
@@ -171,9 +198,6 @@ if user == 'Adrien':
     # Directory for the OPD with the corresponding seed value
     fdir_res   = Path(
         '/Users/asimonnin/Desktop/PhD/Andes/Data_corono/results/').resolve()
-    # Directory for the OPD with the corresponding seed value
-    fdir_plt   = Path(
-        '/Users/asimonnin/Desktop/PhD/Andes/Data_corono/plots/').resolve()
 
 elif user == 'Mamadou':
     fdir_base = ("/Users/mndiaye/Library/CloudStorage/"\
@@ -182,9 +206,8 @@ elif user == 'Mamadou':
     fdir_dat = Path(fdir_base / 'data/').resolve()
     # Directory for the OPD with the corresponding seed value
     fdir_res   = Path(fdir_base / 'results/').resolve()
-    # Directory for the OPD with the corresponding seed value
-    fdir_plt   = Path(fdir_base / 'plots/').resolve()
 
+#%%
 # Directory for the pupils
 fdir_pupil = fdir_dat / 'Pupil'
 
@@ -193,10 +216,6 @@ fdir_pupil = fdir_dat / 'Pupil'
 fname_elt = 'ELT_pupil_400.fits'
 fpath_elt = fdir_pupil / fname_elt
 
-#%%
-"""
-### Read file
-"""
 # Read ELT pupil 
 Pupil = fits.getdata(fpath_elt,)
 
@@ -216,13 +235,21 @@ rad2mas = np.pi/(180.*3600*1000)
 mas2rad = 1/rad2mas
 
 # conversion lam/D to mas
-lamD2mas = (lamC/D)*mas2rad
+# lamD2mas = (lamC/D)*mas2rad
 
 # plate scale in mas per pixel
 pscale = 0.3
 
+# field of view
+# in mas
+fov_mas = nImg * pscale
+# in radians
+fov_rdn = fov_mas * rad2mas
+# in multiple of reference lambda (lamC) over D, 05/2025 -> 
+mD_ref = fov_rdn / ( lamC / D )
+
 # FoV in lam/D in the final image plane D
-mD = 58.393*(nImg/1600) #* (lam_0/lam)
+# mD = 58.393*(nImg/1600) #* (lam_0/lam)  #  simu 2024
 # print(mD)
 
 """
@@ -238,14 +265,13 @@ obs_min = 0.30
 obs_max = 0.44
 obs_stp = 0.01
 obstruction = np.arange(obs_min,obs_max+obs_stp,obs_stp)
-mB_min = 3.0
+# mBmB_min = 3.0
 mB_max = 4.5
+mB_min = 3.0
 mB_stp = 0.1
 mB_conf = np.arange(mB_min,mB_max+mB_stp,mB_stp)
 
 throughput = np.zeros((len(diametre_lyot),len(obstruction)))
-
-diam_k=0
 
 ### Création des tableaux pour stocker les résultats
 results_no_coro_no_turb = np.zeros(
@@ -263,10 +289,12 @@ a_ = np.linspace(-(np.floor(nImg-1)/2), np.floor(nImg-1)/2, nImg)
 b_ = a_.copy()
 aa, bb = np.meshgrid(a_, b_)
 rad_pix = np.sqrt(aa**2 + bb**2)
-rad_mas = rad_pix * (mas2rad * 58.393 / (D * 1e9) )
+# rad_mas = rad_pix * (mas2rad * 58.393 / (D * 1e9) )
+rad_mas = rad_pix * (mas2rad * fov_mas / (2. * D * 1e9) )
 
 #  angular separation
-aS = np.arange(nImg//2) * (mas2rad * 58.393 / (D * 1e9) )
+# aS = np.arange(nImg//2) * (mas2rad * 58.393 / (D * 1e9) )
+aS = np.arange(nImg//2) * (mas2rad * fov_mas / (2. * D * 1e9) )
 
 ### Loop over the parameters
 for i in np.arange(nL):
@@ -277,7 +305,8 @@ for i in np.arange(nL):
     lamD2mas = (lam/D)*mas2rad
     
     # FoV in lam/D in the final image plane D
-    mD = 58.393*(nImg/(lam*1e9))
+    # mD = 58.393*(nImg/(lam*1e9))  #  simu 2024 -> 03/2025
+    mD = mD_ref * lamC / lam # 05/2025 ->
         
     print('lambda (nm):' ,np.round(lam*1e9,0), '. Field of view (lam/D):',
           np.round(mD,3))
@@ -288,7 +317,7 @@ for i in np.arange(nL):
         for ob in range(len(obstruction)):
             obst=obstruction[ob]
 
-            LyotStop2d = (Pupil.copy() * vanes *
+            LyotStop2d = (Pupil.copy() * # vanes *
                           (uniform_disk(nPup, diam*nPup/2) -
                            uniform_disk(nPup, obst*nPup/2)))
             
