@@ -21,7 +21,7 @@ from astropy.io import fits
 import slow_fourier_transform as sft
 from uniform_disk import uniform_disk
 from psf_profile import profile
-from draw_vanes import six_vanes
+from draw_vanes import six_arms
 
 import os
 from pathlib import Path
@@ -67,7 +67,7 @@ D = 38.54
 
 # lyot mask vane width in pixels
 v_width = 3.  #  3. pour fichier ELT_pupil_400.fits non modifie
-vanes = six_vanes(nPup, v_width)
+vanes = six_arms(nPup, v_width)
 
 donow = datetime.now().strftime("%Y%m%d%H%M%S")  #  asp, datetime of now
 
