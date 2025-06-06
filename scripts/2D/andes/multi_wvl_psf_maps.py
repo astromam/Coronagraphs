@@ -38,9 +38,10 @@ rad2mas = np.pi/(180.*3600*1000)
 mas2rad = 1/rad2mas
 
 # angular separation of interest in mas
-as_oi = 25.
+as_oi = 20.
 
-wvl = 'YJH'
+# wvl = 'YJH'
+
 
 #%%
 """
@@ -66,11 +67,28 @@ elif user == 'Mamadou':
     fdir_res   = Path( fdir_base / 'results' ).resolve()
     fdir_plt   = Path( fdir_base / 'plots' ).resolve()
 
-was_donow = '20250326150540'
+was_donow = '20250604120819'
 fdir_res = fdir_res / was_donow
 fdir_plt = fdir_plt / was_donow
 
 
+#%%
+# 500 Hz    0.9/0.37/4.0    20250604120819
+# 1 kH0 Hz  0.9/0.37/4.0    20250602181544
+
+# 0.804 	 [0.92 0.36 3.9 ]    20250523162033 20250523162130
+# 0.811 	 [0.92 0.35 3.8 ]    20250523162217 20250523162247
+# 0.824 	 [0.93 0.36 3.6 ]    20250523163019 20250523162955 
+# 0.826  	 [0.92 0.33 3.5 ]    20250523163116 20250523163139
+
+# RIZ 0.9 / 0.37 / 4.
+# 20250521172353 JQM 05/2025  500Hz
+# 20250521172457 JQM 05/2025 1000Hz
+# YJH 0.9 / 0.37 / 4.
+# 20250522161347 JQM 05/2025  500Hz
+# 20250522160547 JQM 05/2025 1000Hz
+
+#%%
 # ideal with lyotstop + petaling20250321160937 0,1,2 20250321161111 1,2,3
 # 20250321144751 perfect 2nd order with lyotstop + petaling JQM
 # 20250321093529 perfect 2nd order with lyotstop + TT + petaling 2..4 vs 5..1
@@ -94,6 +112,7 @@ fdir_plt = fdir_plt / was_donow
 # 20250312160834 perfect coro no petalling OPDs_PASSATA/OPD/WS/ASI
 # 20250310155522 20250312085754 perfect coro 2nd order full elt pupil
 
+#%%
 # 20250121142815 yjh 0.9/0.37/4.0  0 disp,0 ncpa,0,tilt perfect: 20250122140220
 
 # lyot stop horizontal offset in pixels
@@ -217,14 +236,43 @@ fdir_plt = fdir_plt / was_donow
 #           'OPDs_PASSATA/OPD/WS/JQM/20240509_210742/20240509_210742.0')
 # ,
 #           'perfect')
-
+#%%
 # opds_dir=('OPDs_PASSATA/OPD/WS/JQM/20240509_182041/20240509_123456.0',)
-opds_dir=('OPDs_PASSATA/OPD/WS/JQ1/20240515_163822',)
-opds_dir=('OPDs_PASSATA/OPD/WS/JQ1/20240515_163822',
-          'OPDs_PASSATA/OPD/WS/JQM/20240509_201200/20240509_201200.0')
-opds_dir=('OPDs_PASSATA/OPD/WS/ASI_staticVib',)
+# opds_dir=('OPDs_PASSATA/OPD/WS/JQ1/20240515_163822',)
+# opds_dir=('OPDs_PASSATA/OPD/WS/JQ1/20240515_163822',
+#           'OPDs_PASSATA/OPD/WS/JQM/20240509_201200/20240509_201200.0')
+# opds_dir=('OPDs_PASSATA/OPD/WS/ASI_staticVib',)
 # opds_dir=('OPDs_PASSATA/OPD/WS/ASI_M1M4err',)
+opds_dir=('OPDs_PASSATA/OPD/WS/1kHz/02042025/20250325_145800.0_phase_screens-001/20250325_145800.0',)
+# opds_dir=('OPDs_PASSATA/OPD/WS/500Hz/20250508_163051.0_phase_screens/20250508_163051.0_oaCUBEs',)
 
+#%%
+
+# 1 kHz
+# root_1kHz = 'OPDs_PASSATA/OPD/WS/1kHz/'
+# opds_dir=(root_1kHz+'20250325_145800.0_phase_screens/20250325_145800.0',
+#           root_1kHz+'20250522_150800.0_phase_screens/20250522_150800.0',
+#           root_1kHz+'20250522_154952.0_phase_screens/20250522_154952.0_phase_screens',
+#           root_1kHz+'20250522_163144.0_phase_screens/20250522_163144.0_phase_screens',
+#           root_1kHz+'20250522_171340.0_phase_screens/20250522_171340.0_phase_screens',
+#           root_1kHz+'20250523_120216.0_phase_screens/20250523_120216.0_phase_screens',
+#           root_1kHz+'20250523_124400.0_phase_screens/20250523_124400.0_phase_screens',
+#           root_1kHz+'20250523_140738.0_phase_screens/20250523_140738.0_phase_screens',
+#           root_1kHz+'20250523_144927.0_phase_screens/20250523_144927.0_phase_screens',
+#           root_1kHz+'20250527_145633.0_phase_screens/20250527_145633.0_phase_screens')
+
+# 500 Hz
+root_500Hz = 'OPDs_PASSATA/OPD/WS/500Hz/'
+opds_dir=(root_500Hz + '20250508_163051.0_phase_screens/20250508_163051.0_oaCUBEs',
+          root_500Hz + '20250521_145220.0_phase_screens/20250521_145220.0_oaCUBEs',
+          root_500Hz + '20250521_151332.0_phase_screens/20250521_151332.0_oaCUBEs',
+          root_500Hz + '20250521_153444.0_phase_screens/20250521_153444.0_oaCUBEs',
+          root_500Hz + '20250521_155558.0_phase_screens/20250521_155558.0_oaCUBEs',
+          root_500Hz + '20250521_161711.0_phase_screens/20250521_161711.0_oaCUBEs',
+          root_500Hz + '20250521_163823.0_phase_screens/20250521_163823.0_oaCUBEs',
+          root_500Hz + '20250521_172051.0_phase_screens/20250521_172051.0_oaCUBEs',
+          root_500Hz + '20250521_174203.0_phase_screens/20250521_174203.0_oaCUBEs',
+          root_500Hz + '20250527_122032.0_phase_screens/20250527_122032.0_oaCUBEs')
 
 #%%
 for dir_nb in range(len(opds_dir)):
@@ -249,7 +297,6 @@ for dir_nb in range(len(opds_dir)):
     if os.path.isdir(res_dir):
         
         os.makedirs(fdir_plt / opd_set, exist_ok=True)
-
     
     file_lst = os.listdir(res_dir)
 
@@ -284,7 +331,15 @@ for dir_nb in range(len(opds_dir)):
     lam_min = head_psf['LMIN']
     lam_stp = head_psf['LSTP']
     lam_itv = head_psf['LITV']
-    lam_lst = np.arange(lam_min,lam_min+(lam_itv+1)*lam_stp,lam_stp)
+    # lam_lst = np.arange(lam_min,lam_min+(lam_itv+1)*lam_stp,lam_stp)
+    lam_lst = np.arange(lam_min,lam_min+(lam_itv)*lam_stp+1e-9,lam_stp)
+    lam_lst = lam_lst[np.where(lam_lst < 1840e-9)]
+    
+    if np.median(lam_lst) > 1e-6:
+        wvl = 'YJH'
+    else:
+        wvl = 'RIZ'
+    
     nL = len(lam_lst)
     
     nImg = head_psf['NIMG']
@@ -293,6 +348,9 @@ for dir_nb in range(len(opds_dir)):
     mB = head_psf['SFPM']
     # lam_c = head_psf['LMBD']
     hlf_fov = nImg * pscale / 2.
+
+    # if lambda of interest / D
+    rW_mas = (lam_c / D) * mas2rad
 
     # stackoveflow...
     a_ = np.linspace(-(np.floor(nImg-1)/2), np.floor(nImg-1)/2, nImg)
@@ -304,13 +362,12 @@ for dir_nb in range(len(opds_dir)):
     #  angular separation
     aS = np.arange(nImg//2) * (mas2rad * hlf_fov / (D * 1e9) )
     
-    # if lambda of interest / D
-    rW_mas = (lam_c / D) * mas2rad
-            
+          
     # filename of the plot
-    fname_images_svg = f'ao_corrected_coro_psf_{wvl}band'+'.svg'
-    fname_images_pdf = f'ao_corrected_coro_psf_{wvl}band'+'.pdf'
-    fname_images_png = f'ao_corrected_coro_psf_{wvl}band'+'.png'
+    fnm =  f'ao_corrected_coro_psf_{wvl}band_500Hz'
+    fname_images_svg = fnm+'.svg'
+    fname_images_pdf = fnm+'.pdf'
+    fname_images_png = fnm+'.png'
 
     # filepath for the direct and coronagraphic images
     fpath_images_svg = fdir_plt / opd_set / fname_images_svg
