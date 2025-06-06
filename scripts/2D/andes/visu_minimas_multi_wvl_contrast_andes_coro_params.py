@@ -13,72 +13,8 @@ from astropy.io import fits
 from pathlib import Path
 import os
 from uniform_disk import uniform_disk
-from draw_vanes import six_vanes
+from draw_vanes import six_arms
 
-# from scipy.signal import argrelextrema
-# from scipy import ndimage as ndi
- 
-# stackoveflow... 
-# def local_minima_3D(data, order=1):
-#     """Detects local maxima in a 3D array
-
-#     Parameters
-#     ---------
-#     data : 3d ndarray
-#     order : int
-#         How many points on each side to use for the comparison
-
-#     Returns
-#     -------
-#     coords : ndarray
-#         coordinates of the local maxima
-#     values : ndarray
-#         values of the local maxima
-#     """
-#     # Coordinates of local maxima along each axis
-#     peaks0 = np.array(argrelextrema(data, np.less, axis=0, order=order))
-#     peaks1 = np.array(argrelextrema(data, np.less, axis=1, order=order))
-#     peaks2 = np.array(argrelextrema(data, np.less, axis=2, order=order))
-
-#     # Stack all coordinates 
-#     stacked = np.vstack((peaks0.transpose(), peaks1.transpose(),
-#                           peaks2.transpose()))
-
-#     # We keep coordinates that appear three times (once for each axis)
-#     elements, counts = np.unique(stacked, axis=0, return_counts=True)
-#     coords = elements[np.where(counts == 3)[0]]
-
-#     # Compute values at filtered coordinates
-#     values = data[coords[:, 0], coords[:, 1], coords[:, 2]]
-
-#     return coords, values
- 
-# def local_minima_3D(data, order=1):
-#     """Detects local maxima in a 3D array
-
-#     Parameters
-#     ---------
-#     data : 3d ndarray
-#     order : int
-#         How many points on each side to use for the comparison
-
-#     Returns
-#     -------
-#     coords : ndarray
-#         coordinates of the local maxima
-#     values : ndarray
-#         values of the local maxima
-#     """
-#     size = 1 + 2 * order
-#     footprint = np.ones((size, size, size))
-#     footprint[order, order, order] = 0
-
-#     filtered = ndi.minimum_filter(data, footprint=footprint)
-#     mask_local_minima = data > filtered
-#     coords = np.asarray(np.where(mask_local_minima)).T
-#     values = data[mask_local_minima]
-
-#     return coords, values
         
 plt.rcParams.update({'font.size': 12})
 
@@ -87,21 +23,25 @@ rad2mas = np.pi/(180.*3600*1000)
 mas2rad = 1/rad2mas
 
 # angular separation radius of interest in mas
-as_oi = 25.
+as_oi = 20.
 
-fdir_dat = Path("d:/Andes/Data_corono/results/").resolve()
+fdir_dat = Path("d:/Andes/Data_corono/results/exploreCoroParamsYJHK_25_30_35_mas_lbdCtoDwidth").resolve()
 
 files=['20240923175955/Parameters_results_contrast_w_coro_no_turb_Y.fits',
-        '20240924100841/Parameters_results_contrast_w_coro_no_turb_J.fits',
-        '20240925112915/Parameters_results_contrast_w_coro_no_turb_H.fits',
-        '20240926114503/Parameters_results_contrast_w_coro_no_turb_JH.fits',
-        '20240927090738/Parameters_results_contrast_w_coro_no_turb_YJH.fits',
-        '20240927105903/Parameters_results_contrast_w_coro_no_turb_YJHK.fits']
-files=['20240924115352/Parameters_results_contrast_w_coro_no_turb_K.fits',
-        '20240926154034/Parameters_results_contrast_w_coro_no_turb_HK.fits']
+       '20240924100841/Parameters_results_contrast_w_coro_no_turb_J.fits',
+       '20240925112915/Parameters_results_contrast_w_coro_no_turb_H.fits',
+       '20240926114503/Parameters_results_contrast_w_coro_no_turb_JH.fits',
+       '20240927090738/Parameters_results_contrast_w_coro_no_turb_YJH.fits']
+files=['20240927090738/Parameters_results_contrast_w_coro_no_turb_YJH.fits']
+files=['20240926114503/Parameters_results_contrast_w_coro_no_turb_JH.fits']
+files=['../20250527102340/Parameters_results_contrast_w_coro_no_turb_Y2H.fits']
+
+#         '20240927105903/Parameters_results_contrast_w_coro_no_turb_YJHK.fits']
+# files=['20240924115352/Parameters_results_contrast_w_coro_no_turb_K.fits',
+#         '20240926154034/Parameters_results_contrast_w_coro_no_turb_HK.fits']
 
 # Directory for the pupils
-fdir_pupil = fdir_dat / '../data/Pupil'
+fdir_pupil = fdir_dat / '../../data/Pupil'
 
 # Filename and path for the ELT pupil
 # fname_elt = 'Tel-Pupil.fits'
@@ -116,7 +56,7 @@ Pupil = fits.getdata(fpath_elt,)
 nPup = Pupil.shape[0]
 # lyot mask vane width in pixels
 v_width = 3.  #  3. pour fichier ELT_pupil_400.fits non modifie
-vanes = six_vanes(nPup, v_width)
+vanes = six_arms(nPup, v_width)
 
 #%%
 
@@ -135,6 +75,7 @@ for i in range(len(files)):
     # print("threshold  throughput  intensity  [parameters DLyot obst. FPM]")
 
     coro_data = fits.getdata(fnm)
+
     head_data = fits.getheader(fnm)
     lam = head_data['LMBD']
     nImg = head_data['NIMG']
@@ -216,7 +157,9 @@ for i in range(len(files)):
     
     thrVsInt = []
     thr = 0.
-
+    b2g = 0.
+    # thr_cube = thr_cube[:,:,0:9]
+    # coro_data = coro_data[:,:,0:9]
     while True:
         
         ma_data = np.ma.where(thr_cube > thr, coro_data.copy(), 1.)
@@ -229,10 +172,11 @@ for i in range(len(files)):
         
         ma_tp_data = np.ma.masked_where(thr_data<thr,thr_data.copy(),1.)
             
-        # print("\t", np.round(thr,3), "\t",
-        #       np.round(thr_data[i_min[0],i_min[1]],3), "\t",
-        #       np.round(np.min(ma_data),9), "\t",
-        #       np.round([dL[i_min[0]],obs[i_min[1]],mB[i_min[2]]],2))
+        print("\t", np.round(thr,3), "\t",
+              np.round(thr_data[i_min[0],i_min[1]],3), "\t",
+              np.round(np.min(ma_data),9), "\t",
+              np.round(np.min(ma_data)/thr_data[i_min[0],i_min[1]],9), "\t",
+              np.round([dL[i_min[0]],obs[i_min[1]],mB[i_min[2]]],2))
 
         thr = thr_data[i_min[0],i_min[1]].copy()
         thrVsInt.append([[np.round(thr_data[i_min[0],i_min[1]],3)],
@@ -243,8 +187,8 @@ for i in range(len(files)):
 
     thrVsInt = np.array(thrVsInt)
     plt.figure(8, (8,5))
-    bad = np.argwhere(thrVsInt[:,0,0]<0.75)
-    good = np.argwhere(thrVsInt[:,0,0]>=0.75) 
+    bad = np.argwhere(thrVsInt[:,0,0]<b2g)
+    good = np.argwhere(thrVsInt[:,0,0]>=b2g) 
     plt.plot(thrVsInt[bad,0,0], thrVsInt[bad,1,0],color='r')
     plt.plot(thrVsInt[good,0,0], thrVsInt[good,1,0])
     plt.xlabel("throughput")
