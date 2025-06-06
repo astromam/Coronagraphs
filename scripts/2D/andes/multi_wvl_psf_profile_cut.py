@@ -22,21 +22,20 @@ from pathlib import Path
 #fontsize to 15 for all plots
 plt.rcParams.update({'font.size': 14})  #♦  mdiaye 15!
 
+avoid_k = True
+
 
 #%%
 """
 ### scaling
 """
-
-lam_c = 1.6e-6  #  "central" reference lambda, "of interest", in meters
-slc = False  #  supersed lam_c with lam_lst[i]
-
 # conversion lradian to mas
 rad2mas = np.pi/(180.*3600*1000)
 mas2rad = 1/rad2mas
 
-# angular separation of interest in mas
-as_oi = 25.
+# angular separation and ring width of interest in mas
+as_oi = 20.
+rW_mas = 7.
 
 
 #%%
@@ -62,13 +61,29 @@ elif user == 'Mamadou':
     fdir_res   = Path( fdir_base / 'results' ).resolve()
     fdir_plt   = Path( fdir_base / 'plots' ).resolve()
 
-# dir name where to find results and plots of a common script run date
-wvl = 'YJH'
-was_donow = '20250319083224'
+was_donow = '20250604120819'
 
 fdir_res = fdir_res / was_donow
 fdir_plt = fdir_plt / was_donow
+#%%
+# 500 Hz    0.9/0.37/4.0    20250604120819
+# 1 kH0 Hz  0.9/0.37/4.0    20250602181544
 
+# 0.804 	 0.000341188 	 [0.92 0.36 3.9 ]    20250523162033 20250523162130
+# 0.811 	 0.000354267 	 [0.92 0.35 3.8 ]    20250523162217 20250523162247
+# 0.824 	 0.000380266 	 [0.93 0.36 3.6 ]    20250523163019 20250523162955 
+# 0.826 	 0.000388391 	 [0.92 0.33 3.5 ]    20250523163116 20250523163139
+
+# RIZ
+# 20250521172353 JQM 05/2025  500Hz
+# 20250521172457 JQM 05/2025 1000Hz
+# YJH
+# 20250522161347 JQM 05/2025  500Hz
+# 20250522160547 JQM 05/2025 1000Hz
+
+#%%
+# 20250506131205 coro UJH2024 @ 1 kHz
+# 20250409111209 perfect 2nd order with lyotstop + TT - strehl correction
 # 20250317172539 perfect 2nd order with lyotstop
 # 20250318154752 perfect 2nd order with lyotstop + TT, JQ1 scaled 90%
 # 20250318154814 perfect 2nd order with lyotstop + TT, JQ1 scaled 80%
@@ -81,6 +96,7 @@ fdir_plt = fdir_plt / was_donow
 # 20250312094239 psf no TT corr, coro TT corr
 # 20250313135902 perfect 2nd order coro + petalling corr
 
+#%%
 # 20250121142815 yjh 0.9/0.37/4.0  0 disp,0 ncpa,0,tilt perfect: 20250122140220
 
 # lyot stop horizontal offset in pixels
@@ -189,6 +205,7 @@ fdir_plt = fdir_plt / was_donow
 #               'OPDs_PASSATA/OPD/20240302_000411-003/20240302_000411.0',
 #               'OPDs_PASSATA/OPD/20240313_133532-004/20240313_133532.0',
 #               'OPDs_PASSATA/OPD/20240228_112033-002/20240228_112033.0')
+#%%
 opds_dir=('OPDs_PASSATA/OPD/WS/JQ1/20240515_163822',
           'OPDs_PASSATA/OPD/WS/JQ1/20240517_091216',
           'OPDs_PASSATA/OPD/WS/JQ1/20240517_100705',
@@ -213,7 +230,8 @@ opds_dir=('OPDs_PASSATA/OPD/WS/JQ1/20240515_163822',
           'OPDs_PASSATA/OPD/WS/JQM/20240509_201200/20240509_201200.0',
           'OPDs_PASSATA/OPD/WS/JQM/20240509_203033/20240509_203033.0',
           'OPDs_PASSATA/OPD/WS/JQM/20240509_204907/20240509_204907.0',
-          'OPDs_PASSATA/OPD/WS/JQM/20240509_210742/20240509_210742.0')#,
+          'OPDs_PASSATA/OPD/WS/JQM/20240509_210742/20240509_210742.0')
+#,
           # 'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-001/JQ3/20240521_200540',
           # 'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-004/JQ3/20240521_181105',
           # 'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-002/JQ3/20240521_213115',
@@ -250,15 +268,47 @@ opds_dir=('OPDs_PASSATA/OPD/WS/JQ1/20240515_163822',
 #           'OPDs_PASSATA/OPD/WS/JQM/20240509_204907/20240509_204907.0',
 #           'OPDs_PASSATA/OPD/WS/JQM/20240509_210742/20240509_210742.0',
 #           'perfect',)
-# opds_dir=('OPDs_PASSATA/OPD/WS/JQM/20240509_201200/20240509_201200.0',
-#           'perfect',)
+# opds_dir=('OPDs_PASSATA/OPD/WS/JQM/20240509_201200/20240509_201200.0','perfect',)
+# opds_dir=('OPDs_PASSATA/OPD/WS/JQ1/20240515_163822','perfect',)
 
 # remove .split[0] at opd_set = ...
 # 20241016110318 diam_0.9-obst_0.37_FPM_lcToD_4.5
 # 20241016111736 diam_0.96-obst_0.3_FPM_lcToD_4.5
 # opds_dir=('perfect',)
-
+#%%
 # opds_dir=('OPDs_PASSATA/OPD/WS/JQM/20240509_182041/20240509_123456.0',)
+# opds_dir=('OPDs_PASSATA/OPD/WS/1kHz/02042025/20250325_145800.0_phase_screens-001/20250325_145800.0','perfect')
+# opds_dir=('OPDs_PASSATA/OPD/WS/500Hz/20250508_163051.0_phase_screens/20250508_163051.0_oaCUBEs','perfect')
+#%%
+
+# 1 kHz
+# root_1kHz = 'OPDs_PASSATA/OPD/WS/1kHz/'
+# opds_dir=(root_1kHz+'20250325_145800.0_phase_screens/20250325_145800.0',
+#           root_1kHz+'20250522_150800.0_phase_screens/20250522_150800.0',
+#           root_1kHz+'20250522_154952.0_phase_screens/20250522_154952.0_phase_screens',
+#           root_1kHz+'20250522_163144.0_phase_screens/20250522_163144.0_phase_screens',
+#           root_1kHz+'20250522_171340.0_phase_screens/20250522_171340.0_phase_screens',
+#           root_1kHz+'20250523_120216.0_phase_screens/20250523_120216.0_phase_screens',
+#           root_1kHz+'20250523_124400.0_phase_screens/20250523_124400.0_phase_screens',
+#           root_1kHz+'20250523_140738.0_phase_screens/20250523_140738.0_phase_screens',
+#           root_1kHz+'20250523_144927.0_phase_screens/20250523_144927.0_phase_screens',
+#           root_1kHz+'20250527_145633.0_phase_screens/20250527_145633.0_phase_screens',
+#           'perfect')
+
+# 500 Hz
+root_500Hz = 'OPDs_PASSATA/OPD/WS/500Hz/'
+opds_dir=(root_500Hz + '20250508_163051.0_phase_screens/20250508_163051.0_oaCUBEs',
+          root_500Hz + '20250521_145220.0_phase_screens/20250521_145220.0_oaCUBEs',
+          root_500Hz + '20250521_151332.0_phase_screens/20250521_151332.0_oaCUBEs',
+          root_500Hz + '20250521_153444.0_phase_screens/20250521_153444.0_oaCUBEs',
+          root_500Hz + '20250521_155558.0_phase_screens/20250521_155558.0_oaCUBEs',
+          root_500Hz + '20250521_161711.0_phase_screens/20250521_161711.0_oaCUBEs',
+          root_500Hz + '20250521_163823.0_phase_screens/20250521_163823.0_oaCUBEs',
+          root_500Hz + '20250521_172051.0_phase_screens/20250521_172051.0_oaCUBEs',
+          root_500Hz + '20250521_174203.0_phase_screens/20250521_174203.0_oaCUBEs',
+          root_500Hz + '20250527_122032.0_phase_screens/20250527_122032.0_oaCUBEs',
+          'perfect')
+
 #%%
 
 # """
@@ -299,9 +349,18 @@ for dir_nb in range(len(opds_dir)):
             
             file_psf = [x for x in file_lst if 'wonoise_psf_' in x]
             file_cro = [x for x in file_lst if 'wonoise_coro_psf_' in x]
+            file_elt = [x for x in file_lst if 'wo_noise_psf_elt_pupil' in x]
                
         print("psf :", file_psf)
         print("psf coro :", file_cro)
+
+        if opd_set == 'perfect':
+            
+            file_elt = file_elt[np.argmin(
+                (lambda x:[len(i) for i in x])(file_elt))]
+            base_elt = os.path.basename(file_elt).split('.')[0]
+            Int_elt_avg  = fits.getdata(fdir_res / opd_set / file_elt)
+
         
         file_psf = file_psf[np.argmin(
             (lambda x:[len(i) for i in x])(file_psf))]
@@ -319,14 +378,25 @@ for dir_nb in range(len(opds_dir)):
         lam_min = head_psf['LMIN']
         lam_stp = head_psf['LSTP']
         lam_itv = head_psf['LITV']
-        lam_lst = np.arange(lam_min,lam_min+(lam_itv+1)*lam_stp,lam_stp)
+        lam_lst = np.arange(lam_min,lam_min+(lam_itv)*lam_stp+1e-9,lam_stp)
+        if avoid_k:
+            lam_lst = lam_lst[np.where(lam_lst < 1840e-9)]
+        lmx = str(int(np.rint(lam_lst[-1]*1e9)))
+        lmn = str(int(np.rint(lam_lst[0]*1e9)))
         nL = len(lam_lst)
+
+        if np.median(lam_lst) > 1e-6:
+            wvl = 'YJH'
+        else:
+            wvl = 'RIZ'
         
         nImg = head_psf['NIMG']
         pscale = head_psf['PSCL']
         D = head_psf['DIAM']
         mB = head_psf['SFPM'] # - 0.5
         lam_c = head_psf['LMBD']
+        lamCD2mas = (lam_c / D) * mas2rad
+
         # print(lam_c)
         hlf_fov = nImg * pscale / 2.
         # stackoveflow...
@@ -340,7 +410,7 @@ for dir_nb in range(len(opds_dir)):
         aS = np.arange(nImg//2) * (mas2rad * hlf_fov / (D * 1e9) )
         
         # if lambda of interest / D
-        rW_mas = 10.  #  (lam_c / D) * mas2rad
+        # rW_mas = 10.  #  (lam_c / D) * mas2rad
         
         ratio_prf = np.zeros([nL, nImg//2])
         Int_D0_prf_avg = ratio_prf.copy()
@@ -352,10 +422,15 @@ for dir_nb in range(len(opds_dir)):
         Int_D0_prf_max = ratio_prf.copy()
         Int_D_prf_max = ratio_prf.copy()
 
+        Int_elt_prf_avg = ratio_prf.copy()
+        Int_elt_prf_std = ratio_prf.copy()
+        Int_elt_prf_min = ratio_prf.copy()
+        Int_elt_prf_max = ratio_prf.copy()
+
         for i in range(nL):
             
-            if slc:
-                rW_mas = 10.  #  (lam_lst[i] / D) * mas2rad
+            # if slc:
+            #     rW_mas = rW_mas # 10.  #  (lam_lst[i] / D) * mas2rad
             
             for p in range(nImg//2):
                 
@@ -368,20 +443,38 @@ for dir_nb in range(len(opds_dir)):
                 Int_D_prf_min[i,p] = np.min(Int_D_psf_avg[i,:,:][ring_val])
                 Int_D0_prf_max[i,p] = np.max(Int_D0_psf_avg[i,:,:][ring_val])
                 Int_D_prf_max[i,p] = np.max(Int_D_psf_avg[i,:,:][ring_val])
-           
-        if slc:
+                
+                if opd_set == 'perfect':
+                    
+                    nrm = np.max(Int_elt_avg[i,:,:])
+                    Int_elt_prf_avg[i,p] = np.mean(Int_elt_avg[i,:,:][ring_val])/nrm
+                    Int_elt_prf_std[i,p] = np.std(Int_elt_avg[i,:,:][ring_val])/nrm
+                    Int_elt_prf_min[i,p] = np.min(Int_elt_avg[i,:,:][ring_val])/nrm
+                    Int_elt_prf_max[i,p] = np.max(Int_elt_avg[i,:,:][ring_val])/nrm
+
+        # if slc:
             
-            fname_psf_contrast = ('contrast_profile_Lbd2D_' + opd_set + '_' +
-                                  base_psf + '.fits')
-            fname_cro_contrast = ('contrast_profile_Lbd2D_' + opd_set + '_' +
-                                  base_cro + '.fits')
+        #     fname_psf_contrast = ('contrast_profile_Lbd2D_' + opd_set + '_' +
+        #                           base_psf +'_'+lmn+'_'+lmx+'.fits')
+        #     fname_cro_contrast = ('contrast_profile_Lbd2D_' + opd_set + '_' +
+        #                           base_cro +'_'+lmn+'_'+lmx+ '.fits')
     
-        else:
+        # else:
             
-            fname_psf_contrast = ('contrast_profile_L0toD_' + opd_set + '_' +
-                                  base_psf + '.fits')
-            fname_cro_contrast = ('contrast_profile_L0toD_' + opd_set + '_' +
-                                  base_cro + '.fits')
+        fname_psf_contrast = ('contrast_profile_L0toD_' + opd_set + '_' +
+                              base_psf +'_'+
+                              str(int(as_oi))+'mas_'+str(int(rW_mas))+'mas_'+
+                              lmn+'_'+lmx+ 'nm.fits')
+        fname_cro_contrast = ('contrast_profile_L0toD_' + opd_set + '_' +
+                              base_cro +'_'+
+                              str(int(as_oi))+'mas_'+str(int(rW_mas))+'mas_'+
+                              lmn+'_'+lmx+ 'nm.fits')
+        if opd_set == 'perfect':
+
+            fname_elt_contrast = ('contrast_profile_L0toD_' + opd_set + '_' +
+                              base_elt +'_'+
+                              str(int(as_oi))+'mas_'+str(int(rW_mas))+'mas_'+
+                              lmn+'_'+lmx+ 'nm.fits')
         
         fpath_psf_contrast =  fdir_res / opd_set / fname_psf_contrast 
         fits.writeto(fpath_psf_contrast, Int_D0_prf_avg, head_psf,
@@ -396,6 +489,17 @@ for dir_nb in range(len(opds_dir)):
         fits.append(fpath_cro_contrast, Int_D_prf_std, head_psf)
         fits.append(fpath_cro_contrast, Int_D_prf_min, head_psf)
         fits.append(fpath_cro_contrast, Int_D_prf_max, head_psf)
+
+        prf_as_oi_mas = int(np.median(np.argmin(np.abs(aS[:]-as_oi))))
+       
+        if opd_set == 'perfect':
+    
+            fpath_elt_contrast =  fdir_res / opd_set / fname_elt_contrast 
+            fits.writeto(fpath_elt_contrast, Int_elt_prf_avg, head_psf,
+                         overwrite=True)
+            fits.append(fpath_elt_contrast, Int_elt_prf_std, head_psf)
+            fits.append(fpath_elt_contrast, Int_elt_prf_min, head_psf)
+            fits.append(fpath_elt_contrast, Int_elt_prf_max, head_psf)
 
         prf_as_oi_mas = int(np.median(np.argmin(np.abs(aS[:]-as_oi))))
         
@@ -455,7 +559,6 @@ for dir_nb in range(len(opds_dir)):
         
         #%%
         # fix mask radius before plots
-        lamCD2mas = (lam_c / D) * mas2rad
         
         # # plot of the contrast vs radial distance
         # colors = plt.cm.rainbow(np.linspace(0,1,nL))
@@ -499,6 +602,8 @@ for dir_nb in range(len(opds_dir)):
         # plt.show()
 
         #%%
+        # index of wvl to display
+        iD = [0,nL//4,nL//2-1,nL*3//4,nL-1]
 
         if opd_set != 'perfect':
             
@@ -513,29 +618,32 @@ for dir_nb in range(len(opds_dir)):
             plt.title(f'Coronagraph configuration in {wvl} band')
             plt.grid(True)
            
-            for i in range(0,nL,2):
-            
+            for i in range(5):
+            # for i in range(0,nL,2):
+            # for i in range(6):
+
                 # AO corrected psf 
-                plt.plot(aS, Int_D0_psf_prf[i,1,:], color=colors[i], alpha=0.5,
-                          ls='--')
+                # plt.plot(aS, Int_D0_psf_prf[i,1,:], color=colors[i], alpha=0.5,
+                #           ls='--')
                 
                 # AO corrected coronagraphic psf 
-                plt.plot(aS, Int_D_psf_prf[i,1,:], label=str(int(lam_lst[i]*1e9))+'nm',
-                          color=colors[i])
+                plt.plot(aS, Int_D_psf_prf[iD[i],1,:],
+                         label=str(int(np.rint(lam_lst[iD[i]]*1e9)))+'nm',
+                          color=colors[iD[i]])
                 
             # Focal plane mask boundary
             x = np.arange(0.0, mB/2, 0.01)
             plt.axvline(as_oi, color='k', ls='--')
-            plt.legend(fontsize='xx-small', ncols=5)
+            plt.legend(fontsize='xx-small', ncols=6)
             # Focal plane mask grey area
             plt.fill_between(x *lamCD2mas, 0, mB/2/ 38.54*lam_c/rad2mas, color='gray',
                               alpha=0.3)
             
             fname_contrast_profile = ('intensities_profiles_' + base_cro)
             fpath_contrast_profile_svg = (fdir_plt / opd_set /
-                                          (fname_contrast_profile + '.svg'))
+                                          (fname_contrast_profile +'_'+lmn+'_'+lmx+ '.svg'))
             fpath_contrast_profile_pdf = (fdir_plt / opd_set /
-                                          (fname_contrast_profile + '.pdf'))
+                                          (fname_contrast_profile +'_'+lmn+'_'+lmx+ '.pdf'))
             plt.savefig(fpath_contrast_profile_svg)
             plt.savefig(fpath_contrast_profile_pdf, bbox_inches='tight', pad_inches=0.1)
             plt.show()
@@ -576,9 +684,9 @@ for dir_nb in range(len(opds_dir)):
             
             fname_contrast_profile = ('intensities_profiles_1600nmOnly_'+base_cro)
             fpath_contrast_profile_svg = (fdir_plt / opd_set /
-                                          (fname_contrast_profile + '.svg'))
+                                          (fname_contrast_profile +'_'+lmn+'_'+lmx+ '.svg'))
             fpath_contrast_profile_pdf = (fdir_plt / opd_set /
-                                          (fname_contrast_profile + '.pdf'))
+                                          (fname_contrast_profile +'_'+lmn+'_'+lmx+ '.pdf'))
             plt.savefig(fpath_contrast_profile_svg)
             plt.savefig(fpath_contrast_profile_pdf)
             plt.show()
