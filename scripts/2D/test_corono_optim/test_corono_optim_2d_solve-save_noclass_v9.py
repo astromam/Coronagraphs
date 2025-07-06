@@ -51,7 +51,7 @@ FirstDerGlobalLim = 100.
 BinarityReg       = 0.1
 
 #nPup = corono0.params['nPup']
-nPup0 = 506 #512
+nPup0 = 400 # 506 #512
 nExt0 = 0
 nDim0 = nPup0 + nExt0
 nFPM = 50
@@ -113,6 +113,7 @@ if do_dead_act:
     
 
 do_fits = True
+
 
 #%%
 """
