@@ -41,6 +41,16 @@ fdir_mov = Path('/Users/mndiaye/scratch/data/andes/movie_frames/').resolve()
 frames = np.stack([iio.v3.imread(fdir_mov / f'frame_{isep:04d}.png') for isep in 4*np.arange(nsep//4)], axis = 0)
 iio.mimwrite(fdir_mov / 'movie_planet.gif', frames, fps=(nsep/4)/duration)
 
+
+#%%
+# fileList = [ fdir_mov / f'frame_{isep:04d}.png' for isep in 4*np.arange(nsep//4)]
+
+# writer = iio.get_writer(fdir_mov / 'movie_planet.mp4')
+
+# for im in fileList:
+#     writer.append_data(iio.imread(im))
+# writer.close()
+
 #%%
 """
 ### Optimize gif file
