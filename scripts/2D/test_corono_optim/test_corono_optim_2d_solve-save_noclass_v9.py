@@ -55,8 +55,8 @@ nPup0 = 400 # 506 #512
 nExt0 = 0
 nDim0 = nPup0 + nExt0
 nFPM = 50
-Fmax2d = 45#22.5
-nImg2d = 90#45
+Fmax2d = 75 # 45#22.5
+nImg2d = 150 # 90#45
 
 LS_OD = 0.96
 nPupLS = int(nPup0*LS_OD)
@@ -71,7 +71,7 @@ rMask = 2.252 # ALC2 at 1.593um (185mas)
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
 rho0 =  0.0
-rho1 = 12.0
+rho1 = 30.0 # 20
 
 # contrast in the dark region
 cDarkHole = 10.0
