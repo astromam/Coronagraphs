@@ -59,7 +59,7 @@ if True:
     
     # dark zone bounds (inner and outer edges) in lam0/D unit
     rho0 =  0.0
-    rho1 = 20.0
+    rho1 = 20.0#30.0
     
     # contrast in the dark region
     cDarkHole = 10.0
