@@ -130,13 +130,29 @@ rMask_mas = rMask * (wv0/pdiam)/mas2rad
 File reading for Pupil and Lyot stop
 """
 #fdir = Path('../../data/2D/pupils/').resolve()
+fdir = Path('/Users/mndiaye/scratch/data/Coronagraphs/data/2D/pupils/').resolve()
 if user == 'mndiaye':
     if syst == 'darwin':
-        fdir = Path('/Users/mndiaye/scratch/data/Coronagraphs/data/2D/pupils/').resolve()
+        fdir = Path('/Users/mndiaye/scratch/data/Coronagraphs/data/2D/pupils/').expanduser()
+        fdir_sav = Path('/Users/mndiaye/scratch/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
+        sim_case = 'test' # 'test' or 'server'
     elif syst == 'linux':
         fdir = Path('/scratch/mndiaye/data/Coronagraphs/data/2D/pupils/').resolve()
+        fdir_sav = Path('/scratch/mndiaye/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
+        sim_case = 'server' # 'test' or 'server'            
     else:
-        raise ValueError('Unknown operating system {0}'.format(syst))
+        raise ValueError('Unknown operating system {0}'.format(user))
+elif user == 'ndiaye':
+    if syst == 'darwin':
+        fdir = Path('/Users/mndiaye/scratch/data/Coronagraphs/data/2D/pupils/').expanduser()
+        fdir_sav = Path('/Users/mndiaye/scratch/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
+        sim_case = 'test' # 'test' or 'server'
+    elif syst == 'linux':
+        fdir = Path('/home/ndiaye/scratch/data/Coronagraphs/data/2D/pupils/').resolve()
+        fdir_sav = Path('/home/ndiaye/scratch/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
+        sim_case = 'server' # 'test' or 'server'            
+    else:
+        raise ValueError('Unknown operating system {0}'.format(user))    
 else:
     raise ValueError('Unknown user {0}'.format(user))
 
@@ -227,38 +243,22 @@ if Pupil2dSym == True:
 Save apodizer
 """
 #fdir = Path('../../results/2D/dat_pyth').resolve() / pupil_name
-fdir = Path('/Users/mndiaye/scratch/data/Coronagraphs/data/2D/pupils/').resolve()
-if user == 'mndiaye':
-    if syst == 'darwin':
-        fdir = Path('/Users/mndiaye/scratch/data/Coronagraphs/data/2D/pupils/').expanduser()
-        fdir_sav = Path('/Users/mndiaye/scratch/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
-        sim_case = 'test' # 'test' or 'server'
-    elif syst == 'linux':
-        fdir = Path('/scratch/mndiaye/data/Coronagraphs/data/2D/pupils/').resolve()
-        fdir_sav = Path('/scratch/mndiaye/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
-        sim_case = 'server' # 'test' or 'server'            
-    else:
-        raise ValueError('Unknown operating system {0}'.format(user))
-elif user == 'ndiaye':
-    if syst == 'darwin':
-        fdir = Path('/Users/mndiaye/scratch/data/Coronagraphs/data/2D/pupils/').expanduser()
-        fdir_sav = Path('/Users/mndiaye/scratch/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
-        sim_case = 'test' # 'test' or 'server'
-    elif syst == 'linux':
-        fdir = Path('/home/ndiaye/scratch/data/Coronagraphs/data/2D/pupils/').resolve()
-        fdir_sav = Path('/home/ndiaye/scratch/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
-        sim_case = 'server' # 'test' or 'server'            
-    else:
-        raise ValueError('Unknown operating system {0}'.format(user))    
-else:
-    raise ValueError('Unknown user {0}'.format(user))
+# if user == 'mndiaye':
+#     if syst == 'darwin':
+#         fdir = Path('/Users/mndiaye/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
+#     elif syst == 'linux':
+#         fdir = Path('/scratch/mndiaye/data/Coronagraphs/results/2D/dat_pyth/').resolve()
+#     else:
+#         raise ValueError('Unknown operating system {0}'.format(syst))
+# else:
+#     raise ValueError('Unknown user {0}'.format(user))
 
 
-if not os.path.exists(fdir):
-    os.makedirs(fdir)
+if not os.path.exists(fdir_sav):
+    os.makedirs(fdir_sav)
     
 fname = problem1.get_filename() + f'_{band}band.fits'
-fpath = fdir / fname
+fpath = fdir_sav / fname
 
 if do_fits is True:
     fits.writeto(fpath, Apod1_2d, overwrite=True)
