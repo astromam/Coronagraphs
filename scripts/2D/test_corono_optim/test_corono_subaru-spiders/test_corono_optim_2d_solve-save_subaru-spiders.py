@@ -32,7 +32,7 @@ Parameters
 corono_name  = 'APLC' # 'SP' or 'APLC'
 pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
 problem_name = 'MaxTau' # 'MaxTau' # ,'MaxContrastLinf' # 'MaxContrastL1' #
-solver       = 'stdgrb' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
+solver       = 'gurobipy' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
 slvLogToConsole = 1
 slvCrossover    = 0
 slvMethod       = 2
@@ -132,7 +132,7 @@ File reading for Pupil and Lyot stop
 #fdir = Path('../../data/2D/pupils/').resolve()
 if user == 'mndiaye':
     if syst == 'darwin':
-        fdir = Path('/Users/mndiaye/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs/data/2D/pupils/').resolve()
+        fdir = Path('/Users/mndiaye/scratch/data/Coronagraphs/data/2D/pupils/').resolve()
     elif syst == 'linux':
         fdir = Path('/scratch/mndiaye/data/Coronagraphs/data/2D/pupils/').resolve()
     else:
@@ -227,13 +227,29 @@ if Pupil2dSym == True:
 Save apodizer
 """
 #fdir = Path('../../results/2D/dat_pyth').resolve() / pupil_name
+fdir = Path('/Users/mndiaye/scratch/data/Coronagraphs/data/2D/pupils/').resolve()
 if user == 'mndiaye':
     if syst == 'darwin':
-        fdir = Path('/Users/mndiaye/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
+        fdir = Path('/Users/mndiaye/scratch/data/Coronagraphs/data/2D/pupils/').expanduser()
+        fdir_sav = Path('/Users/mndiaye/scratch/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
+        sim_case = 'test' # 'test' or 'server'
     elif syst == 'linux':
-        fdir = Path('/scratch/mndiaye/data/Coronagraphs/results/2D/dat_pyth/').resolve()
+        fdir = Path('/scratch/mndiaye/data/Coronagraphs/data/2D/pupils/').resolve()
+        fdir_sav = Path('/scratch/mndiaye/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
+        sim_case = 'server' # 'test' or 'server'            
     else:
-        raise ValueError('Unknown operating system {0}'.format(syst))
+        raise ValueError('Unknown operating system {0}'.format(user))
+elif user == 'ndiaye':
+    if syst == 'darwin':
+        fdir = Path('/Users/mndiaye/scratch/data/Coronagraphs/data/2D/pupils/').expanduser()
+        fdir_sav = Path('/Users/mndiaye/scratch/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
+        sim_case = 'test' # 'test' or 'server'
+    elif syst == 'linux':
+        fdir = Path('/home/ndiaye/scratch/data/Coronagraphs/data/2D/pupils/').resolve()
+        fdir_sav = Path('/home/ndiaye/scratch/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
+        sim_case = 'server' # 'test' or 'server'            
+    else:
+        raise ValueError('Unknown operating system {0}'.format(user))    
 else:
     raise ValueError('Unknown user {0}'.format(user))
 
