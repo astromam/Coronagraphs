@@ -31,7 +31,7 @@ Parameters
 # Telescope name
 corono_name  = 'APLC' # 'SP' or 'APLC'
 pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
-problem_name = 'MaxTau' # 'MaxTau' # ,'MaxContrastLinf' # 'MaxContrastL1' #
+problem_name = 'MaxContrastL1' # 'MaxTau' # ,'MaxContrastLinf' # 'MaxContrastL1' #
 solver       = 'gurobipy' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
 slvLogToConsole = 1
 slvCrossover    = 0
@@ -80,10 +80,10 @@ rho0 =  4.0
 rho1 = 20.0
 
 # contrast in the dark region
-cDarkHole = 8.0
+cDarkHole = 7.0
 
 # tau (integrated Pupil transmission)
-tau   = 0.7
+tau   = 0.5
 
 # CtrBtwnPix2
 CtrBtwnPix  = True

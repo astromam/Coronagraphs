@@ -37,7 +37,7 @@ if True:
     # Telescope name
     corono_name  = 'APLC' # 'SP' or 'APLC'
     pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
-    problem_name = 'MaxTau' # 'MaxContrastL1' #'MaxTau' # , 'MaxContrastLinf' # #  
+    problem_name = 'MaxContrastL1' # 'MaxContrastL1' #'MaxTau' # , 'MaxContrastLinf' # #  
     solver       = 'gurobipy' # 'stdgrb' #  'gurobipy', 'scipy.linprog'
     
     MinIsland   = False
@@ -75,7 +75,7 @@ if True:
     rho1 = 20.0
     
     # contrast in the dark region
-    cDarkHole = 8.0
+    cDarkHole = 7.0
     
     # tau (integrated Pupil transmission)
     tau   = 0.5
@@ -188,6 +188,7 @@ if True:
     elif pupil_name == 'sbr':
         # fname_pup = f'pupil=sbr_nPup={nPup}_odiam={int(odiam*100)}_thick={int(thick*100):03d}.fits'
         # fname_lys = f'pupil=sbr_nPup={nPup}_odiam={int(odiam2*100)}_thick={int(thick2*100):03d}.fits'
+        # the v2 term in the filename stands for the pupil margin
         fname_pup = f'pupilsbr_nPup{nPup}_kpdiam{int(kpdiam1*100):03d}_kodiam{int(kodiam1*100):03d}_kthick{int(kthick1*100):03d}_v2.fits'
         fname_lys = f'pupilsbr_nPup{nPup}_kpdiam{int(kpdiam2*100):03d}_kodiam{int(kodiam2*100):03d}_kthick{int(kthick2*100):03d}_v2.fits'
     else:
