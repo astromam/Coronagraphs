@@ -32,19 +32,19 @@ Parameters
 """
 pl.close('all')
 
-test_gurobi = False
+test_gurobi = True
 if True:
     # Telescope name
     corono_name  = 'APLC' # 'SP' or 'APLC'
     pupil_name   = 'sbr' # 'vlt' or 'sbr' or 'lvr'
     problem_name = 'MaxTau' # 'MaxContrastL1' #'MaxTau' # , 'MaxContrastLinf' # #  
-    solver       = 'stdgrb' # 'stdgrb' #  'gurobipy', 'scipy.linprog'
+    solver       = 'gurobipy' # 'stdgrb' #  'gurobipy', 'scipy.linprog'
     
     MinIsland   = False
     FirstDerGlobalLim = 1.
     
     #nPup = corono0.params['nPup']
-    nPup = 200
+    nPup = 256
     nFPM = 50
     Fmax2d = 50
     nImg2d = 500
@@ -55,9 +55,12 @@ if True:
     offset = 1.278            # spider intersection offset (meters)
     beta = 51.75              # spider angle beta
     
-    fac = 2.0
-    odiam2 = fac*odiam
-    thick2 = fac*thick
+    # fac = 2.0
+    #odiam2 = fac*odiam
+    #thick2 = fac*thick
+    kpdiam1, kodiam1, kthick1 = 1.00, 1.00, 1.00
+    kpdiam2, kodiam2, kthick2 = 0.96, 1.11, 2.00
+    
     Fratio    = 64
 
     # Focal plane mask 
@@ -152,14 +155,30 @@ rMask_mas = rMask * (wv0/pdiam)/mas2rad
 File reading for Pupil and Lyot stop
 """
 if True:
-#    fdir = Path('../../data/2D/pupils/').resolve()
+#fdir = Path('../../data/2D/pupils/').resolve()
+    fdir = Path('/Users/mndiaye/scratch/data/Coronagraphs/data/2D/pupils/').resolve()
     if user == 'mndiaye':
         if syst == 'darwin':
-            fdir = Path('/Users/mndiaye/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs/data/2D/pupils/').resolve()
+            fdir = Path('/Users/mndiaye/scratch/data/Coronagraphs/data/2D/pupils/').expanduser()
+            fdir_sav = Path('/Users/mndiaye/scratch/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
+            sim_case = 'test' # 'test' or 'server'
         elif syst == 'linux':
             fdir = Path('/scratch/mndiaye/data/Coronagraphs/data/2D/pupils/').resolve()
+            fdir_sav = Path('/scratch/mndiaye/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
+            sim_case = 'server' # 'test' or 'server'            
         else:
-            raise ValueError('Unknown operating system {0}'.format(syst))
+            raise ValueError('Unknown operating system {0}'.format(user))
+    elif user == 'ndiaye':
+        if syst == 'darwin':
+            fdir = Path('/Users/mndiaye/scratch/data/Coronagraphs/data/2D/pupils/').expanduser()
+            fdir_sav = Path('/Users/mndiaye/scratch/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
+            sim_case = 'test' # 'test' or 'server'
+        elif syst == 'linux':
+            fdir = Path('/home/ndiaye/scratch/data/Coronagraphs/data/2D/pupils/').resolve()
+            fdir_sav = Path('/home/ndiaye/scratch/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
+            sim_case = 'server' # 'test' or 'server'            
+        else:
+            raise ValueError('Unknown operating system {0}'.format(user))    
     else:
         raise ValueError('Unknown user {0}'.format(user))
 
@@ -167,8 +186,10 @@ if True:
         fname_pup = f'ATLAST_Aperture_nPup={nPup}.fits'
         fname_lys = f'ATLAST_LyotStop_nPup={nPup}.fits'
     elif pupil_name == 'sbr':
-        fname_pup = f'pupil=sbr_nPup={nPup}_odiam={int(odiam*100)}_thick={int(thick*100):03d}.fits'
-        fname_lys = f'pupil=sbr_nPup={nPup}_odiam={int(odiam2*100)}_thick={int(thick2*100):03d}.fits'
+        # fname_pup = f'pupil=sbr_nPup={nPup}_odiam={int(odiam*100)}_thick={int(thick*100):03d}.fits'
+        # fname_lys = f'pupil=sbr_nPup={nPup}_odiam={int(odiam2*100)}_thick={int(thick2*100):03d}.fits'
+        fname_pup = f'pupilsbr_nPup{nPup}_kpdiam{int(kpdiam1*100):03d}_kodiam{int(kodiam1*100):03d}_kthick{int(kthick1*100):03d}_v2.fits'
+        fname_lys = f'pupilsbr_nPup{nPup}_kpdiam{int(kpdiam2*100):03d}_kodiam{int(kodiam2*100):03d}_kthick{int(kthick2*100):03d}_v2.fits'
     else:
         raise NameError(f'{pupil_name}: unknown pupil name')
     
@@ -245,32 +266,31 @@ fname_gen = problem1.get_filename()
 fname     = fname_gen + f'_{band}band.fits'
 fpath     = fdir / fname
 
+# if test_gurobi is True:
+#     idx_pup = problem1.idx_pup
+#     npp = problem1.npp
+    
+#     sol = []
+#     import csv
+#     with open('/Users/mndiaye/Desktop/apod2.sol', newline='\n') as csvfile:
+#         reader = csv.reader((line.replace('  ', ' ') for line in csvfile), delimiter=' ')
+#         next(reader)
+#         next(reader)
+#         for var, value in reader:
+#             sol.append(float(value))
 
-if test_gurobi is True:
-    idx_pup = problem1.idx_pup
-    npp = problem1.npp
+#     Apod1 = np.zeros((corono0.nPup**2))
+#     Apod1[idx_pup] = sol[:npp]
     
-    sol = []
-    import csv
-    with open('/Users/mndiaye/Desktop/apod2.sol', newline='\n') as csvfile:
-        reader = csv.reader((line.replace('  ', ' ') for line in csvfile), delimiter=' ')
-        next(reader)
-        next(reader)
-        for var, value in reader:
-            sol.append(float(value))
-
-    Apod1 = np.zeros((corono0.nPup**2))
-    Apod1[idx_pup] = sol[:npp]
+#     Apod_pyth = np.reshape(Apod1, (corono0.nPup, corono0.nPup))
     
-    Apod_pyth = np.reshape(Apod1, (corono0.nPup, corono0.nPup))
-    
-    if Pupil2dSym == True:
-        Apod1_2dtmp =  Apod_pyth[corono0.nPup//2:, corono0.nPup//2:]
-        Apod_pyth[:corono0.nPup//2, corono0.nPup//2:] = np.flip(Apod1_2dtmp, axis=0)
-        Apod_pyth[:, :corono0.nPup//2]          = np.flip(Apod_pyth[:, corono0.nPup//2:], axis=1)
+#     if Pupil2dSym == True:
+#         Apod1_2dtmp =  Apod_pyth[corono0.nPup//2:, corono0.nPup//2:]
+#         Apod_pyth[:corono0.nPup//2, corono0.nPup//2:] = np.flip(Apod1_2dtmp, axis=0)
+#         Apod_pyth[:, :corono0.nPup//2]          = np.flip(Apod_pyth[:, corono0.nPup//2:], axis=1)
         
-else:    
-    Apod_pyth = fits.getdata(fpath,)
+# else:    
+Apod_pyth = fits.getdata(fpath,)
 
 #%% Display of the apodizer
 """
