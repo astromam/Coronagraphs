@@ -219,7 +219,7 @@ Working directories
 #fdir = Path('../../results/2D/dat_pyth').resolve() / pupil_name
 if user == 'mndiaye':
     if syst == 'darwin':
-        fdir = Path('/Users/mndiaye/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
+        fdir = Path('/Users/mndiaye/scratch/data/Coronagraphs/results/2D/dat_pyth/').resolve() / pupil_name
     elif syst == 'linux':
         fdir = Path('/scratch/mndiaye/data/Coronagraphs/results/2D/dat_pyth/').resolve()
     else:
