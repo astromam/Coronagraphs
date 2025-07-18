@@ -77,7 +77,7 @@ rho1 = 30.0 # 20
 cDarkHole = 10.0
 
 # tau (integrated Pupil transmission)
-tau   = 0.5 #0.756
+tau   = 0.756
 # CtrBtwnPix2
 CtrBtwnPix  = True
 CtrBtwnPix2 = True
