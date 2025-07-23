@@ -44,7 +44,7 @@ if True:
     FirstDerGlobalLim = 1.
     
     #nPup = corono0.params['nPup']
-    nPup = 256
+    nPup = 100
     nFPM = 50
     Fmax2d = 50
     nImg2d = 500
@@ -55,11 +55,12 @@ if True:
     offset = 1.278            # spider intersection offset (meters)
     beta = 51.75              # spider angle beta
     
-    # fac = 2.0
-    #odiam2 = fac*odiam
-    #thick2 = fac*thick
-    kpdiam1, kodiam1, kthick1 = 1.00, 1.00, 1.00
-    kpdiam2, kodiam2, kthick2 = 0.96, 1.11, 2.00
+    pdiam_apo, odiam_apo, thick_apo = 7.92*0.975, 2.3+7.92*0.01, 0.25 # tel. and obst. diameters (meters) - apodizer pupil
+    pdiam_lys, odiam_lys, thick_lys = 7.92*0.975*0.96, 2.6457, 0.50# tel. and obst. diameters (meters) - Lyot stop pupil
+
+
+    kpdiam1, kodiam1, kthick1 = pdiam_apo/pdiam, odiam_apo/odiam, thick_apo/thick
+    kpdiam2, kodiam2, kthick2 = pdiam_lys/pdiam, odiam_lys/odiam, thick_lys/thick
     
     Fratio    = 64
 
@@ -188,9 +189,9 @@ if True:
     elif pupil_name == 'sbr':
         # fname_pup = f'pupil=sbr_nPup={nPup}_odiam={int(odiam*100)}_thick={int(thick*100):03d}.fits'
         # fname_lys = f'pupil=sbr_nPup={nPup}_odiam={int(odiam2*100)}_thick={int(thick2*100):03d}.fits'
-        # the v2 term in the filename stands for the pupil margin
-        fname_pup = f'pupilsbr_nPup{nPup}_kpdiam{int(kpdiam1*100):03d}_kodiam{int(kodiam1*100):03d}_kthick{int(kthick1*100):03d}_v2.fits'
-        fname_lys = f'pupilsbr_nPup{nPup}_kpdiam{int(kpdiam2*100):03d}_kodiam{int(kodiam2*100):03d}_kthick{int(kthick2*100):03d}_v2.fits'
+        # the v3 term in the filename stands for the pupil margin set by Olivier Lardiere
+        fname_pup = f'pupilsbr_nPup{nPup:04d}_kpdiam{int(kpdiam1*1000):04d}_kodiam{int(kodiam1*1000):04d}_kthick{int(kthick1*1000):04d}_v3.fits'
+        fname_lys = f'pupilsbr_nPup{nPup:04d}_kpdiam{int(kpdiam2*1000):04d}_kodiam{int(kodiam2*1000):04d}_kthick{int(kthick2*1000):04d}_v3.fits'
     else:
         raise NameError(f'{pupil_name}: unknown pupil name')
     
