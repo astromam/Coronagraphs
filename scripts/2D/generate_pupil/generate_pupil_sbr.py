@@ -13,7 +13,7 @@ License: MIT license
 import numpy as np
 import pyzelda.utils.aperture as aperture
 
-import pylab as pl
+import matplotlib.pyplot as plt
 from pathlib import Path
 
 from astropy.io import fits
@@ -32,25 +32,36 @@ syst = sys.platform
 """
 ### Parameters
 """
-nPup= 400
+nPup= 2048
 do_fits = False
 
 do_margin = True
 
 str_margin=''
 if do_margin:
-    str_margin = '_v2'
+    str_margin = '_v3'
 
 pdiam, odiam = 7.92, 2.3 # tel. and obst. diameters (meters)
+pdiam_apo, odiam_apo, thick_apo = 7.92*0.975, 2.3+7.92*0.01, 0.25 # tel. and obst. diameters (meters) - apodizer pupil
+pdiam_lys, odiam_lys, thick_lys = 7.92*0.975*0.96, 2.6457, 0.50# tel. and obst. diameters (meters) - Lyot stop pupil
+
+#pdiam_bis, odiam_bis, thick_bis = 7.92, 2.3, 0.25
 if do_margin:
-    pdiam, odiam = 7.92*0.99, 2.3+7.92*0.01 # tel. and obst. diameters (meters)
+#    pdiam_bis, odiam_bis, thick_bis = pdiam_apo, odiam_apo, thick_apo # tel. and obst. diameters (meters) - apodizer pupil
+    pdiam_bis, odiam_bis, thick_bis = pdiam_lys, odiam_lys, thick_lys# tel. and obst. diameters (meters) - Lyot stop pupil
+    
 thick = 0.25              # adopted spider thickness (meters)
 offset = 1.278            # spider intersection offset (meters)
 beta = 51.75              # spider angle beta
 
-kpdiam_t = [1.0]#[0.96]#np.linspace(0.9, 1.0, 11) # np.linspace(0.98, 1.0, 3) #
-kodiam_t = [1.0]#[1.112]#np.linspace(1.0, 2.0, 21) # np.linspace(1.0, 1.2, 5)  #
-kthick_t = [1.0]#[2.0]#np.linspace(1.0, 2.0, 11) # np.linspace(1.0, 1.2, 3)  #
+kpdiam_t = [pdiam_bis/pdiam]#[0.96]#np.linspace(0.9, 1.0, 11) # np.linspace(0.98, 1.0, 3) #
+kodiam_t = [odiam_bis/odiam]#[1.112]#np.linspace(1.0, 2.0, 21) # np.linspace(1.0, 1.2, 5)  #
+kthick_t = [thick_bis/thick]#[2.0]#np.linspace(1.0, 2.0, 11) # np.linspace(1.0, 1.2, 3)  #
+
+nPup_ini = nPup*pdiam/pdiam_apo
+nArr = int(np.ceil(nPup_ini))
+if nArr:
+    nArr += 1 
 
 pdiam2_t = np.asarray(kpdiam_t)*pdiam
 odiam2_t = np.asarray(kodiam_t)*odiam
@@ -73,7 +84,7 @@ if thick <= 0.:
 #fdir = Path('/Users/mndiaye/Dropbox/python/Coronagraphs/data/2D/pupils').resolve()
 if user == 'mndiaye':
     if syst == 'darwin':
-        fdir = Path('/Users/mndiaye/OneDrive - Université Nice Sophia Antipolis/data/Coronagraphs/data/2D/pupils/').resolve()
+        fdir = Path('/Users/mndiaye/scratch/data/Coronagraphs/data/2D/pupils/').resolve()
     elif syst == 'linux':
         fdir = Path('/scratch/mndiaye/data/Coronagraphs/data/2D/pupils/').resolve()
     else:
@@ -97,17 +108,22 @@ for ipdiam, kpdiam in enumerate(kpdiam_t):
             odiam2 = odiam2_t[iodiam]
             thick2 = thick2_t[ithick]            
             
-            pupil = xaosim.pupil.four_spider_mask(nPup, nPup, nPup/2, 
-                                                  pdiam=pdiam, odiam=odiam2,
-                                                  beta=beta, thick=thick2, offset=offset,
+            pupil_sbr_tmp = xaosim.pupil.four_spider_mask(nArr, nArr, nPup_ini/2, 
+                                                  pdiam=pdiam, odiam=odiam,
+                                                  beta=beta, thick=thick_bis, offset=offset,
                                                   spiders=kwd_spiders,between_pix=True)
 
-            if kpdiam != 1.0:
-                outer_pupil = coro.utils.uniform_disk(nPup, (nPup/2)*kpdiam, CtrBtwnPix=True)
-                pupil = pupil*outer_pupil           
+            if do_margin:
+                outer_pupil = coro.utils.uniform_disk(nArr, (nPup_ini/2)*pdiam_bis/pdiam, CtrBtwnPix=True) - coro.utils.uniform_disk(nArr, (nPup/2)*odiam_bis/pdiam, CtrBtwnPix=True)
+                pupil_tmp = pupil_sbr_tmp*outer_pupil
+                
             
-            fname = f'pupilsbr_nPup{nPup}_kpdiam{int(np.round(kpdiam*100)):03d}_kodiam{int(np.round(kodiam*100)):03d}_kthick{int(np.round(kthick*100)):03d}{str_margin}.fits' 
+            fname = f'pupilsbr_nPup{nPup:04d}_kpdiam{int(np.round(kpdiam*1000)):04d}_kodiam{int(np.round(kodiam*1000)):04d}_kthick{int(np.round(kthick*1000)):04d}{str_margin}.fits' 
             fpath = fdir / fname
+            
+            nIni = (nArr-nPup)//2
+            nEnd = (nArr+nPup)//2
+            pupil = pupil_tmp[nIni:nEnd, nIni:nEnd]
             
             if do_fits:
                 fits.writeto(fpath, pupil*1, overwrite=True)
@@ -116,25 +132,34 @@ for ipdiam, kpdiam in enumerate(kpdiam_t):
 """
 ### display vlt-like pupil
 """
-pupil_sbr = xaosim.pupil.subaru(nPup, nPup, nPup/2, between_pix=True)
-pupil_diff = pupil*1 - pupil_sbr*1
+pupil_sbr = xaosim.pupil.subaru(nArr, nArr, nPup_ini/2, between_pix=True)
+pupil_diff = pupil_tmp*1 - pupil_sbr*1
 
-pl.figure(0)
-pl.clf()
-pl.subplot(131)
-pl.imshow(pupil)
+plt.figure(0)
+plt.clf()
+plt.subplot(131)
+plt.imshow(pupil_tmp)
+plt.title('new pupil')
 
-pl.subplot(132)
-pl.imshow(pupil_sbr)
 
-pl.subplot(133)
-pl.imshow(pupil_diff)
+plt.subplot(132)
+plt.imshow(pupil_sbr)
+plt.title('subaru pupil')
 
-pl.show()
+plt.subplot(133)
+plt.imshow(pupil_diff)
+plt.title('difference')
 
-a = coro.utils.uniform_disk(nPup, (nPup/2)*kpdiam, CtrBtwnPix=True)
+plt.show()
 
-pl.figure(1)
-pl.clf()
-pl.imshow(a*pupil)
+a = coro.utils.uniform_disk(nPup, (nPup/2), CtrBtwnPix=True)
+
+plt.figure(1)
+plt.clf()
+plt.subplot(111)
+plt.imshow(pupil)
+plt.title('Pupil - Apodizer')
+#plt.subplot(122)
+#plt.imshow(pupil_lys)
+#plt.title('Pupil - Lyot stop')
 
