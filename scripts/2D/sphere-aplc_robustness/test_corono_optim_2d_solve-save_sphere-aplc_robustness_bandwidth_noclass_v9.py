@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt
 ftsz = 16 
 plt.rcParams.update({'font.size': ftsz})
 from matplotlib.patches import Circle
+from matplotlib import cm
 
 from pathlib import Path
 from pyzelda.utils import imutils
@@ -361,17 +362,39 @@ fpath = fdir_plots / fname
 #pl.title('Apod 1 transmission - MaxTau problem - '+ solver)
 #pl.savefig(str(fpath))
 
-#%%
 """
 ### Plot display of the apodizer
 """
-plt.figure(2, figsize=(5,5))
+# plt.figure(2, figsize=(5,5))
+# plt.clf()
+# plt.imshow(Apod_pyth*corono0.Pupil2d, cmap = 'inferno')
+# plt.title('Apodization')
+# plt.tight_layout()
+# if do_plot is True:
+#     plt.savefig(str(fpath), transparent=True)
+
+
+extent_pup = [-0.5, 0.5, -0.5, 0.5]
+
+f1 = plt.figure(2)
 plt.clf()
-plt.imshow(Apod_pyth*corono0.Pupil2d, cmap = 'inferno')
-plt.title('Apodization')
+ax0 = f1.add_subplot(111)
+im = ax0.imshow(Apod_pyth*corono0.Pupil2d, cmap = cm.inferno, 
+          extent = extent_pup, origin = 'lower', vmin=0.0, vmax=1.0)
+ax0.set_xlabel('Pupil diameter [D unit]')
+#pl.imshow(Apod2d*Pupil2d, cmap = cm.Greys_r)
+#ax0.title('Apodized entrance pupil')
+
+f1.subplots_adjust(bottom=0.1, top=0.9, left=0.1, right=0.8,
+                    wspace=0.02, hspace=0.02)
+
+#f1.subplots_adjust(right=0.8)
+cbar_ax = f1.add_axes([0.835, 0.20, 0.05, 0.70])
+cbar    = f1.colorbar(im, cax=cbar_ax)
+cbar.ax.set_ylabel('Normalized amplitude', rotation=270, labelpad = 20)
+
 plt.tight_layout()
-if do_plot is True:
-    plt.savefig(str(fpath), transparent=True)
+plt.savefig(str(fpath), transparent=True)
 
 
 #%% Signal in intensity
@@ -457,6 +480,45 @@ xi2d = corono0.xi2d
 if nImg2dbis%2 == 0:
     xi2d = corono0.xi2d_ctr
 
+#%%
+
+
+fname_image_plane_disp = 'corono_poly_img_t_disp.pdf'
+fpath_image_plane_disp = fdir_plots / fname_image_plane_disp
+
+nSub = 150
+nIni = (nImg2dbis-nSub)//2
+nEnd = (nImg2dbis+nSub)//2
+
+FhalfFOV = Fmax2dbis*nSub/nImg2dbis*lam0D2mas
+extent_img = [-0.5*FhalfFOV, 0.5*FhalfFOV, -0.5*FhalfFOV, 0.5*FhalfFOV]
+
+
+
+f2 = plt.figure(22)#, figsize=(7,5))
+plt.clf()
+ax0 = f2.add_subplot(111)
+ 
+im = ax0.imshow(np.log10(corono_poly_img_f[nIni:nEnd,nIni:nEnd]/direct_poly_img_f.max()), 
+                cmap = "inferno", vmin=-7.5, vmax=-3.5,
+                extent=extent_img)
+ax0.tick_params(axis="x", which="both", bottom="off", top="off", labelbottom="off")
+ax0.tick_params(axis="y", which="both", left="off", right="off", labelleft="off")
+ax0.set_xlabel('Angular separation [mas]')
+
+f2.subplots_adjust(bottom=0.1, top=0.9, left=0.1, right=0.8,
+                    wspace=0.02, hspace=0.02)
+
+#f2.subplots_adjust(right=0.8)
+cbar_ax = f2.add_axes([0.835, 0.20, 0.05, 0.70])
+cbar    = f2.colorbar(im, cax=cbar_ax)
+cbar.ax.set_ylabel('Intensity in log scale', rotation=270, labelpad = 20)
+plt.tight_layout()
+plt.savefig(str(fpath_image_plane_disp), transparent=True)
+plt.show()
+
+
+
 
 #%%
 """
@@ -507,6 +569,7 @@ if do_plot is True:
     plt.savefig(str(fpath_image_plane_f_disp), transparent=True)
 plt.tight_layout()
 plt.show()
+
 
 #%%
 """

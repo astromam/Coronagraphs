@@ -18,6 +18,7 @@ import pylab as pl
 ftsz = 16 
 pl.rcParams.update({'font.size': ftsz})
 from matplotlib.patches import Circle
+from matplotlib import cm
 
 import os
 from pathlib import Path
@@ -249,14 +250,32 @@ pl.tight_layout()
 pl.savefig(str(fpath), transparent=True)
 
 #%%  Apodization
+"""
+### Display of the apodizer
+"""
 Apod2d = fits.getdata(fpath_Apod2d)
 
 fpath = fdir_pupimages / 'Apodizer.pdf'
 
-pl.figure(2)
+extent_pup = [-0.5, 0.5, -0.5, 0.5]
+
+f1 = pl.figure(2)
 pl.clf()
-pl.imshow(Apod2d*Pupil2d, cmap = 'inferno')
-pl.title('Apodized entrance pupil')
+ax0 = f1.add_subplot(111)
+im = ax0.imshow(Apod2d*Pupil2d, cmap = cm.inferno, 
+          extent = extent_pup, origin = 'lower', vmin=0.0, vmax=1.0)
+ax0.set_xlabel('Pupil diameter [D unit]')
+#pl.imshow(Apod2d*Pupil2d, cmap = cm.Greys_r)
+#ax0.title('Apodized entrance pupil')
+
+f1.subplots_adjust(bottom=0.1, top=0.9, left=0.1, right=0.8,
+                    wspace=0.02, hspace=0.02)
+
+#f1.subplots_adjust(right=0.8)
+cbar_ax = f1.add_axes([0.835, 0.20, 0.05, 0.70])
+cbar    = f1.colorbar(im, cax=cbar_ax)
+cbar.ax.set_ylabel('Normalized amplitude', rotation=270, labelpad = 20)
+
 pl.tight_layout()
 pl.savefig(str(fpath), transparent=True)
 
@@ -516,26 +535,35 @@ if nmap <= 10:
     pl.show()
 
 #%%
+
+nSub = 150
+nIni = (nImg2dbis-nSub)//2
+nEnd = (nImg2dbis+nSub)//2
+
+FhalfFOV = Fmax2dbis*nSub/nImg2dbis*lam0D2mas
+extent_img = [-0.5*FhalfFOV, 0.5*FhalfFOV, -0.5*FhalfFOV, 0.5*FhalfFOV]
+
 if nmap <= 10: 
-    f2 = pl.figure(22, figsize=(7,5))
+    f2 = pl.figure(22)#, figsize=(7,5))
     pl.clf()
     for i in range(nmap):
         exec('ax{0} = f2.add_subplot(1,{1},{0})'.format(i+1,nmap))
         if i < nmap: 
-            exec('im = ax{0}.imshow(np.log10(corono_poly_img_t[{1}]/direct_poly_img_t[{1}].max()), cmap = "inferno", vmin=-7.5, vmax=-3.5)'.format(i+1,i))
+            exec('im = ax{0}.imshow(np.log10(corono_poly_img_t[{1}][nIni:nEnd,nIni:nEnd]/direct_poly_img_t[{1}].max()), cmap = "inferno", vmin=-7.5, vmax=-3.5, extent=extent_img)'.format(i+1,i))
 #            exec('ax{0}.text(nImg2dbis/2, 0.1*nImg2dbis, "map {1}", fontsize=8, horizontalalignment="center", color = "white")'.format(i+1,i))
         exec('ax{0}.tick_params(axis="x", which="both", bottom="off", top="off", labelbottom="off")'.format(i+1,))
         exec('ax{0}.tick_params(axis="y", which="both", left="off", right="off", labelleft="off")'.format(i+1,))
+        exec('ax{0}.set_xlabel("Angular separation [mas]")'.format(i+1,))
     
     f2.subplots_adjust(bottom=0.1, top=0.9, left=0.1, right=0.8,
                         wspace=0.02, hspace=0.02)
     
-    f2.subplots_adjust(right=0.8)
-    cbar_ax = f2.add_axes([0.85, 0.15, 0.05, 0.7])
+    #f2.subplots_adjust(right=0.8)
+    cbar_ax = f2.add_axes([0.835, 0.20, 0.05, 0.70])
     cbar    = f2.colorbar(im, cax=cbar_ax)
-    cbar.ax.set_ylabel('intensity in log scale', rotation=270, labelpad = 10)
-    pl.savefig(str(fpath_image_plane_disp), transparent=True)
+    cbar.ax.set_ylabel('Intensity in log scale', rotation=270, labelpad = 20)
     pl.tight_layout()
+    pl.savefig(str(fpath_image_plane_disp), transparent=True)
     pl.show()
 
 #%%
