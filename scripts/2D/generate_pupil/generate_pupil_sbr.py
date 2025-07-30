@@ -32,10 +32,11 @@ syst = sys.platform
 """
 ### Parameters
 """
-nPup= 2048
+nPup= 100
 do_fits = False
 
 do_margin = True
+do_lys = True
 
 str_margin=''
 if do_margin:
@@ -47,8 +48,10 @@ pdiam_lys, odiam_lys, thick_lys = 7.92*0.975*0.96, 2.6457, 0.50# tel. and obst. 
 
 #pdiam_bis, odiam_bis, thick_bis = 7.92, 2.3, 0.25
 if do_margin:
-#    pdiam_bis, odiam_bis, thick_bis = pdiam_apo, odiam_apo, thick_apo # tel. and obst. diameters (meters) - apodizer pupil
-    pdiam_bis, odiam_bis, thick_bis = pdiam_lys, odiam_lys, thick_lys# tel. and obst. diameters (meters) - Lyot stop pupil
+    if do_lys:
+        pdiam_bis, odiam_bis, thick_bis = pdiam_lys, odiam_lys, thick_lys# tel. and obst. diameters (meters) - Lyot stop pupil
+    else:        
+        pdiam_bis, odiam_bis, thick_bis = pdiam_apo, odiam_apo, thick_apo # tel. and obst. diameters (meters) - apodizer pupil
     
 thick = 0.25              # adopted spider thickness (meters)
 offset = 1.278            # spider intersection offset (meters)
@@ -60,8 +63,10 @@ kthick_t = [thick_bis/thick]#[2.0]#np.linspace(1.0, 2.0, 11) # np.linspace(1.0, 
 
 nPup_ini = nPup*pdiam/pdiam_apo
 nArr = int(np.ceil(nPup_ini))
-if nArr:
+print(nArr)
+if nArr % 2:
     nArr += 1 
+print(nArr)
 
 pdiam2_t = np.asarray(kpdiam_t)*pdiam
 odiam2_t = np.asarray(kodiam_t)*odiam
@@ -163,3 +168,15 @@ plt.title('Pupil - Apodizer')
 #plt.imshow(pupil_lys)
 #plt.title('Pupil - Lyot stop')
 
+#%%
+"""
+### Flip check
+"""
+plt.figure(10)
+plt.clf()
+plt.subplot(121)
+plt.imshow(pupil-np.fliplr(pupil))
+plt.title('check flip lr')
+plt.subplot(122)
+plt.imshow(pupil-np.flipud(pupil))
+plt.title('check flip up')
