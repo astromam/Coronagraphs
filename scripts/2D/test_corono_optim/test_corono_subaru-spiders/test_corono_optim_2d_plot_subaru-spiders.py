@@ -90,7 +90,7 @@ if True:
     #nlam
     band = 'GPI_J'
     # bw   = 0.1
-    nlam = 3
+    nlam = 1
 
     
     do_fits = False
