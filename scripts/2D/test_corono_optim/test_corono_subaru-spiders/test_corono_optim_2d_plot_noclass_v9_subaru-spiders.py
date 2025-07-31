@@ -99,11 +99,11 @@ if True:
     
     band = 'GPI_J'
     #bw   = 0.1
-    nlam = 3
+    nlam = 1
 
 
-    test_shift = False
-    shift_tot0 = 1.0 #(np.sqrt(2.)/0.5)*int(0.005*nPup0) #1.0 #int(0.005*nPup0) #np.sqrt(shift_x**2+shift_y**2)
+    test_shift = True
+    shift_tot0 = (np.sqrt(2.)/0.5)*int(0.005*nPup0) #1.0 #int(0.005*nPup0) #np.sqrt(shift_x**2+shift_y**2)
     alpha0 = 0 # np.pi/3 # np.arctan2(shift_x, shift_y)
     shift_y0 = shift_tot0*np.cos(alpha0)
     shift_x0 = shift_tot0*np.sin(alpha0)
@@ -113,8 +113,8 @@ if True:
     test_flip_x = False
     test_flip_y = False
     
-    nshift = 3 # 9
-    shift_max = 1. #(np.sqrt(2.)/0.5)*int(0.005*nPup0) #1.
+    nshift = 9
+    shift_max = (np.sqrt(2.)/0.5)*int(0.005*nPup0) #1.
     shift_xy_t = (shift_max/(nshift//2))*(np.arange(nshift)-nshift//2)
     shift_x_t = shift_xy_t*1 #int(0.005*nPup0)*(np.arange(nshift)-nshift//2)
     shift_y_t = shift_xy_t*1 #int(0.005*nPup0)*(np.arange(nshift)-nshift//2)
