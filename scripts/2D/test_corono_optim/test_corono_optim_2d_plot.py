@@ -55,7 +55,8 @@ if True:
     
     # mask radius in lam0/D unit
     # rMask = 1.766 # ALC1 at 1.593um (145mas) 
-    rMask = 2.252 # ALC2 at 1.593um (185mas)
+    rMask0 = 2.252 # ALC2 at 1.593um (185mas)
+    rMask = 1.766
     
     # dark zone bounds (inner and outer edges) in lam0/D unit
     rho0 =  0.0
@@ -74,7 +75,7 @@ if True:
     Pupil2dSym  = False # set it True only for optimization
     LSRobustness = True
 
-    test_shift = True
+    test_shift = False
     shift_tot0 = 1.0 #(np.sqrt(2.)/0.5)*int(0.005*nPup0) #1.0 #int(0.005*nPup0) #np.sqrt(shift_x**2+shift_y**2)
     alpha0 = 0 # np.pi/3 # np.arctan2(shift_x, shift_y)
     shift_y0 = shift_tot0*np.cos(alpha0)
@@ -85,7 +86,7 @@ if True:
     test_flip_x = False
     test_flip_y = False
     
-    nshift = 3 # 9
+    nshift = 9
     shift_max = 1. #(np.sqrt(2.)/0.5)*int(0.005*nPup0) #1.
     shift_xy_t = (shift_max/(nshift//2))*(np.arange(nshift)-nshift//2)
     shift_x_t = shift_xy_t*1 #int(0.005*nPup0)*(np.arange(nshift)-nshift//2)
@@ -223,7 +224,7 @@ params = coro.to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
                  CtrBtwnPix=CtrBtwnPix, CtrBtwnPix2 = CtrBtwnPix2,
                  nlam=nlam, bw=bw,
                  Pupil2d = Pupil2d, LyotStop2d = LyotStop2d,
-                 Pupil2dSym = Pupil2dSym, rMask=rMask,
+                 Pupil2dSym = Pupil2dSym, rMask=rMask0,
                  problem_name = problem_name, 
                  solver = solver, 
                  corono_name = corono_name, pupil_name = pupil_name,
@@ -764,26 +765,34 @@ if nImg2dbis%2 == 0:
 nImg2d = corono0.params['nImg2d']
 fname = fname_gen + '_intensity_profiles_broadband_avg.pdf'
 fpath = fdir_pdf / fname
+fname_png = fname_gen + '_intensity_profiles_broadband_avg.png'
+fpath_png = fdir_pdf / fname_png
 
 plt.figure(30)
 plt.clf()
 plt.title('Averaged intensity profiles of the images')
 
-plt.semilogy(r_lamD,poly_corono_prf_avg,label=solver)
+colortest = 'C1'
+if np.abs(rMask-rMask0) > 0.001:
+    colortest = 'C2'
+
+
+plt.semilogy(r_lamD,poly_corono_prf_avg,label=f'rMask={rMask:.3f}$\lambda_0$/D', color=colortest)
 
 if test_shift:
     plt.semilogy(r_lamD,poly_corono_shift_prf_avg[ishift_all0],label=solver + ' shift', ls=':')
     
-plt.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
+plt.axvline(x=corono0.rMask, ymin=-12, ymax =2, linewidth=1, linestyle='--', color=colortest)
 plt.axvline(x=corono0.rho0, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
 plt.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
 plt.axhline(10**(-cDarkHole), xmin=corono0.xi.min(), xmax=corono0.xi.max(), linewidth=1, color='k', linestyle='--')
 plt.xlabel(r'Angular separation in $\lambda_0$/D')
-plt.ylabel('Normalized averaged intensity in log scale')
+plt.ylabel('Normalized intensity in log scale')
 plt.ylim(ylim_min0, ylim_max0)
 plt.legend()
 plt.tight_layout()
 plt.savefig(str(fpath))
+plt.savefig(str(fpath_png), transparent=True)
 
 #%%
 """

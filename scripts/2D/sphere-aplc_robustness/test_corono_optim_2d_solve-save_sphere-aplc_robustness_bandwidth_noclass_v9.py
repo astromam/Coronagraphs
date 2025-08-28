@@ -53,7 +53,7 @@ if True:
     FirstDerGlobalLim = 1.
     
     #nPup = corono0.params['nPup']
-    nPup0 = 506
+    nPup0 = 400 #506
     nExt = 0 #int(0.05*nPup0)
     nPup = nPup0 + nExt
     nFPM = 50
@@ -65,11 +65,24 @@ if True:
     
     # mask radius in lam0/D unit
     # rMask = 1.766 # ALC1 at 1.593um (145mas) 
-    rMask = 2.252 # ALC2 at 1.593um (185mas)
-    
+    rMask0 = 2.252 # ALC2 at 1.593um (185mas)
+    SPHERE_mask = 'ALC2bis'
+    if SPHERE_mask == 'ALC1':
+        rMask = 1.766
+        colortest = 'C2'
+        loctest = 1
+    elif SPHERE_mask == 'ALC2':
+        rMask = 2.252
+        colortest = 'C1' 
+        loctest = 4
+    else:
+        rMask = rMask0
+        colortest = 'C4'
+        loctest = 1
+        
     # dark zone bounds (inner and outer edges) in lam0/D unit
     rho0 =  0.0
-    rho1 = 20.0
+    rho1 = 30.0
     
     # contrast in the dark region
     cDarkHole = 10.0
@@ -130,7 +143,7 @@ if True:
     LSRobustness_coeff_sev = 24.
     
     LSRobustness_coeff_v8 = 0.1*np.sqrt(2.)/nPup
-    LSRobustness_coeff_v9 = 4*np.sqrt(2.)*int(0.005*nPup0/2) # np.sqrt(2.)*int(0.005*nPup0) #  int(0.005*nPup0)#  #4 #
+    LSRobustness_coeff_v9 = (np.sqrt(2.)/0.5)*int(0.005*nPup0) #4*np.sqrt(2.)*int(0.005*nPup0/2) # np.sqrt(2.)*int(0.005*nPup0) #  int(0.005*nPup0)#  #4 #
 
 
 
@@ -246,7 +259,7 @@ params = coro.to_dict(nPup=nPup, Fmax2d = Fmax2d, nImg2d=nImg2d, nFPM = nFPM,
                  CtrBtwnPix=CtrBtwnPix, CtrBtwnPix2 = CtrBtwnPix2,
                  nlam=nlam, bw=bw,
                  Pupil2d = Pupil2d, LyotStop2d = LyotStop2d,
-                 Pupil2dSym = Pupil2dSym, rMask=rMask,
+                 Pupil2dSym = Pupil2dSym, rMask=rMask0,
                  problem_name = problem_name, 
                  solver = solver, 
                  corono_name = corono_name, pupil_name = pupil_name,
@@ -402,7 +415,7 @@ plt.savefig(str(fpath), transparent=True)
 ### Computation of the direct and coronagraphic images
 """
 fname_gen  = problem1.get_filename(nlam=nlambis)
-params2    = coro.update_params(params, nlam=nlambis, Fmax2d = Fmax2dbis, nImg2d = nImg2dbis) 
+params2    = coro.update_params(params, nlam=nlambis, Fmax2d = Fmax2dbis, nImg2d = nImg2dbis, rMask=rMask) 
 
 if corono_name == 'SP':
     corono0 = coro.design.SP2d(**params2)
@@ -700,11 +713,11 @@ i0 = 0
 plt.figure(11, (8, 4.5))
 plt.clf()
 plt.semilogy(rad_corono*Fmax2dbis/nImg2dbis, corono_poly_prf_std_f/direct_poly_img_f.max(),
-        label='new APLC', color = 'C1')
+        label='new APLC, ' + SPHERE_mask, color = colortest)
 #pl.semilogy(rad_corono*Fmax2dbis/nImg2dbis, 5*corono_poly_prf_std_f,
 #        label='map {0}'.format(0), color = colors_cor[i0])
 
-plt.axvline(x=rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
+plt.axvline(x=rMask, ymin=-12, ymax =2, linewidth=1, color= colortest, linestyle='--')
 #pl.axvline(x=rho0, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
 plt.axvline(x=rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
 plt.axhline(10**(-cDarkHole), xmin=corono0.xi2d.min(), xmax=corono0.xi2d.max(), 
@@ -712,11 +725,43 @@ plt.axhline(10**(-cDarkHole), xmin=corono0.xi2d.min(), xmax=corono0.xi2d.max(),
 plt.xlabel(f'Angular separation in $\lambda_0$/D ($\lambda_0={wv*1e6}\mu$m)')
 plt.ylabel(r'1$\sigma$ normalized intensity in log scale')
 plt.ylim(3e-8, 3e-4)
-plt.legend(loc=4)
+plt.legend(loc=loctest)
 plt.title(r'Intensity profile in broadband light ($\Delta\lambda/\lambda_0$={0:.1f}%)'.format(bw*100), fontsize=14)
 plt.tight_layout()
 if do_plot is True:
     plt.savefig(str(fpath_image_plane_plot), transparent=True)
+
+
+#%% Intensity profiles of the direct and coronagraphic images
+
+fname_image_plane_plot_avg = 'corono_poly_prf_avg_t_nPup={0}_plot.pdf'.format(nPup)
+fpath_image_plane_plot_avg = fdir_plots / fname_image_plane_plot_avg
+
+rad_corono = np.arange(nImg2dbis//2)
+colors_cor = plt.cm.rainbow(np.linspace(0,1,1))
+
+i0 = 0
+
+plt.figure(10, (8, 4.5))
+plt.clf()
+plt.semilogy(rad_corono*Fmax2dbis/nImg2dbis, corono_poly_prf_avg_f/direct_poly_img_f.max(),
+        label='new APLC, ' + SPHERE_mask, color = colortest)
+#pl.semilogy(rad_corono*Fmax2dbis/nImg2dbis, 5*corono_poly_prf_std_f,
+#        label='map {0}'.format(0), color = colors_cor[i0])
+
+plt.axvline(x=rMask, ymin=-12, ymax =2, linewidth=1, color= colortest, linestyle='--')
+#pl.axvline(x=rho0, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
+plt.axvline(x=rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
+plt.axhline(10**(-cDarkHole), xmin=corono0.xi2d.min(), xmax=corono0.xi2d.max(), 
+           linewidth=1, color='k', linestyle='--')
+plt.xlabel(f'Angular separation in $\lambda_0$/D ($\lambda_0={wv*1e6}\mu$m)')
+plt.ylabel(r'Normalized intensity in log scale')
+plt.ylim(3e-8, 3e-4)
+plt.legend(loc=loctest)
+plt.title(r'Intensity profile in broadband light ($\Delta\lambda/\lambda_0$={0:.1f}%)'.format(bw*100), fontsize=14)
+plt.tight_layout()
+if do_plot is True:
+    plt.savefig(str(fpath_image_plane_plot_avg), transparent=True)
 
 
 #%%
@@ -731,7 +776,7 @@ bw_ter   = 0.92
    
 fname_gen  = problem1.get_filename(nlam=nlambis)
 params3    = coro.update_params(params, Fmax2d = Fmax2dbis, nImg2d = nImg2dbis, 
-                                nlam = nlam_ter, bw = bw_ter)
+                                nlam = nlam_ter, bw = bw_ter, rMask = rMask)
 
 if corono_name == 'SP':
     corono3 = coro.design.SP2d(**params3)
@@ -793,10 +838,12 @@ plt.clf()
 # l2, = pl.semilogy(corono3.lam_t*wv*1e6, corono_poly_avg_rester_wv_t,
 #             color = colors_shifts[1], marker='x', ls ='-')
 
+
+
 l1, = plt.semilogy(corono3.lam_t*wv*1e6, corono_poly_std_resbis_wv_t,
-            color = 'C1', ls ='--')
+            color = colortest, ls ='--')
 l2, = plt.semilogy(corono3.lam_t*wv*1e6, corono_poly_std_rester_wv_t,
-            color = 'C1', ls ='-')
+            color = colortest, ls ='-')
 
 #l5, = pl.semilogy([], [], color = "k", ls='-')
 #l6, = pl.semilogy([], [], color = "k", ls='--')
