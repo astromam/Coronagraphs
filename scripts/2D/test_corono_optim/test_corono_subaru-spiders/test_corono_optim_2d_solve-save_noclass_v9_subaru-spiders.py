@@ -51,7 +51,7 @@ FirstDerGlobalLim = 100.
 BinarityReg       = 0.1
 
 #nPup = corono0.params['nPup']
-nPup0 = 200 # 506 #512
+nPup0 = 100 # 506 #512
 nExt0 = 0
 nDim0 = nPup0 + nExt0
 nFPM = 50
@@ -94,11 +94,14 @@ rMask_m = 453e-6/2
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
 rho0 =  0.0
-rho1 = 20.0 # 20
+rho1 = 10.0 # 20
+
+rho0_nocoro = 1.5
+rho1_nocoro = 3.0 # 20
 
 # contrast in the dark region
 cDarkHole = 7.0
-cDarkHole_nocoro = 3.0
+cDarkHole_nocoro = 3
 
 # tau (integrated Pupil transmission)
 tau   = 0.5 #0.756
@@ -106,15 +109,15 @@ tau   = 0.5 #0.756
 CtrBtwnPix  = True
 CtrBtwnPix2 = True
 Pupil2dSym  = False
-LSRobustness = True # (new robustness approach using derivative of the field with respect to Lyot stop displacement)
+LSRobustness = False # (new robustness approach using derivative of the field with respect to Lyot stop displacement)
 ImPart      = False 
-ConstrApodImg  = False
+ConstrApodImg  = True
 
 # kwd_qrt = True
 
 band = 'GPI_J'
 #bw   = 0.1
-nlam = 3
+nlam = 1
 
 
 #nlam
@@ -1180,7 +1183,14 @@ for k in range(nProgRef):
         #     params_t.append(coro.update_params(params0, LyotStop2d=LyotStop2d_t[l])) 
         #     corono_t.append(coro.design.APLC2d(**params_t[l])) 
 
-        
+    params0_nocoro = coro.update_params(params0, rho0=rho0_nocoro, rho1=rho1_nocoro)
+    if corono_name == 'SP':
+        corono0_nocoro = coro.design.SP2d(**params0_nocoro)
+    elif corono_name == 'APLC':
+        corono0_nocoro = coro.design.APLC2d(**params0_nocoro)
+    else:
+        raise NameError('{0}: Not an existing coronagraph!'.format(corono_name))
+   
         
     #%%
     """
@@ -1216,6 +1226,9 @@ for k in range(nProgRef):
     xyp = (nDim/(2*nDim))*(np.arange(2*nDim)-2*nDim//2+1/2)
     xxp, yyp  = np.meshgrid(xyp, xyp)
     
+    
+    dz2d_nocoro, rad2d_nocoro = corono0_nocoro.generate_area()
+    
     #%%
     """
     ### Point selection in the image plane
@@ -1246,6 +1259,20 @@ for k in range(nProgRef):
         idx_dist= np.reshape(idx_dist, (corono0.nlam*ndz))
 
 
+    """
+    ### Point selection in the image plane for the non coronagraphic image
+    """
+    if ImPart == True: 
+        dz2d_nocoro_hlf  = dz2d_nocoro[:nImg2d//2, :] 
+        dz_nocoro        = np.reshape(dz2d_nocoro_hlf, (corono0.nImg2d*corono0.nImg2d//2))
+    else:
+        dz2d_nocoro_qrt = dz2d_nocoro[nImg2d//2:,nImg2d//2:] 
+        dz_nocoro       = np.reshape(dz2d_nocoro_qrt, ((corono0.nImg2d//2)**2))
+        
+    idx_dz_nocoro  = list(aaa[dz_nocoro == 1])  
+    ndz_nocoro     = len(idx_dz_nocoro)
+
+
 #%%    
     """
     ### Point selection in the pupil plane
@@ -1260,18 +1287,21 @@ for k in range(nProgRef):
     idx_pup = list(bbb[pup])
     npp     = len(idx_pup)
     
-    if problem_name == 'MaxTau':
-        if corono0.Pupil2dSym == False:
-            PupilLyotStop_vec = np.reshape(Pupil2d*LyotStop2d, ((corono0.nPup)**2))
-        else:
-            PupilLyotStop_vec = np.reshape(Pupil2d_qrt*LyotStop2d_qrt, ((corono0.nPup//2)**2))
+    #if problem_name == 'MaxTau':
+    if corono0.Pupil2dSym == False:
+        PupilLyotStop_vec = np.reshape(Pupil2d*LyotStop2d, ((corono0.nPup)**2))
+    else:
+        PupilLyotStop_vec = np.reshape(Pupil2d_qrt*LyotStop2d_qrt, ((corono0.nPup//2)**2))
 
 #%%
     neps = 0
+    neps_nocoro = 0
     if problem_name == 'MaxContrastLinf':
         neps = 1
+        neps_nocoro = 1
     elif problem_name == 'MaxContrastL1':
         neps = ndz*1   
+        neps_nocoro = ndz_nocoro*1
         
     #%%
     TR = np.sum(Pupil_vec)
@@ -1280,6 +1310,8 @@ for k in range(nProgRef):
     # if ImPart is True:
     #     nI1 = 2
     nPsiD = nI1*corono0.nlam*ndz
+    
+    nPsiD_nocoro = nI1*corono0.nlam*ndz_nocoro
     
     t1 = time.time()
     print(f'variable definition time: {t1-t0:.3f}s\n')
@@ -1292,7 +1324,7 @@ for k in range(nProgRef):
     print('computing matrix A')
     t00=time.time() 
     PsiD_re = np.zeros((npp, nPsiD))
-    PsiDnocoro_re = np.zeros((npp, nPsiD))
+    PsiDnocoro_re = np.zeros((npp, nPsiD_nocoro))
     PsiD_im = 0
     PsiDnocoro_im = 0
                
@@ -1304,7 +1336,7 @@ for k in range(nProgRef):
         PsiD_re[0:npp,0:nPsiD], PsiD_im[0:npp,0:nPsiD] = compute_response_matrices_qrt(idx_pup, idx_dz, npp, ndz, corono0)
         if ConstrApodImg:
             PsiDnocoro_im = np.zeros((npp, nPsiD))
-            PsiDnocoro_re[0:npp,0:nPsiD], PsiDnocoro_im[0:npp,0:nPsiD] = compute_direct_matrices_qrt(idx_pup, idx_dz, npp, ndz, corono0)
+            PsiDnocoro_re[0:npp,0:nPsiD_nocoro], PsiDnocoro_im[0:npp,0:nPsiD] = compute_direct_matrices_qrt(idx_pup, idx_dz_nocoro, npp, ndz_nocoro, corono0_nocoro)
     
         if k != 0:
             PsiD0 = (1./4)*compute_corono_field_2d_LSasym(Ones_2d2_qrt, Pupil2d2_qrt, LyotStop2d, corono0)
@@ -1316,7 +1348,7 @@ for k in range(nProgRef):
     else:        
         PsiD_re[0:npp,0:nPsiD] = compute_response_matrices_qrt(idx_pup, idx_dz, npp, ndz,corono0)
         if ConstrApodImg:
-            PsiDnocoro_re[0:npp,0:nPsiD] = compute_direct_matrices_qrt(idx_pup, idx_dz, npp, ndz,corono0)
+            PsiDnocoro_re[0:npp,0:nPsiD_nocoro] = compute_direct_matrices_qrt(idx_pup, idx_dz_nocoro, npp, ndz_nocoro, corono0_nocoro)
         if k != 0:
             PsiD0 = (1./4)*compute_corono_field_2d_qrt(Ones_2d2_qrt, Pupil2d2_qrt, LyotStop2d2_qrt, corono0)
             PsiD0 = np.reshape(PsiD0, (corono0.nlam, (corono0.nImg2d//2)**2)) 
@@ -1385,15 +1417,15 @@ for k in range(nProgRef):
         if problem_name == 'MaxContrastLinf':
             Eps = model.addMVar(neps, lb=0.0, name="Eps")
             if ConstrApodImg:
-                Eps2 = model.addMVar(neps, lb=0.0, name="Eps2")
+                Eps_nocoro = model.addMVar(neps_nocoro, lb=0.0, name="Eps_nocoro")
         else:
             Eps = model.addMVar(neps*corono0.nlam, lb=0.0, name="Eps")
             if ConstrApodImg:
-                Eps2 = model.addMVar(neps*corono0.nlam, lb=0.0, name="Eps")
+                Eps_nocoro = model.addMVar(neps_nocoro*corono0.nlam, lb=0.0, name="Eps_nocoro")
             
         # Set objective
         if ConstrApodImg:
-            model.setObjective(Eps.sum()+Eps2.sum(), gb.GRB.MINIMIZE)
+            model.setObjective(Eps.sum()+Eps_nocoro.sum(), gb.GRB.MINIMIZE)
         else:
             model.setObjective(Eps.sum(), gb.GRB.MINIMIZE)
         
@@ -1408,13 +1440,13 @@ for k in range(nProgRef):
             model.addConstr( PsiD_re.T @ Apo + PsiD0bis.real - Eps <= 0)
             model.addConstr(-PsiD_re.T @ Apo - PsiD0bis.real - Eps <= 0)
             if ConstrApodImg:
-                # cst_nocoro = (10.**(-cDarkHole_nocoro/2.)/np.sqrt(2.))*corono0.Fmax2d/(corono0.nImg2d*corono0.nPup)
-                # Psi0_nocoro = cst_nocoro*np.sum(PupilLyotStop_vec)
+                cst_nocoro = (10.**(-cDarkHole_nocoro/2.)/np.sqrt(2.))*corono0.Fmax2d/(corono0.nImg2d*corono0.nPup)
+                Psi0_nocoro = cst_nocoro*np.sum(PupilLyotStop_vec)
                 
-                # model.addConstr( PsiDnocoro_re.T @ Apo - Psi0_nocoro <= 0)
-                # model.addConstr(-PsiDnocoro_re.T @ Apo - Psi0_nocoro <= 0)
-                model.addConstr( PsiDnocoro_re.T @ Apo + PsiD0bis.real - Eps2 <= 0)
-                model.addConstr(-PsiDnocoro_re.T @ Apo - PsiD0bis.real - Eps2 <= 0)
+                model.addConstr( PsiDnocoro_re.T @ Apo - Psi0_nocoro <= 0)
+                model.addConstr(-PsiDnocoro_re.T @ Apo - Psi0_nocoro <= 0)
+                #model.addConstr( PsiDnocoro_re.T @ Apo + PsiD0bis.real - Eps2 <= 0)
+                #model.addConstr(-PsiDnocoro_re.T @ Apo - PsiD0bis.real - Eps2 <= 0)
                 
 
 

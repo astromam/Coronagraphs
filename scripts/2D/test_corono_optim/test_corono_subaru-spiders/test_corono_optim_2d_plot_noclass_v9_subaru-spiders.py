@@ -40,7 +40,7 @@ if True:
     FirstDerGlobalLim = 1.
     
     #nPup = corono0.params['nPup']
-    nPup0 = 200 # 506
+    nPup0 = 100 # 506
     nExt = 0 # 50 #int(0.05*nPup0)
     nPup = nPup0 + nExt
     nFPM = 50
@@ -80,7 +80,7 @@ if True:
     
     # dark zone bounds (inner and outer edges) in lam0/D unit
     rho0 =  0.0
-    rho1 = 20.0
+    rho1 = 10.0
     
     # contrast in the dark region
     cDarkHole = 7.0
@@ -94,15 +94,15 @@ if True:
     CtrBtwnPix  = True
     CtrBtwnPix2 = True
     Pupil2dSym  = False # set it True only for optimization
-    LSRobustness = True
-    ConstrApodImg  = False
+    LSRobustness = False
+    ConstrApodImg  = True
     
     band = 'GPI_J'
     #bw   = 0.1
-    nlam = 3
+    nlam = 1
 
 
-    test_shift = True
+    test_shift = False
     shift_tot0 = 1.0 #(np.sqrt(2.)/0.5)*int(0.005*nPup0) #1.0 #int(0.005*nPup0) #np.sqrt(shift_x**2+shift_y**2)
     alpha0 = 0 # np.pi/3 # np.arctan2(shift_x, shift_y)
     shift_y0 = shift_tot0*np.cos(alpha0)
@@ -216,7 +216,7 @@ rMask_mas = rMask * (wv0/pdiam)/mas2rad
 
 #%%
 
-nlambis = 5
+nlambis = 1 #5
 Fmax2dbis = 50 #75
 nImg2dbis = 500 #750    
 
