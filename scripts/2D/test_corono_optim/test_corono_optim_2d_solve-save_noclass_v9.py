@@ -36,7 +36,7 @@ Parameters
 """
 # Telescope name
 corono_name  = 'APLC' # 'SP' or 'APLC'
-pupil_name   = 'vlt_btw' # 'vlt' or 'sbr' or 'lvr' or 'vlt_btw'
+pupil_name   = 'vlt_btw_compass' # 'vlt' or 'sbr' or 'lvr' or 'vlt_btw'
 problem_name = 'MaxContrastL1' # 'MaxContrastLinf' #  ,'MaxTau' #  'MaxContrastL1' #
 solver       = 'gurobipy' #,'stdgrb' #  'gurobipy', 'scipy.linprog'
 slvLogToConsole = 1
@@ -71,7 +71,7 @@ rMask = 2.252 # ALC2 at 1.593um (185mas)
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
 rho0 =  0.0
-rho1 = 30.0 # 20
+rho1 = 20.0 # 20
 
 # contrast in the dark region
 cDarkHole = 10.0
