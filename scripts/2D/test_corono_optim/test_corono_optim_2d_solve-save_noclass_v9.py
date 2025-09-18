@@ -71,7 +71,7 @@ rMask = 2.252 # ALC2 at 1.593um (185mas)
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
 rho0 =  0.0
-rho1 = 20.0 # 20
+rho1 = 30.0 # 20
 
 # contrast in the dark region
 cDarkHole = 10.0
