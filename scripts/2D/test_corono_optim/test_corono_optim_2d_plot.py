@@ -56,7 +56,7 @@ if True:
     # mask radius in lam0/D unit
     # rMask = 1.766 # ALC1 at 1.593um (145mas) 
     rMask0 = 2.252 # ALC2 at 1.593um (185mas)
-    rMask = 1.766
+    rMask = rMask0*1.# 1.766
     
     # dark zone bounds (inner and outer edges) in lam0/D unit
     rho0 =  0.0
@@ -75,7 +75,7 @@ if True:
     Pupil2dSym  = False # set it True only for optimization
     LSRobustness = True
 
-    test_shift = False
+    test_shift = True
     shift_tot0 = 1.0 #(np.sqrt(2.)/0.5)*int(0.005*nPup0) #1.0 #int(0.005*nPup0) #np.sqrt(shift_x**2+shift_y**2)
     alpha0 = 0 # np.pi/3 # np.arctan2(shift_x, shift_y)
     shift_y0 = shift_tot0*np.cos(alpha0)
