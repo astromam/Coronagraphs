@@ -43,12 +43,13 @@ if True:
     FirstDerGlobalLim = 1.
     
     #nPup = corono0.params['nPup']
+    red_factor = 0.99
     nPup0 = 400 # 506
     nExt = 0 # 50 #int(0.05*nPup0)
     nPup = nPup0 + nExt
     nFPM = 50
-    Fmax2d = 50 #75
-    nImg2d = 500 #750
+    Fmax2d = 50 # 75 # 
+    nImg2d = 500 # 750 # 
     
     LS_OD = 1.0#0.96
     nPupLS = int(LS_OD*nPup0)
@@ -60,7 +61,7 @@ if True:
     
     # dark zone bounds (inner and outer edges) in lam0/D unit
     rho0 =  0.0
-    rho1 = 20.0
+    rho1 = 30.0
     
     # contrast in the dark region
     cDarkHole = 10.0
@@ -132,6 +133,7 @@ if True:
     str_LSRcoeff_sev = ''
     str_LSRcoeff_v8 = ''
     str_LSRcoeff_v9 = ''
+    str_red_factor = ''
     
     if LSRobustness:
         if LSRobustness_pre:
@@ -149,13 +151,14 @@ if True:
         if LSRobustness_v9:
             str_LSRcoeff_v9 = f'LSRcoeff_v9={int(np.round(LSRobustness_coeff_v9*1e3)):05d}'
 
-
+    if red_factor != 1.:
+        str_red_factor = '_nPup={int(np.round(red_factor*nPup0))}'
     
     do_fits = False
 
 nlambis = 5
-Fmax2dbis = 50 #75
-nImg2dbis = 500 #750    
+Fmax2dbis = 50 # 75 # 
+nImg2dbis = 500 # 750 # 
 
 ylim_min0 = 1e-8
 ylim_max0 = 1e-3
@@ -188,8 +191,10 @@ if True:
         fname_pup = 'ATLAST_Aperture_nPup={0}.fits'.format(nPup0,)
         fname_lys = 'ATLAST_LyotStop_nPup={0}.fits'.format(nPup0,)
     else:
-        fname_pup = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup0,)
-        fname_lys = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup0,)
+        # fname_pup = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup0,)
+        # fname_lys = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup0,)
+        fname_pup = f'pupil={pupil_name}_nArr={nPup0}_nPup={int(np.round(red_factor*nPup0))}.fits' #'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup0,)
+        fname_lys = f'pupil={pupil_name}_nArr={nPup0}_nPup={int(np.round(red_factor*nPup0))}.fits' #'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup0,)
         if do_dead_act:
             fname_lys = f'sphere_stop_ST_ALC2_nPup{nPup0:04d}.fits'
     
@@ -274,7 +279,7 @@ else:
 ### Read files
 """
 fname_gen = problem1.get_filename()
-fname     = fname_gen + f'{str_dead_act}' + str_LSRcoeff_pre + str_LSRcoeff_bis + str_LSRcoeff_qua + str_LSRcoeff_qua2 + str_LSRcoeff_sev + str_LSRcoeff_v8 + str_LSRcoeff_v9 + '.fits'
+fname     = fname_gen + f'{str_dead_act}' + str_LSRcoeff_pre + str_LSRcoeff_bis + str_LSRcoeff_qua + str_LSRcoeff_qua2 + str_LSRcoeff_sev + str_LSRcoeff_v8 + str_LSRcoeff_v9 + str_red_factor + '.fits'
 fname     = fname.replace(f'N={nPup:04d}', f'N={nPup0:04d}') 
 #fname     = fname.replace(f'N={nPup:04d}', f'N={nPup:04d}') 
 fpath     = fdir_res / fname

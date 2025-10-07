@@ -45,7 +45,7 @@ test_gurobi = False
 if True:
     # Telescope name
     corono_name  = 'APLC' # 'SP' or 'APLC'
-    pupil_name   = 'vlt_btw' #'vlt_btw' # 'vlt' or 'sbr' or 'lvr'
+    pupil_name   = 'vlt_btw_compass' #'vlt_btw' # 'vlt' or 'sbr' or 'lvr'
     problem_name = 'MaxContrastL1' #'MaxContrastLinf' # 'MaxTau' # ,  'MaxContrastLinf' # #  
     solver       = 'gurobipy' # 'stdgrb' #  'gurobipy', 'scipy.linprog'
     
@@ -53,7 +53,8 @@ if True:
     FirstDerGlobalLim = 1.
     
     #nPup = corono0.params['nPup']
-    nPup0 = 400 #506
+    red_factor=0.99
+    nPup0 = 400  #506
     nExt = 0 #int(0.05*nPup0)
     nPup = nPup0 + nExt
     nFPM = 50
@@ -82,7 +83,7 @@ if True:
         
     # dark zone bounds (inner and outer edges) in lam0/D unit
     rho0 =  0.0
-    rho1 = 30.0
+    rho1 = 20.0
     
     # contrast in the dark region
     cDarkHole = 10.0
@@ -171,6 +172,10 @@ if True:
         if LSRobustness_v9:
             str_LSRcoeff_v9 = f'LSRcoeff_v9={int(np.round(LSRobustness_coeff_v9*1e3)):05d}'
 
+    str_red_factor = ''    
+    if red_factor != 1.:
+        str_red_factor = '_nPup={int(np.round(red_factor*nPup0))}'
+
 
     
     do_fits = False
@@ -223,8 +228,8 @@ if True:
         fname_pup = 'ATLAST_Aperture_nPup={0}.fits'.format(nPup0,)
         fname_lys = 'ATLAST_LyotStop_nPup={0}.fits'.format(nPup0,)
     else:
-        fname_pup = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup0,)
-        fname_lys = 'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup0,)
+        fname_pup = f'pupil={pupil_name}_nArr={nPup0}_nPup={int(np.round(red_factor*nPup0))}.fits' #'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup0,)
+        fname_lys = f'pupil={pupil_name}_nArr={nPup0}_nPup={int(np.round(red_factor*nPup0))}.fits' #'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup0,)
         if do_dead_act:
             fname_lys = f'sphere_stop_ST_ALC2_nPup{nPup0:04d}.fits'
     
@@ -346,7 +351,7 @@ else:
 # fpath     = fdir / fname
 
 fname_gen = problem1.get_filename()
-fname     = fname_gen + f'{str_dead_act}' + str_LSRcoeff_pre + str_LSRcoeff_bis + str_LSRcoeff_qua + str_LSRcoeff_qua2 + str_LSRcoeff_sev + str_LSRcoeff_v8 + str_LSRcoeff_v9 + '.fits'
+fname     = fname_gen + f'{str_dead_act}' + str_LSRcoeff_pre + str_LSRcoeff_bis + str_LSRcoeff_qua + str_LSRcoeff_qua2 + str_LSRcoeff_sev + str_LSRcoeff_v8 + str_LSRcoeff_v9 + str_red_factor + '.fits'
 fname     = fname.replace(f'N={nPup:04d}', f'N={nPup0:04d}') 
 #fname     = fname.replace(f'N={nPup:04d}', f'N={nPup:04d}') 
 fpath     = fdir_res / fname

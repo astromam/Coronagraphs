@@ -51,6 +51,7 @@ FirstDerGlobalLim = 100.
 BinarityReg       = 0.1
 
 #nPup = corono0.params['nPup']
+red_factor = 0.99
 nPup0 = 400 # 506 #512
 nExt0 = 0
 nDim0 = nPup0 + nExt0
@@ -110,7 +111,10 @@ if do_dead_act:
     Pupil2dSym = False
     ImPart = True
     str_dead_act = '_deadact'
-    
+
+str_red_factor = ''    
+if red_factor != 1.:
+    str_red_factor = '_nPup={int(np.round(red_factor*nPup0))}'
 
 do_fits = True
 
@@ -878,8 +882,8 @@ for k in range(nProgRef):
         fname_pup = f'ATLAST_Aperture_nPup={nPup}.fits'
         fname_lys = f'ATLAST_LyotStop_nPup={nPup}.fits'
     else:
-        fname_pup = f'pupil={pupil_name}_nPup={nPup}.fits'
-        fname_lys = f'pupil={pupil_name}_nPup={nPup}.fits'
+        fname_pup = f'pupil={pupil_name}_nArr={nPup0}_nPup={int(np.round(red_factor*nPup0))}.fits' #'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup0,)
+        fname_lys = f'pupil={pupil_name}_nArr={nPup0}_nPup={int(np.round(red_factor*nPup0))}.fits' #'pupil={0}_nPup={1}.fits'.format(pupil_name, nPup0,)
         if do_dead_act:
             fname_lys = f'sphere_stop_ST_ALC2_nPup{nPup:04d}.fits'
     
@@ -1287,7 +1291,7 @@ for k in range(nProgRef):
     if not os.path.exists(fdir_sav):
         os.makedirs(fdir_sav)
         
-    fname_sav = get_filename(corono0) + f'{str_dead_act}' + str_LSRcoeff_v9 + '.fits'
+    fname_sav = get_filename(corono0) + f'{str_dead_act}' + str_LSRcoeff_v9 + str_red_factor + '.fits'
     fpath_sav = fdir_sav / fname_sav
     
     if do_fits is True:

@@ -50,14 +50,22 @@ import xaosim
 """
 pupil_name = 'vlt_btw_compass'
 do_dead_act = False
-nPup_arr= [100, 200, 256, 300, 400, 512, 600, 800, 1024, 1200, 1600, 2048] #384
+nArr_arr = np.array([100, 200, 256, 300, 400, 512, 600, 800, 1024, 1200, 1600, 2048]) #384
+
+k_factor = 0.99
+
+nPup_arr= k_factor*nArr_arr #[100, 200, 256, 300, 400, 512, 600, 800, 1024, 1200, 1600, 2048] #384
 do_fits = True
 
 do_zeropad = False
 do_fits_zeropad = False
-nArr = 400 #384
+
 
 kwd_spiders = False
+
+Dpup_vlt =8.000
+ID = 1.116+(1.-k_factor)*Dpup_vlt
+spider_strut = 0.050 + (1 - k_factor)*Dpup_vlt
 
 
 
@@ -268,13 +276,75 @@ def make_sphere_lyot_stop(
     return lyotStop
 
 
+#%%
+def make_VLT_pupil_zeropad(
+    pupdiam,
+    subpupdiam,
+    centralobs=0.14,
+    spiders=0.00625,
+    spiders_bool=True,
+    centralobs_bool=True,
+):
+    """
+    Return a VLT pupil
+    based on make_VLT function from shesha/shesha/util/make_pupil.py
+
+    Args :
+        pupdiam (int) [pixel] : pupil diameter
+
+        centralobs (float, optional) [fraction of diameter] : central obtruction diameter, default = 0.14
+
+        spiders (float, optional) [fraction of diameter] : spider diameter, default = 0.00625
+
+        spiders_bool (bool, optional) : if False, return the VLT pupil without spiders; default = True
+
+        centralobs_bool (bool, optional) : if False, return the VLT pupil without central obstruction; default = True
+
+    Returns :
+        VLT_pupil (2D array) : VLT transmission pupil of shape (pupdiam, pupdiam), filled with 0 and 1
+    """
+    range = 0.5 * (1) - 0.25 / pupdiam
+    X = np.tile(np.linspace(-range, range, pupdiam, dtype=np.float32), (pupdiam, 1))
+    R = np.sqrt(X**2 + (X.T) ** 2)
+
+    if centralobs_bool:
+        VLT_pupil = ((R < 0.5*subpupdiam/pupdiam) & (R > (centralobs / 2))).astype(np.float32)
+    else:
+        VLT_pupil = (R < 0.5*subpupdiam/pupdiam).astype(np.float32)
+
+    if spiders_bool:
+        angle = 50.5 * np.pi / 180.0  # 50.5 degrees = angle between spiders
+
+        if pupdiam % 2 == 0:
+            spiders_map = (
+                (
+                    (X.T > (X - centralobs / 2 + spiders / np.sin(angle)) * np.tan(angle))
+                    + (X.T < (X - centralobs / 2) * np.tan(angle))
+                )
+                * (X > 0)
+                * (X.T > 0)
+            )
+        elif pupdiam % 2 == 1:
+            spiders_map = (
+                (
+                    (X.T > (X - centralobs / 2 + spiders / np.sin(angle)) * np.tan(angle))
+                    + (X.T < (X - centralobs / 2) * np.tan(angle))
+                )
+                * (X >= 0)
+                * (X.T >= 0)
+            )
+        spiders_map += np.fliplr(spiders_map)
+        spiders_map += np.flipud(spiders_map)
+        VLT_pupil = VLT_pupil * spiders_map
+
+    return VLT_pupil
 
 
 
     #%%
 for i, nPup in enumerate(nPup_arr):
 
-
+    nArr = nArr_arr[i]
     """
     ### generation of a VLT like pupil
     """
@@ -288,7 +358,10 @@ for i, nPup in enumerate(nPup_arr):
         else:
             pupil = aperture.vlt_pupil(nPup, nPup, dead_actuator_diameter=0.)
     elif pupil_name == 'vlt_btw_compass':
-        pupil = make_VLT_pupil(nPup)
+#        pupil = make_VLT_pupil(nPup)
+        pupil = make_VLT_pupil_zeropad(nArr, nPup,
+                                       centralobs=ID/Dpup_vlt,
+                                       spiders=spider_strut/Dpup_vlt,)
     else:
         raise(f'Error: {pupil_name} does not exist')
     
@@ -311,7 +384,7 @@ for i, nPup in enumerate(nPup_arr):
     if do_dead_act and pupil_name == 'vlt':
         str_dead_act = '_dead_act'
     
-    fname = f'pupil={pupil_name}_nPup={nPup}{str_dead_act}.fits'
+    fname = f'pupil={pupil_name}_nArr={nArr}_nPup={int(np.round(nPup))}{str_dead_act}.fits'
     fpath = fdir / fname
     print(fname)
     
