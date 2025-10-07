@@ -50,12 +50,12 @@ import xaosim
 """
 pupil_name = 'vlt_btw_compass'
 do_dead_act = False
-nArr_arr = np.array([100, 200, 256, 300, 400, 512, 600, 800, 1024, 1200, 1600, 2048]) #384
+nArr_arr = np.array([800]) #np.array([100, 200, 256, 300, 400, 512, 600, 800, 1024, 1200, 1600, 2048]) #384
 
-k_factor = 0.99
+red_factor = 0.99
 
-nPup_arr= k_factor*nArr_arr #[100, 200, 256, 300, 400, 512, 600, 800, 1024, 1200, 1600, 2048] #384
-do_fits = True
+nPup_arr= red_factor*nArr_arr #[100, 200, 256, 300, 400, 512, 600, 800, 1024, 1200, 1600, 2048] #384
+do_fits = False
 
 do_zeropad = False
 do_fits_zeropad = False
@@ -63,9 +63,9 @@ do_fits_zeropad = False
 
 kwd_spiders = False
 
-Dpup_vlt =8.000
-ID = 1.116+(1.-k_factor)*Dpup_vlt
-spider_strut = 0.050 + (1 - k_factor)*Dpup_vlt
+Dpup_vlt = 8.000
+ID = 1.116+(1. - red_factor)*Dpup_vlt
+spider_strut = 0.050 + (1 - red_factor)*Dpup_vlt
 
 
 
@@ -362,6 +362,10 @@ for i, nPup in enumerate(nPup_arr):
         pupil = make_VLT_pupil_zeropad(nArr, nPup,
                                        centralobs=ID/Dpup_vlt,
                                        spiders=spider_strut/Dpup_vlt,)
+        pupil_original = make_VLT_pupil(nArr)
+        fraction = np.sum(pupil)/np.sum(pupil_original)
+        
+        print(f'amplitude transmission for undersizing {red_factor}: {fraction:.3f}')
     else:
         raise(f'Error: {pupil_name} does not exist')
     
