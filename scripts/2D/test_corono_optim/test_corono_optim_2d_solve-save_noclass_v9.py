@@ -56,8 +56,8 @@ nPup0 = 400 # 506 #512
 nExt0 = 0
 nDim0 = nPup0 + nExt0
 nFPM = 50
-Fmax2d = 75 # 45#22.5
-nImg2d = 150 # 90#45
+Fmax2d = 45 #75 # 45#22.5
+nImg2d = 90 #150 # 90#45
 
 LS_OD = 0.96
 nPupLS = int(nPup0*LS_OD)
@@ -78,7 +78,7 @@ rho1 = 20.0
 cDarkHole = 10.0
 
 # tau (integrated Pupil transmission)
-tau   = 0.756/0.954
+tau   = 0.756 #/0.954
 # CtrBtwnPix2
 CtrBtwnPix  = True
 CtrBtwnPix2 = True
@@ -114,7 +114,7 @@ if do_dead_act:
 
 str_red_factor = ''    
 if red_factor != 1.:
-    str_red_factor = '_nPup={int(np.round(red_factor*nPup0))}'
+    str_red_factor = f'_nPup={int(np.round(red_factor*nPup0))}'
 
 do_fits = True
 

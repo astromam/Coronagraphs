@@ -61,13 +61,13 @@ if True:
     
     # dark zone bounds (inner and outer edges) in lam0/D unit
     rho0 =  0.0
-    rho1 = 30.0
+    rho1 = 20.0
     
     # contrast in the dark region
     cDarkHole = 10.0
     
     # tau (integrated Pupil transmission)
-    tau   = 0.756 #0.756
+    tau   = 0.756/0.954 #0.756
     
     # CtrBtwnPix2
 
@@ -152,7 +152,7 @@ if True:
             str_LSRcoeff_v9 = f'LSRcoeff_v9={int(np.round(LSRobustness_coeff_v9*1e3)):05d}'
 
     if red_factor != 1.:
-        str_red_factor = '_nPup={int(np.round(red_factor*nPup0))}'
+        str_red_factor = f'_nPup={int(np.round(red_factor*nPup0))}'
     
     do_fits = False
 
@@ -162,6 +162,7 @@ nImg2dbis = 500 # 750 #
 
 ylim_min0 = 1e-8
 ylim_max0 = 1e-3
+
 
 #%%
 """
