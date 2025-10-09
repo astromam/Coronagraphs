@@ -80,7 +80,7 @@ if True:
     
     # dark zone bounds (inner and outer edges) in lam0/D unit
     rho0 =  0.0
-    rho1 = 20.0
+    rho1 = 10.0
     
     # contrast in the dark region
     cDarkHole = 7.0
@@ -99,7 +99,7 @@ if True:
     
     band = 'GPI_H'
     #bw   = 0.1
-    nlam = 1
+    nlam = 3
 
 
     test_shift = False

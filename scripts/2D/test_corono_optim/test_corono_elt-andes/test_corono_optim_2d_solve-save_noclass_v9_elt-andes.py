@@ -94,7 +94,7 @@ rMask_m = 453e-6/2
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
 rho0 =  0.0
-rho1 = 20.0 # 20
+rho1 = 10.0 # 20
 
 rho0_nocoro = 1.5
 rho1_nocoro = 3.0 # 20
@@ -117,7 +117,7 @@ ConstrApodImg  = False
 
 band = 'GPI_H'
 #bw   = 0.1
-nlam = 1
+nlam = 3
 
 
 #nlam
