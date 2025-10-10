@@ -56,8 +56,8 @@ nPup0 = 400 # 506 #512
 nExt0 = 0
 nDim0 = nPup0 + nExt0
 nFPM = 50
-Fmax2d = 45 #75 # 45#22.5
-nImg2d = 90 #150 # 90#45
+Fmax2d = 75 # 45 #  45#22.5
+nImg2d = 150 #90 #  90#45
 
 LS_OD = 0.96
 nPupLS = int(nPup0*LS_OD)
