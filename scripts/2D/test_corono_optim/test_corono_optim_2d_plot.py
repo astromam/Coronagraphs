@@ -48,8 +48,8 @@ if True:
     nExt = 0 # 50 #int(0.05*nPup0)
     nPup = nPup0 + nExt
     nFPM = 50
-    Fmax2d = 50 # 75 # 
-    nImg2d = 500 # 750 # 
+    Fmax2d =  75 # 50 #
+    nImg2d = 750 # 500 # 
     
     LS_OD = 1.0#0.96
     nPupLS = int(LS_OD*nPup0)
@@ -61,7 +61,7 @@ if True:
     
     # dark zone bounds (inner and outer edges) in lam0/D unit
     rho0 =  0.0
-    rho1 = 20.0
+    rho1 = 30.0
     
     # contrast in the dark region
     cDarkHole = 10.0
@@ -157,8 +157,8 @@ if True:
     do_fits = False
 
 nlambis = 5
-Fmax2dbis = 50 # 75 # 
-nImg2dbis = 500 # 750 # 
+Fmax2dbis = 75 # 50 # 
+nImg2dbis = 750 # 500 #  
 
 ylim_min0 = 1e-8
 ylim_max0 = 1e-3
