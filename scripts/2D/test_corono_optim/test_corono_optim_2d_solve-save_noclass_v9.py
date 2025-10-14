@@ -51,7 +51,7 @@ FirstDerGlobalLim = 100.
 BinarityReg       = 0.1
 
 #nPup = corono0.params['nPup']
-red_factor = 0.99
+red_factor = 0.995
 nPup0 = 400 # 506 #512
 nExt0 = 0
 nDim0 = nPup0 + nExt0
@@ -78,7 +78,7 @@ rho1 = 20.0
 cDarkHole = 10.0
 
 # tau (integrated Pupil transmission)
-tau   = 0.700 # 0.756 #/0.954
+tau   = 0.756 # 0.756 #/0.954
 # CtrBtwnPix2
 CtrBtwnPix  = True
 CtrBtwnPix2 = True
