@@ -8,6 +8,8 @@ Created on Wed Oct 23 10:12:09 2024
 
 import numpy as np
 import matplotlib.pyplot as plt
+plt.close()
+
 # from matplotlib.patches import Ellipse
 from astropy.io import fits
 import os
@@ -57,20 +59,53 @@ elif user == 'Mamadou':
 # was_donow = ('20250121142815','20250122183859','20250122184044',
 #              '20250122184053','20250122184101','20250122184109')
 
+# 0.89/0.35/3.9 + ncpa 
+was_donow = ('20251020152206','20251016135837','20251016135818',
+             '20251016135714','20251001085445')
+
+# 20251016135714 10 nm RMS
+# 20251016135818 30 nm RMS
+# 20251016135837 50 nm RMS
+# 20251020152206 70 nm RMS
+
 # 0 dispersion directory first
 #yjh 0, 5, 10, 15 mas/µm disp 
 # was_donow = ('20250121142815','20250124135415',
 #              '20250124135527','20250124135557')
 
+# 0.89/0.35/3.9 + disp
+# was_donow = ("20251020152303","20251015162408","20251014150115",
+#              "20251014150042","20251001085445")
+
+# 20251014150042  5 mas/µ
+# 20251014150115 10 mas/µ
+# 20251015162408 15 mas/µ
+# 20251020152303 20 mas/µ
+
 # lyot stop angular position error
+# 0.9/0.37/4.0
 # was_donow = ('20250121142815','20250214100748',
 #              '20250214100828','20250214100857')
 
+# 0.89 0.35 3.9 + LS angular position error
+# was_donow = ('20251017120423','20251017115610','20251017115549',
+#              '20251017115345','20251001085445')
+# 20251017115345 0.5°
+# 20251017115549 1.0°
+# 20251017115610 1.5°
+# 20251017120335 2.0°
+# 20251017120423 3.0°
+# 20251017120448 4.0°
+
 # offset/tilt of 0, 1, 2, 3 and 4 mas for psf to fpm + yjh
-was_donow = ('20250121142815','20250217154848','20250217155004',
-              '20250217155048','20250217155138')
+# was_donow = ('20250121142815','20250217154848','20250217155004',
+#               '20250217155048','20250217155138')
  
+# was_donow = ("20251015134855","20251013163616","20251013163502",
+#               "20251013163430","20251001085445")
+
 # lyot stop vertical (elevation) offset in pixels: 1, 2, 4, 8
+# 2024->05/2025 09/037/4.0
 # was_donow = ('20250121142815',"20250130104616","20250130104747",
 #               "20250130104759","20250130104809")
 
@@ -83,13 +118,13 @@ was_donow = ('20250121142815','20250217154848','20250217155004',
 #              "20250210175531","20250210175546","20250210175606")
 
 
-jq = 'JQ3'
+jq = 'JQM'
 seeings = {'JQ1':'0.43"', 'JQ2':'0.58"','JQM':'0.65"','JQ3':'0.74"','JQ4':'1.06"'}
 jqs=seeings.get(jq)
 
-as_oi = 25.
-
-was_donow = was_donow[::-1]
+as_oi = 20.
+spxl = 7.
+# was_donow = was_donow[::-1]
 
 #%%
 c_tab= plt.cm.inferno(np.linspace(.85,0.,len(was_donow))) # ['c','b','k','r','m','g','y']
@@ -100,7 +135,8 @@ for i, was_d in enumerate(was_donow):
     
     fdir_res2 = fdir_res / was_d
 
-    cfile = fdir_res2/('contrast_'+jq+'_'+was_d+'.fits')
+    cfile = fdir_res2/('contrast_'+str(int(as_oi))+'mas_'+
+                       str(int(spxl))+'mas_'+jq+'_'+was_d+'.fits')
     print('cfile:', cfile)
     data = fits.getdata(cfile)        # contrast mean
     data2 = fits.getdata(cfile,ext=1)   # contrast min/max     
@@ -158,6 +194,8 @@ for i, was_d in enumerate(was_donow):
     lam_stp = head['LSTP']
     lam_itv = head['LITV']
     lam_lst = np.arange(lam_min,lam_min+(lam_itv+1)*lam_stp,lam_stp)
+    lam_lst = lam_lst[np.where(lam_lst < 1860e-9)]
+
     nL = len(lam_lst)
         
     nPup = head['NPUP']
@@ -189,14 +227,13 @@ for i, was_d in enumerate(was_donow):
         atmoNoCoro = data3[0,:]*data[0,:]
             
     # plt.plot(lam_lst*1e9, data[0,:])
-    # plt.plot(lam_lst*1e9, data[0,:], label=f'{ncpa}', color=c_tab[i])
+    plt.plot(lam_lst*1e9, data[0,:], label=f'{ncpa}', color=c_tab[i])
     # plt.plot(lam_lst*1e9, data[0,:], label=f'{disp}', color=c_tab[i])
     # plt.plot(lam_lst*1e9, data[0,:], label=f'{ls_ape:.1f}°', color=c_tab[i])
-    plt.plot(lam_lst*1e9, data[0,:], label=f'{offset*lamC*mas2rad/D:.1f}', color=c_tab[i])
+    # plt.plot(lam_lst*1e9, data[0,:], label=f'{offset*lamC*mas2rad/D:.1f}', color=c_tab[i])
     # plt.plot(lam_lst*1e9, data[0,:], label=f'{ls_voe*100./nPup:.2f}', color=c_tab[i])
     # plt.plot(lam_lst*1e9, data[0,:], label=f'{ls_hoe*100./nPup:.2f}', color=c_tab[i])
     # plt.plot(lam_lst*1e9, data[0,:], label=f'{fpm_dfe_elt}', color=c_tab[i])
-    # plt.plot(lam_lst*1e9, data[0,:], label=f'{offset*lamC*mas2rad/D:.1f} mas')
     # plt.plot(lam_lst*1e9, data[0,:], label=f'{offset*lamC*mas2rad/D:.1f} mas')
     
     plt.fill_between(lam_lst*1e9, data2[0,:], data2[1,:], alpha=0.2, color=c_tab[i])
@@ -209,10 +246,10 @@ plt.plot(lam_lst*1e9, bdata[:,pos_as_oi], color='black', ls=':')  #  , label='no
 # plt.plot(lam_lst*1e9, atmoNoCoro,color='black' , label='atmo., no coro.', ls='--')
 
 plt.ylim(1e-5,1e-1)
-# plt.legend(title='NCPA [nm RMS]',fontsize='small', loc=2, ncol=2)
-# plt.legend(title='Chromatic dispersion\n[mas/µm]',fontsize='small', loc=2, ncol=1)
+plt.legend(title='NCPA [nm RMS]',fontsize='small', loc=2, ncol=2)
+# plt.legend(title='Chromatic dispersion\n[mas/µm]',fontsize='small', loc=2, ncol=2)
 # plt.legend(title='Lyot stop\nclocking error',fontsize='small', loc=2, ncol=1)
-plt.legend(title='Tilt [mas]',fontsize='small', loc=2, ncol=1)
+# plt.legend(title='Tilt [mas]',fontsize='small', loc=2, ncol=1)
 # plt.legend(title=f'Lyot stop elevation offset [%D$_{{ELT}}]$\n(D$_{{LS}}$ = {diam} D$_{{ELT}}$)',fontsize='small', loc=2, ncol=2)
 # plt.legend(title=f'Lyot stop azimuth offset [%D$_{{ELT}}]$\n(D$_{{LS}}$ = {diam} D$_{{ELT}}$)',fontsize='small', loc=2, ncol=2)
 # plt.legend(title='FPM defocus [nm RMS]',fontsize='small', loc=2, ncol=2)
@@ -221,8 +258,10 @@ plt.plot(lam_lst*1e9, atmoNoCoro,color='black' , ls='--')
 
 #♠, label='atmo., no coro.')
 bbox = dict(boxstyle='square', fc='w', alpha=0.125)
-plt.text(2000,2e-2,'--- atmo., no coro.', bbox=bbox)
-plt.text(2000,2e-5,'... no atmo., coro.', bbox=bbox)
+# plt.text(2000,2e-2,'--- atmo., no coro.', bbox=bbox)
+# plt.text(2000,2e-5,'... no atmo., coro.', bbox=bbox)
+plt.text(1600,2e-2,'--- atmo., no coro.', bbox=bbox)
+plt.text(1600,2e-5,'... no atmo., coro.', bbox=bbox)
 
 
 # fname_contrast_25mas = ('all_windshake_data_contrast_25mas_asRatioOf_lbd2D_ringAvgdPrfs_vs_wvl_' +
@@ -234,9 +273,9 @@ plt.text(2000,2e-5,'... no atmo., coro.', bbox=bbox)
 # plt.savefig(fpath_contrast_25mas_svg)
 # plt.savefig(fpath_contrast_25mas_pdf)
 
-plt.savefig('C:/Users/asp/Desktop/tilt_'+jq+'.svg')
-plt.savefig('C:/Users/asp/Desktop/tilt_'+jq+'.pdf', bbox_inches='tight', pad_inches=0.1)
-plt.savefig('C:/Users/asp/Desktop/tilt_'+jq+'.png')
+# plt.savefig('C:/Users/asp/Desktop/tilt_'+jq+'.svg')
+plt.savefig(fdir_plt / was_donow[-1] / ('ncpa_'+str(int(as_oi))+'mas_'+str(int(spxl))+'mas_'+jq+'.pdf'), bbox_inches='tight', pad_inches=0.1)
+# plt.savefig('C:/Users/asp/Desktop/tilt_'+jq+'.png')
 
 plt.show()
     
