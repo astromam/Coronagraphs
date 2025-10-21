@@ -105,7 +105,8 @@ def profile(img, ptype='mean', step=1, mask=None, center=None, rmax=0, clip=True
     img_flat = img.ravel()
     for r in range(i_max):
         cnt = r_uniq_cnt[r]
-        val = img_flat[r_uniq_inv == r]
+        # val = img_flat[r_uniq_inv == r]
+        val = img_flat[r_uniq_inv.ravel() == r]
         polar[r, 0:cnt] = val
             
     # calculate profile
