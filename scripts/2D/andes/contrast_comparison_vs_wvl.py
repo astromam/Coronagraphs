@@ -51,13 +51,102 @@ res_dir = fdir_res
 # os.makedirs(fdir_plt, exist_ok=True)
 
 #%%
-# 500 Hz    0.9/0.37/4.0    20250604120819 , 10 sets
-# 1 kH0 Hz  0.9/0.37/4.0    20250602181544 , 10 sets
+# 500 Hz    0.9/0.37/4.0    20250604120819 , 10 sets, lam_itv = 80 nm
+# 1 kH0 Hz  0.9/0.37/4.0    20250602181544 , 10 sets, lam_itv = 80 nm
+# 500 Hz    0.9/0.37/4.0    20250610135805 , 10 sets, lam_itv = 50 nm
+# 1 kH0 Hz  0.9/0.37/4.0    20250610140016 , 10 sets, lam_itv = 50 nm
+
 ptrn = str(int(as_oi))+"mas_"+str(int(rW_mas))+"mas_"
-files = ("20250604120819/contrast_"+ptrn+"JQM_20250604120819.fits",
-        "20250602181544/contrast_"+ptrn+"JQM_20250602181544.fits",
-        "20250602181544/perfect/contrast_profile_L0toD_perfect_wonoise_psf_20250522160547_"+ptrn+"960_1760nm.fits",
-        "20250602181544/perfect/contrast_profile_L0toD_perfect_wonoise_coro_psf_20250522160547_"+ptrn+"960_1760nm.fits")
+
+
+#%%
+# 500Hz  0.9/0.37/4.0    20250602181544 , 10 sets constant WS
+
+# files = ("20250604120819/contrast_"+ptrn+"JQM_20250604120819.fits",
+#         "20250602181544/contrast_"+ptrn+"JQM_20250602181544.fits",
+#         "20250602181544/perfect/contrast_profile_L0toD_perfect_wonoise_psf_20250522160547_"+ptrn+"960_1840nm.fits",
+#         "20250602181544/perfect/contrast_profile_L0toD_perfect_wonoise_coro_psf_20250522160547_"+ptrn+"960_1840nm.fits")
+
+# ?
+# files = ("20250610135805/contrast_"+ptrn+"JQM_20250610135805.fits",
+#         "20250610140016/contrast_"+ptrn+"JQM_20250610140016.fits",
+#         "20250610140016/perfect/contrast_profile_L0toD_perfect_wonoise_psf_20250611134316_"+ptrn+"950_1850nm.fits",
+#         "20250610140016/perfect/contrast_profile_L0toD_perfect_wonoise_coro_psf_20250611134316_"+ptrn+"950_1850nm.fits")
+
+# 20250711155826 0.89/0.35/3.9 1.kHz
+# 20250711155801 0.89/0.35/3.9 .5kHz
+# files = ("20250711155801/contrast_"+ptrn+"JQM_20250711155801.fits",
+#         "20250711155826/contrast_"+ptrn+"JQM_20250711155826.fits",
+#         "20250711155826/perfect/contrast_profile_L0toD_perfect_wonoise_psf_20250711155826_"+ptrn+"950_1850nm.fits",
+#         "20250711155826/perfect/contrast_profile_L0toD_perfect_wonoise_coro_psf_20250711155826_"+ptrn+"950_1850nm.fits")
+
+# 20250711155932 0.88/0.30/4.0 1.kHz
+# 20250711155911 0.88/0.30/4.0 .5kHz
+# files = ("20250711155911/contrast_"+ptrn+"JQM_20250711155911.fits",
+#         "20250711155932/contrast_"+ptrn+"JQM_20250711155932.fits",
+#         "20250711155932/perfect/contrast_profile_L0toD_perfect_wonoise_psf_20250711155932_"+ptrn+"950_1850nm.fits",
+#         "20250711155932/perfect/contrast_profile_L0toD_perfect_wonoise_coro_psf_20250711155932_"+ptrn+"950_1850nm.fits")
+
+#%%
+# cameras comparison
+# 2 cameras
+# 0.89 0.35 3.9 alice  20251007190203
+# 0.89 0.35 3.9 ocam2k 20251007190218
+# files = ("20251007190203/contrast_"+ptrn+"JQM_20251007190203.fits",
+#         "20251007190218/contrast_"+ptrn+"JQM_20251007190218.fits",
+#         "20251007190218/perfect/contrast_profile_L0toD_perfect_wonoise_psf_20251007190218_"+ptrn+"950_1850nm.fits",
+#         "20251007190218/perfect/contrast_profile_L0toD_perfect_wonoise_coro_psf_20251007190218_"+ptrn+"950_1850nm.fits")
+
+# 0.90 0.37 4.0 alice  20251007190322
+# 0.90 0.37 4.0 ocam2k 20251007190259
+# files = ("20251007190322/contrast_"+ptrn+"JQM_20251007190322.fits",
+#         "20251007190259/contrast_"+ptrn+"JQM_20251007190259.fits",
+#         "20251007190259/perfect/contrast_profile_L0toD_perfect_wonoise_psf_20251007190259_"+ptrn+"950_1850nm.fits",
+#         "20251007190259/perfect/contrast_profile_L0toD_perfect_wonoise_coro_psf_20251007190259_"+ptrn+"950_1850nm.fits")
+
+# 3 cameras
+# 0.9 0.37 4.0  cam_500us 20251013105414
+# 0.90 0.37 4.0 alice  20251007190322
+# 0.90 0.37 4.0 ocam2k 20251007190259
+# files = ("20251007190322/contrast_"+ptrn+"JQM_20251007190322.fits",
+#         "20251007190259/contrast_"+ptrn+"JQM_20251007190259.fits",
+#         "20251007190259/perfect/contrast_profile_L0toD_perfect_wonoise_psf_20251007190259_"+ptrn+"950_1850nm.fits",
+#         "20251007190259/perfect/contrast_profile_L0toD_perfect_wonoise_coro_psf_20251007190259_"+ptrn+"950_1850nm.fits",
+#         "20251013105414/contrast_"+ptrn+"JQM_20251013105414.fits",
+#         "20251013105414/perfect/contrast_profile_L0toD_perfect_wonoise_psf_20251013105414_"+ptrn+"950_1850nm.fits",
+#         "20251013105414/perfect/contrast_profile_L0toD_perfect_wonoise_coro_psf_20251013105414_"+ptrn+"950_1850nm.fits")
+
+# 0.89 0.35 3.9 cam_500us 20251013105528
+# 0.89 0.35 3.9 alice  20251007190203
+# 0.89 0.35 3.9 ocam2k 20251007190218
+files = ("20251007190203/contrast_"+ptrn+"JQM_20251007190203.fits",
+        "20251007190218/contrast_"+ptrn+"JQM_20251007190218.fits",
+        "20251007190218/perfect/contrast_profile_L0toD_perfect_wonoise_psf_20251007190218_"+ptrn+"950_1850nm.fits",
+        "20251007190218/perfect/contrast_profile_L0toD_perfect_wonoise_coro_psf_20251007190218_"+ptrn+"950_1850nm.fits",
+        "20251013105528/contrast_"+ptrn+"JQM_20251013105528.fits",
+        "20251013105528/perfect/contrast_profile_L0toD_perfect_wonoise_psf_20251013105528_"+ptrn+"950_1850nm.fits",
+        "20251013105528/perfect/contrast_profile_L0toD_perfect_wonoise_coro_psf_20251013105528_"+ptrn+"950_1850nm.fits")
+
+# 20250711160041 0.88/0.30/3.5 1.kHz
+# 20250711160019 0.88/0.30/3.5 .5kHz
+# files = ("20250711160019/contrast_"+ptrn+"JQM_20250711160019.fits",
+#         "20250711160041/contrast_"+ptrn+"JQM_20250711160041.fits",
+#         "20250711160041/perfect/contrast_profile_L0toD_perfect_wonoise_psf_20250711160041_"+ptrn+"950_1850nm.fits",
+#         "20250711160041/perfect/contrast_profile_L0toD_perfect_wonoise_coro_psf_20250711160041_"+ptrn+"950_1850nm.fits")
+
+#%%
+# 500Hz 0.86 0.31 4.0 20250709155129
+#  1kHz 0.86 0.31 4.0 20250709155051
+# files = ("20250709155129/contrast_"+ptrn+"JQM_20250709155129.fits",
+#         "20250709155051/contrast_"+ptrn+"JQM_20250709155051.fits",
+#         "20250709155051/perfect/contrast_profile_L0toD_perfect_wonoise_psf_20250709155051_"+ptrn+"950_1850nm.fits",
+#         "20250709155051/perfect/contrast_profile_L0toD_perfect_wonoise_coro_psf_20250709155051_"+ptrn+"950_1850nm.fits")
+
+# 500Hz  0.9/0.37/4.0    20250708162615 , 10 sets
+# files = ("20250708162615/contrast_"+ptrn+"JQM_20250708162615.fits",
+#         "20250708171059/contrast_"+ptrn+"JQM_20250708171059.fits",
+#         "20250708171059/perfect/contrast_profile_L0toD_perfect_wonoise_psf_20250708171059_"+ptrn+"950_1850nm.fits",
+#         "20250708171059/perfect/contrast_profile_L0toD_perfect_wonoise_coro_psf_20250708171059_"+ptrn+"950_1850nm.fits")
 
 # 1 kH0 Hz  0.9/0.37/4.0    20250602181544 , 10 sets
 
@@ -147,7 +236,7 @@ lam_min = head_psf['LMIN']
 lam_stp = head_psf['LSTP']
 lam_itv = head_psf['LITV']
 lam_lst = np.arange(lam_min,lam_min+(lam_itv)*lam_stp+1e-9,lam_stp)
-lam_lst = lam_lst[np.where(lam_lst < 1840e-9)]
+lam_lst = lam_lst[np.where(lam_lst < 1860e-9)]
 nL = len(lam_lst)
 
 nImg = head_psf['NIMG']
@@ -171,15 +260,15 @@ atmo_data =  (fits.getdata(res_dir / files[2]))[0:nL,:]
 atmo = atmo_data[:,pos_as_oi]
 
 contrast = np.zeros((nL, 2))
-cont_std = np.zeros((nL, 2))
+# cont_std = np.zeros((nL, 2))
 cont_min = np.zeros((nL, 2))
 cont_max = np.zeros((nL, 2))
-maxi = np.zeros((nL, 2))
+# maxi = np.zeros((nL, 2))
 
 for i in range(2):
 
-    Int_D_prf_avg  = fits.getdata(res_dir / files[i]) # [0:nL,:]
     # if contrast files from individual sets of opds
+    # Int_D_prf_avg  = fits.getdata(res_dir / files[i]) # [0:nL,:]
     # Int_D_prf_min  = fits.getdata(res_dir / files[i], ext=2) # [0:nL,:]
     # Int_D_prf_max  = fits.getdata(res_dir / files[i], ext=3) # [0:nL,:]
     # contrast[:,i] = Int_D_prf_avg[:,pos_as_oi]
@@ -191,12 +280,38 @@ for i in range(2):
     cont_min[:,i] = fits.getdata(res_dir / files[i], ext=1)[0,:]
     cont_max[:,i] = fits.getdata(res_dir / files[i], ext=1)[1,:]
 
+if len(files)==7:
+    
+    contrast2 = np.zeros((nL))
+    # cont_std2 = np.zeros((nL, 2))
+    cont_min2 = np.zeros((nL))
+    cont_max2 = np.zeros((nL))
+
+    # Int_D_prf_avg2  = fits.getdata(res_dir / files[4+i]) # [0:nL,:]
+    # if contrast files from individual sets of opds
+    # Int_D_prf_min2  = fits.getdata(res_dir / files[4+i], ext=2) # [0:nL,:]
+    # Int_D_prf_max2  = fits.getdata(res_dir / files[4+i], ext=3) # [0:nL,:]
+    # contrast[:,i] = Int_D_prf_avg2[:,pos_as_oi]
+    # cont_min[:,i] = Int_D_prf_min2[:,pos_as_oi]
+    # cont_max[:,i] = Int_D_prf_max2[:,pos_as_oi]
+
+    # if contrast files from average of sets of opds
+    contrast2 = fits.getdata(res_dir / files[4])[0,:]
+    cont_min2 = fits.getdata(res_dir / files[4], ext=1)[0,:]
+    cont_max2 = fits.getdata(res_dir / files[4], ext=1)[1,:]
+
+        
+
             
 #%%
 """
 plot profiles
 """
-lbl = ["500Hz", "1kHz"]
+# lbl = ["500Hz", "1kHz"]
+# lbl = ["alice","ocam2k"]
+lbl = ["alice","ocam2k","cam_500us"]
+lst = ["-", "-","--"] 
+clt = ["C0", "C1", "C4"]
 # plot of the azimutal average ratio profile
 plt.figure(2, (8, 4.5))
 plt.tight_layout()
@@ -204,35 +319,47 @@ plt.xlabel(r'Wavelength $\lambda$ [nm]')#[$\lambda$/D]')
 plt.ylabel(f'Contrast @ {int(as_oi)} mas')
 plt.yscale('log')
 # plt.title('Coronagraph configuration for YJH band')
-plt.title(f'Lyot diam. {dL}, obsc. {obs}, FPM {mB}, spaxel {rW_mas} mas')
+plt.title(f'Photometric aperture {rW_mas} mas')
 plt.grid(True)
 
 for i in range(2):
     
-        plt.plot(lam_lst*1e9, contrast[:,i], label=lbl[i])
-        plt.fill_between(lam_lst*1e9,
-                         cont_min[:,i], cont_max[:,i], alpha=0.2)
+    plt.plot(lam_lst*1e9, contrast[:,i], label=lbl[i], ls=lst[i], color=clt[i])
+    plt.fill_between(lam_lst*1e9, cont_min[:,i], cont_max[:,i], alpha=0.2)
 
+if len(files) == 7:
+          
+    plt.plot(lam_lst*1e9, contrast2, label=lbl[2],ls=lst[2], color=clt[2])
+    plt.fill_between(lam_lst*1e9, cont_min2, cont_max2, alpha=0.2)
+        
+        
 plt.plot(lam_lst*1e9, contrast_nncr, color='black', ls=':')
 bbox = dict(boxstyle='square', fc='w', alpha=0.75)
 # YJH
-plt.text(1000,1e-4,'... no atmo., coro.', bbox=bbox)
+plt.text(930,3e-5,'.... no atmo., coro.', bbox=bbox)
 # RIZ
 # plt.text(650,2e-5,'... no atmo., coro.', bbox=bbox)
 
 plt.plot(lam_lst*1e9, atmo, ls='--', color='black')
 # YJH
-plt.text(1500,1e-2,'---- atmo., no coro.', bbox=bbox)
+plt.text(930,3e-2,'---- atmo., no coro.', bbox=bbox)
 # RIZ
 # plt.text(850,1e-2,'---- atmo., no coro.', bbox=bbox)
-
+plt.xlim(900,1900)
 plt.ylim(1e-5,1e-1)
-plt.legend(title='loop speed',fontsize='small', loc=4)
+# plt.legend(title='loop speed',fontsize='small', loc=4)
+plt.legend(title='Camera:',fontsize='small', loc=4)
 
 # fname = ("contrast_comp_"+as_str+'mas_'+str(int(dL*100))+'_'+str(int(obs*100))+
 #          '_'+str(int(mB*10)))
-fname = ("contrast_comp_"+ptrn+str(int(dL*100))+'_'+str(int(obs*100))+
-         '_'+str(int(mB*10)))
+# fname = ("contrast_comp_"+ptrn+
+#          str(int(dL*100))+'_'+str(int(obs*100))+'_'+str(int(mB*10))+'_'+
+#          str(int(np.rint(lam_lst[0]*1e9)))+'-'+
+#          str(int(np.rint(lam_lst[-1]*1e9)))+'nm')
+fname = ("contrast_comp_3cam_"+ptrn+
+         str(int(dL*100))+'_'+str(int(obs*100))+'_'+str(int(mB*10))+'_'+
+         str(int(np.rint(lam_lst[0]*1e9)))+'-'+
+         str(int(np.rint(lam_lst[-1]*1e9)))+'nm')
 
 # fpath_contrast_25mas_svg = fdir_plt / (fname + '.svg')
 fpath_contrast_25mas_pdf = fdir_plt / (fname + '.pdf')
@@ -241,7 +368,6 @@ fpath_contrast_25mas_pdf = fdir_plt / (fname + '.pdf')
 # plt.savefig(fpath_contrast_25mas_svg)
 plt.savefig(fpath_contrast_25mas_pdf, bbox_inches='tight', pad_inches=0.1)
 # plt.savefig(fpath_contrast_25mas_png)
-
 
 plt.show()
 
