@@ -63,14 +63,80 @@ elif user == 'Mamadou':
     fdir_plt   = Path( fdir_base / 'plots' ).resolve()
     fdir_plt   = Path( fdir_base / 'data/OPDs_PASSATA/OPD/WS' ).resolve()
 
-was_donow = '20250604120819'
+was_donow = '20251020152206'
 fdir_res = fdir_res / was_donow
 fdir_plt = fdir_plt / was_donow
 
+# new ref 1 kHz 01/10/2025
+# 0.89 0.35 3.9 20251001085445 ruane2018 YJH
+
+# 0.89/0.35/3.9 + offsets
+# 20251013163430 1 mas
+# 20251013163502 2 mas
+# 20251013163616 3 mas
+# 20251015134855 5 mas
+
+# 0.89/0.35/3.9 + disp
+# 20251014150042  5 mas/µ
+# 20251014150115 10 mas/µ
+# 20251015162408 15 mas/µ
+# 20251020152303 20 mas/µ
+
+# 0.89/0.35/3.9 + ncpa
+# 20251016135714 10 nm RMS
+# 20251016135818 30 nm RMS
+# 20251016135837 50 nm RMS
+# 20251020152206 70 nm RMS
+
+# 0.89 0.35 3.9 + LS angular position error
+# 20251017115345 0.5°
+# 20251017115549 1.0°
+# 20251017115610 1.5°
+# 20251017120335 2.0°
+# 20251017120423 3.0°
+# 20251017120448 4.0°
+
+# 0.89 0.35 3.9 alice  20251007190203
+# 0.90 0.37 4.0 alice  20251007190322
+# 0.89 0.35 3.9 ocam2k 20251007190218
+# 0.90 0.37 4.0 ocam2k 20251007190259
+# 0.89 0.35 3.9 cam_500us 20251013105528
+# 0.9 0.37 4.0  cam_500us 20251013105414
+
+# 0.96 0.34 3.3 20251001154101 ruane2018 YJH raw contrast optimization
+# 0.96 0.3 3.3 20251001100920 ruane2018 JH raw contrast optimization
+# 0.89 0.35 3.9 20251001085445 ruane2018 JH/YJH 10mas@25mas! raw contrast optimization
+
+# 0.89 0.35 3.7 20250929170957 ruane2018 YJH raw contrast optimization
+# 0.87 0.3 3.9 20250929171546 ruane2018 JH raw contrast optimization
+
+# new params exploration follow. ruane2018 06/2025
+# photometric aperture 7µ, 1kHz data
+# J     4.6e-05     0.85    0.36   3.3 0.66501  20250618164513
+# H     0.000392    0.86    0.3    4.1 0.72769  20250618164620
+# JH    0.000428    0.86    0.3    4.0 0.72769  20250618164704
+# YJH   0.000628    0.86    0.37   4.0 0.67608  20250618164749
+
+# 500Hz 0.86 0.31 4.0 20250709155129
+#  1kHz 0.86 0.31 4.0 20250709155051
+
+# 20250711155826 0.89/0.35/3.9 1.kHz
+# 20250711155801 0.89/0.35/3.9 .5kHz
+
+# 20250711155932
+# 20250711155911
+
+# 20250711160041
+# 20250711160019
 
 #%%
-# 500 Hz    0.9/0.37/4.0    20250604120819
-# 1 kH0 Hz  0.9/0.37/4.0    20250602181544
+# 500 Hz    0.9/0.37/4.0    20250604120819 lam_itv = 80
+# 1 kH0 Hz  0.9/0.37/4.0    20250602181544 lam_itv = 80
+# 500 Hz    0.9/0.37/4.0    20250610135805 lam_itv = 50
+# 1 kH0 Hz  0.9/0.37/4.0    20250610140016 lam_itv = 50
+
+# 500 Hz    0.9/0.37/4.0    20250708162615 lam_itv = 50
+# 1 kH0 Hz  0.9/0.37/4.0    20250708171059 lam_itv = 50
 
 #%%
 # 20250305134456 perfect coro 2nd order full elt pupil
@@ -216,6 +282,35 @@ fdir_plt = fdir_plt / was_donow
 
 #%%
 
+# root = 'OPDs_PASSATA/OPD/WS/'
+# p_dir=(root+'ocam2k','perfect')
+# p_dir=(root+'alice','perfect')
+# p_dir=(root+'cam_500us','perfect')
+
+# root = 'OPDs_PASSATA/OPD/WS/500HzVarWS/'
+# p_dir=(root+'20250704_105833.0',
+#           root+'20250704_112007.0',
+#           root+'20250704_114101.0',
+#           root+'20250704_121550.0',
+#           root+'20250704_123540.0',
+#           root+'20250704_125507.0',
+#           root+'20250704_131433.0',
+#           root+'20250704_135325.0',
+#           root+'20250704_141253.0',
+#           root+'20250707_114321.0',
+#           'perfect')
+root = 'OPDs_PASSATA/OPD/WS/1kHzVarWS/'
+p_dir=(root+'1',
+          root+'2',
+          root+'3',
+          root+'4',
+          root+'5',
+          root+'6',
+          root+'7',
+          root+'8',
+          root+'9',
+          root+'10','perfect')
+
 # 1 kHz
 # root_1kHz = 'OPDs_PASSATA/OPD/WS/1kHz/'
 # p_dir=(root_1kHz+'20250325_145800.0_phase_screens/20250325_145800.0',
@@ -231,18 +326,18 @@ fdir_plt = fdir_plt / was_donow
 #           'perfect')
 
 # 500 Hz
-root_500Hz = 'OPDs_PASSATA/OPD/WS/500Hz/'
-p_dir=(root_500Hz + '20250508_163051.0_phase_screens/20250508_163051.0_oaCUBEs',
-          root_500Hz + '20250521_145220.0_phase_screens/20250521_145220.0_oaCUBEs',
-          root_500Hz + '20250521_151332.0_phase_screens/20250521_151332.0_oaCUBEs',
-          root_500Hz + '20250521_153444.0_phase_screens/20250521_153444.0_oaCUBEs',
-          root_500Hz + '20250521_155558.0_phase_screens/20250521_155558.0_oaCUBEs',
-          root_500Hz + '20250521_161711.0_phase_screens/20250521_161711.0_oaCUBEs',
-          root_500Hz + '20250521_163823.0_phase_screens/20250521_163823.0_oaCUBEs',
-          root_500Hz + '20250521_172051.0_phase_screens/20250521_172051.0_oaCUBEs',
-          root_500Hz + '20250521_174203.0_phase_screens/20250521_174203.0_oaCUBEs',
-          root_500Hz + '20250527_122032.0_phase_screens/20250527_122032.0_oaCUBEs',
-          'perfect')
+# root_500Hz = 'OPDs_PASSATA/OPD/WS/500Hz/'
+# p_dir=(root_500Hz + '20250508_163051.0_phase_screens/20250508_163051.0_oaCUBEs',
+#           root_500Hz + '20250521_145220.0_phase_screens/20250521_145220.0_oaCUBEs',
+#           root_500Hz + '20250521_151332.0_phase_screens/20250521_151332.0_oaCUBEs',
+#           root_500Hz + '20250521_153444.0_phase_screens/20250521_153444.0_oaCUBEs',
+#           root_500Hz + '20250521_155558.0_phase_screens/20250521_155558.0_oaCUBEs',
+#           root_500Hz + '20250521_161711.0_phase_screens/20250521_161711.0_oaCUBEs',
+#           root_500Hz + '20250521_163823.0_phase_screens/20250521_163823.0_oaCUBEs',
+#           root_500Hz + '20250521_172051.0_phase_screens/20250521_172051.0_oaCUBEs',
+#           root_500Hz + '20250521_174203.0_phase_screens/20250521_174203.0_oaCUBEs',
+#           root_500Hz + '20250527_122032.0_phase_screens/20250527_122032.0_oaCUBEs',
+#           'perfect')
 
 
 #%%
@@ -275,7 +370,7 @@ if True:
     lam_itv = nncr_head['LITV']
     lam_lst = np.arange(lam_min,lam_min+(lam_itv+0.5)*lam_stp,lam_stp)
     if avoid_k:
-        lam_lst = lam_lst[np.where(lam_lst < 1840e-9)]
+        lam_lst = lam_lst[np.where(lam_lst < 1860e-9)]
     nL = len(lam_lst)
         
     nImg = nncr_head['NIMG']
@@ -331,7 +426,7 @@ for dir_nb in range(len(p_dir)):
             lam_itv = head_psf['LITV']
             lam_lst = np.arange(lam_min,lam_min+(lam_itv+0.5)*lam_stp,lam_stp)
             if avoid_k:
-                lam_lst = lam_lst[np.where(lam_lst < 1840e-9)]
+                lam_lst = lam_lst[np.where(lam_lst < 1860e-9)]
             nL = len(lam_lst)
             
             nImg = head_psf['NIMG']
