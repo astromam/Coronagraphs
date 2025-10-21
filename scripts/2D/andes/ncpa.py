@@ -6,7 +6,7 @@ Created on Tue Dec 17 13:55:41 2024
 """
 
 import numpy as np
-from slow_fourier_transform import isft
+import slow_fourier_transform as sft
 
 def ncpa(ncpa_rms, nOPD, nPup, Pupil, pwr):
     
@@ -34,7 +34,7 @@ def ncpa(ncpa_rms, nOPD, nPup, Pupil, pwr):
     # amplitude.shape = tuple : *amplitude.shape tuple elements...
     random = np.random.uniform(low=-0.5,high=0.5,size=amplitude.shape)
     ncpa_field = amplitude * np.exp(1j*2.*np.pi*random)
-    ncpa = np.real(isft(ncpa_field,nMap,nMap//2))
+    ncpa = np.real(sft.isft(ncpa_field,nMap,nMap//2))
     
     N = nMap//2
     hlf = N//2
