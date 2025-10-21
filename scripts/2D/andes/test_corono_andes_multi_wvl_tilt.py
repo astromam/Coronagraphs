@@ -62,11 +62,12 @@ nOPD = 4000
 
 # wavelengths in m
 lamC = 1600e-9  #  some reference wvl unique value
-# yjhk
-lam_min = 960e-9  #  min value in range
-lam_max = 2450e-9  #  max value in range  #  2450e-9 // 1800e-9
-lam_itv = 18  #  nb of intervals in range --> nb+1 wvl's !  #  18 // 10
-lam_stp = np.floor(np.ceil((lam_max-lam_min)*1e9/lam_itv)/10)*1e-8  # wvl step
+
+# yjhk --> 2025-03
+# lam_min = 960e-9  #  min value in range
+# lam_max = 2450e-9  #  max value in range  #  2450e-9 // 1800e-9
+# lam_itv = 18  #  nb of intervals in range --> nb+1 wvl's !  #  18 // 10
+# lam_stp = np.floor(np.ceil((lam_max-lam_min)*1e9/lam_itv)/10)*1e-8  # wvl step
 
 # riz
 # lam_min = 630e-9  #  min value in range
@@ -74,9 +75,13 @@ lam_stp = np.floor(np.ceil((lam_max-lam_min)*1e9/lam_itv)/10)*1e-8  # wvl step
 # lam_itv = 8  #  nb of intervals in range --> nb+1 wvl's !  #  18 // 10
 # lam_stp = 40e-9 # np.floor(np.ceil((lam_max-lam_min)*1e9/lam_itv)/10)*1e-8  # wvl step
 
-lam_lst = np.arange(lam_min,lam_max,lam_stp) if lam_max != lam_min else [lamC]
-nL = len(lam_lst)
+# yjhk  2025-05 -->
+lam_min = 950e-9  #  min value in range
+lam_itv = 30
+lam_stp = 50e-9
 
+lam_lst = np.arange(lam_min,lam_min+(lam_itv+0.5)*lam_stp,lam_stp)
+nL = len(lam_lst)
 print(nL, lam_stp, lam_lst)
 
 # Pupil diameter in m 
@@ -111,15 +116,7 @@ mask2d = uniform_disk(nFPM, nFPM/2.)
 
 # from JH optimum research @ 25 mas: throughput, <contrast>, config, comments
 # 0.754 	 0.000253336 	 [0.9  0.37 4.  ]    'YJH2024'
-# 0.757 	 0.000258949 	 [0.89 0.34 4.1 ]
-# 0.762 	 0.000263092 	 [0.9  0.36 4.  ]
-# 0.77 	     0.000275971 	 [0.9  0.35 4.  ]
-# 0.774 	 0.000290575 	 [0.91 0.37 4.  ]
-# 0.778 	 0.000292235 	 [0.9  0.34 4.  ]
-# 0.783 	 0.000300305 	 [0.91 0.36 4.  ]
-# 0.785 	 0.000311143 	 [0.9  0.33 4.  ]
-# 0.79 	     0.00031333 	 [0.91 0.35 4.  ]
-# 0.798 	 0.00032991 	 [0.91 0.34 4.  ]
+# ...
 # 0.804 	 0.000341188 	 [0.92 0.36 3.9 ]    20250523162033 20250523162130
 # 0.805 	 0.000349114 	 [0.91 0.33 3.9 ]
 # 0.811 	 0.000354267 	 [0.92 0.35 3.8 ]    20250523162217 20250523162247
@@ -127,16 +124,23 @@ mask2d = uniform_disk(nFPM, nFPM/2.)
 # 0.824 	 0.000380266 	 [0.93 0.36 3.6 ]    20250523162955 20250523163019
 # 0.826 	 0.000388391 	 [0.92 0.33 3.5 ]    20250523163116 20250523163139
 
-diam = 0.90 # diameter of the pupil in fraction of the pupil size
-obst = 0.37 # diameter of the central obscuration in fraction of the pupil size
+# new params exploration follow. ruane2018 06/2025
+# photometric aperture 7µ
+# J     4.6e-05     0.85    0.36   3.3 0.66501  20250618164513
+# H     0.000392    0.86    0.3    4.1 0.72769  20250618164620
+# JH    0.000428    0.86    0.3    4.0 0.72769  20250618164704
+# YJH   0.000628    0.86    0.37   4.0 0.67608  20250618164749
+# 0.85 0.32 3.9 
+
+diam = 0.89 # diameter of the pupil in fraction of the pupil size
+obst = 0.35 # diameter of the central obscuration in fraction of the pupil size
 # FPM size in lam/D in the focal plane B
 # 4. with 'ELT_pupil_400.fits'
 # 3.8 with 'Tel-Pupil.fits', old!
-mB = 4.0
-print(diam,obst,mB)
+mB = 3.9
 
 # dispersion mas/m
-disp = 0.  #  e.g 8e7 ou 80e6 = 80 mas / 1e-6 m
+disp = 2e7  #  e.g 8e7 ou 80e6 = 80 mas / 1e-6 m
 # psf to fpm decentering in mas then for legacy in radians
 fpm_dec_mas = 0.
 fpm_dec = fpm_dec_mas * rad2mas
@@ -153,9 +157,15 @@ fpm_dfe_elt = 0
 # fpm_dfe = -1 if fpm_dfe_elt = 0., computed dynamicaly otherwise
 fpm_dfe = fpm_dfe_elt - 1.
 
+# compute & keep elt psf & profiles
+simu_elt = False
+
 # datetime of script execution
 donow = datetime.now().strftime("%Y%m%d%H%M%S")  #  asp, datetime of now
+
+print('\n', diam, obst, mB)
 print('date of now : ', donow)
+
 
 #%%
 """
@@ -192,6 +202,9 @@ elif user == 'Mamadou':
 fdir_pupil = fdir_dat / 'Pupil'
 
 fdir_res = fdir_res / donow
+fdir_prfct = fdir_res / 'perfect'
+os.makedirs(fdir_prfct, exist_ok=True)
+
 fdir_plt = fdir_plt / donow
 
 
@@ -207,6 +220,7 @@ Int_D = np.zeros([nL, nImg, nImg])
 Int_D0_prf_avg = np.zeros([nL, 2, nImg//2])
 Int_D_prf_avg = np.zeros([nL, 2, nImg//2])
 Int_elt = np.zeros([nL, nImg, nImg])
+
 
 #%%
 """
@@ -234,7 +248,8 @@ ncpa_d = np.zeros((nOPD,nPup,nPup))
 if ncpa_rms != 0:
     print("NCPA [nm RMS]:",ncpa_rms)
     # ncpa_d = np.zeros((nOPD,nImg,nImg))
-    fnm = ('ncpa_pupil_new_'+str(ncpa_rms)+'nm.fits')
+    # fnm = ('ncpa_pupil_new_'+str(ncpa_rms)+'nm.fits')
+    fnm = ('ncpa_ELT_pupil_400_'+str(ncpa_rms)+'nm_4096screens.fits')
     ncpa_d = fits.getdata(fdir_dat/fnm)
 
 
@@ -287,6 +302,40 @@ if ls_voe != 0 or ls_hoe != 0:
 """
 ### working directory of the OPD files
 """
+
+#%%
+#tests cameras
+# root = 'OPDs_PASSATA/OPD/WS/'
+# # opds_dir=(root+'ocam2k',)
+# # opds_dir=(root+'alice',)
+# opds_dir=(root+'cam_500us',)
+
+
+#%%
+# root = 'OPDs_PASSATA/OPD/WS/500HzVarWS/'
+# opds_dir=(root+'20250704_105833.0',
+#           root+'20250704_112007.0',
+#           root+'20250704_114101.0',
+#           root+'20250704_121550.0',
+#           root+'20250704_123540.0',
+#           root+'20250704_125507.0',
+#           root+'20250704_131433.0',
+#           root+'20250704_135325.0',
+#           root+'20250704_141253.0',
+#           root+'20250707_114321.0')
+root = 'OPDs_PASSATA/OPD/WS/1kHzVarWS/'
+opds_dir=(root+'1',
+          root+'2',
+          root+'3',
+          root+'4',
+          root+'5',
+          root+'6',
+          root+'7',
+          root+'8',
+          root+'9',
+          root+'10')
+
+#%%
 # Directory for the OPDs with the corresponding seed value 
 # (from HARMONI simulation)
 # fdir_opd   = fdir_dat / 'OPD_Harmoni' / str(seed)
@@ -359,7 +408,6 @@ if ls_voe != 0 or ls_hoe != 0:
 # opds_dir=('OPDs_PASSATA/OPD/WS/JQM/20240509_201200/20240509_201200.0',)
 # opds_dir=('OPDs_PASSATA/OPD/WS/JQ1/20240515_163822',)
 # opds_dir=('OPDs_PASSATA/OPD/WS/ASI_staticVib',)
-#%%
 
 # 1 kHz
 # root_1kHz = 'OPDs_PASSATA/OPD/WS/1kHz/'
@@ -375,17 +423,17 @@ if ls_voe != 0 or ls_hoe != 0:
 #           root_1kHz+'20250527_145633.0_phase_screens/20250527_145633.0_phase_screens')
 
 # 500 Hz
-root_500Hz = 'OPDs_PASSATA/OPD/WS/500Hz/'
-opds_dir=(root_500Hz + '20250508_163051.0_phase_screens/20250508_163051.0_oaCUBEs',
-          root_500Hz + '20250521_145220.0_phase_screens/20250521_145220.0_oaCUBEs',
-          root_500Hz + '20250521_151332.0_phase_screens/20250521_151332.0_oaCUBEs',
-          root_500Hz + '20250521_153444.0_phase_screens/20250521_153444.0_oaCUBEs',
-          root_500Hz + '20250521_155558.0_phase_screens/20250521_155558.0_oaCUBEs',
-          root_500Hz + '20250521_161711.0_phase_screens/20250521_161711.0_oaCUBEs',
-          root_500Hz + '20250521_163823.0_phase_screens/20250521_163823.0_oaCUBEs',
-          root_500Hz + '20250521_172051.0_phase_screens/20250521_172051.0_oaCUBEs',
-          root_500Hz + '20250521_174203.0_phase_screens/20250521_174203.0_oaCUBEs',
-          root_500Hz + '20250527_122032.0_phase_screens/20250527_122032.0_oaCUBEs')
+# root_500Hz = 'OPDs_PASSATA/OPD/WS/500Hz/'
+# opds_dir=(root_500Hz + '20250508_163051.0_phase_screens/20250508_163051.0_oaCUBEs',
+#           root_500Hz + '20250521_145220.0_phase_screens/20250521_145220.0_oaCUBEs',
+#           root_500Hz + '20250521_151332.0_phase_screens/20250521_151332.0_oaCUBEs',
+#           root_500Hz + '20250521_153444.0_phase_screens/20250521_153444.0_oaCUBEs',
+#           root_500Hz + '20250521_155558.0_phase_screens/20250521_155558.0_oaCUBEs',
+#           root_500Hz + '20250521_161711.0_phase_screens/20250521_161711.0_oaCUBEs',
+#           root_500Hz + '20250521_163823.0_phase_screens/20250521_163823.0_oaCUBEs',
+#           root_500Hz + '20250521_172051.0_phase_screens/20250521_172051.0_oaCUBEs',
+#           root_500Hz + '20250521_174203.0_phase_screens/20250521_174203.0_oaCUBEs',
+#           root_500Hz + '20250527_122032.0_phase_screens/20250527_122032.0_oaCUBEs')
 
 # opds_dir=('OPDs_PASSATA/OPD/WS/500Hz/20250508_163051.0_phase_screens/20250508_163051.0_oaCUBEs',)
 
@@ -476,22 +524,19 @@ for dir_nb in range(len(opds_dir)):
         """
         
         # Field in the entrance pupil plane A
-        Fld_AA0 = Pupil * 1.*LyotStop2d
+        Fld_AA0 = Pupil * 1.* LyotStop2d
         
         # Field in the image plane D (no coronagraph)
         Fld_DD0 = sft.sft(Fld_AA0, nImg, mD*diam)
 
-        Fld_elt = sft.sft(Pupil*1., nImg, mD*diam)
 
         # Intensity 
         Int_DD0[i,:] = np.abs(Fld_DD0)**2
-        Int_elt[i,:] = np.abs(Fld_elt)**2
         
         # Normalized intensity
         norm_peakDD0 = 1/np.max(Int_DD0[i,:])
         Int_DD0[i,:] *= norm_peakDD0
-        Int_elt[i,:] *= norm_peakDD0
-        
+
         
         #%%
         """
@@ -507,7 +552,7 @@ for dir_nb in range(len(opds_dir)):
         Fld_CC = Fld_AA - sft.isft(Fld_BB, nPup, mB*lamC/lam)
         
         # # pupil plane C after Lyot stop
-        Fld_LL = Fld_CC*LyotStop2d
+        Fld_LL = Fld_CC * LyotStop2d
         
         # image plane D 
         Fld_DD = sft.sft(Fld_LL, nImg, mD*diam)
@@ -519,18 +564,19 @@ for dir_nb in range(len(opds_dir)):
         Int_DD[i,:] *= norm_peakDD0
         
         
-        # pdb.set_trace()
-                
-        
     #%%    
         # computation of the averaged intensity profiles of the images  
         Int_DD0_prf_avg, rad_DD0_prf_avg = profile(Int_DD0[i,:], ptype='mean')
         Int_DD_prf_avg, rad_DD_prf_avg = profile(Int_DD[i,:], ptype='mean')
         
-        
+        if simu_elt:
+            Fld_elt = sft.sft(Pupil*1., nImg, mD*diam)
+            Int_elt[i,:] = np.abs(Fld_elt)**2
+            Int_elt[i,:] *= norm_peakDD0
+
         # computation of the standard deviation intensity profiles of the images
-        Int_DD0_prf_std, rad_DD0_prf_std = profile(Int_DD0[i,:], ptype='std')
-        Int_DD_prf_std, rad_DD_prf_std = profile(Int_DD[i,:], ptype='std')
+        # Int_DD0_prf_std, rad_DD0_prf_std = profile(Int_DD0[i,:], ptype='std')
+        # Int_DD_prf_std, rad_DD_prf_std = profile(Int_DD[i,:], ptype='std')
         
         
         #%%
@@ -620,7 +666,7 @@ for dir_nb in range(len(opds_dir)):
         # Int_D0_prf_avg2, rad_D0_prf_avg = profile(Int_D0_2, ptype='mean')
         Int_D0_prf_avg[i,1,:], rad_D0_prf_avg = profile(Int_D0[i,:], ptype='mean')
         Int_D_prf_avg[i,1,:], rad_D_prf_avg = profile(Int_D[i,:], ptype='mean')
-        
+
         # computation of the standard deviation intensity profiles of the images
         # Int_D0_prf_std2, rad_D0_prf_std = profile(Int_D0_2, ptype='std')
         # Int_D0_prf_std, rad_D0_prf_std = profile(Int_D0, ptype='std')
@@ -643,35 +689,46 @@ for dir_nb in range(len(opds_dir)):
     """
     
     # filename for the direct and coronagraphic images and profiles
-    fname_Int_DD0 = 'wonoise_psf_'+donow+'.fits'
-    fname_Int_DD = 'wonoise_coro_psf_'+donow+'.fits'
     fname_Int_D0 = 'ao_corr_psf_'+donow+'.fits'
     fname_Int_D = 'ao_corr_coro_psf_'+donow+'.fits'
     fname_Prf_D0 = 'ao_corr_psf_profile_'+donow+'.fits'
     fname_Prf_D = 'ao_corr_coro_psf_profile_'+donow+'.fits'
-    fname_elt = 'wo_noise_psf_elt_pupil.fits'
     
     # filepath for the direct and coronagraphic images
-    fpath_Int_DD0 = fdir_res / opd_set / fname_Int_DD0
-    fpath_Int_DD  = fdir_res / opd_set / fname_Int_DD
     fpath_Int_D0 = fdir_res / opd_set / fname_Int_D0
     fpath_Int_D  = fdir_res / opd_set / fname_Int_D
     fpath_Prf_D0 = fdir_res / opd_set / fname_Prf_D0
     fpath_Prf_D  = fdir_res / opd_set / fname_Prf_D
-    fpath_elt = fdir_res / opd_set / fname_elt
     
     # save the direct and coronagraphic images
-    fits.writeto(fpath_Int_DD0, Int_DD0, overwrite=True)
-    fits.writeto(fpath_Int_DD, Int_DD, overwrite=True)
     fits.writeto(fpath_Int_D0, Int_D0, overwrite=True)
     fits.writeto(fpath_Int_D, Int_D, overwrite=True)
     fits.writeto(fpath_Prf_D0, Int_D0_prf_avg, overwrite=True)
     fits.writeto(fpath_Prf_D, Int_D_prf_avg, overwrite=True)
-    fits.writeto(fpath_elt, Int_elt, overwrite=True)
 
     # fpath_psf_lst=(fpath_Int_D0, fpath_Int_D,fpath_Prf_D0, fpath_Prf_D)
-    fpath_psf_lst=(fpath_Int_DD0, fpath_Int_DD, fpath_Int_D0, fpath_Int_D,
-                   fpath_Prf_D0, fpath_Prf_D, fpath_elt)
+    fpath_psf_lst=(fpath_Int_D0, fpath_Int_D, fpath_Prf_D0, fpath_Prf_D)
+
+    if len(os.listdir(fdir_prfct))==0:
+        fname_Int_DD0 = 'wonoise_psf_'+donow+'.fits'
+        fname_Int_DD = 'wonoise_coro_psf_'+donow+'.fits'
+        fpath_Int_DD0 = fdir_prfct/ fname_Int_DD0
+        fpath_Int_DD  = fdir_prfct / fname_Int_DD
+
+        if not os.path.isfile(fpath_Int_DD0):
+            fits.writeto(fpath_Int_DD0, Int_DD0, overwrite=True)
+            fpath_psf_lst += (fpath_Int_DD0,)
+            
+        if not os.path.isfile(fpath_Int_DD):
+            fits.writeto(fpath_Int_DD, Int_DD, overwrite=True)
+            fpath_psf_lst += (fpath_Int_DD,)
+    
+        if simu_elt:
+            fname_elt = 'wo_noise_psf_elt_pupil.fits'
+            fpath_elt = fdir_prfct / fname_elt
+            if not os.path.isfile(fpath_elt):
+                fits.writeto(fpath_elt, Int_elt, overwrite=True)
+                fpath_psf_lst += (fpath_elt,)
     
     for fpath in fpath_psf_lst:
         fits.setval(fpath,'NPUP',value=nPup,comment='pupil size')
@@ -708,6 +765,8 @@ for dir_nb in range(len(opds_dir)):
                     comment='pup. circumcirc. input defocus nm RMS ref. wvl')
         fits.setval(fpath,'EPUP_FNM',value=fname_elt,
                 comment='ELT pupil filename')
+        fits.setval(fpath,'DATE_NOW',value=donow,
+            comment='daye of now, i.e. script execution')
 
 
     #%%
@@ -773,7 +832,6 @@ for dir_nb in range(len(opds_dir)):
     """
     plot profiles
     """
-    
         
     # filepath for the direct and coronagraphic images
     fname_prf_svg = 'intensities_profiles_'+donow+'.svg'
@@ -811,4 +869,7 @@ for dir_nb in range(len(opds_dir)):
     plt.savefig(fpath_prf_pdf)
         
     plt.show()
+
+print(diam,obst,mB)
+print('date of now : ', donow)
 
