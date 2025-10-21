@@ -22,26 +22,18 @@ user = 'Alain'
 if user == 'Alain':
     fdir_dat   = Path('D:/Andes/Data_corono/data/').resolve()  #  fits data
 
-elif user == 'Adrien':
-    # Directory for the OPD with the corresponding seed value
-    fdir_dat   = Path(
-        '/Users/asimonnin/Desktop/PhD/Andes/Data_corono/data/').resolve()
-
-elif user == 'Mamadou':
-    fdir_base = ("/Users/mndiaye/Library/CloudStorage/"\
-                 "OneDrive-UniversitéNiceSophiaAntipolis/data/andes")
-    # Directory for the OPD with the corresponding seed value
-    fdir_dat   = Path( fdir_base / 'data' ).resolve()
-
 
 #%%
 
-std_tgt = 6e-8 #☺ target std in meters
+std_tgt = 7e-8 #☺ target std in meters
+nb_ncpa = 4096
 
 fdir_pupil = fdir_dat / 'Pupil'
 fname_elt = 'ELT_pupil_400.fits' # New pupil with new spider
 fpath_elt = fdir_pupil / fname_elt
 pup = fpath_elt.stem
+fnm = ('ncpa_'+pup+'_'+str(int(np.rint(std_tgt*1e9)))+"nm_"+
+       str(int(nb_ncpa))+"screens.fits")
 
 """
 ### Read pupil file
@@ -82,7 +74,6 @@ rndOpd_powLaw = np.real(sft.isft(ncpa_field,nMap,nMap//2))
 # N = pupil size
 N=nMap//2
 hlf=N//2
-nb_ncpa = 2048
 rnd=np.random.randn(nb_ncpa)
 rnd /= 2.
 xi=np.round(rnd*hlf/np.max([-np.min(rnd),np.max(rnd)])).astype(int)
@@ -101,7 +92,7 @@ for n in np.arange(nb_ncpa):
     ncpa[:,:,n] *= std_tgt/np.std(ncpa[:,:,n][iok])
 
 fits.writeto(
-    (fdir_dat/('ncpa_'+pup+'_'+str(int(np.rint(std_tgt*1e9)))+"nm.fits")),
+    (fdir_dat/fnm),
     np.transpose(ncpa,(2,0,1)), overwrite=True)
 
 
