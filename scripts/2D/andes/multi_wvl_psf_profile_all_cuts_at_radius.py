@@ -63,12 +63,33 @@ elif user == 'Mamadou':
     fdir_plt   = Path( fdir_base / 'plots' ).resolve()
     fdir_plt   = Path( fdir_base / 'data/OPDs_PASSATA/OPD/WS' ).resolve()
 
-was_donow = '20251020152206'
+was_donow = '20251106160002'
 fdir_res = fdir_res / was_donow
 fdir_plt = fdir_plt / was_donow
 
 # new ref 1 kHz 01/10/2025
 # 0.89 0.35 3.9 20251001085445 ruane2018 YJH
+
+# 0.89/0.35/3.9 + Lyot stop azimutal offset
+# 20251107134453 2 pixels / 0.5% D 
+# 20251107134538 4 pixels / 1.0% D 
+# 20251107134615 8 pixels / 2.0% D 
+
+# 0.89/0.35/3.9 + Lyot stop azimutal offset
+# 20251106103751 2 pixels / 0.5% D
+# 20251106103913 4 pixels / 1.0% D
+# 20251106104005 8 pixels / 2.0% D
+
+# 0.89/0.35/3.9 + Lyot stop vertical offset
+# 20251104110334 2 pixels / 0.5% D
+# 20251104110517 4 pixels / 1.0% D
+# 20251104110556 8 pixels / 2.0% D
+
+# 0.89/0.35/3.9 + fpm defocus
+# 20251103103334  10 nm RMS
+# 20251103103358  30 nm RMS
+# 20251103103429  50 nm RMS
+# 20251105104900  70 nm RMS
 
 # 0.89/0.35/3.9 + offsets
 # 20251013163430 1 mas
