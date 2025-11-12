@@ -60,8 +60,8 @@ elif user == 'Mamadou':
 #              '20250122184053','20250122184101','20250122184109')
 
 # 0.89/0.35/3.9 + ncpa 
-was_donow = ('20251020152206','20251016135837','20251016135818',
-             '20251016135714','20251001085445')
+# was_donow = ('20251020152206','20251016135837','20251016135818',
+#              '20251016135714','20251001085445')
 
 # 20251016135714 10 nm RMS
 # 20251016135818 30 nm RMS
@@ -109,14 +109,37 @@ was_donow = ('20251020152206','20251016135837','20251016135818',
 # was_donow = ('20250121142815',"20250130104616","20250130104747",
 #               "20250130104759","20250130104809")
 
+# 0.89/0.35/3.9 + Lyot stop vertical offset
+# 20251104110334 2 pixels / 0.5% D
+# 20251104110517 4 pixels / 1.0% D
+# 20251104110556 8 pixels / 2.0% D
+# was_donow = ("20251104110556","20251104110517",
+#               "20251104110334","20251001085445")
+
 # lyot stop horizontal (azimuth) offset in pixels: 1, 2, 4, 8
 # was_donow = ('20250121142815','20250214100537','20250214100614',
 #              '20250214100649','20250214100716')
 
+
+# 0.89/0.35/3.9 + Lyot stop azimutal offset
+# 20251107134453 2 pixels / 0.5% D 
+# 20251107134538 4 pixels / 1.0% D 
+# 20251107134615 8 pixels / 2.0% D 
+
+was_donow = ("20251107134615","20251107134538",
+              "20251107134453","20251001085445")
 # fpm defocus in nm RMS: 10, 20, 30, 40, 50
 # was_donow = ('20250121142815',"20250210175500","20250210175517",
 #              "20250210175531","20250210175546","20250210175606")
 
+# 0.89/0.35/3.9 + fpm defocus
+# 20251103103334  10 nm RMS
+# 20251103103358  30 nm RMS
+# 20251103103429  50 nm RMS
+# 20251105104900  70 nm RMS
+
+# was_donow = ('20251105104900','20251103103429','20251103103358',
+#              '20251103103334','20251001085445')
 
 jq = 'JQM'
 seeings = {'JQ1':'0.43"', 'JQ2':'0.58"','JQM':'0.65"','JQ3':'0.74"','JQ4':'1.06"'}
@@ -227,12 +250,12 @@ for i, was_d in enumerate(was_donow):
         atmoNoCoro = data3[0,:]*data[0,:]
             
     # plt.plot(lam_lst*1e9, data[0,:])
-    plt.plot(lam_lst*1e9, data[0,:], label=f'{ncpa}', color=c_tab[i])
+    # plt.plot(lam_lst*1e9, data[0,:], label=f'{ncpa}', color=c_tab[i])
     # plt.plot(lam_lst*1e9, data[0,:], label=f'{disp}', color=c_tab[i])
     # plt.plot(lam_lst*1e9, data[0,:], label=f'{ls_ape:.1f}°', color=c_tab[i])
     # plt.plot(lam_lst*1e9, data[0,:], label=f'{offset*lamC*mas2rad/D:.1f}', color=c_tab[i])
     # plt.plot(lam_lst*1e9, data[0,:], label=f'{ls_voe*100./nPup:.2f}', color=c_tab[i])
-    # plt.plot(lam_lst*1e9, data[0,:], label=f'{ls_hoe*100./nPup:.2f}', color=c_tab[i])
+    plt.plot(lam_lst*1e9, data[0,:], label=f'{ls_hoe*100./nPup:.2f}', color=c_tab[i])
     # plt.plot(lam_lst*1e9, data[0,:], label=f'{fpm_dfe_elt}', color=c_tab[i])
     # plt.plot(lam_lst*1e9, data[0,:], label=f'{offset*lamC*mas2rad/D:.1f} mas')
     
@@ -246,12 +269,12 @@ plt.plot(lam_lst*1e9, bdata[:,pos_as_oi], color='black', ls=':')  #  , label='no
 # plt.plot(lam_lst*1e9, atmoNoCoro,color='black' , label='atmo., no coro.', ls='--')
 
 plt.ylim(1e-5,1e-1)
-plt.legend(title='NCPA [nm RMS]',fontsize='small', loc=2, ncol=2)
+# plt.legend(title='NCPA [nm RMS]',fontsize='small', loc=2, ncol=2)
 # plt.legend(title='Chromatic dispersion\n[mas/µm]',fontsize='small', loc=2, ncol=2)
 # plt.legend(title='Lyot stop\nclocking error',fontsize='small', loc=2, ncol=1)
 # plt.legend(title='Tilt [mas]',fontsize='small', loc=2, ncol=1)
 # plt.legend(title=f'Lyot stop elevation offset [%D$_{{ELT}}]$\n(D$_{{LS}}$ = {diam} D$_{{ELT}}$)',fontsize='small', loc=2, ncol=2)
-# plt.legend(title=f'Lyot stop azimuth offset [%D$_{{ELT}}]$\n(D$_{{LS}}$ = {diam} D$_{{ELT}}$)',fontsize='small', loc=2, ncol=2)
+plt.legend(title=f'Lyot stop azimuth offset [%D$_{{ELT}}]$\n(D$_{{LS}}$ = {diam} D$_{{ELT}}$)',fontsize='small', loc=2, ncol=2)
 # plt.legend(title='FPM defocus [nm RMS]',fontsize='small', loc=2, ncol=2)
 
 plt.plot(lam_lst*1e9, atmoNoCoro,color='black' , ls='--')
@@ -274,7 +297,7 @@ plt.text(1600,2e-5,'... no atmo., coro.', bbox=bbox)
 # plt.savefig(fpath_contrast_25mas_pdf)
 
 # plt.savefig('C:/Users/asp/Desktop/tilt_'+jq+'.svg')
-plt.savefig(fdir_plt / was_donow[-1] / ('ncpa_'+str(int(as_oi))+'mas_'+str(int(spxl))+'mas_'+jq+'.pdf'), bbox_inches='tight', pad_inches=0.1)
+plt.savefig(fdir_plt / was_donow[-1] / ('ls_azimuthal_offset_'+str(int(as_oi))+'mas_'+str(int(spxl))+'mas_'+jq+'.pdf'), bbox_inches='tight', pad_inches=0.1)
 # plt.savefig('C:/Users/asp/Desktop/tilt_'+jq+'.png')
 
 plt.show()
