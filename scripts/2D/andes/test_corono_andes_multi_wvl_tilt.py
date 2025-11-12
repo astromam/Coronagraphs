@@ -108,11 +108,12 @@ mD_ref = fov_rdn / ( lamC / D )
 """
 # Focal plane mask
 mask2d = uniform_disk(nFPM, nFPM/2.)
-# diam = 0.90 obs = 0.37, mB = 4. with 'ELT_pupil_400.fits' YJH
+# diam = 0.89 obs = 0.35, mB = 3.9 2025 with 'ELT_pupil_400.fits' YJH
+# diam = 0.90 obs = 0.37, mB = 4.0 2024 with 'ELT_pupil_400.fits' YJH
 # diam = 0.96 obs = 0.30, mB = 4.5 with 'ELT_pupil_400.fits' K
 # diam = 0.90 obs = 0.38 with 'Tel-Pupil.fits'
 
-# 'YJH2024' 0.9 / 0.37 / 0.4 @ 25 mas / 75% thr
+# 'YJH2024' 0.9 / 0.37 / 4.0 @ 25 mas / 75% thr
 
 # from JH optimum research @ 25 mas: throughput, <contrast>, config, comments
 # 0.754 	 0.000253336 	 [0.9  0.37 4.  ]    'YJH2024'
@@ -140,16 +141,16 @@ obst = 0.35 # diameter of the central obscuration in fraction of the pupil size
 mB = 3.9
 
 # dispersion mas/m
-disp = 2e7  #  e.g 8e7 ou 80e6 = 80 mas / 1e-6 m
+disp = 0  #  e.g 8e7 ou 80e6 = 80 mas / 1e-6 m
 # psf to fpm decentering in mas then for legacy in radians
-fpm_dec_mas = 0.
+fpm_dec_mas = 0
 fpm_dec = fpm_dec_mas * rad2mas
 # lyot stop angular position error in degres
-ls_ape = 0.
+ls_ape = 0
 # lyot stop vertical - elevation - offset error in pixels
 ls_voe = 0
 # lyot stop horizontal - azimut - offset error in pixels
-ls_hoe = 0
+ls_hoe = 8
 # ncpa phase screens
 ncpa_rms = 0  #  nm
 # defocus at fpm in nm RMS for reference wvl
@@ -254,12 +255,14 @@ if ncpa_rms != 0:
 
 
 dfc = np.zeros((nPup,nPup))
-if fpm_dfe != 0:
+if fpm_dfe >= 0:
     
+    # create circular pupil (elt circumcircle) phase with defocus
     dfc = uniform_disk(nPup,nPup//2)
     iok = np.nonzero(dfc)
     dfc[iok] = np.sqrt(3.)*(rho[iok]*rho[iok]-1.)
 
+    # scale defocus inside elt pupil to required value
     dfc_temp = dfc.copy()
     dfc_temp *= Pupil.copy()
     mp = np.mean(dfc_temp[ipup])
@@ -267,11 +270,15 @@ if fpm_dfe != 0:
     sp = np.std(dfc_temp[ipup])
     dfc_temp /= sp
     dfc_temp *= fpm_dfe_elt * 1e-9
+
+    # compute input defocus over elt circum circle in front of elt pupil
     dfc -= mp
     dfc /= sp
     dfc *= fpm_dfe_elt * 1e-9
     dfc -= np.mean(dfc[iok])
     fpm_dfe = np.std(dfc[iok]) * 1e9
+    
+    # update defocus phase screen to elt pupil shape with the required value
     dfc = dfc_temp.copy()    
     
     print('elt pupil circumcircle input defocus:', np.round(fpm_dfe,3),\
