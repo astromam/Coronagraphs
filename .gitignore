@@ -165,3 +165,6 @@ scripts/2D/andes/contastAtLamC4JQs.py
 scripts/2D/andes/readResultsFitsHeader.py
 
 scripts/2D/andes/visu_means_multi_wvl_contrast_andes_coro_params.py
+
+scripts/2D/andes/old/
+
