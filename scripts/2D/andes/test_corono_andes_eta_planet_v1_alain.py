@@ -114,22 +114,6 @@ if user == 'Alain':
     fdir_plt   = Path('D:/Andes/Data_corono/plots/').resolve()   #  plots
     fdir_mov = Path("D:/Andes/Data_corono/results/").resolve()
     
-# fdir = Path('/Users/mndiaye/scratch/data/andes/data/Pupil/').resolve()
-
-# # Directory for the OPD with the corresponding seed value
-# fdir_res   = Path('/Users/mndiaye/scratch/data/andes/results/').resolve()
-
-# fdir_mov = Path('/Users/mndiaye/scratch/data/andes/movie_frames/').resolve()
-# if not os.path.exists(fdir_mov):
-#     os.makedirs(fdir_mov)
-#     print(fdir_mov)
-
-# # Directory for the OPD with the corresponding seed value
-# fdir_plt   = Path('/Users/mndiaye/scratch/data/andes/plots/').resolve()
-# if not os.path.exists(fdir_plt):
-#     os.makedirs(fdir_plt)
-#     print(fdir_plt)
-
 
 fname_pup = 'Pupil\ELT_pupil_400.fits'
 # fname_lys = 'lyotStop_90_37_7.fits'
