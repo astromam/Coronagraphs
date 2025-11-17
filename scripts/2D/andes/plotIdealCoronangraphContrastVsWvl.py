@@ -18,7 +18,6 @@ lam_max = 2450e-9  #  max value in range  #  2450e-9 // 1800e-9
 lam_itv = 18  #  nb of intervals in range --> nb+1 wvl's !  #  18 // 10
 lam_stp = np.floor(np.ceil((lam_max-lam_min)*1e9/lam_itv)/10)*1e-8  # wvl step
 lam_lst = np.arange(lam_min,lam_max,lam_stp) if lam_max != lam_min else [lamC]
-# lam_lst = [lam_lst[8]]
 nL = len(lam_lst)
 
 # Pupil diameter in m 
@@ -52,7 +51,7 @@ files=('20250317172539/contrast_JQ1_20250317172539_15.fits',
 
 plt.figure(0, (8, 4.5))
 plt.tight_layout()
-plt.xlabel(r'Wavelength $\lambda$ [nm]')#[$\lambda$/D]')
+plt.xlabel(r'Wavelength $\lambda$ [nm]') #[$\lambda$/D]')
 plt.ylabel(f'Contrast @ {int(as_oi)} mas')
 plt.yscale('log')
 plt.ylim(1e-5,1e-1)
