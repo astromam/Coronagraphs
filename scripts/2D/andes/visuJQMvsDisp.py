@@ -10,14 +10,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 plt.close()
 
-# from matplotlib.patches import Ellipse
 from astropy.io import fits
 import os
 from pathlib import Path
-# from mpl_toolkits.axes_grid1 import AxesGrid
 from datetime import datetime  #  asp for datetime of now
-
-# from psf_profile import profile
 
 #fontsize to 15 for all plots
 plt.rcParams.update({'font.size': 14})  #♦  mdiaye 15!
