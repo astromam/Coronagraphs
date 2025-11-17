@@ -25,7 +25,7 @@ if user == 'Alain':
 
 #%%
 
-std_tgt = 7e-8 #☺ target std in meters
+std_tgt = 10e-8 #☺ target std in meters
 nb_ncpa = 4096
 
 fdir_pupil = fdir_dat / 'Pupil'
@@ -45,10 +45,10 @@ Pupil = fits.getdata(fpath_elt,)
 nMap = Pupil.shape[0] * 2
 
 # 2D frequency space
-kx = (np.arange(nMap)-nMap//2)/(nMap/2)  # spatial frequencies
+kx = (np.arange(nMap)-nMap//2)/(nMap/2)
 ky = (np.arange(nMap)-nMap//2)/(nMap/2)
 kx2, ky2 = np.meshgrid(kx, ky)
-k = np.sqrt(kx2**2 + ky2**2)  # spatial fréquencies norm vector
+k = np.sqrt(kx2**2 + ky2**2)
 
 # DSP law in f^pwr
 # add epsilon to avoid zero division
@@ -65,13 +65,8 @@ amplitude = np.sqrt(dsp)
 random = np.random.uniform(low=-0.5,high=0.5,size=amplitude.shape)
 ncpa_field = amplitude * np.exp(1j*2.*np.pi*random)
 
-# Transformée de Fourier inverse pour obtenir l'image spatiale
-rndOpd_powLaw = np.real(sft.isft(ncpa_field,nMap,nMap//2))
+ncpaX2 = np.real(sft.isft(ncpa_field,nMap,nMap//2))
 
-# boucle extraction aleatoire d'un masque random de dimension identique
-# à la pupille
-
-# N = pupil size
 N=nMap//2
 hlf=N//2
 rnd=np.random.randn(nb_ncpa)
@@ -86,7 +81,7 @@ iok = np.nonzero(Pupil.copy())
 
 for n in np.arange(nb_ncpa):
     
-    temp = (rndOpd_powLaw[hlf+xi[n]:hlf+N+xi[n],hlf+yi[n]:hlf+N+yi[n]]).copy()
+    temp = (ncpaX2[hlf+xi[n]:hlf+N+xi[n],hlf+yi[n]:hlf+N+yi[n]]).copy()
     ncpa[:,:,n] *= temp
     ncpa[:,:,n] -= np.mean(ncpa[:,:,n][iok])
     ncpa[:,:,n] *= std_tgt/np.std(ncpa[:,:,n][iok])
