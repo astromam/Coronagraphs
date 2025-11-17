@@ -33,18 +33,11 @@ files=['20240923175955/Parameters_results_contrast_w_coro_no_turb_Y.fits',
        '20240926114503/Parameters_results_contrast_w_coro_no_turb_JH.fits',
        '20240927090738/Parameters_results_contrast_w_coro_no_turb_YJH.fits']
 files=['20240927090738/Parameters_results_contrast_w_coro_no_turb_YJH.fits']
-files=['20240926114503/Parameters_results_contrast_w_coro_no_turb_JH.fits']
-files=['../20250527102340/Parameters_results_contrast_w_coro_no_turb_Y2H.fits']
-
-#         '20240927105903/Parameters_results_contrast_w_coro_no_turb_YJHK.fits']
-# files=['20240924115352/Parameters_results_contrast_w_coro_no_turb_K.fits',
-#         '20240926154034/Parameters_results_contrast_w_coro_no_turb_HK.fits']
 
 # Directory for the pupils
 fdir_pupil = fdir_dat / '../../data/Pupil'
 
 # Filename and path for the ELT pupil
-# fname_elt = 'Tel-Pupil.fits'
 fname_elt = 'ELT_pupil_400.fits'
 fpath_elt = fdir_pupil / fname_elt
 
@@ -60,8 +53,6 @@ vanes = six_arms(nPup, v_width)
 
 #%%
 
-# print("threshold  throughput  intensity  [parameters DLyot obst. FPM]")
-
 all_contrast_range = {}
 allThrVsInt = {}
 
@@ -72,7 +63,6 @@ for i in range(len(files)):
     wvl = (fdir_dat / files[i]).stem.split('_')[-1]
     
     print(donow, wvl)
-    # print("threshold  throughput  intensity  [parameters DLyot obst. FPM]")
 
     coro_data = fits.getdata(fnm)
 
@@ -105,9 +95,6 @@ for i in range(len(files)):
 
     coro_data = coro_data[1,:,:,:,i_as_oi]
     data_shape = coro_data.shape
-    
-    # coords, values = local_minima_3D(coro_data.copy(), order=1)
-    # print(coords, values)
     
     i_min = np.unravel_index(np.argmin(coro_data), data_shape)
     cd_min = np.log10(np.min(coro_data))
