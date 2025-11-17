@@ -18,7 +18,7 @@ import numpy as np
 from astropy.io import fits
 import slow_fourier_transform as sft
 from uniform_disk import uniform_disk
-from psf_profile import profile
+import profile as pp
 # from draw_vanes import six_arms
 
 import os
@@ -386,8 +386,8 @@ for i in np.arange(nL):
                 Int_DD *= norm_peakDD0 #norm_peakDD0
     
                 # computation of the averaged intensity profiles of the images
-                Int_DD_prf_avg, rad_DD_prf_avg = profile(Int_DD, ptype='mean')
-                Int_DD0_prf_avg,rad_DD0_prf_avg = profile(Int_DD0,ptype='mean')
+                Int_DD_prf_avg, rad_DD_prf_avg = pp.radial_profile(Int_DD, ptype='mean')
+                Int_DD0_prf_avg,rad_DD0_prf_avg = pp.radial_profile(Int_DD0,ptype='mean')
     
                 ### Save images
                 results_w_coro_no_turb[0,dL,ob,s,:] = rad_DD_prf_avg
