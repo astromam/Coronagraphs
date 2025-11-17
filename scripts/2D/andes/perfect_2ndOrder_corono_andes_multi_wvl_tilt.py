@@ -21,7 +21,7 @@ import pyzelda.utils.zernike as zernike
 # pythonpath to update possibly...
 import slow_fourier_transform as sft
 from uniform_disk import uniform_disk
-from psf_profile import profile
+import profile as pp
 from draw_vanes import six_petals #, six_arms
 
 import matplotlib.pyplot as plt
@@ -46,9 +46,6 @@ plt.rcParams.update({'font.size': 14})  #  mdiaye 15!
 # Sampling of the coronagraph focal plane mask
 nFPM = 100
 
-# "field of view" in mas, not the real fov but some legacy nIMG*pscale/2...
-# f_o_v = 58.393
-
 # Image size
 nImg = 400  #*1.6 #  #  even/pair!
 
@@ -65,7 +62,6 @@ lam_max = 2450e-9  #  max value in range  #  2450e-9 // 1800e-9
 lam_itv = 18  #  nb of intervals in range --> nb+1 wvl's !  #  18 // 10
 lam_stp = np.floor(np.ceil((lam_max-lam_min)*1e9/lam_itv)/10)*1e-8  # wvl step
 lam_lst = np.arange(lam_min,lam_max,lam_stp) if lam_max != lam_min else [lamC]
-# lam_lst = [lam_lst[8]]
 nL = len(lam_lst)
 
 print(nL, lam_stp, lam_lst)
@@ -81,6 +77,7 @@ mas2rad = 1/rad2mas
 pscale = 0.3
 
 lamCD2mas = (lamC/D)*mas2rad
+
 # field of view
 # in mas
 fov_mas = nImg * pscale
@@ -111,7 +108,6 @@ fpm_dec = fpm_dec_mas * rad2mas
 
 # lyot stop angular position error in degres
 ls_ape = 0.
-
 # lyot stop vertical - elevation - offset error in pixels
 ls_voe = 0
 # lyot stop horizontal - azimut - offset error in pixels
@@ -119,7 +115,6 @@ ls_hoe = 0
 
 # ncpa phase screens
 ncpa_rms = 0  #  nm
-
 # defocus at fpm in nm RMS for reference wvl
 fpm_dfe_elt = 0
 # fpm_dfe = 0 if fpm_dfe_elt = 0., computed dynamicaly otherwise
@@ -140,26 +135,7 @@ if user == 'Alain':
     fdir_res   = Path('D:/Andes/Data_corono/results/').resolve()  #  fits data
     fdir_plt   = Path('D:/Andes/Data_corono/plots/').resolve()   #  plots
 
-elif user == 'Adrien':
-    # File directory
-    fdir_dat = Path(
-        '/Users/asimonnin/Desktop/PhD/Andes/Data_corono/data/').resolve()
-    # Directory for the OPD with the corresponding seed value
-    fdir_res   = Path(
-        '/Users/asimonnin/Desktop/PhD/Andes/Data_corono/results/').resolve()
-    # Directory for the OPD with the corresponding seed value
-    fdir_plt   = Path(
-        '/Users/asimonnin/Desktop/PhD/Andes/Data_corono/plots/').resolve()
-
-elif user == 'Mamadou':
-    fdir_base = ("/Users/mndiaye/Library/CloudStorage/"\
-                 "OneDrive-UniversitéNiceSophiaAntipolis/data/andes")
-    # File directory
-    fdir_dat = Path( fdir_base / 'data' ).resolve()
-    # Directory for the OPD with the corresponding seed value
-    fdir_res   = Path( fdir_base / 'results' ).resolve()
-    # Directory for the OPD with the corresponding seed value
-    fdir_plt   = Path( fdir_base / 'plots' ).resolve()
+# elif user == 'toto':
 
 # Directory for the pupils
 fdir_pupil = fdir_dat / 'Pupil'
@@ -185,7 +161,7 @@ Int_D_prf_avg = np.zeros([nL, 2, nImg//2])
 """
 ncpa's, pupils, ncpa, defocus
 """
-# Filename and path for the ELT pupil  //  'Tel-Pupil.fits' <-- OLD
+# Filename and path for the ELT pupil  
 fname_elt = 'ELT_pupil_400.fits' # New pupil with new spider
 fpath_elt = fdir_pupil / fname_elt
 # Read ELT pupil 
@@ -195,7 +171,6 @@ Pupil = np.where(Pupil==1,1.,0.)
 ipup = np.nonzero(Pupil)
 nb_pup = float(np.asarray(ipup).shape[1])
 
-# arms = six_arms(nPup,4)
 petals = six_petals(nPup)
 pupil_cube = petals * Pupil[None,:,:] #* arms[None,:,:]
 i_p = {i:np.nonzero(pupil_cube[i,:]) for i in range(6)}
@@ -298,63 +273,8 @@ if ls_voe != 0 or ls_hoe != 0:
 """
 ### working directory of the OPD files
 """
-# Directory for the OPDs with the corresponding seed value 
-# (from HARMONI simulation)
-# New set of OPDs from PASSATA 
 
-opds_dir=('OPDs_PASSATA/OPD/WS/JQ1/20240515_163822',)
-          # 'OPDs_PASSATA/OPD/WS/JQ1/20240517_091216',
-          # 'OPDs_PASSATA/OPD/WS/JQ1/20240517_100705',
-          # 'OPDs_PASSATA/OPD/WS/JQ1/20240517_103452',
-          # 'OPDs_PASSATA/OPD/WS/JQ1/20240517_105822',
-          # 'OPDs_PASSATA/OPD/WS/JQ1/20240517_111658',
-          # 'OPDs_PASSATA/OPD/WS/JQ1/20240517_113534',
-          # 'OPDs_PASSATA/OPD/WS/JQ1/20240517_121247')#,
-          # 'OPDs_PASSATA/OPD/WS/JQ2/20240517_181033',
-          # 'OPDs_PASSATA/OPD/WS/JQ2/20240517_183817',
-          # 'OPDs_PASSATA/OPD/WS/JQ2/20240517_190418',
-          # 'OPDs_PASSATA/OPD/WS/JQ2/20240517_192251',
-          # 'OPDs_PASSATA/OPD/WS/JQ2/20240517_194126',
-          # 'OPDs_PASSATA/OPD/WS/JQ2/20240517_195959',
-          # 'OPDs_PASSATA/OPD/WS/JQ2/20240517_201835',
-          # 'OPDs_PASSATA/OPD/WS/JQ2/20240517_203708',
-          # 'OPDs_PASSATA/OPD/WS/JQM/20240509_182041/20240509_182041.0',
-          # 'OPDs_PASSATA/OPD/WS/JQM/20240509_183915/20240509_183915.0',
-          # 'OPDs_PASSATA/OPD/WS/JQM/20240509_191620/20240509_191620.0',
-          # 'OPDs_PASSATA/OPD/WS/JQM/20240509_193453/20240509_193453.0',
-          # 'OPDs_PASSATA/OPD/WS/JQM/20240509_195327/20240509_195327.0',
-          # 'OPDs_PASSATA/OPD/WS/JQM/20240509_201200/20240509_201200.0',
-          # 'OPDs_PASSATA/OPD/WS/JQM/20240509_203033/20240509_203033.0',
-          # 'OPDs_PASSATA/OPD/WS/JQM/20240509_204907/20240509_204907.0',
-          # 'OPDs_PASSATA/OPD/WS/JQM/20240509_210742/20240509_210742.0',
-          # 'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-001/JQ3/20240521_200540',
-          # 'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-004/JQ3/20240521_181105',
-          # 'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-002/JQ3/20240521_213115',
-          # 'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-005/JQ3/20240521_222747',
-          # 'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-003/JQ3/20240521_210334',
-          # 'OPDs_PASSATA/OPD/WS/JQ3/20240527_190439/JQ3/20240527_190439',
-          # 'OPDs_PASSATA/OPD/WS/JQ3/20240527_195648/JQ3/20240527_195648',
-          # 'OPDs_PASSATA/OPD/WS/JQ3/20240527_204843/JQ3/20240527_204843',
-          # 'OPDs_PASSATA/OPD/WS/JQ3/20240527_214043/JQ3/20240527_214043',
-          # 'OPDs_PASSATA/OPD/WS/JQ3/20240527_223245/JQ3/20240527_223245',
-          # 'OPDs_PASSATA/OPD/WS/JQ4/20240528_161522/JQ4/20240528_161522',
-          # 'OPDs_PASSATA/OPD/WS/JQ4/20240528_163416/JQ4/20240528_163416',
-          # 'OPDs_PASSATA/OPD/WS/JQ4/20240528_165414/JQ4/20240528_165414',
-          # 'OPDs_PASSATA/OPD/WS/JQ4/20240528_171307/JQ4/20240528_171307',
-          # 'OPDs_PASSATA/OPD/WS/JQ4/20240528_173157/JQ4/20240528_173157',
-          # 'OPDs_PASSATA/OPD/WS/JQ4/20240528_175246/JQ4/20240528_175246',
-          # 'OPDs_PASSATA/OPD/WS/JQ4/20240528_181244/JQ4/20240528_181244',
-          # 'OPDs_PASSATA/OPD/WS/JQ4/20240528_183130/JQ4/20240528_183130',
-          # 'OPDs_PASSATA/OPD/WS/JQ4/20240528_185018/JQ4/20240528_185018',
-          # 'OPDs_PASSATA/OPD/WS/JQ4/20240528_190906/JQ4/20240528_190906')
-
-# opds_dir=('OPDs_PASSATA/OPD/WS/ASI',)
-# opds_dir=('OPDs_PASSATA/OPD/WS/JQ1/20240517_100705',)
-# opds_dir=('OPDs_PASSATA/OPD/WS/JQ1/20240515_163822','OPDs_PASSATA/OPD/WS/JQ1/20240517_100705')
-# opds_dir=('OPDs_PASSATA/OPD/WS/JQM/20240509_201200/20240509_201200.0',)
-# opds_dir=('OPDs_PASSATA/OPD/WS/JQ1/20240515_163822',)
-# opds_dir=('OPDs_PASSATA/OPD/WS/ASI_staticVib',)
-# opds_dir=('OPDs_PASSATA/OPD/WS/ASI_M1M4err',)
+opds_dir=('OPDs_PASSATA/OPD/WS/ASI',)
 
 
 #%%
@@ -426,13 +346,6 @@ for dir_nb in range(len(opds_dir)):
     for i in np.arange(nL):
         
         lam = lam_lst[i]
-        # if i!=8:
-        #     continue
-        
-        # if i%6==0:
-        #     lam = lam_lst[i]
-        # else:
-        #     continue
         
         dLam = lam - lamC
         tilt = dLam * disp * rad2mas
@@ -441,7 +354,6 @@ for dir_nb in range(len(opds_dir)):
         lamD2mas = (lam/D)*mas2rad
         
         # FoV in lam/D in the final image plane D
-        # mD = f_o_v*(nImg/(lam*1e9))
         mD = mD_ref * lamC / lam
         print('lambda (nm):' ,np.round(lam*1e9,0), '. Field of view (lam/D):',
               np.round(mD,3))
@@ -502,9 +414,6 @@ for dir_nb in range(len(opds_dir)):
         for iOPD in range(nOPD):
             
             opd_tmp = OPD_arr[iOPD,:,:].copy() * Pupil * LyotStop2d
-            # plt.imshow(opd_tmp)
-            # stop
-            
             # opd_tmp[i_ls] = 0.
 
             if iOPD == 0:
@@ -687,9 +596,8 @@ for dir_nb in range(len(opds_dir)):
         ### Compute the radial intensity profiles of the images
         """
         # computation of the averaged intensity profiles of the images   
-        # Int_D0_prf_avg2, rad_D0_prf_avg = profile(Int_D0_2, ptype='mean')
-        Int_D0_prf_avg[i,1,:], rad_D0_prf_avg = profile(Int_D0[i,:], ptype='mean')
-        Int_D_prf_avg[i,1,:], rad_D_prf_avg = profile(Int_D[i,:], ptype='mean')
+        Int_D0_prf_avg[i,1,:], rad_D0_prf_avg = pp.radial_profile(Int_D0[i,:], ptype='mean')
+        Int_D_prf_avg[i,1,:], rad_D_prf_avg = pp.radial_profile(Int_D[i,:], ptype='mean')
         
         # convert pixel scale into lam/D scale for the x-axis
         rad_D0_prf_avg_lamD = rad_D0_prf_avg * mD/nImg
@@ -699,7 +607,6 @@ for dir_nb in range(len(opds_dir)):
         Int_D0_prf_avg[i,0,:] = rad_D0_prf_avg_lamD * lamD2mas
         rad_D_prf_avg_mas = rad_D_prf_avg_lamD * lamD2mas
         Int_D_prf_avg[i,0,:] = rad_D_prf_avg_lamD * lamD2mas
-        # rad_DD0_prf_avg_mas = rad_DD0_prf_avg_lamD * lamD2mas 
     
     
     #%%
@@ -708,8 +615,6 @@ for dir_nb in range(len(opds_dir)):
     """
     
     # filename for the direct and coronagraphic images and profiles
-    # fname_Int_DD0 = 'wonoise_psf_'+donow+'.fits'
-    # fname_Int_DD = 'wonoise_coro_psf_'+donow+'.fits'
     fname_Int_D0 = 'ao_corr_psf_'+donow+'.fits'
     fname_Int_D = 'ao_corr_coro_psf_'+donow+'.fits'
     fname_Prf_D0 = 'ao_corr_psf_profile_'+donow+'.fits'
@@ -717,8 +622,6 @@ for dir_nb in range(len(opds_dir)):
     
     
     # filepath for the direct and coronagraphic images
-    # fpath_Int_DD0 = fdir_res / opd_set / fname_Int_DD0
-    # fpath_Int_DD  = fdir_res / opd_set / fname_Int_DD
     fpath_Int_D0 = fdir_res / opd_set / fname_Int_D0
     fpath_Int_D  = fdir_res / opd_set / fname_Int_D
     fpath_Prf_D0 = fdir_res / opd_set / fname_Prf_D0
@@ -726,16 +629,12 @@ for dir_nb in range(len(opds_dir)):
     
     
     # save the direct and coronagraphic images
-    # fits.writeto(fpath_Int_DD0, Int_DD0, overwrite=True)
-    # fits.writeto(fpath_Int_DD, Int_DD, overwrite=True)
     fits.writeto(fpath_Int_D0, Int_D0, overwrite=True)
     fits.writeto(fpath_Int_D, Int_D, overwrite=True)
     fits.writeto(fpath_Prf_D0, Int_D0_prf_avg, overwrite=True)
     fits.writeto(fpath_Prf_D, Int_D_prf_avg, overwrite=True)
     
     fpath_psf_lst=(fpath_Int_D0, fpath_Int_D,fpath_Prf_D0, fpath_Prf_D)
-    # fpath_psf_lst=(fpath_Int_DD0, fpath_Int_DD, fpath_Int_D0, fpath_Int_D,
-    #                fpath_Prf_D0, fpath_Prf_D)
     
     for fpath in fpath_psf_lst:
         fits.setval(fpath,'NPUP',value=nPup,comment='pupil size')
@@ -779,9 +678,7 @@ for dir_nb in range(len(opds_dir)):
     """
         
     # filepath for the direct and coronagraphic images
-    fname_prf_svg = 'intensities_profiles_'+donow+'.svg'
     fname_prf_pdf = 'intensities_profiles_'+donow+'.pdf'
-    fpath_prf_svg = fdir_plt / opd_set / fname_prf_svg
     fpath_prf_pdf = fdir_plt / opd_set / fname_prf_pdf
     
     # plot of the radial profiles
@@ -814,7 +711,6 @@ for dir_nb in range(len(opds_dir)):
     plt.ylim(1e-5, 2e0)  #  (2e-5, 2e0)
     # plt.ylim(1e-40, 2e0)  #  (2e-5, 2e0)
 
-    plt.savefig(fpath_prf_svg)
     plt.savefig(fpath_prf_pdf)
         
     plt.show()
@@ -847,12 +743,8 @@ for dir_nb in range(len(opds_dir)):
     # plt.xlim(-0.05,np.max(rad_D_prf_avg_mas)+0.05)
     # plt.ylim(1e-5, 2e0)  #  (2e-5, 2e0)
 
-    # fpath_prf_svg = (fdir_plt / opd_set /
-    #                  ('intensities_profiles_YJHK_5wvl'+donow+'.svg'))
     # fpath_prf_pdf = (fdir_plt / opd_set /
     #                  ('intensities_profiles_YJHK_5wvl'+donow+'.pdf'))
-
-    # plt.savefig(fpath_prf_svg)
     # plt.savefig(fpath_prf_pdf)
         
     # plt.show()
@@ -886,12 +778,8 @@ for dir_nb in range(len(opds_dir)):
     # plt.xlim(-0.05,np.max(rad_D_prf_avg_mas)+0.05)
     # plt.ylim(1e-5, 2e0)  #  (2e-5, 2e0)
 
-    # fpath_prf_svg = (fdir_plt / opd_set /
-    #                  ('intensities_profiles_YJH_6wvl'+donow+'.svg'))
     # fpath_prf_pdf = (fdir_plt / opd_set /
     #                  ('intensities_profiles_YJH_6wvl'+donow+'.pdf'))
-
-    # plt.savefig(fpath_prf_svg)
     # plt.savefig(fpath_prf_pdf)
         
     # plt.show()
