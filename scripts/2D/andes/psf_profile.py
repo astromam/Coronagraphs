@@ -9,7 +9,7 @@ Created on Thu Apr 25 15:42:23 2024
 import numpy as np
 
 #%%
-def profile(img, ptype='mean', step=1, mask=None, center=None, rmax=0, clip=True, exact=False):
+def radial_profile(img, ptype='mean', step=1, mask=None, center=None, rmax=0, clip=True, exact=False):
     '''
     Azimuthal statistics of an image
 
