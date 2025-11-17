@@ -13,7 +13,6 @@ import matplotlib.pyplot as plt
 from astropy.io import fits
 # import os
 from pathlib import Path
-# from psf_profile import profile
 from datetime import datetime  #  asp for datetime of now
 
 #fontsize to 15 for all plots
@@ -134,95 +133,6 @@ files = ("20251007190203/contrast_"+ptrn+"JQM_20251007190203.fits",
 #         "20250711160041/perfect/contrast_profile_L0toD_perfect_wonoise_psf_20250711160041_"+ptrn+"950_1850nm.fits",
 #         "20250711160041/perfect/contrast_profile_L0toD_perfect_wonoise_coro_psf_20250711160041_"+ptrn+"950_1850nm.fits")
 
-#%%
-# 500Hz 0.86 0.31 4.0 20250709155129
-#  1kHz 0.86 0.31 4.0 20250709155051
-# files = ("20250709155129/contrast_"+ptrn+"JQM_20250709155129.fits",
-#         "20250709155051/contrast_"+ptrn+"JQM_20250709155051.fits",
-#         "20250709155051/perfect/contrast_profile_L0toD_perfect_wonoise_psf_20250709155051_"+ptrn+"950_1850nm.fits",
-#         "20250709155051/perfect/contrast_profile_L0toD_perfect_wonoise_coro_psf_20250709155051_"+ptrn+"950_1850nm.fits")
-
-# 500Hz  0.9/0.37/4.0    20250708162615 , 10 sets
-# files = ("20250708162615/contrast_"+ptrn+"JQM_20250708162615.fits",
-#         "20250708171059/contrast_"+ptrn+"JQM_20250708171059.fits",
-#         "20250708171059/perfect/contrast_profile_L0toD_perfect_wonoise_psf_20250708171059_"+ptrn+"950_1850nm.fits",
-#         "20250708171059/perfect/contrast_profile_L0toD_perfect_wonoise_coro_psf_20250708171059_"+ptrn+"950_1850nm.fits")
-
-# 1 kH0 Hz  0.9/0.37/4.0    20250602181544 , 10 sets
-
-# YJH 0.9 / 0.37 / 4.
-# files = ("20250522161347/20250508_163051/contrast_profile_L0toD_20250508_163051_ao_corr_coro_psf_20250522161347.fits",
-#         "20250522160547/20250325_145800/contrast_profile_L0toD_20250325_145800_ao_corr_coro_psf_20250522160547.fits",
-#         "20250522160547/perfect/contrast_profile_L0toD_perfect_wonoise_psf_20250522160547.fits",
-#         "20250522160547/perfect/contrast_profile_L0toD_perfect_wonoise_coro_psf_20250522160547.fits")
-
-# RIZ 0.9 / 0.37 / 4.
-# files = ("20250521172353/20250508_163051/contrast_profile_L0toD_20250508_163051_ao_corr_coro_psf_20250521172353.fits",
-#         "20250521172457/20250325_145800/contrast_profile_L0toD_20250325_145800_ao_corr_coro_psf_20250521172457.fits",
-#         "20250521172457/perfect/contrast_profile_L0toD_perfect_wonoise_psf_20250521172457.fits",
-#         "20250521172457/perfect/contrast_profile_L0toD_perfect_wonoise_coro_psf_20250521172457.fits")
-
-# 0.804 	 0.000341188 	 [0.92 0.36 3.9 ]    20250523162033 20250523162130
-# files = ("20250523162033/20250508_163051/contrast_profile_L0toD_20250508_163051_ao_corr_coro_psf_20250523162033_959_1760.fits",
-#         "20250523162130/20250325_145800/contrast_profile_L0toD_20250325_145800_ao_corr_coro_psf_20250523162130_959_1760.fits",
-#         "20250523162130/perfect/contrast_profile_L0toD_perfect_wonoise_psf_20250523162130_959_1760.fits",
-#         "20250523162130/perfect/contrast_profile_L0toD_perfect_wonoise_coro_psf_20250523162130_959_1760.fits")
-
-# 0.811 	 0.000354267 	 [0.92 0.35 3.8 ]    20250523162217 20250523162247
-# files = ("20250523162217/20250508_163051/contrast_profile_L0toD_20250508_163051_ao_corr_coro_psf_20250523162217_959_1760.fits",
-#         "20250523162247/20250325_145800/contrast_profile_L0toD_20250325_145800_ao_corr_coro_psf_20250523162247_959_1760.fits",
-#         "20250523162247/perfect/contrast_profile_L0toD_perfect_wonoise_psf_20250523162247_959_1760.fits",
-#         "20250523162247/perfect/contrast_profile_L0toD_perfect_wonoise_coro_psf_20250523162247_959_1760.fits")
-
-# 0.824 	 0.000380266 	 [0.93 0.36 3.6 ]    20250523163019 20250523162955 
-# files = ("20250523163019/20250508_163051/contrast_profile_L0toD_20250508_163051_ao_corr_coro_psf_20250523163019_959_1760.fits",
-#         "20250523162955/20250325_145800/contrast_profile_L0toD_20250325_145800_ao_corr_coro_psf_20250523162955_959_1760.fits",
-#         "20250523162955/perfect/contrast_profile_L0toD_perfect_wonoise_psf_20250523162955_959_1760.fits",
-#         "20250523162955/perfect/contrast_profile_L0toD_perfect_wonoise_coro_psf_20250523162955_959_1760.fits")
-
-# 0.826 	 0.000388391 	 [0.92 0.33 3.5 ]    20250523163116 20250523163139
-# files = ("20250523163116/20250508_163051/contrast_profile_L0toD_20250508_163051_ao_corr_coro_psf_20250523163116_959_1760.fits",
-#         "20250523163139/20250325_145800/contrast_profile_L0toD_20250325_145800_ao_corr_coro_psf_20250523163139_959_1760.fits",
-#         "20250523163139/perfect/contrast_profile_L0toD_perfect_wonoise_psf_20250523163139_959_1760.fits",
-#         "20250523163139/perfect/contrast_profile_L0toD_perfect_wonoise_coro_psf_20250523163139_959_1760.fits")
-
-# # 0.82 / 0.41 / 3.8
-# files = ("20250521103343/20250508_163051/contrast_profile_L0toD_20250508_163051_ao_corr_coro_psf_20250521103343.fits",
-#         "20250521135258/20250325_145800/contrast_profile_L0toD_20250325_145800_ao_corr_coro_psf_20250521135258.fits",
-#         "20250521135258/perfect/contrast_profile_L0toD_perfect_wonoise_psf_20250521135258.fits",
-#         "20250521135258/perfect/contrast_profile_L0toD_perfect_wonoise_coro_psf_20250521135258.fits")
-
-# 0.82 / 0.37 / 3.0
-# files = ("20250521085239/20250508_163051/contrast_profile_L0toD_20250508_163051_ao_corr_coro_psf_20250521085239.fits",
-#         "20250521085213/20250325_145800/contrast_profile_L0toD_20250325_145800_ao_corr_coro_psf_20250521085213.fits",)
-
-# 0.9 / 0.37 / 3.5
-# files = ("20250520132136/20250508_163051/contrast_profile_L0toD_20250508_163051_ao_corr_coro_psf_20250520132136.fits",
-#         "20250520132159/20250325_145800/contrast_profile_L0toD_20250325_145800_ao_corr_coro_psf_20250520132159.fits",)
-
-# 0.96 / 0.3 /3.5 
-# files = ("20250520154454/20250508_163051/contrast_profile_L0toD_20250508_163051_ao_corr_coro_psf_20250520154454.fits",
-#         "20250520154438/20250325_145800/contrast_profile_L0toD_20250325_145800_ao_corr_coro_psf_20250520154438.fits",)
-
-# 0.84 / 0.38 / 3.2
-# files = ("20250520110756/20250508_163051/contrast_profile_L0toD_20250508_163051_ao_corr_coro_psf_20250520110756.fits",
-#         "20250520110739/20250325_145800/contrast_profile_L0toD_20250325_145800_ao_corr_coro_psf_20250520110739.fits",)
-
-# 0.96 / 0.3 / 3. 
-# files = ("20250516134048/20250508_163051/contrast_profile_L0toD_20250508_163051_ao_corr_coro_psf_20250516134048.fits",
-#         "20250516141104/20250325_145800/contrast_profile_L0toD_20250325_145800_ao_corr_coro_psf_20250516141104.fits",)
-
-# 0.9 / 0.37 / 3.
-# files = ("20250516165000/20250508_163051/contrast_profile_L0toD_20250508_163051_ao_corr_coro_psf_20250516165000.fits",
-#         "20250516154501/20250325_145800/contrast_profile_L0toD_20250325_145800_ao_corr_coro_psf_20250516154501.fits",)
-
-# 0.94 / 0.31 / 4.
-# files = ("20250519111848/20250508_163051/contrast_profile_L0toD_20250508_163051_ao_corr_coro_psf_20250519111848.fits",
-#         "20250519111554/20250325_145800/contrast_profile_L0toD_20250325_145800_ao_corr_coro_psf_20250519111554.fits")
-
-# 0.92 / 0.33 / 4.
-# files = ("20250519165120/20250508_163051/contrast_profile_L0toD_20250508_163051_ao_corr_coro_psf_20250519165120.fits",
-#         "20250519165144/20250325_145800/contrast_profile_L0toD_20250325_145800_ao_corr_coro_psf_20250519165144.fits")
 
 #%%
 
@@ -300,8 +210,6 @@ if len(files)==7:
     cont_min2 = fits.getdata(res_dir / files[4], ext=1)[0,:]
     cont_max2 = fits.getdata(res_dir / files[4], ext=1)[1,:]
 
-        
-
             
 #%%
 """
@@ -361,13 +269,8 @@ fname = ("contrast_comp_3cam_"+ptrn+
          str(int(np.rint(lam_lst[0]*1e9)))+'-'+
          str(int(np.rint(lam_lst[-1]*1e9)))+'nm')
 
-# fpath_contrast_25mas_svg = fdir_plt / (fname + '.svg')
 fpath_contrast_25mas_pdf = fdir_plt / (fname + '.pdf')
-# fpath_contrast_25mas_png = fdir_plt / (fname + '.png')
-
-# plt.savefig(fpath_contrast_25mas_svg)
 plt.savefig(fpath_contrast_25mas_pdf, bbox_inches='tight', pad_inches=0.1)
-# plt.savefig(fpath_contrast_25mas_png)
 
 plt.show()
 
