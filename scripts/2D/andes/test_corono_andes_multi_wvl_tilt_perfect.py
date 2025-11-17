@@ -18,7 +18,7 @@ import numpy as np
 # pythonpath to update possibly...
 import slow_fourier_transform as sft
 from uniform_disk import uniform_disk
-from psf_profile import profile
+import psf_profile as pp
 
 import matplotlib.pyplot as plt
 # from mpl_toolkits.axes_grid1 import AxesGrid
@@ -44,9 +44,6 @@ nPup = 400  #  even/pair!
 # Sampling of the coronagraph focal plane mask
 nFPM = 100
 
-# half field of view in mas
-# hlf_fov = 58.393 # some legacy value...
-
 # Image size
 nImg = 400  #*1.6 #  #  even/pair!
 
@@ -57,13 +54,6 @@ as_oi = 20.
 nOPD = 4000
 
 lamC = 1600e-9  #  some reference wvl unique value
-
-# wavelengths in m --> 2025-03
-# lam_min = 960e-9  #  min value in range
-# lam_max = 2450e-9  #  max value in range  #  2450e-9 // 1800e-9
-# lam_itv = 18  #  nb of intervals in range --> nb+1 wvl's !  #  18 // 10
-# lam_stp = np.floor(np.ceil((lam_max-lam_min)*1e9/lam_itv)/10)*1e-8  # wvl step
-# lam_lst = np.arange(lam_min,lam_max,lam_stp) if lam_max != lam_min else [lamC]
 
 # yjhk  2025-05 -->
 lam_min = 950e-9  #  min value in range
@@ -100,18 +90,10 @@ mD_ref = fov_rdn / ( lamC / D )
 """
 # Focal plane mask
 mask2d = uniform_disk(nFPM, nFPM/2.)
-# diam = 0.90 obs = 0.37, mB = 4. with 'ELT_pupil_400.fits' YJH
-# diam = 0.96 obs = 0.30, mB = 4.5 with 'ELT_pupil_400.fits' HK
-# diam = 0.90 obs = 0.38 with 'Tel-Pupil.fits'
-# diam = 0.90 # diameter of the pupil in fraction of the pupil size
-# obst = 0.37 # diameter of the central obscuration in fraction of the pupil size
+# diam = 0.90 obs = 0.37, mB = 4. with 'ELT_pupil_400.fits' YJH 2024
 diam = 0.90
 obst = 0.37
 mB = 4.
-# FPM size in lam/D in the focal plane B
-# 4. with 'ELT_pupil_400.fits'
-# 3.8 with 'Tel-Pupil.fits', old!
-# mB = 4. # 3.8  #  at 1600nm !!
 
 # dispersion mas/m
 disp = 0e7  #  e.g 8e7 = 80 mas / 1e-6 m
@@ -137,32 +119,16 @@ if user == 'Alain':
     fdir_res   = Path('D:/Andes/Data_corono/results/').resolve()  #  fits data
     fdir_plt   = Path('D:/Andes/Data_corono/plots/').resolve()   #  plots
 
-elif user == 'Adrien':
-    # File directory
-    fdir_dat = Path(
-        '/Users/asimonnin/Desktop/PhD/Andes/Data_corono/data/').resolve()
-    # Directory for the OPD with the corresponding seed value
-    fdir_res   = Path(
-        '/Users/asimonnin/Desktop/PhD/Andes/Data_corono/results/').resolve()
-    # Directory for the OPD with the corresponding seed value
-    fdir_plt   = Path(
-        '/Users/asimonnin/Desktop/PhD/Andes/Data_corono/plots/').resolve()
-
-elif user == 'Mamadou':
-    fdir_base = ("/Users/mndiaye/Library/CloudStorage/"\
-                 "OneDrive-UniversitéNiceSophiaAntipolis/data/andes")
-    # File directory
-    fdir_dat = Path( fdir_base / 'data' ).resolve()
-    # Directory for the OPD with the corresponding seed value
-    fdir_res   = Path( fdir_base / 'results' ).resolve()
-    # Directory for the OPD with the corresponding seed value
-    fdir_plt   = Path( fdir_base / 'plots' ).resolve()
+# elif user == 'toto':
 
 # Directory for the pupils
 fdir_pupil = fdir_dat / 'Pupil'
 
 fdir_res = fdir_res / donow / 'perfect'
 fdir_plt = fdir_plt / donow / 'perfect'
+
+os.makedirs(fdir_res , exist_ok=True)
+os.makedirs(fdir_plt , exist_ok=True)
 
 
 #%%
@@ -191,15 +157,6 @@ Pupil = fits.getdata(fpath_elt,)
 # Lyot stop
 LyotStop2d = Pupil*(
     uniform_disk(nPup, diam*nPup/2)-uniform_disk(nPup, obst*nPup/2))
-
-#%%
-
-# opd_set='diam_'+str(diam)+'-obst_'+str(obst)+'_FPM_lcToD_'+str(mB)
-# os.makedirs(fdir_res / opd_set, exist_ok=True)
-# os.makedirs(fdir_plt / opd_set, exist_ok=True)
-os.makedirs(fdir_res , exist_ok=True)
-os.makedirs(fdir_plt , exist_ok=True)
-
 
 #%%
 
@@ -268,14 +225,9 @@ for i in np.arange(nL):
     
 #%%    
     # computation of the averaged intensity profiles of the images  
-    Int_DD0_prf_avg[i,1,:], rad_DD0_prf_avg = profile(Int_DD0[i,:], ptype='mean')
-    Int_DD_prf_avg[i,1,:], rad_DD_prf_avg = profile(Int_DD[i,:], ptype='mean')
-    
-    
-    # computation of the standard deviation intensity profiles of the images
-    # Int_DD0_prf_std, rad_DD0_prf_std = profile(Int_DD0[i,:], ptype='std')
-    # Int_DD_prf_std, rad_DD_prf_std = profile(Int_DD[i,:], ptype='std')
-    
+    Int_DD0_prf_avg[i,1,:], rad_DD0_prf_avg = pp.radial_profile(Int_DD0[i,:], ptype='mean')
+    Int_DD_prf_avg[i,1,:], rad_DD_prf_avg = pp.radial_profile(Int_DD[i,:], ptype='mean')
+       
     """
     ### Compute the radial intensity profiles of the images
     """
@@ -288,7 +240,6 @@ for i in np.arange(nL):
     Int_DD0_prf_avg[i,0,:] = rad_DD0_prf_avg_lamD * lamD2mas
     rad_DD_prf_avg_mas = rad_DD_prf_avg_lamD * lamD2mas
     Int_DD_prf_avg[i,0,:] = rad_DD_prf_avg_lamD * lamD2mas
-    # rad_DD0_prf_avg_mas = rad_DD0_prf_avg_lamD * lamD2mas 
 
 
 #%%
