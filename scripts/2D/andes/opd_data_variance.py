@@ -49,9 +49,6 @@ fpath_elt = fdir_pupil / 'ELT_pupil_400.fits'
 Pupil = fits.getdata(fpath_elt,)
 width = Pupil.shape[0]
 
-# plt.imshow(Pupil)
-# plt.show()
-
 iok = np.nonzero(Pupil)
 
 res = {}
@@ -88,17 +85,13 @@ for f, dnm in enumerate(all_dirs):
                 spatialStd[i] = np.std(opds[:,:,i][iok])
         
             tempStd = np.std(opds, axis=2)
-            # plt.imshow(tempStd)
-            # plt.show()
             tempStd = tempStd[iok]
             r_d = [x for x in r_dirs if x in dnm ]
             res[dnm] = (r_d, np.rint(np.mean(spatialStd)),
                         np.rint(np.std(spatialStd)))
-                                     # np.rint(np.mean(tempStd)))
             
             print(r_d[0],
                   np.rint(np.mean(spatialStd)), np.rint(np.std(spatialStd)))
-            #       np.rint(np.mean(tempStd)))      
 
 nb_val = len(res)
 d_c = {0:'g',1:'b',2:'r'} #♥ follows roots tuple order
