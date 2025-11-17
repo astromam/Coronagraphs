@@ -21,7 +21,7 @@ from scipy import ndimage
 # pythonpath to update possibly...
 import slow_fourier_transform as sft
 from uniform_disk import uniform_disk
-from psf_profile import profile
+import psf_profile as pp
 
 import matplotlib.pyplot as plt
 # from mpl_toolkits.axes_grid1 import AxesGrid
@@ -42,8 +42,6 @@ plt.rcParams.update({'font.size': 14})  #♦  mdiaye 15!
 """
 ### Parameters
 """
-# Pupil size
-# nPup = 400  #  even/pair!
 
 # Sampling of the coronagraph focal plane mask
 nFPM = 100
@@ -62,18 +60,6 @@ nOPD = 4000
 
 # wavelengths in m
 lamC = 1600e-9  #  some reference wvl unique value
-
-# yjhk --> 2025-03
-# lam_min = 960e-9  #  min value in range
-# lam_max = 2450e-9  #  max value in range  #  2450e-9 // 1800e-9
-# lam_itv = 18  #  nb of intervals in range --> nb+1 wvl's !  #  18 // 10
-# lam_stp = np.floor(np.ceil((lam_max-lam_min)*1e9/lam_itv)/10)*1e-8  # wvl step
-
-# riz
-# lam_min = 630e-9  #  min value in range
-# lam_max = 960e-9  #  max value in range  #  2450e-9 // 1800e-9
-# lam_itv = 8  #  nb of intervals in range --> nb+1 wvl's !  #  18 // 10
-# lam_stp = 40e-9 # np.floor(np.ceil((lam_max-lam_min)*1e9/lam_itv)/10)*1e-8  # wvl step
 
 # yjhk  2025-05 -->
 lam_min = 950e-9  #  min value in range
@@ -109,36 +95,13 @@ mD_ref = fov_rdn / ( lamC / D )
 # Focal plane mask
 mask2d = uniform_disk(nFPM, nFPM/2.)
 # diam = 0.89 obs = 0.35, mB = 3.9 2025 with 'ELT_pupil_400.fits' YJH
-# diam = 0.90 obs = 0.37, mB = 4.0 2024 with 'ELT_pupil_400.fits' YJH
-# diam = 0.96 obs = 0.30, mB = 4.5 with 'ELT_pupil_400.fits' K
+# diam = 0.90 obs = 0.37, mB = 4.0 2024 with 'ELT_pupil_400.fits' YJH @ 25 mas / 75% thr
+# diam = 0.96 obs = 0.30, mB = 4.5 2024 with 'ELT_pupil_400.fits' K
 # diam = 0.90 obs = 0.38 with 'Tel-Pupil.fits'
-
-# 'YJH2024' 0.9 / 0.37 / 4.0 @ 25 mas / 75% thr
-
-# from JH optimum research @ 25 mas: throughput, <contrast>, config, comments
-# 0.754 	 0.000253336 	 [0.9  0.37 4.  ]    'YJH2024'
-# ...
-# 0.804 	 0.000341188 	 [0.92 0.36 3.9 ]    20250523162033 20250523162130
-# 0.805 	 0.000349114 	 [0.91 0.33 3.9 ]
-# 0.811 	 0.000354267 	 [0.92 0.35 3.8 ]    20250523162217 20250523162247
-# 0.819 	 0.000370672 	 [0.92 0.34 3.8 ]
-# 0.824 	 0.000380266 	 [0.93 0.36 3.6 ]    20250523162955 20250523163019
-# 0.826 	 0.000388391 	 [0.92 0.33 3.5 ]    20250523163116 20250523163139
-
-# new params exploration follow. ruane2018 06/2025
-# photometric aperture 7µ
-# J     4.6e-05     0.85    0.36   3.3 0.66501  20250618164513
-# H     0.000392    0.86    0.3    4.1 0.72769  20250618164620
-# JH    0.000428    0.86    0.3    4.0 0.72769  20250618164704
-# YJH   0.000628    0.86    0.37   4.0 0.67608  20250618164749
-# 0.85 0.32 3.9 
 
 diam = 0.89 # diameter of the pupil in fraction of the pupil size
 obst = 0.35 # diameter of the central obscuration in fraction of the pupil size
-# FPM size in lam/D in the focal plane B
-# 4. with 'ELT_pupil_400.fits'
-# 3.8 with 'Tel-Pupil.fits', old!
-mB = 3.9
+mB = 3.9    # FPM size in lam/D in the focal plane B
 
 # dispersion mas/m
 disp = 0  #  e.g 8e7 ou 80e6 = 80 mas / 1e-6 m
@@ -155,8 +118,8 @@ ls_hoe = 8
 ncpa_rms = 0  #  nm
 # defocus at fpm in nm RMS for reference wvl
 fpm_dfe_elt = 0
-# fpm_dfe = -1 if fpm_dfe_elt = 0., computed dynamicaly otherwise
-fpm_dfe = fpm_dfe_elt - 1.
+# fpm_dfe = 0 if fpm_dfe_elt = 0., computed dynamicaly otherwise
+fpm_dfe = fpm_dfe_elt * -1.
 
 # compute & keep elt psf & profiles
 simu_elt = False
@@ -178,26 +141,7 @@ if user == 'Alain':
     fdir_res   = Path('D:/Andes/Data_corono/results/').resolve()  #  fits data
     fdir_plt   = Path('D:/Andes/Data_corono/plots/').resolve()   #  plots
 
-elif user == 'Adrien':
-    # File directory
-    fdir_dat = Path(
-        '/Users/asimonnin/Desktop/PhD/Andes/Data_corono/data/').resolve()
-    # Directory for the OPD with the corresponding seed value
-    fdir_res   = Path(
-        '/Users/asimonnin/Desktop/PhD/Andes/Data_corono/results/').resolve()
-    # Directory for the OPD with the corresponding seed value
-    fdir_plt   = Path(
-        '/Users/asimonnin/Desktop/PhD/Andes/Data_corono/plots/').resolve()
-
-elif user == 'Mamadou':
-    fdir_base = ("/Users/mndiaye/Library/CloudStorage/"\
-                 "OneDrive-UniversitéNiceSophiaAntipolis/data/andes")
-    # File directory
-    fdir_dat = Path( fdir_base / 'data' ).resolve()
-    # Directory for the OPD with the corresponding seed value
-    fdir_res   = Path( fdir_base / 'results' ).resolve()
-    # Directory for the OPD with the corresponding seed value
-    fdir_plt   = Path( fdir_base / 'plots' ).resolve()
+#  elif user == 'toto':
 
 # Directory for the pupils
 fdir_pupil = fdir_dat / 'Pupil'
@@ -227,7 +171,7 @@ Int_elt = np.zeros([nL, nImg, nImg])
 """
 ncpa's, pupils, ncpa, defocus
 """
-# Filename and path for the ELT pupil  //  'Tel-Pupil.fits' <-- OLD
+# Filename and path for the ELT pupil
 fname_elt = 'ELT_pupil_400.fits' # New pupil with new spider
 fpath_elt = fdir_pupil / fname_elt
 # Read ELT pupil 
@@ -248,14 +192,12 @@ rho = np.sqrt(kx2**2 + ky2**2)
 ncpa_d = np.zeros((nOPD,nPup,nPup))
 if ncpa_rms != 0:
     print("NCPA [nm RMS]:",ncpa_rms)
-    # ncpa_d = np.zeros((nOPD,nImg,nImg))
-    # fnm = ('ncpa_pupil_new_'+str(ncpa_rms)+'nm.fits')
     fnm = ('ncpa_ELT_pupil_400_'+str(ncpa_rms)+'nm_4096screens.fits')
     ncpa_d = fits.getdata(fdir_dat/fnm)
 
 
 dfc = np.zeros((nPup,nPup))
-if fpm_dfe >= 0:
+if fpm_dfe > 0:
     
     # create circular pupil (elt circumcircle) phase with defocus
     dfc = uniform_disk(nPup,nPup//2)
@@ -309,15 +251,6 @@ if ls_voe != 0 or ls_hoe != 0:
 """
 ### working directory of the OPD files
 """
-
-#%%
-#tests cameras
-# root = 'OPDs_PASSATA/OPD/WS/'
-# # opds_dir=(root+'ocam2k',)
-# # opds_dir=(root+'alice',)
-# opds_dir=(root+'cam_500us',)
-
-
 #%%
 # root = 'OPDs_PASSATA/OPD/WS/500HzVarWS/'
 # opds_dir=(root+'20250704_105833.0',
@@ -342,107 +275,6 @@ opds_dir=(root+'1',
           root+'9',
           root+'10')
 
-#%%
-# Directory for the OPDs with the corresponding seed value 
-# (from HARMONI simulation)
-# fdir_opd   = fdir_dat / 'OPD_Harmoni' / str(seed)
-
-# New set of OPDs from PASSATA 
-
-# opds_dir=('OPDs_PASSATA/OPD/20231124_090126.0/',
-#               'OPDs_PASSATA/OPD/20231122_142204.0/',
-#               'OPDs_PASSATA/OPD/20240227_234849-007/20240227_234849.0',
-#               'OPDs_PASSATA/OPD/20240228_053027-001/20240228_053027.0',
-#               'OPDs_PASSATA/OPD/20240302_000411-003/20240302_000411.0',
-#               'OPDs_PASSATA/OPD/20240313_133532-004/20240313_133532.0',
-#               'OPDs_PASSATA/OPD/20240228_112033-002/20240228_112033.0')
-# opds_dir=('OPDs_PASSATA/OPD/WS/JQ1/20240515_163822',
-          # 'OPDs_PASSATA/OPD/WS/JQ1/20240517_091216',
-          # 'OPDs_PASSATA/OPD/WS/JQ1/20240517_100705',
-          # 'OPDs_PASSATA/OPD/WS/JQ1/20240517_103452',
-          # 'OPDs_PASSATA/OPD/WS/JQ1/20240517_105822',
-          # 'OPDs_PASSATA/OPD/WS/JQ1/20240517_111658',
-          # 'OPDs_PASSATA/OPD/WS/JQ1/20240517_113534',
-          # 'OPDs_PASSATA/OPD/WS/JQ1/20240517_121247',
-          # 'OPDs_PASSATA/OPD/WS/JQ2/20240517_181033',
-          # 'OPDs_PASSATA/OPD/WS/JQ2/20240517_183817',
-          # 'OPDs_PASSATA/OPD/WS/JQ2/20240517_190418',
-          # 'OPDs_PASSATA/OPD/WS/JQ2/20240517_192251',
-          # 'OPDs_PASSATA/OPD/WS/JQ2/20240517_194126',
-          # 'OPDs_PASSATA/OPD/WS/JQ2/20240517_195959',
-          # 'OPDs_PASSATA/OPD/WS/JQ2/20240517_201835',
-          # 'OPDs_PASSATA/OPD/WS/JQ2/20240517_203708',
-          # 'OPDs_PASSATA/OPD/WS/JQM/20240509_182041/20240509_182041.0',
-          # 'OPDs_PASSATA/OPD/WS/JQM/20240509_183915/20240509_183915.0',
-          # 'OPDs_PASSATA/OPD/WS/JQM/20240509_191620/20240509_191620.0',
-          # 'OPDs_PASSATA/OPD/WS/JQM/20240509_193453/20240509_193453.0',
-          # 'OPDs_PASSATA/OPD/WS/JQM/20240509_195327/20240509_195327.0',
-          # 'OPDs_PASSATA/OPD/WS/JQM/20240509_201200/20240509_201200.0',
-          # 'OPDs_PASSATA/OPD/WS/JQM/20240509_203033/20240509_203033.0',
-          # 'OPDs_PASSATA/OPD/WS/JQM/20240509_204907/20240509_204907.0',
-          # 'OPDs_PASSATA/OPD/WS/JQM/20240509_210742/20240509_210742.0',
-          # 'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-001/JQ3/20240521_200540',
-          # 'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-004/JQ3/20240521_181105',
-          # 'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-002/JQ3/20240521_213115',
-          # 'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-005/JQ3/20240521_222747',
-          # 'OPDs_PASSATA/OPD/WS/JQ3/JQ3-20240523T090047Z-003/JQ3/20240521_210334',
-          # 'OPDs_PASSATA/OPD/WS/JQ3/20240527_190439/JQ3/20240527_190439',
-          # 'OPDs_PASSATA/OPD/WS/JQ3/20240527_195648/JQ3/20240527_195648',
-          # 'OPDs_PASSATA/OPD/WS/JQ3/20240527_204843/JQ3/20240527_204843',
-          # 'OPDs_PASSATA/OPD/WS/JQ3/20240527_214043/JQ3/20240527_214043',
-          # 'OPDs_PASSATA/OPD/WS/JQ3/20240527_223245/JQ3/20240527_223245',
-          # 'OPDs_PASSATA/OPD/WS/JQ4/20240528_161522/JQ4/20240528_161522',
-          # 'OPDs_PASSATA/OPD/WS/JQ4/20240528_163416/JQ4/20240528_163416',
-          # 'OPDs_PASSATA/OPD/WS/JQ4/20240528_165414/JQ4/20240528_165414',
-          # 'OPDs_PASSATA/OPD/WS/JQ4/20240528_171307/JQ4/20240528_171307',
-          # 'OPDs_PASSATA/OPD/WS/JQ4/20240528_173157/JQ4/20240528_173157',
-          # 'OPDs_PASSATA/OPD/WS/JQ4/20240528_175246/JQ4/20240528_175246',
-          # 'OPDs_PASSATA/OPD/WS/JQ4/20240528_181244/JQ4/20240528_181244',
-          # 'OPDs_PASSATA/OPD/WS/JQ4/20240528_183130/JQ4/20240528_183130',
-          # 'OPDs_PASSATA/OPD/WS/JQ4/20240528_185018/JQ4/20240528_185018',
-          # 'OPDs_PASSATA/OPD/WS/JQ4/20240528_190906/JQ4/20240528_190906')
-# opds_dir=('OPDs_PASSATA/OPD/WS/JQM/20240509_182041/20240509_182041.0',
-#           'OPDs_PASSATA/OPD/WS/JQM/20240509_183915/20240509_183915.0',
-#           'OPDs_PASSATA/OPD/WS/JQM/20240509_191620/20240509_191620.0',
-#           'OPDs_PASSATA/OPD/WS/JQM/20240509_193453/20240509_193453.0',
-#           'OPDs_PASSATA/OPD/WS/JQM/20240509_195327/20240509_195327.0',
-#           'OPDs_PASSATA/OPD/WS/JQM/20240509_201200/20240509_201200.0',
-#           'OPDs_PASSATA/OPD/WS/JQM/20240509_203033/20240509_203033.0',
-#           'OPDs_PASSATA/OPD/WS/JQM/20240509_204907/20240509_204907.0',
-#           'OPDs_PASSATA/OPD/WS/JQM/20240509_210742/20240509_210742.0')
-# opds_dir=('OPDs_PASSATA/OPD/WS/JQ1/20240515_163822',
-#           'OPDs_PASSATA/OPD/WS/JQM/20240509_201200/20240509_201200.0')
-# opds_dir=('OPDs_PASSATA/OPD/WS/JQM/20240509_201200/20240509_201200.0',)
-# opds_dir=('OPDs_PASSATA/OPD/WS/JQ1/20240515_163822',)
-# opds_dir=('OPDs_PASSATA/OPD/WS/ASI_staticVib',)
-
-# 1 kHz
-# root_1kHz = 'OPDs_PASSATA/OPD/WS/1kHz/'
-# opds_dir=(root_1kHz+'20250325_145800.0_phase_screens/20250325_145800.0',
-#           root_1kHz+'20250522_150800.0_phase_screens/20250522_150800.0',
-#           root_1kHz+'20250522_154952.0_phase_screens/20250522_154952.0_phase_screens',
-#           root_1kHz+'20250522_163144.0_phase_screens/20250522_163144.0_phase_screens',
-#           root_1kHz+'20250522_171340.0_phase_screens/20250522_171340.0_phase_screens',
-#           root_1kHz+'20250523_120216.0_phase_screens/20250523_120216.0_phase_screens',
-#           root_1kHz+'20250523_124400.0_phase_screens/20250523_124400.0_phase_screens',
-#           root_1kHz+'20250523_140738.0_phase_screens/20250523_140738.0_phase_screens',
-#           root_1kHz+'20250523_144927.0_phase_screens/20250523_144927.0_phase_screens',
-#           root_1kHz+'20250527_145633.0_phase_screens/20250527_145633.0_phase_screens')
-
-# 500 Hz
-# root_500Hz = 'OPDs_PASSATA/OPD/WS/500Hz/'
-# opds_dir=(root_500Hz + '20250508_163051.0_phase_screens/20250508_163051.0_oaCUBEs',
-#           root_500Hz + '20250521_145220.0_phase_screens/20250521_145220.0_oaCUBEs',
-#           root_500Hz + '20250521_151332.0_phase_screens/20250521_151332.0_oaCUBEs',
-#           root_500Hz + '20250521_153444.0_phase_screens/20250521_153444.0_oaCUBEs',
-#           root_500Hz + '20250521_155558.0_phase_screens/20250521_155558.0_oaCUBEs',
-#           root_500Hz + '20250521_161711.0_phase_screens/20250521_161711.0_oaCUBEs',
-#           root_500Hz + '20250521_163823.0_phase_screens/20250521_163823.0_oaCUBEs',
-#           root_500Hz + '20250521_172051.0_phase_screens/20250521_172051.0_oaCUBEs',
-#           root_500Hz + '20250521_174203.0_phase_screens/20250521_174203.0_oaCUBEs',
-#           root_500Hz + '20250527_122032.0_phase_screens/20250527_122032.0_oaCUBEs')
-
-# opds_dir=('OPDs_PASSATA/OPD/WS/500Hz/20250508_163051.0_phase_screens/20250508_163051.0_oaCUBEs',)
 
 #%%
 for dir_nb in range(len(opds_dir)):
@@ -573,18 +405,14 @@ for dir_nb in range(len(opds_dir)):
         
     #%%    
         # computation of the averaged intensity profiles of the images  
-        Int_DD0_prf_avg, rad_DD0_prf_avg = profile(Int_DD0[i,:], ptype='mean')
-        Int_DD_prf_avg, rad_DD_prf_avg = profile(Int_DD[i,:], ptype='mean')
+        Int_DD0_prf_avg, rad_DD0_prf_avg = pp.radial_profile(Int_DD0[i,:], ptype='mean')
+        Int_DD_prf_avg, rad_DD_prf_avg = pp.radial_profile(Int_DD[i,:], ptype='mean')
         
         if simu_elt:
             Fld_elt = sft.sft(Pupil*1., nImg, mD*diam)
             Int_elt[i,:] = np.abs(Fld_elt)**2
             Int_elt[i,:] *= norm_peakDD0
 
-        # computation of the standard deviation intensity profiles of the images
-        # Int_DD0_prf_std, rad_DD0_prf_std = profile(Int_DD0[i,:], ptype='std')
-        # Int_DD_prf_std, rad_DD_prf_std = profile(Int_DD[i,:], ptype='std')
-        
         
         #%%
         """
@@ -670,15 +498,9 @@ for dir_nb in range(len(opds_dir)):
         ### Compute the radial intensity profiles of the images
         """
         # computation of the averaged intensity profiles of the images   
-        # Int_D0_prf_avg2, rad_D0_prf_avg = profile(Int_D0_2, ptype='mean')
-        Int_D0_prf_avg[i,1,:], rad_D0_prf_avg = profile(Int_D0[i,:], ptype='mean')
-        Int_D_prf_avg[i,1,:], rad_D_prf_avg = profile(Int_D[i,:], ptype='mean')
+        Int_D0_prf_avg[i,1,:], rad_D0_prf_avg = pp.radial_profile(Int_D0[i,:], ptype='mean')
+        Int_D_prf_avg[i,1,:], rad_D_prf_avg = pp.radial_profile(Int_D[i,:], ptype='mean')
 
-        # computation of the standard deviation intensity profiles of the images
-        # Int_D0_prf_std2, rad_D0_prf_std = profile(Int_D0_2, ptype='std')
-        # Int_D0_prf_std, rad_D0_prf_std = profile(Int_D0, ptype='std')
-        # Int_D_prf_std, rad_D_prf_std = profile(Int_D, ptype='std')
-        
         # convert pixel scale into lam/D scale for the x-axis
         rad_D0_prf_avg_lamD = rad_D0_prf_avg * mD/nImg
         rad_D_prf_avg_lamD = rad_D_prf_avg * mD/nImg
@@ -687,7 +509,6 @@ for dir_nb in range(len(opds_dir)):
         Int_D0_prf_avg[i,0,:] = rad_D0_prf_avg_lamD * lamD2mas
         rad_D_prf_avg_mas = rad_D_prf_avg_lamD * lamD2mas
         Int_D_prf_avg[i,0,:] = rad_D_prf_avg_lamD * lamD2mas
-        # rad_DD0_prf_avg_mas = rad_DD0_prf_avg_lamD * lamD2mas 
     
     
     #%%
@@ -713,7 +534,6 @@ for dir_nb in range(len(opds_dir)):
     fits.writeto(fpath_Prf_D0, Int_D0_prf_avg, overwrite=True)
     fits.writeto(fpath_Prf_D, Int_D_prf_avg, overwrite=True)
 
-    # fpath_psf_lst=(fpath_Int_D0, fpath_Int_D,fpath_Prf_D0, fpath_Prf_D)
     fpath_psf_lst=(fpath_Int_D0, fpath_Int_D, fpath_Prf_D0, fpath_Prf_D)
 
     if len(os.listdir(fdir_prfct))==0:
@@ -782,11 +602,9 @@ for dir_nb in range(len(opds_dir)):
     # """
         
     # # filename of the plot
-    # fname_images_svg = 'ao_corrected_coro_psf_'+donow+'.svg'
     # fname_images_pdf = 'ao_corrected_coro_psf_'+donow+'.pdf'
     
     # # filepath for the direct and coronagraphic images
-    # fpath_images_svg = fdir_plt / opd_set / fname_images_svg
     # fpath_images_pdf = fdir_plt / opd_set / fname_images_pdf
     
     # index of wvl to display
@@ -841,9 +659,7 @@ for dir_nb in range(len(opds_dir)):
     """
         
     # filepath for the direct and coronagraphic images
-    fname_prf_svg = 'intensities_profiles_'+donow+'.svg'
     fname_prf_pdf = 'intensities_profiles_'+donow+'.pdf'
-    fpath_prf_svg = fdir_plt / opd_set / fname_prf_svg
     fpath_prf_pdf = fdir_plt / opd_set / fname_prf_pdf
     
     # plot of the radial profiles
@@ -872,7 +688,6 @@ for dir_nb in range(len(opds_dir)):
     plt.xlim(-0.05,np.max(rad_D_prf_avg_mas)+0.05)
     plt.ylim(1e-5, 2e0)  #  (2e-5, 2e0)
 
-    plt.savefig(fpath_prf_svg)
     plt.savefig(fpath_prf_pdf)
         
     plt.show()
