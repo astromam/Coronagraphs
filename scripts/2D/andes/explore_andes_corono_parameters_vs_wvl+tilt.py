@@ -18,8 +18,6 @@ import numpy as np
 from astropy.io import fits
 import slow_fourier_transform as sft
 from uniform_disk import uniform_disk
-# import psf_profile as pp
-# from psf_profile import profile
 
 import os
 from pathlib import Path
