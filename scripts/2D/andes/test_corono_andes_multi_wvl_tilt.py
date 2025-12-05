@@ -119,7 +119,7 @@ ncpa_rms = 0  #  nm
 # defocus at fpm in nm RMS for reference wvl
 fpm_dfe_elt = 0
 # fpm_dfe = 0 if fpm_dfe_elt = 0., computed dynamicaly otherwise
-# fpm_dfe = fpm_dfe_elt * -1.
+fpm_dfe = fpm_dfe_elt * -1.
 
 # compute & keep elt psf & profiles
 simu_elt = False
@@ -189,14 +189,9 @@ ky = (np.arange(nPup)-nPup//2)/(nPup/2)
 kx2, ky2 = np.meshgrid(kx, ky)
 rho = np.sqrt(kx2**2 + ky2**2)
 
-# ncpa_d = np.zeros((nOPD,nPup,nPup))
 if ncpa_rms != 0:
     
     print("NCPA [nm RMS]:",ncpa_rms)
-    # fnm = ('ncpa_ELT_pupil_400_100nm_4096screens.fits')
-    # ncpa_d = fits.getdata(fdir_dat/fnm)
-    # ncpa_d *= ncpa_rms
-    # ncpa_d /= 100.
     
     fnm = ('ncpa_unscaled_x2_ELT_pupil_400.fits')
     ncpa_1 = fits.getdata(fdir_dat/fnm)
@@ -205,24 +200,6 @@ if ncpa_rms != 0:
     N=nMap//2
     hlf=N//2
     
-#     rnd=np.random.randn(nOPD)
-#     rnd /= 2.
-#     xi=np.round(rnd*hlf/np.max([-np.min(rnd),np.max(rnd)])).astype(int)
-    
-#     rnd=np.random.randn(nOPD)
-#     rnd /= 2.
-#     yi=np.round(rnd*hlf/np.max([-np.min(rnd),np.max(rnd)])).astype(int)
-    
-    # ncpa_d = np.ones((N,N,nOPD))
-    # ncpa_d *= Pupil[:,:,None].copy()
-    
-    # for n in np.arange(nOPD):
-        
-    #     temp = (ncpa_1[hlf+xi[n]:hlf+N+xi[n],hlf+yi[n]:hlf+N+yi[n]]).copy()
-    #     ncpa_d[:,:,n] *= temp
-    #     ncpa_d[:,:,n] -= np.mean(ncpa_d[:,:,n][ipup])
-    #     ncpa_d[:,:,n] *= ncpa_rms/np.std(ncpa_d[:,:,n][ipup])
-
 dfc = np.zeros((nPup,nPup))
 if fpm_dfe_elt > 0:
     
@@ -361,7 +338,7 @@ for dir_nb in range(len(opds_dir)):
     t1 = time.time()
     print(f'OPD reading file time: {t1-t0:.3f}s')
     
-    OPD_arr *= 1e-9 # convert OPD from nm `to m if new OPD with new pupil
+    OPD_arr *= 1e-9 # convert OPD from nm to m if new OPD with new pupil
     
     if ncpa_rms != 0:
          
@@ -567,21 +544,51 @@ for dir_nb in range(len(opds_dir)):
     fname_Int_D = 'ao_corr_coro_psf_'+donow+'.fits'
     fname_Prf_D0 = 'ao_corr_psf_profile_'+donow+'.fits'
     fname_Prf_D = 'ao_corr_coro_psf_profile_'+donow+'.fits'
-    
+
     # filepath for the direct and coronagraphic images
     fpath_Int_D0 = fdir_res / opd_set / fname_Int_D0
     fpath_Int_D  = fdir_res / opd_set / fname_Int_D
     fpath_Prf_D0 = fdir_res / opd_set / fname_Prf_D0
     fpath_Prf_D  = fdir_res / opd_set / fname_Prf_D
-    
     # save the direct and coronagraphic images
+
     fits.writeto(fpath_Int_D0, Int_D0, overwrite=True)
     fits.writeto(fpath_Int_D, Int_D, overwrite=True)
     fits.writeto(fpath_Prf_D0, Int_D0_prf_avg, overwrite=True)
     fits.writeto(fpath_Prf_D, Int_D_prf_avg, overwrite=True)
-
+    
+    hdr_keys = {'NPUP':(nPup,'pupil size'),
+                'NFPM':(nFPM,'FP coro. sampling'),
+                'NIMG':(nImg,'image size'),
+                'NOPD':(nOPD,'number of OPD files'),
+                'FOVS':(fov_mas,'field of view in mas'),
+                'LMIN':(lam_min,'wavelength in meters'),
+                'LITV':(lam_itv,'# of wvl intervals'),
+                'LSTP':(lam_stp,'wvl step in meters'),
+                'LMBD':(lamC,'reference wvl in meters'),
+                'DIAM':(D,'pupil dimater in meters'),
+                'PSCL':(pscale,'plate scale in mas'),
+                'SFPM':(mB,'FPM (LMBD/D), first focal plane'),
+                'FDIA':(diam,'fractional pup. diameter'),
+                'OBST':(obst,'fractional obscuration'),
+                'OPDS':(opd_set,'opd set creation date'),
+                'DISP':(disp,'achr. disp. in mas/m bw'),
+                'NCPA':(ncpa_rms,'ncpa rms in meters'),
+                'FDEC':(fpm_dec,'psf to fpm offset in radians'),
+                'FTLT':(fpm_dec_mas,'psf to fpm offset in mas'),
+                'LSAE':(ls_ape,'lyot stop angular position error in degrees'),
+                'LSVE':(ls_voe,'lyot stop vertical offset error in pixels'),
+                'LSHE':(ls_hoe,'lyot stop horizontal offset error in pixels'),
+                'ELT_DFOC':(fpm_dfe_elt,'elt pupil defocus in nm RMS at LMBD'),
+                'DIAM_DFC':(fpm_dfe,'pup. circumcirc. defocus nm RMS at LMBD'),
+                'EPUP_FNM':(fname_elt,'ELT pupil filename'),
+                'DATE_NOW':(donow,'date of now, i.e. script execution date')}
+    
     fpath_psf_lst=(fpath_Int_D0, fpath_Int_D, fpath_Prf_D0, fpath_Prf_D)
-
+    for fpath in fpath_psf_lst:
+        for n, k in enumerate(hdr_keys):
+            fits.setval(fpath,k,value=hdr_keys[k][0],comment=hdr_keys[k][1])
+            
     if len(os.listdir(fdir_prfct))==0:
         fname_Int_DD0 = 'wonoise_psf_'+donow+'.fits'
         fname_Int_DD = 'wonoise_coro_psf_'+donow+'.fits'
@@ -602,44 +609,6 @@ for dir_nb in range(len(opds_dir)):
             if not os.path.isfile(fpath_elt):
                 fits.writeto(fpath_elt, Int_elt, overwrite=True)
                 fpath_psf_lst += (fpath_elt,)
-    
-    for fpath in fpath_psf_lst:
-        fits.setval(fpath,'NPUP',value=nPup,comment='pupil size')
-        fits.setval(fpath,'NFPM',value=nFPM,comment='FP coro. sampling')
-        fits.setval(fpath,'NIMG',value=nImg,comment='image size')
-        fits.setval(fpath,'NOPD',value=nOPD,comment='number of OPD files')
-        fits.setval(fpath,'FOVS',value=fov_mas,comment='field of view in mas')
-        fits.setval(fpath,'LMIN',value=lam_min,comment='wavelength in meters')
-        fits.setval(fpath,'LITV',value=lam_itv,comment='# of wvl intervals')
-        fits.setval(fpath,'LSTP',value=lam_stp,comment='wvl step in meters')
-        fits.setval(fpath,'LMBD',value=lamC,comment='reference wvl in meters')
-        fits.setval(fpath,'DIAM',value=D,comment='pupil dimater in meters')
-        fits.setval(fpath,'PSCL',value=pscale,comment='plate scale in mas')
-        fits.setval(fpath,'SFPM',value=mB,
-                    comment='FPM (LMBD/D), first focal plane')
-        fits.setval(fpath,'FDIA',value=diam,comment='fractional pup. diameter')
-        fits.setval(fpath,'OBST',value=obst,comment='fractional obscuration')
-        fits.setval(fpath,'OPDS',value=opd_set,comment='opd set creation date')
-        fits.setval(fpath,'DISP',value=disp,comment='achr. disp. in mas/m bw')
-        fits.setval(fpath,'NCPA',value=ncpa_rms,comment='ncpa rms in meters')
-        fits.setval(fpath,'FDEC',value=fpm_dec,
-                    comment='psf to fpm offset in radians')
-        fits.setval(fpath,'FTLT',value=fpm_dec_mas,
-                    comment='psf to fpm offset in mas')
-        fits.setval(fpath,'LSAE',value=ls_ape,
-                    comment='lyot stop angular position error in degrees')
-        fits.setval(fpath,'LSVE',value=ls_voe,
-                    comment='lyot stop vertical offset error in pixels')
-        fits.setval(fpath,'LSHE',value=ls_hoe,
-                    comment='lyot stop horizontal offset error in pixels')
-        fits.setval(fpath,'ELT_DFOC',value=fpm_dfe_elt,
-                    comment='defocus at elt pupil in nm RMS at reference wvl')
-        fits.setval(fpath,'DIAM_DFC',value=np.round(fpm_dfe,3),
-                    comment='pup. circumcirc. input defocus nm RMS ref. wvl')
-        fits.setval(fpath,'EPUP_FNM',value=fname_elt,
-                comment='ELT pupil filename')
-        fits.setval(fpath,'DATE_NOW',value=donow,
-            comment='daye of now, i.e. script execution')
 
 
     #%%
