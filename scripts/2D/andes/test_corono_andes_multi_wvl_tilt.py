@@ -63,7 +63,7 @@ lamC = 1600e-9  #  some reference wvl unique value
 
 # yjhk  2025-05 -->
 lam_min = 950e-9  #  min value in range
-lam_itv = 30
+lam_itv = 18  #◘ 30 if + K band
 lam_stp = 50e-9
 
 lam_lst = np.arange(lam_min,lam_min+(lam_itv+0.5)*lam_stp,lam_stp)
@@ -113,13 +113,13 @@ ls_ape = 0
 # lyot stop vertical - elevation - offset error in pixels
 ls_voe = 0
 # lyot stop horizontal - azimut - offset error in pixels
-ls_hoe = 8
+ls_hoe = 0
 # ncpa phase screens
 ncpa_rms = 0  #  nm
 # defocus at fpm in nm RMS for reference wvl
 fpm_dfe_elt = 0
 # fpm_dfe = 0 if fpm_dfe_elt = 0., computed dynamicaly otherwise
-fpm_dfe = fpm_dfe_elt * -1.
+# fpm_dfe = fpm_dfe_elt * -1.
 
 # compute & keep elt psf & profiles
 simu_elt = False
@@ -189,15 +189,42 @@ ky = (np.arange(nPup)-nPup//2)/(nPup/2)
 kx2, ky2 = np.meshgrid(kx, ky)
 rho = np.sqrt(kx2**2 + ky2**2)
 
-ncpa_d = np.zeros((nOPD,nPup,nPup))
+# ncpa_d = np.zeros((nOPD,nPup,nPup))
 if ncpa_rms != 0:
+    
     print("NCPA [nm RMS]:",ncpa_rms)
-    fnm = ('ncpa_ELT_pupil_400_'+str(ncpa_rms)+'nm_4096screens.fits')
-    ncpa_d = fits.getdata(fdir_dat/fnm)
-
+    # fnm = ('ncpa_ELT_pupil_400_100nm_4096screens.fits')
+    # ncpa_d = fits.getdata(fdir_dat/fnm)
+    # ncpa_d *= ncpa_rms
+    # ncpa_d /= 100.
+    
+    fnm = ('ncpa_unscaled_x2_ELT_pupil_400.fits')
+    ncpa_1 = fits.getdata(fdir_dat/fnm)
+    nMap = ncpa_1.shape[0]
+    
+    N=nMap//2
+    hlf=N//2
+    
+#     rnd=np.random.randn(nOPD)
+#     rnd /= 2.
+#     xi=np.round(rnd*hlf/np.max([-np.min(rnd),np.max(rnd)])).astype(int)
+    
+#     rnd=np.random.randn(nOPD)
+#     rnd /= 2.
+#     yi=np.round(rnd*hlf/np.max([-np.min(rnd),np.max(rnd)])).astype(int)
+    
+    # ncpa_d = np.ones((N,N,nOPD))
+    # ncpa_d *= Pupil[:,:,None].copy()
+    
+    # for n in np.arange(nOPD):
+        
+    #     temp = (ncpa_1[hlf+xi[n]:hlf+N+xi[n],hlf+yi[n]:hlf+N+yi[n]]).copy()
+    #     ncpa_d[:,:,n] *= temp
+    #     ncpa_d[:,:,n] -= np.mean(ncpa_d[:,:,n][ipup])
+    #     ncpa_d[:,:,n] *= ncpa_rms/np.std(ncpa_d[:,:,n][ipup])
 
 dfc = np.zeros((nPup,nPup))
-if fpm_dfe > 0:
+if fpm_dfe_elt > 0:
     
     # create circular pupil (elt circumcircle) phase with defocus
     dfc = uniform_disk(nPup,nPup//2)
@@ -327,15 +354,34 @@ for dir_nb in range(len(opds_dir)):
         OPD_arr = OPD_arr[0,:,:,start:]
         OPD_arr = np.transpose(OPD_arr,(2,0,1))
         nOPD = OPD_arr.shape[0]
-        print("phase screen array shape from file: ", OPD_arr.shape)
+        print("phase screen array shape from cube file: ", OPD_arr.shape)
     else:
-        print("phase screen array shape from files: ", OPD_arr.shape)
+        print("phase screen array shape from set of files: ", OPD_arr.shape)
 
     t1 = time.time()
     print(f'OPD reading file time: {t1-t0:.3f}s')
     
     OPD_arr *= 1e-9 # convert OPD from nm `to m if new OPD with new pupil
+    
+    if ncpa_rms != 0:
+         
+        rnd=np.random.randn(nOPD)
+        rnd /= 2.
+        xi=np.round(rnd*hlf/np.max([-np.min(rnd),np.max(rnd)])).astype(int)
+        
+        rnd=np.random.randn(nOPD)
+        rnd /= 2.
+        yi=np.round(rnd*hlf/np.max([-np.min(rnd),np.max(rnd)])).astype(int)
 
+        for n in range(nOPD):
+            
+            temp = ((ncpa_1[hlf+xi[n]:hlf+N+xi[n],hlf+yi[n]:hlf+N+yi[n]]).copy() *
+                    Pupil.copy())
+            
+            temp -= np.mean(temp[ipup])
+            temp *= float(ncpa_rms) * 1e-9 / np.std(temp[ipup])
+            OPD_arr[n,:,:] += temp.copy()
+            temp *= 0.
     
         #%%
     
@@ -427,7 +473,7 @@ for dir_nb in range(len(opds_dir)):
             Fld_A0 = (Pupil 
                       * np.exp(1j*2*np.pi *
                                (OPD_arr[iOPD] +
-                                ncpa_d[iOPD] +
+                                # ncpa_d[iOPD] +
                                 tilt * D * diam * sf_y / nPup +
                                 fpm_dec * D * diam * sf_y / nPup +
                                 dfc)/lam)
@@ -463,7 +509,7 @@ for dir_nb in range(len(opds_dir)):
             Fld_A0 = (Pupil 
                       * np.exp(1j*2*np.pi * 
                                (OPD_arr[iOPD] +
-                                ncpa_d[iOPD] +
+                                # ncpa_d[iOPD] +
                                 tilt * D * diam * sf_y / nPup +
                                 fpm_dec * D * diam * sf_y / nPup +
                                 dfc)/lam))
