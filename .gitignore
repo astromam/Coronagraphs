@@ -166,4 +166,9 @@ scripts/2D/andes/readResultsFitsHeader.py
 
 scripts/2D/andes/visu_means_multi_wvl_contrast_andes_coro_params.py
 
+<<<<<<< HEAD
 scripts/2D/andes/old/
+=======
+scripts/2D/andes/old/
+
+>>>>>>> origin/rescale_maps_alain
