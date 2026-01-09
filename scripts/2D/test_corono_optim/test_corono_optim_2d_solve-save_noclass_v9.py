@@ -51,7 +51,7 @@ FirstDerGlobalLim = 100.
 BinarityReg       = 0.1
 
 #nPup = corono0.params['nPup']
-red_factor = 0.995
+red_factor = 1.0 #0.995
 nPup0 = 400 # 506 #512
 nExt0 = 0
 nDim0 = nPup0 + nExt0
@@ -66,8 +66,10 @@ nPupLS = int(nPup0*LS_OD)
 nProgRef = 1
 
 # mask radius in lam0/D units
-#rMask = 1.766 # ALC1 at 1.593um (145mas) 
-rMask = 2.252 # ALC2 at 1.593um (185mas)
+# rMask = 1.766 # ALC1 at 1.593um (145mas diameter) 
+# rMask = 2.252 # ALC2 at 1.593um (185mas diameter)
+# rMask = 2.922 # ALC3 at 1.593µm (240mas diameter)
+rMask = 2.116 # ALC3 at 2.2µm (240mas diameter)
 
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
