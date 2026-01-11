@@ -53,7 +53,7 @@ if True:
     FirstDerGlobalLim = 1.
     
     #nPup = corono0.params['nPup']
-    red_factor=0.99
+    red_factor=1.#0.99
     nPup0 = 400  #506
     nExt = 0 #int(0.05*nPup0)
     nPup = nPup0 + nExt
@@ -66,8 +66,9 @@ if True:
     
     # mask radius in lam0/D unit
     # rMask = 1.766 # ALC1 at 1.593um (145mas) 
-    rMask0 = 2.252 # ALC2 at 1.593um (185mas)
-    SPHERE_mask = 'ALC2bis'
+    #rMask0 = 2.252 # ALC2 at 1.593um (185mas)
+    rMask0 = 2.116 # ALC3 at 2.2µm (240mas diameter)
+    SPHERE_mask = 'ALC3'
     if SPHERE_mask == 'ALC1':
         rMask = 1.766
         colortest = 'C2'
@@ -75,10 +76,14 @@ if True:
     elif SPHERE_mask == 'ALC2':
         rMask = 2.252
         colortest = 'C1' 
+        loctest = 7 #4
+    elif SPHERE_mask == 'ALC3':
+        rMask = 2.922
+        colortest = 'C0' 
         loctest = 4
     else:
         rMask = rMask0
-        colortest = 'C4'
+        colortest = 'C5'
         loctest = 1
         
     # dark zone bounds (inner and outer edges) in lam0/D unit
@@ -174,7 +179,7 @@ if True:
 
     str_red_factor = ''    
     if red_factor != 1.:
-        str_red_factor = '_nPup={int(np.round(red_factor*nPup0))}'
+        str_red_factor = f'_nPup={int(np.round(red_factor*nPup0))}'
 
 
     
@@ -188,16 +193,17 @@ ylim_min0 = 1e-8
 ylim_max0 = 1e-3
 
 do_plot = True
-wv = 1.593e-6
+wv0 = 1.593e-6
+wv = wv0 #2.2e-6
 
 nImg2dbis = 256
 Fmax2dbis = nImg2dbis/(2*(wv/950e-9))
 nlambis   = 11
 
 Dtel = 8
-lam0D2mas = (wv/Dtel)*(180.*3600*1000/np.pi)
+lam0D2mas = (wv0/Dtel)*(180.*3600*1000/np.pi)
 
-lam02um = wv*1e6 
+lam02um = wv0*1e6 
 
 
 #%%
