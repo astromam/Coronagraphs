@@ -56,8 +56,8 @@ nPup0 = 400 # 506 #512
 nExt0 = 0
 nDim0 = nPup0 + nExt0
 nFPM = 50
-Fmax2d = 45 # 75 #   45#22.5
-nImg2d = 90 # 150 #  90#45
+Fmax2d = 75 #   45 #22.5
+nImg2d = 150 #  90 #45
 
 LS_OD = 0.96
 nPupLS = int(nPup0*LS_OD)
@@ -69,7 +69,8 @@ nProgRef = 1
 # rMask = 1.766 # ALC1 at 1.593um (145mas diameter) 
 # rMask = 2.252 # ALC2 at 1.593um (185mas diameter)
 # rMask = 2.922 # ALC3 at 1.593µm (240mas diameter)
-rMask = 2.116 # ALC3 at 2.2µm (240mas diameter)
+# rMask = 2.116 # ALC3 at 2.2µm (240mas diameter)
+rMask = 2.133 # ALC3 at 2.182µm (240mas diameter)
 
 
 # dark zone bounds (inner and outer edges) in lam0/D unit

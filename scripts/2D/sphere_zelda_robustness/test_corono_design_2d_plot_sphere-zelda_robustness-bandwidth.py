@@ -213,6 +213,8 @@ fpath_corono_mono_lyot_im_t     = fdir_results / fname_corono_mono_lyot_im_t
 """
 ### Filenames to be saved
 """
+
+fname_image_plane_plot_avg   = 'corono_poly_prf_avg_t_OPDmap={0}_plot.pdf'.format(imap0)
 fname_image_plane_plot   = 'corono_poly_prf_std_t_OPDmap={0}_plot.pdf'.format(imap0)
 fname_image_plane_mono_plot   = 'corono_poly_prf_std_t_OPDmap={0}_mono_plot.pdf'.format(imap0)
 fname_image_allmaps_plot = 'corono_poly_prf_std_t_OPDmap=all_plot.pdf'
@@ -222,6 +224,7 @@ fname_pupil_plane_disp   = 'corono_poly_lyot_t_OPDmap={0}_disp.pdf'.format(imap0
 fname_image_plane_disp_all   = 'corono_poly_img_t_OPDmap={0}_disp_all0.pdf'.format(imap0)
 
 
+fpath_image_plane_plot_avg   = fdir_plots / fname_image_plane_plot_avg
 fpath_image_plane_plot   = fdir_plots / fname_image_plane_plot
 fpath_image_plane_mono_plot   = fdir_plots / fname_image_plane_mono_plot
 fpath_image_allmaps_plot = fdir_plots / fname_image_allmaps_plot
@@ -262,7 +265,7 @@ extent_pup = [-0.5, 0.5, -0.5, 0.5]
 f1 = pl.figure(2)
 pl.clf()
 ax0 = f1.add_subplot(111)
-im = ax0.imshow(Apod2d*Pupil2d, cmap = cm.inferno, 
+im = ax0.imshow(Apod2d*Pupil2d, cmap = cm.gray, 
           extent = extent_pup, origin = 'lower', vmin=0.0, vmax=1.0)
 ax0.set_xlabel('Pupil diameter [D unit]')
 #pl.imshow(Apod2d*Pupil2d, cmap = cm.Greys_r)
@@ -391,6 +394,34 @@ direct_mono_lyot_t = direct_mono_lyot_re_t*1
 if kw_aberr is True:
     direct_mono_lyot_t  = 1j*corono_mono_lyot_im_t + direct_mono_lyot_re_t
 corono_mono_lyot_t  = 1j*corono_mono_lyot_im_t + corono_mono_lyot_re_t
+
+#%% 
+"""
+###Intensity profiles of the direct and coronagraphic images
+"""
+rad_corono = np.arange(nImg2dbis//2)
+colors_cor = pl.cm.rainbow(np.linspace(0,1,nmap))
+
+i0 = 0
+
+pl.figure(10, (8,4.5))
+pl.clf()
+pl.semilogy(rad_corono*Fmax2dbis/nImg2dbis, corono_poly_prf_avg_t[i0]/direct_poly_img_t[i0].max(),
+        label='current APLC', color = 'C0')
+
+pl.axvline(x=rMask, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
+#pl.axvline(x=rho0, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
+pl.axvline(x=rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
+pl.axhline(10**(-cDarkHole), xmin=corono00.xi2d.min(), xmax=corono00.xi2d.max(), 
+           linewidth=1, color='k', linestyle='--')
+pl.xlabel(f'Angular separation in $\lambda_0$/D ($\lambda_0={wv*1e6}\mu$m)')
+pl.ylabel(r'Normalized intensity in log scale')
+pl.ylim(3e-8, 3e-4)
+pl.legend(loc=1)
+pl.title(r'Intensity profile in broadband light ($\Delta\lambda/\lambda_0$={0:.1f}%)'.format(bw*100), fontsize=14)
+pl.tight_layout()
+pl.savefig(str(fpath_image_plane_plot_avg), transparent=True)
+
 
 
 #%% 

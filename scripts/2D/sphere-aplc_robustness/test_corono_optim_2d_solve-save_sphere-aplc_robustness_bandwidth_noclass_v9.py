@@ -66,7 +66,7 @@ if True:
     
     # mask radius in lam0/D unit
     # rMask = 1.766 # ALC1 at 1.593um (145mas) 
-    #rMask0 = 2.252 # ALC2 at 1.593um (185mas)
+    # rMask0 = 2.252 # ALC2 at 1.593um (185mas)
     rMask0 = 2.116 # ALC3 at 2.2µm (240mas diameter)
     SPHERE_mask = 'ALC3'
     if SPHERE_mask == 'ALC1':
@@ -88,7 +88,7 @@ if True:
         
     # dark zone bounds (inner and outer edges) in lam0/D unit
     rho0 =  0.0
-    rho1 = 20.0
+    rho1 = 30.0
     
     # contrast in the dark region
     cDarkHole = 10.0
@@ -842,7 +842,7 @@ fpath_bw_plot = fdir_plots / fname_bw_plot
 
 plot_lines = []
 
-plt.figure(31)
+plt.figure(31, (8, 4.5))
 plt.clf()
 # l1, = pl.semilogy(corono3.lam_t*wv*1e6, corono_poly_avg_resbis_wv_t,
 #             color = colors_shifts[0], marker='x', ls ='-')
@@ -875,7 +875,8 @@ plt.grid(True,which="both",ls="--")
 
 #legend1 = pl.legend([l5,l6], ["x-axis", "y-axis"], loc=3)
 #pl.gca().add_artist(legend1)
-plt.legend([l1,l2], [r'{0:.1f} $\lambda_0/D$'.format(sepbis), r'{0:.1f} $\lambda_0/D$'.format(septer)], loc=4, title='new APLC', fontsize=14)
+# plt.legend([l1,l2], [r'{0:.1f} $\lambda_0/D$'.format(sepbis), r'{0:.1f} $\lambda_0/D$'.format(septer)], loc=4, title='new APLC', fontsize=14)
+plt.legend([l1,l2], [r'{0:.1f} $\lambda_0/D$'.format(sepbis), r'{0:.1f} $\lambda_0/D$'.format(septer)], loc=2, title='', fontsize=14)
 
 plt.tight_layout()
 if do_plot is True:
