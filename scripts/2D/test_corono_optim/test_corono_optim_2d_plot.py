@@ -48,8 +48,8 @@ if True:
     nExt = 0 # 50 #int(0.05*nPup0)
     nPup = nPup0 + nExt
     nFPM = 50
-    Fmax2d = 50 # 75 # 
-    nImg2d = 500 # 750 # 
+    Fmax2d = 75 # 
+    nImg2d = 750 # 
     
     LS_OD = 1.0#0.96
     nPupLS = int(LS_OD*nPup0)
@@ -57,12 +57,12 @@ if True:
     # mask radius in lam0/D unit
     # rMask = 1.766 # ALC1 at 1.593um (145mas) 
     # rMask0 = 2.252 # ALC2 at 1.593um (185mas)
-    rMask0 = 2.116 # ALC3 at 2.2µm (240mas diameter)
+    rMask0 = 2.133 # ALC3 at 2.182µm (240mas diameter)
     rMask = rMask0*1.# 1.766
     
     # dark zone bounds (inner and outer edges) in lam0/D unit
     rho0 =  0.0
-    rho1 = 20.0
+    rho1 = 30.0
     
     # contrast in the dark region
     cDarkHole = 10.0
@@ -158,8 +158,8 @@ if True:
     do_fits = False
 
 nlambis = 5
-Fmax2dbis = 50 # 75 #  
-nImg2dbis = 500 # 750 # 
+Fmax2dbis = 75 #  
+nImg2dbis = 750 # 
 
 ylim_min0 = 1e-8
 ylim_max0 = 1e-3

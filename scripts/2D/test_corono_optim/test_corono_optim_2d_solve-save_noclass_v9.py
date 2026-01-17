@@ -67,10 +67,10 @@ nProgRef = 1
 
 # mask radius in lam0/D units
 # rMask = 1.766 # ALC1 at 1.593um (145mas diameter) 
-# rMask = 2.252 # ALC2 at 1.593um (185mas diameter)
+rMask = 2.252 # ALC2 at 1.593um (185mas diameter)
 # rMask = 2.922 # ALC3 at 1.593µm (240mas diameter)
 # rMask = 2.116 # ALC3 at 2.2µm (240mas diameter)
-rMask = 2.133 # ALC3 at 2.182µm (240mas diameter)
+# rMask = 2.133 # ALC3 at 2.182µm (240mas diameter)
 
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
@@ -81,7 +81,7 @@ rho1 = 30.0
 cDarkHole = 10.0
 
 # tau (integrated Pupil transmission)
-tau   = 0.756 # 0.756 #/0.954
+tau   = 0.500 # 0.756 # 0.756 #/0.954
 # CtrBtwnPix2
 CtrBtwnPix  = True
 CtrBtwnPix2 = True

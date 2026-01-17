@@ -67,7 +67,7 @@ if True:
     # mask radius in lam0/D unit
     # rMask = 1.766 # ALC1 at 1.593um (145mas) 
     # rMask0 = 2.252 # ALC2 at 1.593um (185mas)
-    rMask0 = 2.116 # ALC3 at 2.2µm (240mas diameter)
+    rMask0 = 2.133 # ALC3 at 2.182µm (240mas diameter)
     SPHERE_mask = 'ALC3'
     if SPHERE_mask == 'ALC1':
         rMask = 1.766
