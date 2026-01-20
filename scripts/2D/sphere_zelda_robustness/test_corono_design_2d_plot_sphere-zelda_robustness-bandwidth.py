@@ -44,11 +44,15 @@ dAper     = 8
 
 mas2rad   = np.pi/(180.*3600)
 
-rMask_m   = 287e-6/2.
+
 Fratio    = 40
 
-rMask  = rMask_m/(wv*Fratio)
-rMask_mas = 1000.*rMask * (wv/dAper)/mas2rad
+# rMask_m   = 287e-6/2.
+# rMask  = rMask_m/(wv*Fratio)
+# rMask_mas = 1000.*rMask * (wv/dAper)/mas2rad
+rMask_mas = 185/2. # ALC1 (145/2. mas), ALC2 (185/2. mas), ALC3 (240/2. mas) @ 1.593um
+rMask = rMask_mas/(wv*180*3600*1000/np.pi/dAper)
+
 print('Mask radius: {0:.2f} mas at {1:.3f}um'.format(rMask_mas, wv*1e6))
 
 rho0   = 5.
@@ -727,7 +731,7 @@ print('plots: ok')
 rad_corono = np.arange(nImg2dbis//2)
 colors_map = pl.cm.rainbow(np.linspace(0,1,nmap))
 
-pl.figure(31)
+pl.figure(25)
 pl.clf()
 for imap in range(nmap):
     pl.semilogy(rad_corono*Fmax2dbis/nImg2dbis, 5*corono_poly_prf_std_t[imap]/direct_poly_img_t[imap].max(),
@@ -814,7 +818,7 @@ fpath_bw_plot = fdir_plots / fname_bw_plot
 
 plot_lines = []
 
-pl.figure(31)
+pl.figure(31, (8, 4.5))
 pl.clf()
 # l1, = pl.semilogy(wv*1e6*corono3.lam_t, corono_poly_avg_resbis_wv_t,
 #             color = colors_shifts[0], marker='x', ls ='--')
@@ -822,9 +826,9 @@ pl.clf()
 #             color = colors_shifts[1], marker='x', ls ='--')
 
 l1, = pl.semilogy(wv*1e6*corono3.lam_t, corono_poly_std_resbis_wv_t,
-            color = 'C0', ls ='--')
+            color = 'C9', ls ='--')
 l2, = pl.semilogy(wv*1e6*corono3.lam_t, corono_poly_std_rester_wv_t,
-            color = 'C0', ls ='-')
+            color = 'C9', ls ='-')
 
 #l5, = pl.semilogy([], [], color = "k", ls='-')
 #l6, = pl.semilogy([], [], color = "k", ls='--')
@@ -845,7 +849,7 @@ pl.grid(True,which="both",ls="--")
 
 #legend1 = pl.legend([l5,l6], ["x-axis", "y-axis"], loc=3)
 #pl.gca().add_artist(legend1)
-pl.legend([l1,l2], [r'{0:.1f} $\lambda_0/D$'.format(sepbis), r'{0:.1f} $\lambda_0/D$'.format(septer)], loc=3, title='current APLC', fontsize=14)
+pl.legend([l1,l2], [r'{0:.1f} $\lambda_0/D$'.format(sepbis), r'{0:.1f} $\lambda_0/D$'.format(septer)], loc=2, title='', fontsize=14)
 
 pl.tight_layout()
 pl.savefig(str(fpath_bw_plot), transparent=True)

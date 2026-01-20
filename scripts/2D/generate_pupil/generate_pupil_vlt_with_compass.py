@@ -50,9 +50,9 @@ import xaosim
 """
 pupil_name = 'vlt_btw_compass'
 do_dead_act = False
-nArr_arr = np.array([800]) #np.array([100, 200, 256, 300, 400, 512, 600, 800, 1024, 1200, 1600, 2048]) #384
+nArr_arr = np.array([100, 200, 256, 300, 400, 512, 600, 800, 1024, 1200, 1600, 2048]) #384 np.array([800]) #
 
-red_factor = 0.99
+red_factor = 0.995
 
 nPup_arr= red_factor*nArr_arr #[100, 200, 256, 300, 400, 512, 600, 800, 1024, 1200, 1600, 2048] #384
 do_fits = False

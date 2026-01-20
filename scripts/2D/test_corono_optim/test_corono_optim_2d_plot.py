@@ -56,8 +56,8 @@ if True:
     
     # mask radius in lam0/D unit
     # rMask = 1.766 # ALC1 at 1.593um (145mas) 
-    # rMask0 = 2.252 # ALC2 at 1.593um (185mas)
-    rMask0 = 2.133 # ALC3 at 2.182µm (240mas diameter)
+    rMask0 = 2.252 # ALC2 at 1.593um (185mas)
+    # rMask0 = 2.133 # ALC3 at 2.182µm (240mas diameter)
     rMask = rMask0*1.# 1.766
     
     # dark zone bounds (inner and outer edges) in lam0/D unit
@@ -68,7 +68,7 @@ if True:
     cDarkHole = 10.0
     
     # tau (integrated Pupil transmission)
-    tau   = 0.756 # 0.700 #  0.756/0.954 #0.756
+    tau   = 0.500 # 0.700 #  0.756/0.954 #0.756
     
     # CtrBtwnPix2
 
