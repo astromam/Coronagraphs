@@ -36,7 +36,7 @@ if True:
     # Telescope name
     corono_name  = 'APLC' # 'SP' or 'APLC'
     pupil_name   = 'vlt_btw_compass' #'vlt_btw' # 'vlt' or 'sbr' or 'lvr'
-    problem_name = 'MaxContrastL1' #'MaxContrastLinf' # 'MaxTau' # ,  'MaxContrastLinf' # #  
+    problem_name = 'MaxTau' #'MaxContrastLinf' # 'MaxTau' # ,  'MaxContrastLinf' # #  
     solver       = 'gurobipy' # 'stdgrb' #  'gurobipy', 'scipy.linprog'
     
     MinIsland   = False
@@ -61,11 +61,11 @@ if True:
     rMask = rMask0*1.# 1.766
     
     # dark zone bounds (inner and outer edges) in lam0/D unit
-    rho0 =  0.0
+    rho0 =  5.0
     rho1 = 30.0
     
     # contrast in the dark region
-    cDarkHole = 10.0
+    cDarkHole = 6.0
     
     # tau (integrated Pupil transmission)
     tau   = 0.500 # 0.700 #  0.756/0.954 #0.756
