@@ -20,6 +20,7 @@ from scipy import ndimage
 
 # pythonpath to update possibly...
 import slow_fourier_transform as sft
+# import cupy_slow_fourier_transform as sft
 from uniform_disk import uniform_disk
 import psf_profile as pp
 
@@ -88,6 +89,7 @@ fov_mas = nImg * pscale
 fov_rdn = fov_mas * rad2mas
 # in multiple of reference lambda (lamC) over D
 mD_ref = fov_rdn / ( lamC / D )
+# mD = fov_rdn * D / lam_lst
 
 """
 ### Coronagraphic components
@@ -104,20 +106,20 @@ obst = 0.35 # diameter of the central obscuration in fraction of the pupil size
 mB = 3.9    # FPM size in lam/D in the focal plane B
 
 # dispersion mas/m
-disp = 0  #  e.g 8e7 ou 80e6 = 80 mas / 1e-6 m
+disp = 5e6  #  e.g 8e7 ou 80e6 = 80 mas / 1e-6 m
 # psf to fpm decentering in mas then for legacy in radians
-fpm_dec_mas = 0
+fpm_dec_mas = 2
 fpm_dec = fpm_dec_mas * rad2mas
 # lyot stop angular position error in degres
-ls_ape = 0
+ls_ape = 1
 # lyot stop vertical - elevation - offset error in pixels
 ls_voe = 0
 # lyot stop horizontal - azimut - offset error in pixels
-ls_hoe = 0
+ls_hoe = 4
 # ncpa phase screens
-ncpa_rms = 0  #  nm
+ncpa_rms = 30  #  nm
 # defocus at fpm in nm RMS for reference wvl
-fpm_dfe_elt = 0
+fpm_dfe_elt = 30
 # fpm_dfe = 0 if fpm_dfe_elt = 0., computed dynamicaly otherwise
 fpm_dfe = fpm_dfe_elt * -1.
 
@@ -267,6 +269,7 @@ if ls_voe != 0 or ls_hoe != 0:
 #           root+'20250704_135325.0',
 #           root+'20250704_141253.0',
 #           root+'20250707_114321.0')
+
 root = 'OPDs_PASSATA/OPD/WS/1kHzVarWS/'
 opds_dir=(root+'1',
           root+'2',
@@ -356,9 +359,11 @@ for dir_nb in range(len(opds_dir)):
                     Pupil.copy())
             
             temp -= np.mean(temp[ipup])
-            temp *= float(ncpa_rms) * 1e-9 / np.std(temp[ipup])
-            OPD_arr[n,:,:] += temp.copy()
+            temp /= np.std(temp[ipup])
+            temp *= float(ncpa_rms) * 1e-9
+            OPD_arr[n,:,:] += temp.copy() * Pupil.copy()
             temp *= 0.
+
     
         #%%
     
@@ -557,7 +562,30 @@ for dir_nb in range(len(opds_dir)):
     fits.writeto(fpath_Prf_D0, Int_D0_prf_avg, overwrite=True)
     fits.writeto(fpath_Prf_D, Int_D_prf_avg, overwrite=True)
     
-    hdr_keys = {'NPUP':(nPup,'pupil size'),
+    fpath_psf_lst=(fpath_Int_D0, fpath_Int_D, fpath_Prf_D0, fpath_Prf_D)
+                
+    if len(os.listdir(fdir_prfct))==0:
+        fname_Int_DD0 = 'wonoise_psf_'+donow+'.fits'
+        fname_Int_DD = 'wonoise_coro_psf_'+donow+'.fits'
+        fpath_Int_DD0 = fdir_prfct/ fname_Int_DD0
+        fpath_Int_DD  = fdir_prfct / fname_Int_DD
+
+        if not os.path.isfile(fpath_Int_DD0):
+            fits.writeto(fpath_Int_DD0, Int_DD0, overwrite=True)
+            fpath_psf_lst += (fpath_Int_DD0,)
+            
+        if not os.path.isfile(fpath_Int_DD):
+            fits.writeto(fpath_Int_DD, Int_DD, overwrite=True)
+            fpath_psf_lst += (fpath_Int_DD,)
+    
+        if simu_elt:
+            fname_elt = 'wo_noise_psf_elt_pupil.fits'
+            fpath_elt = fdir_prfct / fname_elt
+            if not os.path.isfile(fpath_elt):
+                fits.writeto(fpath_elt, Int_elt, overwrite=True)
+                fpath_psf_lst += (fpath_elt,)
+
+        hdr_keys = {'NPUP':(nPup,'pupil size'),
                 'NFPM':(nFPM,'FP coro. sampling'),
                 'NIMG':(nImg,'image size'),
                 'NOPD':(nOPD,'number of OPD files'),
@@ -584,31 +612,9 @@ for dir_nb in range(len(opds_dir)):
                 'EPUP_FNM':(fname_elt,'ELT pupil filename'),
                 'DATE_NOW':(donow,'date of now, i.e. script execution date')}
     
-    fpath_psf_lst=(fpath_Int_D0, fpath_Int_D, fpath_Prf_D0, fpath_Prf_D)
     for fpath in fpath_psf_lst:
         for n, k in enumerate(hdr_keys):
             fits.setval(fpath,k,value=hdr_keys[k][0],comment=hdr_keys[k][1])
-            
-    if len(os.listdir(fdir_prfct))==0:
-        fname_Int_DD0 = 'wonoise_psf_'+donow+'.fits'
-        fname_Int_DD = 'wonoise_coro_psf_'+donow+'.fits'
-        fpath_Int_DD0 = fdir_prfct/ fname_Int_DD0
-        fpath_Int_DD  = fdir_prfct / fname_Int_DD
-
-        if not os.path.isfile(fpath_Int_DD0):
-            fits.writeto(fpath_Int_DD0, Int_DD0, overwrite=True)
-            fpath_psf_lst += (fpath_Int_DD0,)
-            
-        if not os.path.isfile(fpath_Int_DD):
-            fits.writeto(fpath_Int_DD, Int_DD, overwrite=True)
-            fpath_psf_lst += (fpath_Int_DD,)
-    
-        if simu_elt:
-            fname_elt = 'wo_noise_psf_elt_pupil.fits'
-            fpath_elt = fdir_prfct / fname_elt
-            if not os.path.isfile(fpath_elt):
-                fits.writeto(fpath_elt, Int_elt, overwrite=True)
-                fpath_psf_lst += (fpath_elt,)
 
 
     #%%
