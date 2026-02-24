@@ -48,7 +48,7 @@ if user == 'Alain':
     
 # elif user == 'toto':
 
-was_donow = '20251106160002'
+was_donow = '20260224120818'
 
 fdir_res = fdir_res / was_donow
 fdir_plt = fdir_plt / was_donow
@@ -421,42 +421,42 @@ for dir_nb in range(len(opds_dir)):
             plt.show()
     
     
-            # plot of the radial profiles
-            colors = plt.cm.rainbow(np.linspace(0,1,nL))
-            plt.figure(4, (8, 8))
-            # plt.title('intensity@1600nm with/without coro. vs radial distance')
-            plt.tight_layout()
-            plt.xlim(1e0,1e2)
-            plt.ylim(1e-5, 2e0)
-            plt.xlabel('Angular separation [mas]')#[$\lambda$/D]')
-            plt.ylabel('intensity')
-            plt.yscale('log')
-            plt.xscale('log')
-            plt.title('intensities(wvl) vs radial distance')
-            plt.grid(True)
+            # # plot of the radial profiles
+            # colors = plt.cm.rainbow(np.linspace(0,1,nL))
+            # plt.figure(4, (8, 8))
+            # # plt.title('intensity@1600nm with/without coro. vs radial distance')
+            # plt.tight_layout()
+            # plt.xlim(1e0,1e2)
+            # plt.ylim(1e-5, 2e0)
+            # plt.xlabel('Angular separation [mas]')#[$\lambda$/D]')
+            # plt.ylabel('intensity')
+            # plt.yscale('log')
+            # plt.xscale('log')
+            # plt.title('intensities(wvl) vs radial distance')
+            # plt.grid(True)
            
-            if True:
+            # if True:
                 
-                i=np.argmin(np.abs(lam_lst-lam_c))
-                # AO corrected psf 
-                plt.plot(aS, Int_D0_psf_prf[i,1,:],
-                          label='no coro', color=colors[0])
+            #     i=np.argmin(np.abs(lam_lst-lam_c))
+            #     # AO corrected psf 
+            #     plt.plot(aS, Int_D0_psf_prf[i,1,:],
+            #               label='no coro', color=colors[0])
                 
-                # AO corrected coronagraphic psf 
-                plt.plot(aS, Int_D_psf_prf[i,1,:],
-                          label='with coro', color=colors[-1])
+            #     # AO corrected coronagraphic psf 
+            #     plt.plot(aS, Int_D_psf_prf[i,1,:],
+            #               label='with coro', color=colors[-1])
                 
-            # Focal plane mask boundary
-            x = np.arange(0.0, mB/2, 0.01)
-            plt.axvline(as_oi, color='k', ls='--')
-            plt.legend(fontsize='xx-small', ncols=5)
-            # Focal plane mask grey area
-            fill_max=mB/2/ 38.54*lam_c/rad2mas
-            plt.fill_between(x*lamCD2mas, 1e-5, fill_max, color='gray', alpha=0.3)
+            # # Focal plane mask boundary
+            # x = np.arange(0.0, mB/2, 0.01)
+            # plt.axvline(as_oi, color='k', ls='--')
+            # plt.legend(fontsize='xx-small', ncols=5)
+            # # Focal plane mask grey area
+            # fill_max=mB/2/ 38.54*lam_c/rad2mas
+            # plt.fill_between(x*lamCD2mas, 1e-5, fill_max, color='gray', alpha=0.3)
             
-            fname_contrast_profile = ('intensities_profiles_1600nmOnly_'+base_cro)
-            fpath_contrast_profile_pdf = (fdir_plt / opd_set /
-                                          (fname_contrast_profile +'_'+lmn+'_'+lmx+ '.pdf'))
-            plt.savefig(fpath_contrast_profile_pdf)
-            plt.show()
+            # fname_contrast_profile = ('intensities_profiles_1600nmOnly_'+base_cro)
+            # fpath_contrast_profile_pdf = (fdir_plt / opd_set /
+            #                               (fname_contrast_profile +'_'+lmn+'_'+lmx+ '.pdf'))
+            # plt.savefig(fpath_contrast_profile_pdf)
+            # plt.show()
         
