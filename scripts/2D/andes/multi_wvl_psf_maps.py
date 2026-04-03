@@ -51,7 +51,7 @@ if user == 'Alain':
 
 # elif user == 'toto':
 
-was_donow = '20251106160002'
+was_donow = '20260403141537'
 fdir_res = fdir_res / was_donow
 fdir_plt = fdir_plt / was_donow
 
@@ -127,16 +127,17 @@ fdir_plt = fdir_plt / was_donow
 #           root+'20250704_141253.0',
 #           root+'20250707_114321.0')
 root = 'OPDs_PASSATA/OPD/WS/1kHzVarWS/'
-opds_dir=(root+'1',
-          root+'2',
-          root+'3',
-          root+'4',
-          root+'5',
-          root+'6',
-          root+'7',
-          root+'8',
-          root+'9',
-          root+'10')
+opds_dir=(root+'1',)
+# opds_dir=(root+'1',
+#           root+'2',
+#           root+'3',
+#           root+'4',
+#           root+'5',
+#           root+'6',
+#           root+'7',
+#           root+'8',
+#           root+'9',
+#           root+'10')
 
 
 #%%
