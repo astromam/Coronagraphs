@@ -35,7 +35,7 @@ try:
         # Kernel creation: exp(i * 2pi * X.T @ U)
         # Using matrix mult for outer product
         XU = (2.0 * cp.pi) * cp.matmul(X.T, U)
-        
+
         # Transformation matrices
         A3 = cp.exp(1j * sign * XU)
         A1 = A3.T
@@ -71,7 +71,6 @@ except FileNotFoundError:
   
 import numpy as np
 from scipy import ndimage
-import matplotlib.pyplot as plt
 from astropy.io import fits
 from uniform_disk import uniform_disk
 from psf_profile import radial_profile
@@ -79,10 +78,7 @@ from psf_profile import radial_profile
 import os
 from pathlib import Path
 from datetime import datetime
-   
-#fontsize to 15 for all plots
-plt.rcParams.update({'font.size': 14})  #♦  mdiaye 15!
-    
+
 # conversion l radian to mas
 rad2mas = np.pi/(180.*3600*1000)
 mas2rad = 1/rad2mas
@@ -90,12 +86,12 @@ mas2rad = 1/rad2mas
 
 def compute_images_gpu_batch(elt_gpu, LyotStop2d_gpu, opds_gpu, mask2d_gpu,
                              lam_lst_gpu, nImg, mB, lam_ref, diam, obst,
-                             mD_ref, nFPM, disp, rad2mas):
+                             mD_ref, nFPM, disp, rad2mas, fpm_dec, nPup):
     """
     Process all OPDs in chunks to calculate the average intensity images.
-    Returns the averaged Intensity arrays for the 3 cases.
     """
 
+    chnk_v = cp.ones(opds_gpu.shape[0])
     nL = lam_lst_gpu.shape[0]
     Int_D0 = cp.zeros((nL,nImg, nImg))
     Int_D  = cp.zeros((nL,nImg, nImg))
@@ -105,59 +101,46 @@ def compute_images_gpu_batch(elt_gpu, LyotStop2d_gpu, opds_gpu, mask2d_gpu,
     for ilam in range(nL):
         
         # Sélection GPU (si plusieurs GPU disponibles)M
-        dev_id = ilam % cp.cuda.runtime.getDeviceCount()
-        cp.cuda.Device(dev_id).use()
 
-        curr_wl = lam_lst_gpu[ilam]
-        dLam = curr_wl - lam_ref
+        lam = lam_lst_gpu[ilam]
+        dLam = lam - lam_ref
         tilt = dLam * disp * rad2mas
-        mD = mD_ref * lam_ref / curr_wl
+        mD = mD_ref * lam_ref / lam
         
         # PERFECT PSF
         Fld_AA0 = elt_gpu * LyotStop2d_gpu
         Fld_DD0 = sft(Fld_AA0, nImg, mD*diam)
         Int_DD0[ilam,:,:] = cp.abs(Fld_DD0)**2
-        # norm_peakDD0 = 1/cp.max(Int_DD0)
-        # Int_DD0 *= norm_peakDD0
     
         # perfect coronographic image
         
         Fld_AA = elt_gpu * 1.
-        Fld_BB = mask2d_gpu*sft(Fld_AA, nFPM, mB*lam_ref/curr_wl)
-        Fld_CC = Fld_AA - isft(Fld_BB, nPup, mB*lam_ref/curr_wl)
+        Fld_BB = mask2d_gpu*sft(Fld_AA, nFPM, mB*lam_ref/lam)
+        Fld_CC = Fld_AA - isft(Fld_BB, nPup, mB*lam_ref/lam)
         Fld_LL = Fld_CC * LyotStop2d_gpu
         Fld_DD = sft(Fld_LL, nImg, mD*diam)
         Int_DD[ilam,:,:] = cp.abs(Fld_DD)**2
-        # Int_DD *= norm_peakDD0
     
-        # LOOP OPD
-        # for k in range(batch_size):
-    
-        phase = (opds_gpu +
-                 (fpm_dec + tilt) * D * diam * sf_y_gpu[None,:,:] / nPup +
-                 dfc_gpu[None,:,:])
-        # print(phase.shape)
-        Fld_A0 = (elt_gpu * cp.exp(1j * 2 * cp.pi * phase / curr_wl) *
+        phase = (opds_gpu + dfc_gpu[None,:,:] + (fpm_dec + tilt) *
+                 chnk_v[:,None,None] * D * diam * sf_y_gpu[None,:,:] / nPup)
+
+        Fld_A0 = (elt_gpu * cp.exp(1j * 2 * cp.pi * phase / lam) *
                   LyotStop2d_gpu)
     
         Fld_D0 = sft(Fld_A0, nImg, mD*diam)
-        Int_D0[ilam,:,:] = cp.sum(cp.abs(Fld_D0)**2, axis=0)
+        Fld_D0 = cp.abs(Fld_D0)**2
+        Int_D0[ilam,:,:] = cp.mean(Fld_D0, axis=0)
     
         # CORO
-        Fld_A0 = (elt_gpu * cp.exp(1j*2*cp.pi * phase / curr_wl))
+        Fld_A0 = (elt_gpu * cp.exp(1j*2*cp.pi * phase / lam))
     
-        Fld_B = mask2d_gpu*sft(Fld_A0, nFPM, mB*lam_ref/curr_wl)
-        Fld_C = Fld_A0 - sft(Fld_B, nPup, mB*lam_ref/curr_wl, inv=True)
+        Fld_B = mask2d_gpu*sft(Fld_A0, nFPM, mB*lam_ref/lam)
+        Fld_C = Fld_A0 - sft(Fld_B, nPup, mB*lam_ref/lam, inv=True)
         Fld_L = Fld_C * LyotStop2d_gpu
         Fld_D = sft(Fld_L, nImg, mD*diam)
+        Fld_D = cp.abs(Fld_D)**2
+        Int_D[ilam,:,:] = cp.mean(Fld_D, axis=0)
     
-        Int_D[ilam,:,:] = cp.sum(cp.abs(Fld_D)**2, axis=0)
-    
-        # norm_peakD0 = 1/cp.max(Int_D0)
-    
-        # Int_D0 *= norm_peakD0
-        # Int_D  *= norm_peakD0
-
     return Int_D0, Int_D, Int_DD0, Int_DD
 
 
@@ -374,9 +357,9 @@ if __name__ == "__main__":
     #%%
     
     root = 'OPDs_PASSATA/OPD/WS/1kHzVarWS/'
-    opds_dir=(root+'1',)
-    # opds_dir=(root+'1', root+'2', root+'3', root+'4', root+'5',
-    #           root+'6', root+'7', root+'8', root+'9', root+'10')
+    # opds_dir=(root+'1',)
+    opds_dir=(root+'1', root+'2', root+'3', root+'4', root+'5',
+              root+'6', root+'7', root+'8', root+'9', root+'10')
 
     for dir_nb in range(len(opds_dir)):
     
@@ -455,7 +438,7 @@ if __name__ == "__main__":
                 # temp *= float(ncpa_rms) * 1e-9
                 # OPD_arr[n,:,:] += temp.copy() * Pupil.copy()
                 # temp *= 0.
-                OPD_arr[n,:,:] += ncpa_1[n,:,:]
+                OPD_arr[n,:,:] += ncpa_1[n,:,:] * Pupil.copy()
             
         nOPD = OPD_arr.shape[0]
         opd_arr_sz = OPD_arr.nbytes
@@ -484,54 +467,51 @@ if __name__ == "__main__":
 
         for c in range(nchk):
 
+            dev_id = c % cp.cuda.runtime.getDeviceCount()
+            cp.cuda.Device(dev_id).use()
+
             opd_gpu = cp.asarray(
                 OPD_arr[GPU_BATCH_SIZE*c:GPU_BATCH_SIZE*(c+1),:,:],
                 dtype=cp.float64)
         
-            # for ilam in range(nL):
-            # curr_wl = lam_lst[ilam]
-            
-            # RUN GPU COMPUTATION
-            # returns tuple: (Int_B2, Int_D, Int_B)
-            # All returns are still on GPU
             gpu_ret = compute_images_gpu_batch(
                 elt_gpu, LyotStop2d_gpu, opd_gpu, mask2d_gpu, lam_lst_gpu,
                 nImg, mB, lam_ref, diam, obst, mD_ref, 
-                nFPM, disp, rad2mas )
+                nFPM, disp, rad2mas, fpm_dec, nPup )
             
             # Transfer result back to CPU RAM immediately
-            Int_D0 += gpu_ret[0].get()
-            Int_D += gpu_ret[1].get()
+            Int_D0  += gpu_ret[0].get()
+            Int_D   += gpu_ret[1].get()
             Int_DD0 += gpu_ret[2].get()
-            Int_DD += gpu_ret[3].get()
+            Int_DD  += gpu_ret[3].get()
 
             # Clean up GPU memory for this minute
             del opd_gpu
             cp.get_default_memory_pool().free_all_blocks()
 
-        Int_D0  /= float(nchk*GPU_BATCH_SIZE)
-        Int_D   /= float(nchk*GPU_BATCH_SIZE)
-        Int_DD0 /= float(nchk*GPU_BATCH_SIZE)
-        Int_DD  /= float(nchk*GPU_BATCH_SIZE)
+        # Int_D0  /= float(nchk*GPU_BATCH_SIZE)
+        # Int_D   /= float(nchk*GPU_BATCH_SIZE)
+        # Int_DD0 /= float(nchk*GPU_BATCH_SIZE)
+        # Int_DD  /= float(nchk*GPU_BATCH_SIZE)
         
-        norm_D0 = np.max(Int_D0)
-        Int_D0  /= norm_D0
-        Int_D   /= norm_D0
+        norm_D0 = np.max(Int_D0, axis=(1,2))
+        Int_D0  /= norm_D0[:,None,None]
+        Int_D   /= norm_D0[:,None,None]
         
-        norm_DD0 = np.max(Int_DD0)
-        Int_DD0  /= norm_DD0
-        Int_DD   /= norm_DD0
+        norm_DD0 = np.max(Int_DD0, axis=(1,2))
+        Int_DD0  /= norm_DD0[:,None,None]
+        Int_DD   /= norm_DD0[:,None,None]
         
         for ilam in range(nL):
             
             """
             ### Compute the radial intensity profiles of the images
             """
-            curr_wl = lam_lst[ilam]
-            mD = mD_ref * lam_ref / curr_wl
+            lam = lam_lst[ilam]
+            mD = mD_ref * lam_ref / lam
 
             # conversion lam/D to mas
-            lamD2mas = (curr_wl / D) * mas2rad
+            lamD2mas = (lam / D) * mas2rad
 
             # computation of the averaged intensity profiles of the images   
             Int_D0_prf_avg[ilam,1,:], rad_D0_prf_avg = (
