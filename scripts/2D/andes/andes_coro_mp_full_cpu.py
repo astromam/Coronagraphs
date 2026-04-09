@@ -21,10 +21,6 @@ from psf_profile import radial_profile
 #fontsize to 15 for all plots
 plt.rcParams.update({'font.size': 14})  #♦  mdiaye 15!
     
-# conversion l radian to mas
-rad2mas = np.pi/(180.*3600*1000)
-mas2rad = 1/rad2mas
-
 os.environ["OMP_NUM_THREADS"] = "1"
 
 def compute_one_lambda_shared_full(args):
@@ -51,9 +47,6 @@ def compute_one_lambda_shared_full(args):
     dLam = lam - lamC
     tilt = dLam * disp * rad2mas
     mD = mD_ref * lamC / lam
-
-    # conversion lam/D to mas
-    lamD2mas = (lam/D)*mas2rad
 
     nOPD = OPD_arr.shape[0]
 
@@ -84,18 +77,15 @@ def compute_one_lambda_shared_full(args):
     # LOOP OPD
     for k in range(nOPD):
 
-        phase = (OPD_arr[k] + (fpm_dec + tilt) * D * diam * sf_y / nPup + dfc)
+        phase = (OPD_arr[k,:,:] + (fpm_dec + tilt) * D * diam * sf_y / nPup + dfc)
 
-        Fld_A0 = (Pupil *
-                  np.exp(1j*2*np.pi * phase/lam) *
-                  LyotStop2d)
+        Fld_A0 = (Pupil * np.exp(1j*2*np.pi * phase/lam) * LyotStop2d)
 
         Fld_D0 = sft(Fld_A0, nImg, mD*diam)
         Int_D0 += np.abs(Fld_D0)**2
 
         # CORO
-        Fld_A0 = (Pupil *
-                  np.exp(1j*2*np.pi * phase/lam))
+        Fld_A0 = (Pupil * np.exp(1j * 2 * np.pi * phase / lam))
 
         Fld_B = mask2d*sft(Fld_A0, nFPM, mB*lamC/lam)
         Fld_C = Fld_A0 - sft(Fld_B, nPup, mB*lamC/lam, inv=True)
@@ -124,9 +114,9 @@ def compute_one_lambda_shared_full(args):
     rad_D_prf_avg_lamD = rad_D_prf_avg * mD/nImg
     
     # rad_D0_prf_avg_mas = rad_D0_prf_avg_lamD * lamD2mas
-    Int_D0_prf[0,:] = rad_D0_prf_avg_lamD * lamD2mas
+    Int_D0_prf[0,:] = rad_D0_prf_avg_lamD * (lam/D) / rad2mas
     # rad_D_prf_avg_mas = rad_D_prf_avg_lamD * lamD2mas
-    Int_D_prf[0,:] = rad_D_prf_avg_lamD * lamD2mas
+    Int_D_prf[0,:] = rad_D_prf_avg_lamD * (lam/D) / rad2mas
 
     shm_opd.close()
     shm_opd.unlink()
@@ -354,7 +344,7 @@ if __name__ == "__main__":
     #%%
     
     root = 'OPDs_PASSATA/OPD/WS/1kHzVarWS/'
-    opds_dir=(root+'1',
+    opds_dir=(root+'1',#)
               root+'2',
               root+'3',
               root+'4',
@@ -421,25 +411,28 @@ if __name__ == "__main__":
         OPD_arr *= 1e-9 # convert OPD from nm to m if new OPD with new pupil
         
         if ncpa_rms != 0:
-             
-            rnd=np.random.randn(nOPD)
-            rnd /= 2.
-            xi=np.round(rnd*hlf/np.max([-np.min(rnd),np.max(rnd)])).astype(int)
             
-            rnd=np.random.randn(nOPD)
-            rnd /= 2.
-            yi=np.round(rnd*hlf/np.max([-np.min(rnd),np.max(rnd)])).astype(int)
+            fnm = ('ncpa_ELT_pupil_400_30nm_4096screens.fits')
+            ncpa_1 = fits.getdata(fdir_dat/fnm)             
+            # rnd=np.random.randn(nOPD)
+            # rnd /= 2.
+            # xi=np.round(rnd*hlf/np.max([-np.min(rnd),np.max(rnd)])).astype(int)
+            
+            # rnd=np.random.randn(nOPD)
+            # rnd /= 2.
+            # yi=np.round(rnd*hlf/np.max([-np.min(rnd),np.max(rnd)])).astype(int)
     
             for n in range(nOPD):
                 
-                temp = ((ncpa_1[hlf+xi[n]:hlf+N+xi[n],
-                                hlf+yi[n]:hlf+N+yi[n]]).copy() * Pupil.copy())
+                # temp = ((ncpa_1[hlf+xi[n]:hlf+N+xi[n],
+                #                 hlf+yi[n]:hlf+N+yi[n]]).copy() * Pupil.copy())
                 
-                temp -= np.mean(temp[ipup])
-                temp /= np.std(temp[ipup])
-                temp *= float(ncpa_rms) * 1e-9
-                OPD_arr[n,:,:] += temp.copy() * Pupil.copy()
-                temp *= 0.
+                # temp -= np.mean(temp[ipup])
+                # temp /= np.std(temp[ipup])
+                # temp *= float(ncpa_rms) * 1e-9
+                # OPD_arr[n,:,:] += temp.copy() * Pupil.copy()
+                # temp *= 0.
+                OPD_arr[n,:,:] += ncpa_1[n,:,:] * Pupil.copy()
     
         mp.set_start_method("spawn", force=True)
     
@@ -480,10 +473,8 @@ if __name__ == "__main__":
              shm_opd.name, OPD_arr.shape, OPD_arr.dtype,
              shm_pupil.name, Pupil.shape, Pupil.dtype,
              shm_lyot.name, LyotStop2d.shape, LyotStop2d.dtype,
-             mask2d, fpm_dec, dfc, sf_y,
-             D, diam, nPup,
-             nImg, nFPM, mB, lamC,
-             mD_ref, disp, rad2mas)
+             mask2d, fpm_dec, dfc, sf_y, D, diam, nPup,
+             nImg, nFPM, mB, lamC, mD_ref, disp, rad2mas)
             for i in range(nL)
         ]
     
