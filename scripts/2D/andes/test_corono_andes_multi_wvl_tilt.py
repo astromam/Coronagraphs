@@ -345,6 +345,8 @@ for dir_nb in range(len(opds_dir)):
     
     if ncpa_rms != 0:
          
+        # fnm = ('ncpa_ELT_pupil_400_30nm_4096screens.fits')
+        # ncpa_1 = fits.getdata(fdir_dat/fnm)        
         rnd=np.random.randn(nOPD)
         rnd /= 2.
         xi=np.round(rnd*hlf/np.max([-np.min(rnd),np.max(rnd)])).astype(int)
@@ -363,6 +365,7 @@ for dir_nb in range(len(opds_dir)):
             temp *= float(ncpa_rms) * 1e-9
             OPD_arr[n,:,:] += temp.copy() * Pupil.copy()
             temp *= 0.
+            # OPD_arr[n,:,:] += ncpa_1[n,:,:] * Pupil.copy()
 
     
         #%%
