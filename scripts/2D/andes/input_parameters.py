@@ -1,0 +1,25 @@
+# -*- coding: utf-8 -*-
+nFPM = 100
+nImg = 400
+nOPD = 4000
+lam_ref = 1600e-9
+lam_min = 950e-9
+lam_itv = 18
+lam_stp = 50e-9
+D = 38.54
+pscale = 0.3
+diam = 0.89
+obst = 0.35
+mB = 3.9
+disp = 5e6
+fpm_dec_mas = 2
+ls_ape = 1
+ls_voe = 0
+ls_hoe = 4
+ncpa_rms = 30
+fpm_dfe_elt = 30
+user = 'Alain'
+usr_base = 'D:/Andes/Data_corono/'
+fnm_eltp = 'ELT_pupil_400.fits' # New pupil with new spider
+ncpa_fnm = ('ncpa_unscaled_x2_ELT_pupil_400.fits')
+dir_root = 'OPDs_PASSATA/OPD/WS/1kHzVarWS/'
