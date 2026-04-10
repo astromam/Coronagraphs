@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 
@@ -8,12 +9,15 @@ from multiprocessing import shared_memory
 from multiprocessing import cpu_count
 
 import numpy as np
-from scipy import ndimage
 import matplotlib.pyplot as plt
+from scipy import ndimage
 from astropy.io import fits
+
 import os
+import sys
 from pathlib import Path
 from datetime import datetime
+
 from slow_fourier_transform import sft, isft
 from uniform_disk import uniform_disk
 from psf_profile import radial_profile
@@ -31,7 +35,7 @@ def compute_one_lambda_shared_full(args):
      shm_lyot_name, shape_lyot, dtype_lyot,
      mask2d, fpm_dec, dfc, sf_y,
      D, diam, nPup,
-     nImg, nFPM, mB, lamC,
+     nImg, nFPM, mB, lam_ref,
      mD_ref, disp, rad2mas) = args
 
     # --- reconnect shared arrays ---
@@ -44,9 +48,9 @@ def compute_one_lambda_shared_full(args):
     shm_lyot = shared_memory.SharedMemory(name=shm_lyot_name)
     LyotStop2d = np.ndarray(shape_lyot, dtype=dtype_lyot, buffer=shm_lyot.buf)
 
-    dLam = lam - lamC
+    dLam = lam - lam_ref
     tilt = dLam * disp * rad2mas
-    mD = mD_ref * lamC / lam
+    mD = mD_ref * lam_ref / lam
 
     nOPD = OPD_arr.shape[0]
 
@@ -67,8 +71,8 @@ def compute_one_lambda_shared_full(args):
     # perfect coronographic image
     
     Fld_AA = Pupil * 1.
-    Fld_BB = mask2d*sft(Fld_AA, nFPM, mB*lamC/lam)
-    Fld_CC = Fld_AA - isft(Fld_BB, nPup, mB*lamC/lam)
+    Fld_BB = mask2d*sft(Fld_AA, nFPM, mB*lam_ref/lam)
+    Fld_CC = Fld_AA - isft(Fld_BB, nPup, mB*lam_ref/lam)
     Fld_LL = Fld_CC * LyotStop2d
     Fld_DD = sft(Fld_LL, nImg, mD*diam)
     Int_DD = np.abs(Fld_DD)**2
@@ -87,8 +91,8 @@ def compute_one_lambda_shared_full(args):
         # CORO
         Fld_A0 = (Pupil * np.exp(1j * 2 * np.pi * phase / lam))
 
-        Fld_B = mask2d*sft(Fld_A0, nFPM, mB*lamC/lam)
-        Fld_C = Fld_A0 - sft(Fld_B, nPup, mB*lamC/lam, inv=True)
+        Fld_B = mask2d*sft(Fld_A0, nFPM, mB*lam_ref/lam)
+        Fld_C = Fld_A0 - sft(Fld_B, nPup, mB*lam_ref/lam, inv=True)
         Fld_L = Fld_C * LyotStop2d
         Fld_D = sft(Fld_L, nImg, mD*diam)
 
@@ -129,94 +133,107 @@ def compute_one_lambda_shared_full(args):
 
 
 if __name__ == "__main__":
-
+    
     """
     ### Parameters
     """
-    
-    # Sampling of the coronagraph focal plane mask
-    nFPM = 100
-    
-    # "field of view" in mas, not the real fov but some legacy nIMG*pscale/2...
-    # f_o_v = 58.393
-    
-    # Image size
-    nImg = 400  #*1.6 #  #  even/pair!
-    
-    # angular separation of interest in mas
-    as_oi = 20.
-    
-    # # of OPD phase screens
-    nOPD = 4000
-    
-    # wavelengths in m
-    lamC = 1600e-9  #  some reference wvl unique value
-    
-    # yjhk  2025-05 -->
-    lam_min = 950e-9  #  min value in range
-    lam_itv = 18  # 30 if + K band
-    lam_stp = 50e-9
-    
-    lam_lst = np.arange(lam_min,lam_min+(lam_itv+0.5)*lam_stp,lam_stp)
-    nL = len(lam_lst)
-    print(nL, lam_stp, lam_lst)
-    
-    # Pupil diameter in m 
-    D = 38.54
-    
-    # conversion l radian to mas
-    rad2mas = np.pi/(180.*3600*1000)
-    mas2rad = 1/rad2mas
-    
-    # plate scale in mas per pixel
-    pscale = 0.3
-    
-    lamCD2mas = (lamC/D)*mas2rad
-    # field of view
-    # in mas
-    fov_mas = nImg * pscale
-    # in radians
-    fov_rdn = fov_mas * rad2mas
-    # in multiple of reference lambda (lamC) over D
-    mD_ref = fov_rdn / ( lamC / D )
-    # mD = fov_rdn * D / lam_lst
-    
-    """
-    ### Coronagraphic components
-    """
-    # Focal plane mask
-    mask2d = uniform_disk(nFPM, nFPM/2.)
+
+    nFPM = 100  # Sampling of the coronagraph focal plane mask
+    nImg = 400  # last focal plane image size
+    nOPD = 4000  # # of AO corrected phase residuals screens
+    lam_ref = 1600e-9  # reference wvl
+    lam_min = 950e-9  # minimal value of wvl
+    lam_itv = 18  # # of intervals
+    lam_stp = 50e-9  # interval step
+    D = 38.54  #  main pupil diameter/ elt pupil diameter
+    pscale = 0.3  # image plate scale in last focal plane
+
     # diam = 0.89 obs = 0.35, mB = 3.9 2025 with 'ELT_pupil_400.fits' YJH
     # diam = 0.90 obs = 0.37, mB = 4.0 2024 with 'ELT_pupil_400.fits' YJH @ 25 mas / 75% thr
     # diam = 0.96 obs = 0.30, mB = 4.5 2024 with 'ELT_pupil_400.fits' K
     # diam = 0.90 obs = 0.38 with 'Tel-Pupil.fits'
+    diam = 0.89  # Lyot fractional outer diameter
+    obst = 0.35  # Lyot fractional inner/obscuration diameter
+    mB = 3.9        # Lyot focal plane mask diameter in lam_ref/D
+
+    disp = 0  # dispersion mas/mu e.g 8e7 ou 80e6 = 80 mas / 1e-6 m
+    fpm_dec_mas = 0  # psf to fpm decentering in mas
+    ls_ape = 0  # lyot stop angular position error in degres
+    ls_voe = 0  # lyot stop vertical - elevation - offset error in pixels
+    ls_hoe = 0  # lyot stop horizontal - elevation - offset error in pixels
+    ncpa_rms = 0  # scale of ncpa phase screens in nm RMS
+    fpm_dfe_elt = 0  # scale of defocus at fpm in nm RMS for reference wvl
     
-    diam = 0.89 # diameter of the pupil in fraction of the pupil size
-    obst = 0.35 # diameter of the central obscuration in fraction of the pupil size
-    mB = 3.9    # FPM size in lam/D in the focal plane B
+    user = 'Alain'
+    usr_base = 'D:/Andes/Data_corono/'
+    fnm_eltp = 'ELT_pupil_400.fits' # New pupil with new spider
+    # unscaled unmasked ncpa file twice the size of the pupil size / nPup
+    ncpa_fnm = ('ncpa_unscaled_x2_ELT_pupil_400.fits')
+    dir_root = 'OPDs_PASSATA/OPD/WS/1kHzVarWS/'  # root of OA phase screens set
     
-    # dispersion mas/m
-    disp = 5e6  #  e.g 8e7 ou 80e6 = 80 mas / 1e-6 m
-    # psf to fpm decentering in mas then for legacy in radians
-    fpm_dec_mas = 2
+    av = sys.argv
+    print('\n', av)
+    if len(av) > 1: input_parameters = av[1]  # PYTHONPATH update?
+    
+    try:
+        
+        import input_parameters as ip
+        if hasattr(ip, 'nFPM'): nFPM = ip.nFPM
+        if hasattr(ip, 'nImg'): nImg = ip.nImg
+        if hasattr(ip, 'nOPD'): nOPD = ip.nOPD
+        if hasattr(ip, 'lam_ref'): lam_ref = ip.lam_ref
+        if hasattr(ip, 'lam_min'):  lam_min = ip.lam_min
+        if hasattr(ip, 'lam_itv'):  lam_itv = ip.lam_itv
+        if hasattr(ip, 'lam_stp'):  lam_stp = ip.lam_stp
+        if hasattr(ip, 'D'):    D = ip.D
+        if hasattr(ip, 'pscale'):   pscale = ip.pscale
+        if hasattr(ip, 'diam'): diam = ip.diam
+        if hasattr(ip, 'obst'): obst = ip.obst
+        if hasattr(ip, 'mB'):   mB = ip.mB
+        if hasattr(ip, 'disp'): disp = ip.disp
+        if hasattr(ip, 'fpm_dec_mas'):  fpm_dec_mas = ip.fpm_dec_mas
+        if hasattr(ip, 'ls_ape'):   ls_ape = ip.ls_ape
+        if hasattr(ip, 'ls_voe'):   ls_voe = ip.ls_voe
+        if hasattr(ip, 'ls_hoe'):   ls_hoe = ip.ls_hoe
+        if hasattr(ip, 'ncpa_rms'): ncpa_rms = ip.ncpa_rms
+        if hasattr(ip, 'fpm_dfe_elt'):  fpm_dfe_elt = ip.fpm_dfe_elt
+        if hasattr(ip, 'user'):user = ip.user
+        if hasattr(ip, 'usr_base'): usr_base = ip.usr_base
+        if hasattr(ip, 'fnm_eltp'): fnm_eltp = ip.fnm_eltp
+        if hasattr(ip, 'ncpa_fnm'): ncpa_fnm = ip.ncpa_fnm
+        if hasattr(ip, 'dir_root'): dir_root = ip.dir_root
+
+        
+    except ModuleNotFoundError:
+        
+        print('use defaults parameters')
+    
+     
+    lam_lst = np.arange(lam_min,lam_min+(lam_itv+0.5)*lam_stp,lam_stp)
+    nL = len(lam_lst)
+
+    # conversions
+    rad2mas = np.pi/(180.*3600*1000)
+    mas2rad = 1/rad2mas
+
+    # fov in mas
+    fov_mas = nImg * pscale
+    # field of view in radians
+    fov_rdn = fov_mas * rad2mas
+    # in multiple of reference lambda (lam_ref) over D
+    mD_ref = fov_rdn / ( lam_ref / D )
+    
+    # Focal plane mask
+    mask2d = uniform_disk(nFPM, nFPM/2.)
+    
+    # psf to fpm decentering in radians for legacy
     fpm_dec = fpm_dec_mas * rad2mas
-    # lyot stop angular position error in degres
-    ls_ape = 1
-    # lyot stop vertical - elevation - offset error in pixels
-    ls_voe = 0
-    # lyot stop horizontal - azimut - offset error in pixels
-    ls_hoe = 4
-    # ncpa phase screens
-    ncpa_rms = 30  #  nm
-    # defocus at fpm in nm RMS for reference wvl
-    fpm_dfe_elt = 30
+
     # fpm_dfe = 0 if fpm_dfe_elt = 0., computed dynamicaly otherwise
     fpm_dfe = fpm_dfe_elt * -1.
       
     # datetime of script execution
     donow = datetime.now().strftime("%Y%m%d%H%M%S")  #  asp, datetime of now
-    
-    print('\n', diam, obst, mB)
     print('date of now : ', donow)
     
     
@@ -224,11 +241,11 @@ if __name__ == "__main__":
     """
     ### Working directories
     """
-    user = 'Alain'
+    
     if user == 'Alain':
-        fdir_dat = Path("D:/Andes/Data_corono/data/").resolve()
-        fdir_res   = Path('D:/Andes/Data_corono/results/').resolve()
-        fdir_plt   = Path('D:/Andes/Data_corono/plots/').resolve()
+        fdir_dat = Path(usr_base+"/data/").resolve()
+        fdir_res   = Path(usr_base+"/results/").resolve()
+        fdir_plt   = Path(usr_base+"/plots/").resolve()
     
     #  elif user == 'toto':
     
@@ -258,8 +275,7 @@ if __name__ == "__main__":
     ncpa's, pupils, ncpa, defocus
     """
     # Filename and path for the ELT pupil
-    fname_elt = 'ELT_pupil_400.fits' # New pupil with new spider
-    fpath_elt = fdir_pupil / fname_elt
+    fpath_elt = fdir_pupil / fnm_eltp
     # Read ELT pupil 
     Pupil = fits.getdata(fpath_elt,)
     nPup = Pupil.shape[0]
@@ -277,10 +293,7 @@ if __name__ == "__main__":
     
     if ncpa_rms != 0:
         
-        print("NCPA [nm RMS]:",ncpa_rms)
-        
-        fnm = ('ncpa_unscaled_x2_ELT_pupil_400.fits')
-        ncpa_1 = fits.getdata(fdir_dat/fnm)
+        ncpa_1 = fits.getdata(fdir_dat/ncpa_fnm)
         nMap = ncpa_1.shape[0]
         
         N=nMap//2
@@ -313,9 +326,6 @@ if __name__ == "__main__":
         # update defocus phase screen to elt pupil shape with the required value
         dfc = dfc_temp.copy()    
         
-        print('elt pupil circumcircle input defocus:', np.round(fpm_dfe,3),\
-              ',\nelt pupil input defocus:', np.round(fpm_dfe_elt,3))
-    
     
     #%%
     '''
@@ -342,18 +352,10 @@ if __name__ == "__main__":
     ### working directory of the OPD files
     """
     #%%
-    
-    root = 'OPDs_PASSATA/OPD/WS/1kHzVarWS/'
-    opds_dir=(root+'1',#)
-              root+'2',
-              root+'3',
-              root+'4',
-              root+'5',
-              root+'6',
-              root+'7',
-              root+'8',
-              root+'9',
-              root+'10')
+    opds_dir=(dir_root+'1',  # )
+              dir_root+'2', dir_root+'3', dir_root+'4', dir_root+'5',
+              dir_root+'6', dir_root+'7', dir_root+'8', dir_root+'9',
+              dir_root+'10')
 
     for dir_nb in range(len(opds_dir)):
     
@@ -361,7 +363,6 @@ if __name__ == "__main__":
         fdir_opd   = new_spider_flare
         
         opd_set = os.path.basename(fdir_opd).split('.')[0]
-        print(opd_set)
         
         # opd_set='toto'
         os.makedirs(fdir_res / opd_set, exist_ok=True)
@@ -379,14 +380,14 @@ if __name__ == "__main__":
         flist_opd = sorted(flist_opd,key=len)
         # flist_opd = sorted(os.listdir(fdir_opd),key=len) 
         nof = len(flist_opd)
-        print("# of files in phase screens dir:", nof)
+        # print("# of files in phase screens dir:", nof)
         fpath_opd = [fdir_opd / flist_opd[i] for i in range(nof)]
         # fpath_opd = sorted(fpath_opd)
         nW = int(np.floor((nof/nOPD)+1))
         if nW>2:
             fpath_opd = [fpath_opd[i] for i in range(1,nof,nW)]
         nOPD = len(fpath_opd)
-        print('sample size of OPD files:', nOPD)
+        # print('sample size of OPD files:', nOPD)
         
         
         #%%
@@ -400,11 +401,11 @@ if __name__ == "__main__":
         # pour jeu fichier fits unique, e.g: OPDs_PASSATA/OPD/WS/ASI_*
         if nof < 2:
             start = int((OPD_arr.shape)[3]/5)
-            print("skip:", start)
+            # print("skip:", start)
             OPD_arr = OPD_arr[0,:,:,start:]
             OPD_arr = np.transpose(OPD_arr,(2,0,1))
             nOPD = OPD_arr.shape[0]
-            print("phase screen array shape from single file: ", OPD_arr.shape)
+            # print("phase screen array shape from single file: ", OPD_arr.shape)
         else:
             print("phase screen array shape from set of files: ",OPD_arr.shape)
            
@@ -412,27 +413,27 @@ if __name__ == "__main__":
         
         if ncpa_rms != 0:
             
-            fnm = ('ncpa_ELT_pupil_400_30nm_4096screens.fits')
-            ncpa_1 = fits.getdata(fdir_dat/fnm)             
-            # rnd=np.random.randn(nOPD)
-            # rnd /= 2.
-            # xi=np.round(rnd*hlf/np.max([-np.min(rnd),np.max(rnd)])).astype(int)
+            # fnm = ('ncpa_ELT_pupil_400_30nm_4096screens.fits')
+            # ncpa_1 = fits.getdata(fdir_dat/fnm)             
+            rnd=np.random.randn(nOPD)
+            rnd /= 2.
+            xi=np.round(rnd*hlf/np.max([-np.min(rnd),np.max(rnd)])).astype(int)
             
-            # rnd=np.random.randn(nOPD)
-            # rnd /= 2.
-            # yi=np.round(rnd*hlf/np.max([-np.min(rnd),np.max(rnd)])).astype(int)
+            rnd=np.random.randn(nOPD)
+            rnd /= 2.
+            yi=np.round(rnd*hlf/np.max([-np.min(rnd),np.max(rnd)])).astype(int)
     
             for n in range(nOPD):
                 
-                # temp = ((ncpa_1[hlf+xi[n]:hlf+N+xi[n],
-                #                 hlf+yi[n]:hlf+N+yi[n]]).copy() * Pupil.copy())
+                # OPD_arr[n,:,:] += ncpa_1[n,:,:] * Pupil.copy()
+                temp = ((ncpa_1[hlf+xi[n]:hlf+N+xi[n],
+                                hlf+yi[n]:hlf+N+yi[n]]).copy() * Pupil.copy())
                 
-                # temp -= np.mean(temp[ipup])
-                # temp /= np.std(temp[ipup])
-                # temp *= float(ncpa_rms) * 1e-9
-                # OPD_arr[n,:,:] += temp.copy() * Pupil.copy()
-                # temp *= 0.
-                OPD_arr[n,:,:] += ncpa_1[n,:,:] * Pupil.copy()
+                temp -= np.mean(temp[ipup])
+                temp /= np.std(temp[ipup])
+                temp *= float(ncpa_rms) * 1e-9
+                OPD_arr[n,:,:] += temp.copy() * Pupil.copy()
+                temp *= 0.
     
         mp.set_start_method("spawn", force=True)
     
@@ -474,7 +475,7 @@ if __name__ == "__main__":
              shm_pupil.name, Pupil.shape, Pupil.dtype,
              shm_lyot.name, LyotStop2d.shape, LyotStop2d.dtype,
              mask2d, fpm_dec, dfc, sf_y, D, diam, nPup,
-             nImg, nFPM, mB, lamC, mD_ref, disp, rad2mas)
+             nImg, nFPM, mB, lam_ref, mD_ref, disp, rad2mas)
             for i in range(nL)
         ]
     
@@ -533,7 +534,7 @@ if __name__ == "__main__":
                     'LMIN':(lam_min,'wavelength in meters'),
                     'LITV':(lam_itv,'# of wvl intervals'),
                     'LSTP':(lam_stp,'wvl step in meters'),
-                    'LMBD':(lamC,'reference wvl in meters'),
+                    'LMBD':(lam_ref,'reference wvl in meters'),
                     'DIAM':(D,'pupil dimater in meters'),
                     'PSCL':(pscale,'plate scale in mas'),
                     'SFPM':(mB,'FPM (LMBD/D), first focal plane'),
@@ -549,8 +550,10 @@ if __name__ == "__main__":
                     'LSHE':(ls_hoe,'lyot stop horizontal offset error in pixels'),
                     'ELT_DFOC':(fpm_dfe_elt,'elt pupil defocus in nm RMS at LMBD'),
                     'DIAM_DFC':(fpm_dfe,'pup. circumcirc. defocus nm RMS at LMBD'),
-                    'EPUP_FNM':(fname_elt,'ELT pupil filename'),
-                    'DATE_NOW':(donow,'date of now, i.e. script execution date')}
+                    'EPUP_FNM':(fnm_eltp,'ELT pupil filename'),
+                    'DATE_NOW':(donow,'date of now: script execution date'),
+                    'DIR_ROOT':(dir_root,'root of OA residuals data'),
+                    'NCPA_FNM':(ncpa_fnm,'filename for ncpa generation')}
 
         for fpath in fpath_psf_lst:
             for n, k in enumerate(hdr_keys):
@@ -559,5 +562,3 @@ if __name__ == "__main__":
     # datetime of script execution
     donow = datetime.now().strftime("%Y%m%d%H%M%S")  #  asp, datetime of now
     
-    print('\n', diam, obst, mB)
-    print('date of now : ', donow)
