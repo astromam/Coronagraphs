@@ -1,12 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Mon May  6 22:50:10 2019
+Created on Fri Apr 24 15:48:19 2026
 
-Author: Mamadou N'Diaye <mamadou.ndiaye@oca.eu> (https://github.com/astromam)
-
-License: MIT license
-
+@author: mndiaye
 """
 
 import numpy as np
@@ -24,7 +21,7 @@ import pylab as pl
 """
 Parameters
 """
-corono_name  = 'DZPM' # 'APLC' or 'SP' or 'HDZPM' or 'HTZPM'
+corono_name  = 'HTZPM' # 'APLC' or 'SP' or 'HDZPM' or 'HTZPM'
 problem_name = 'MaxContrastL1' # 'MaxContrastLinf' # , 'MaxContrastL1' # ,
 solver       = 'gurobipy' # 'stdgrb', 'gurobipy', 'scipy.linprog'
 slvLogToConsole = 0
@@ -45,26 +42,27 @@ nImg = 66
 Fmax = 22
 R    = 1
 
-bw   = 0.2
+bw   = 0.10
 nlam = 3
 
 PupilID    = 0. # 0.14
 rMask      = 4.0
 
-rMask1      = 3.0
+rMask1      = 0.50
 rMask2      = 0.25
-OPDx1       = 0.25
-OPDx2       = 0.75
-ome1 = -2.34
-ome2 = 2.051
-beta = -0.236
+rMask3      = 0.25
+OPDx2       = 0.25
+OPDx3       = 0.75
+ome1        = -2.34
+ome2        = 2.051
+beta        = -0.236
 
 LyotStopID = 0. #0.14
 LyotStopOD = 1.0
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
-rho0 = 0.0
-rho1 = 10.0
+rho0 = 4.0
+rho1 = 6.0
 
 # contrast in the dark region
 cDarkHole = 10.0
@@ -83,8 +81,8 @@ params = coro.to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
                  nPup = nPup, nFPM=nFPM, nImg=nImg, Fmax = Fmax,
                  bw = bw, nlam = nlam,
                  PupilID = PupilID, rMask = rMask, 
-                 rMask1 = rMask1, rMask2 = rMask2, 
-                 OPDx1 = OPDx1, OPDx2 = OPDx2,
+                 rMask1 = rMask1, rMask2 = rMask2, rMask3 = rMask3,
+                 OPDx2 = OPDx2, OPDx3 = OPDx3,
                  ome1 = ome1, ome2= ome2, beta = beta,
                  LyotStopID = LyotStopID,
                  LyotStopOD = LyotStopOD,
@@ -110,10 +108,10 @@ if not os.path.exists(fdir):
 Coronagraph defintion
 """
 
-if corono_name == 'DZPM':
-    corono0 = coro.design.DZPM1d(**params)
+if corono_name == 'HTZPM':
+    corono0 = coro.design.HTZPM1d(**params)
 else:
-    raise NameError('{0}: Not a DZPM!'.format(corono_name))
+    raise NameError('{0}: Not a HTZPM!'.format(corono_name))
 
 #%%
 """
@@ -143,10 +141,10 @@ t0 = time.time()
 """
 Parameter boundaries
 """
-if corono_name == 'DZPM':
-    x_init = [rMask1, rMask2, OPDx1, OPDx2, ome1, ome2, beta, LyotStopID, LyotStopOD]
-    x_lb   = [0.3, 0.0, 0.1, 0.5, -2.5, 1.5, -0.3, 0.0, 0.8]
-    x_ub   = [0.6, 0.5, 0.5, 1.0, -1.5, 2.5, -0.1, 0.0, 1.0]        
+if corono_name == 'HTZPM':
+    x_init = [rMask1, rMask2, rMask3, OPDx2, OPDx3, ome1, ome2, beta, LyotStopID, LyotStopOD]
+    x_lb   = [0.7, 0.0, 0.0, 0.0, 0.0, -3.5, 0.5, -1.0, 0.0, 0.6]
+    x_ub   = [1.0, 1.0, 1.0, 1.0, 1.0, -0.5, 3.5,  1.0, 0.0, 1.0]        
 else:    
     raise NameError('{0}: Not a correct coronagraph for NM-optimization!'.format(corono_name))    
     
@@ -158,20 +156,22 @@ else:
 def res_energy_with_lp(x_t): 
     x_t = np.maximum(x_lb,np.minimum(x_ub,x_t))
         
-    if corono_name == 'DZPM':
-        rMask1, OPDx1, OPDx2, ome1, ome2, beta, LyotStopID, LyotStopOD = [x_t[i] for i in {0,2,3,4,5,6,7,8}]
+    if corono_name == 'HTZPM':
+        rMask1, OPDx2, OPDx3, ome1, ome2, beta, LyotStopID, LyotStopOD = [x_t[i] for i in {0,3,4,5,6,7,8,9}]
         rMask2      = rMask1 + x_t[1]
+        rMask3      = rMask1 + x_t[1] + x_t[2]
         
         LyotStop1d   = (r>LyotStopID)*(r<LyotStopOD)*1.0
-        params2 = coro.update_params(params, rMask1 = rMask1, rMask2 = rMask2,
-                                     OPDx1 = OPDx1, OPDx2 = OPDx2, 
+        params2 = coro.update_params(params, 
+                                     rMask1 = rMask1, rMask2 = rMask2, rMask3 = rMask3,
+                                     OPDx2 = OPDx2, OPDx3 = OPDx3, 
                                      ome1 = ome1, ome2 = ome2, beta = beta,
                                      LyotStop1d = LyotStop1d, LyotStopID = LyotStopID, 
                                      LyotStopOD = LyotStopOD) 
         
-        corono0 = coro.design.DZPM1d(**params2)
+        corono0 = coro.design.HTZPM1d(**params2)
     else:
-        raise NameError('{0}: Not a DZPM for NM-optimization!'.format(corono_name))    
+        raise NameError('{0}: Not a HTZPM for NM-optimization!'.format(corono_name))    
     
     """
     Problem defintion

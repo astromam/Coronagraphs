@@ -65,7 +65,7 @@ if True:
     rho1 = 30.0
     
     # contrast in the dark region
-    cDarkHole = 6.0
+    cDarkHole = 8.0
     
     # tau (integrated Pupil transmission)
     tau   = 0.500 # 0.700 #  0.756/0.954 #0.756

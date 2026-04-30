@@ -19,7 +19,7 @@ import corono as coro
 """
 Parameters
 """
-corono_name  = 'DZPM' # 'APLC' or 'SP' or 'HDZPM' or 'HTZPM'
+corono_name  = 'HTZPM' # 'APLC' or 'SP' or 'HDZPM' or 'HTZPM'
 problem_name = 'MaxContrastL1'#'MaxContrastLinf' # ,'MaxContrastL1' # #  'MaxContrastL1', 
 solver       = 'gurobipy' # 'stdgrb', 'gurobipy', 'scipy.linprog'
 slvLogToConsole = 0
@@ -40,7 +40,7 @@ nImg = 220
 Fmax = 22
 R    = 1
 
-bw   = 0.2
+bw   = 0.10
 nlam = 3
 nlambis = 11
 
@@ -48,10 +48,11 @@ PupilID    = 0.
 
 rMask       = 4.0  #2.3 or 4.0
 
-rMask1      = 3.0
+rMask1      = 0.50
 rMask2      = 0.25
-OPDx1       = 0.25
-OPDx2       = 0.75
+rMask3      = 0.25
+OPDx2       = 0.25
+OPDx3       = 0.75
 ome1 = -2.34
 ome2 = 2.051
 beta = -0.236
@@ -60,8 +61,8 @@ LyotStopID = 0.
 LyotStopOD = 1.0
 
 # dark zone bounds (inner and outer edges) in lam0/D unit
-rho0 = 0.0
-rho1 = 10.0
+rho0 = 4.0
+rho1 = 6.0
 
 # contrast in the dark region
 cDarkHole = 10.0
@@ -80,8 +81,8 @@ params = coro.to_dict(rho0=rho0, rho1=rho1, cDarkHole=cDarkHole, tau=tau,
                  nPup = nPup, nFPM=nFPM, nImg=nImg, Fmax = Fmax,
                  bw = bw, nlam = nlam,
                  PupilID = PupilID, rMask = rMask, 
-                 rMask1 = rMask1, rMask2 = rMask2,
-                 OPDx1 = OPDx1, OPDx2 = OPDx2,
+                 rMask1 = rMask1, rMask2 = rMask2, rMask3 = rMask3,
+                 OPDx2 = OPDx2, OPDx3 = OPDx3,
                  ome1 = ome1, ome2= ome2, beta = beta,
                  LyotStopID = LyotStopID,
                  LyotStopOD = LyotStopOD,
@@ -114,10 +115,10 @@ if not os.path.exists(fdir_pyth):
 Coronagraph defintion
 """
 
-if corono_name == 'DZPM':
-    corono0 = coro.design.DZPM1d(**params)
+if corono_name == 'HTZPM':
+    corono0 = coro.design.HTZPM1d(**params)
 else:
-    raise NameError('{0}: Not a DZPM!'.format(corono_name))
+    raise NameError('{0}: Not a HTZPM!'.format(corono_name))
     
 #%%
 """
@@ -141,13 +142,15 @@ fname_pyth_nm0 = fname_gen + '_nm0.dat'
 fpath_pyth_nm0 = fdir_pyth / fname_pyth_nm0 
 x_end = np.loadtxt(fpath_pyth_nm0)
 
-if corono_name == 'DZPM': 
-    rMask1, OPDx1, OPDx2, ome1, ome2, beta, LyotStopID, LyotStopOD = [x_end[i] for i in {0,2,3,4,5,6,7,8}]
+if corono_name == 'HTZPM': 
+    rMask1, OPDx2, OPDx3, ome1, ome2, beta, LyotStopID, LyotStopOD = [x_end[i] for i in {0,3,4,5,6,7,8,9}]
     rMask2      = rMask1 + x_end[1]
+    rMask3      = rMask1 + x_end[1] + x_end[2]
     print('mask diameter 1         : {0:.3f} lambda_0/D'.format(2*rMask1))
     print('mask diameter 2         : {0:.3f} lambda_0/D'.format(2*rMask2))
-    print('OPD 1                 : {0:.3f} lambda_0'.format(OPDx1))
+    print('mask diameter 3         : {0:.3f} lambda_0/D'.format(2*rMask3))
     print('OPD 2                 : {0:.3f} lambda_0'.format(OPDx2))
+    print('OPD 3                 : {0:.3f} lambda_0'.format(OPDx3))
     print('ome 1                 : {0:.3f} '.format(ome1))
     print('ome 2                 : {0:.3f} '.format(ome2))
     print('beta                  : {0:.3f} lambda_0'.format(beta))
@@ -161,8 +164,8 @@ r   = np.arange(nPup)*R/nPup + R/(2*nPup)
 Pupil1d      = (r>PupilID)*1.0
 LyotStop1d   = (r>LyotStopID)*(r<LyotStopOD)*1.0
 
-params = coro.update_params(params, rMask1 = rMask1, rMask2 = rMask2,
-                                     OPDx1 = OPDx1, OPDx2 = OPDx2, 
+params = coro.update_params(params, rMask1 = rMask1, rMask2 = rMask2, rMask3 = rMask3,
+                                     OPDx2 = OPDx2, OPDx3 = OPDx3, 
                                      ome1 = ome1, ome2 = ome2, beta = beta, 
                                      LyotStop1d = LyotStop1d, LyotStopID = LyotStopID, 
                                      LyotStopOD = LyotStopOD) 
@@ -172,10 +175,12 @@ params = coro.update_params(params, rMask1 = rMask1, rMask2 = rMask2,
 """
 Apodizer solutions
 """
-fname_pyth = problem0.get_filename() + '_tmp.dat'
-fpath_pyth = fdir_pyth / fname_pyth
-test0 = np.loadtxt(fpath_pyth)
-Apod_pyth = test0[:, 1]
+#fname_pyth = problem0.get_filename() + '_tmp.dat'
+#fpath_pyth = fdir_pyth / fname_pyth
+#test0 = np.loadtxt(fpath_pyth)
+#Apod_pyth = test0[:, 1]
+
+Apod_pyth = 1 + ome1 *((r/2)**2-(PupilID/2)**2) + ome2 *((r/2)**4-(PupilID/2)**4)
 
 #%%
 """
@@ -216,10 +221,10 @@ Computation of the direct and coronagraphic images
 fname_gen  = problem0.get_filename(nlam=nlambis)
 params2    = coro.update_params(params, nlam=nlambis) 
 
-if corono_name == 'DZPM':
-    corono0 = coro.design.DZPM1d(**params2)
+if corono_name == 'HTZPM':
+    corono0 = coro.design.HTZPM1d(**params2)
 else:
-    raise NameError('{0}: Not a DZPM!'.format(corono_name))
+    raise NameError('{0}: Not a HTZPM!'.format(corono_name))
 
 poly_nostop_image1 = corono0.compute_nostop_intensity_1d()
 poly_direct_image1 = corono0.compute_direct_intensity_1d(Apod_pyth)
@@ -249,16 +254,16 @@ fname_pl = fname_gen + '_intensity_test_nm0.pdf'
 fpath = fdir_plot / fname_pl
 plt.figure(2)
 plt.clf()
-plt.title('Broadband intensity profiles of the DZPM coronagraphic image')
+plt.title('Broadband intensity profiles of the HTZPM coronagraphic image')
 #plt.semilogy(corono0.xi,poly_direct_image1/poly_direct_image1.max(),label='Direct')
 #plt.semilogy(corono0.xi,poly_direct_image2/poly_direct_image2.max(),label='Direct')
 #plt.semilogy(corono0.xi,poly_direct_image3/poly_direct_image3.max(),label='Direct')
 plt.semilogy(corono0.xi,poly_corono_image1/poly_direct_image1.max())
-if corono_name == 'DZPM':
+if corono_name == 'HTZPM':
     plt.axvline(x=corono0.rMask1, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
     plt.axvline(x=corono0.rMask2, ymin=-12, ymax =2, linewidth=1, color='g', linestyle='--')    
 else:
-    raise NameError('{0}: Not a DZPM!'.format(corono_name))
+    raise NameError('{0}: Not a HTZPM!'.format(corono_name))
 
 plt.axvline(x=corono0.rho0, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
 plt.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
@@ -283,18 +288,18 @@ fname_pl = fname_gen + '_intensity_mono_test_nm0.pdf'
 fpath = fdir_plot / fname_pl
 plt.figure(3)
 plt.clf()
-plt.title('Monochromatic intensity profile of the DZPM coronagraphic images')
+plt.title('Monochromatic intensity profile of the HTZPM coronagraphic images')
 #plt.semilogy(corono0.xi,poly_direct_image1/poly_direct_image1.max(),label='Direct')
 #plt.semilogy(corono0.xi,poly_direct_image2/poly_direct_image2.max(),label='Direct')
 #plt.semilogy(corono0.xi,poly_direct_image3/poly_direct_image3.max(),label='Direct')
 for i in range(corono0.nlam):
     plt.semilogy(corono0.xi,mono_corono_image1[i]/mono_direct_image1[(corono0.nlam+1)//2].max(), 
                 label=r'{0:.2f}$\lambda_0$'.format(corono0.lam_t[i]), color = colors[i])
-if corono_name == 'DZPM':
+if corono_name == 'HTZPM':
     plt.axvline(x=corono0.rMask1, ymin=-12, ymax =2, linewidth=1, color='r', linestyle='--')
     plt.axvline(x=corono0.rMask2, ymin=-12, ymax =2, linewidth=1, color='g', linestyle='--')    
 else:
-    raise NameError('{0}: Not a DZPM!'.format(corono_name))
+    raise NameError('{0}: Not a HTZPM!'.format(corono_name))
 
 plt.axvline(x=corono0.rho0, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
 plt.axvline(x=corono0.rho1, ymin=-12, ymax =2, linewidth=1, color='b', linestyle='--')
