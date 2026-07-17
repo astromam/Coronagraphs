@@ -28,8 +28,12 @@ from mpl_toolkits.axes_grid1 import AxesGrid
 
 from scipy.optimize import curve_fit
 
-# from astropy.io import fits
+import os
 
+from datetime import datetime
+
+donow = datetime.now().strftime("%Y%m%d%H%M%S")  #  asp, datetime of now
+print('date of now : ', donow)
 
 #%%
 """
@@ -45,23 +49,33 @@ nFPM = 50
 nImg = 400
 
 # wavelength in m
-#wv = 1600e-9 #1600e-9
+wv = 1600e-9 #1600e-9
+lam_ref = wv
 
 #wv_t = np.array([960e-9, 1280e-9, 1440e-9, 1600e-9, 1760e-9])    #(900 + 100*np.arange(3))*1e-9 
-wv_t = np.array([1000e-9, 1200e-9, 1400e-9, 1600e-9, 1800e-9])    #(900 + 100*np.arange(3))*1e-9 
+    
+lam_min = 950e-9
+lam_stp = 50e-9
+lam_itv = 18 
+wv_t = np.arange(lam_min,lam_min+(lam_itv)*lam_stp+1e-9,lam_stp)
+nL = len(wv_t)
 
+# wv_t = np.array([9.50e-07, 1.00e-06, 1.05e-06, 1.10e-06, 1.15e-06, 1.20e-06,
+#                  1.25e-06, 1.30e-06, 1.35e-06, 1.40e-06, 1.45e-06, 1.50e-06,
+#                  1.55e-06, 1.60e-06, 1.65e-06, 1.70e-06, 1.75e-06, 1.80e-06,
+#                  1.85e-06])
 
 nwv = np.shape(wv_t)[0]
 
 # Pupil diameter in m 
 D = 38.54
 
-# conversion lradian to mas
+# conversion radian to mas
 rad2mas = np.pi/(180.*3600*1000)
 mas2rad = 1/rad2mas
 
 # conversion lam/D to mas
-#lamD2mas = (wv/D)*mas2rad
+lamD2mas = (wv/D)*mas2rad
 
 lamD2mas_t = (wv_t/D)*mas2rad
 
@@ -69,7 +83,8 @@ lamD2mas_t = (wv_t/D)*mas2rad
 pscale = 0.3
 
 # FPM size in lam/D in the focal plane B
-dMask_mas = 34.3 * 3.9 / 4.0
+mB = 3.9
+dMask_mas = mB * lamD2mas # 34.3 * 3.9 / 4.0 # 34.3 = 4 lambda/D @ 1600 nm
 rMask_mas = dMask_mas/2.
 #mB = rMask_mas/lamD2mas
 #rMask = mB/2.
@@ -78,8 +93,12 @@ mB_t = dMask_mas/lamD2mas_t
 
 # FoV in lam/D in the final image plane D
 #mD = 120/lamD2mas #*(nImg/wv)
-FoV_mas = 130
+# FoV_mas = 130
+FoV_mas = nImg * pscale
+
 mD_t = FoV_mas/lamD2mas_t
+
+spxl = 7 # spaxel diameter for integration, in mas
 
 # save fits 
 do_sav_fits = True 
@@ -110,12 +129,22 @@ y2=rMask_mas
 user = 'Alain'
 if user == 'Alain':
     fdir = Path("D:/Andes/Data_corono/data/").resolve()  # opd's seed value
-    fdir_res   = Path('D:/Andes/Data_corono/results/').resolve()  #  fits data
-    fdir_plt   = Path('D:/Andes/Data_corono/plots/').resolve()   #  plots
-    fdir_mov = Path("D:/Andes/Data_corono/results/").resolve()
+    fdir_res   = Path('D:/Andes/Data_corono/results/throughput/').resolve()  #  fits data
+    fdir_plt   = Path('D:/Andes/Data_corono/plots/throughput/').resolve()   #  plots
+    fdir_mov = Path("D:/Andes/Data_corono/results/throughput/").resolve()
     
+fdir_res = fdir_res / donow
+fdir_plt = fdir_plt / donow
+fdir_mov = fdir_mov / donow
+
+os.makedirs(fdir_res, exist_ok=True)
+os.makedirs(fdir_plt, exist_ok=True)
+os.makedirs(fdir_mov, exist_ok=True)
+os.makedirs((fdir_res / 'planet_images'), exist_ok=True)
 
 fname_pup = 'Pupil\ELT_pupil_400.fits'
+fnm_eltp = fname_pup
+
 # fname_lys = 'lyotStop_90_37_7.fits'
 
 fpath_pup = fdir / fname_pup
@@ -125,17 +154,63 @@ fpath_pup = fdir / fname_pup
 """
 ### Read file 
 """
-Pupil2d = fits.getdata(fpath_pup)
+Pupil2d = fits.getdata(fpath_pup) * 1.
 # LyotStop2d = fits.getdata(fpath_lys)
 
 diam = 0.89
 obst = 0.35
 
-LyotStop2d = Pupil2d * 0.
+# LyotStop2d = Pupil2d * 0.
 
 LyotStop2d = (Pupil2d.copy() * (uniform_disk(nPup, diam*nPup/2) -
-                              uniform_disk(nPup, obst*nPup/2)))
-            
+                              uniform_disk(nPup, obst*nPup/2)) * 1.)
+
+
+#%%
+"""
+### Planet image in monochormatic light
+"""   
+# vector of angular separation for the computation of planet transmission
+sep_mas_min  = 0.0
+sep_mas_max  = FoV_mas / 2 # 62.5 # Fmax2dbis_t[0]//2-1.
+sep_mas_stp  = pscale # 0.25 # 0.125  #Fmax2dbis_t[0]/nImg2dbis #0.5
+
+# array of angular separations
+nsep     = int(round(1+(sep_mas_max-sep_mas_min)/sep_mas_stp))
+sep_mas_arr  = sep_mas_min + sep_mas_stp*np.arange(nsep)
+print('{0:5d} sep'.format(nsep))
+
+# array of angular distances in the final image plane
+xx,yy   = np.meshgrid(np.arange(nPup)-nPup/2, np.arange(nPup)-nPup/2)
+rr      = (2./float(nPup))*np.hypot(yy,xx)
+theta   = np.arctan2(yy,xx)
+Z       = 2.*rr*np.cos(theta)*Pupil2d  
+
+
+#%%
+"""
+### header keys for fits files
+"""
+hdr_keys = {'NPUP':(nPup,'pupil size'),
+            'NFPM':(nFPM,'FP coro. sampling'),
+            'NIMG':(nImg,'image size'),
+            'FOVS':(FoV_mas,'field of view in mas'),
+            'LMIN':(lam_min,'wavelength in meters'),
+            'LITV':(lam_itv,'# of wvl intervals'),
+            'LSTP':(lam_stp,'wvl step in meters'),
+            'LMBD':(lam_ref,'reference wvl in meters'),
+            'DIAM':(D,'pupil dimater in meters'),
+            'PSCL':(pscale,'plate scale in mas'),
+            'SFPM':(mB,'FPM (LMBD/D), first focal plane'),
+            'FDIA':(diam,'fractional pup. diameter'),
+            'OBST':(obst,'fractional obscuration'),
+            'EPUP_FNM':(fnm_eltp,'ELT pupil filename'),
+            'DATE_NOW':(donow,'date of now: script execution date'),
+            'SPXLDIAM':(spxl, 'spaxel diameter, in mas'),
+            'SMIN':(sep_mas_min,'minimum separation, in mas'),
+            'SMAX':(sep_mas_max,'maximum separation , in mas'),
+            'SSTP':(sep_mas_stp,'separation step, in mas')}
+
 #%%
 """
 ### Coronagraphic components
@@ -213,10 +288,10 @@ coro_throughput = EE_Lys/EE_Tel
 """
 ### Compute the coronagraph throughput (based on the energy in the re-imaged focal plane) (remember that the FoV is finite)
 """
-EE_Tel_bis = np.sum(Int_D_Tel_t_tmp[nwv//2])
-EE_Lys_bis = np.sum(Int_D_Lys_t_tmp[nwv//2])
+# EE_Tel_bis = np.sum(Int_D_Tel_t_tmp[nwv//2])
+# EE_Lys_bis = np.sum(Int_D_Lys_t_tmp[nwv//2])
 
-coro_throughput_bis = EE_Lys_bis/EE_Tel_bis
+# coro_throughput_bis = EE_Lys_bis/EE_Tel_bis
 
 
 #%%
@@ -249,26 +324,6 @@ for iwv in range(nwv):
     
     # Normalized intensity
     Int_D_t[iwv] = norm_peakD_Lys_t[iwv]*Int_D
-
-#%%
-"""
-### Planet image in monochormatic light
-"""   
-# vector of angular separation for the computation of planet transmission
-sep_mas_min  = 0.0
-sep_mas_max  = 62.5 #Fmax2dbis_t[0]//2-1.
-sep_mas_stp  = 0.125  #Fmax2dbis_t[0]/nImg2dbis #0.5
-
-# array of angular separations
-nsep     = int(round(1+(sep_mas_max-sep_mas_min)/sep_mas_stp))
-sep_mas_arr  = sep_mas_min + sep_mas_stp*np.arange(nsep)
-print('{0:5d} sep'.format(nsep))
-
-# array of angular distances in the final image plane
-xx,yy   = np.meshgrid(np.arange(nPup)-nPup/2, np.arange(nPup)-nPup/2)
-rr      = (2./float(nPup))*np.hypot(yy,xx)
-theta   = np.arctan2(yy,xx)
-Z       = 2.*rr*np.cos(theta)*Pupil2d  
 
 
 #%%
@@ -337,6 +392,7 @@ fpath_Int_D_pla_Tel = fdir_res / 'planet_images' / fname_Int_D_pla_Tel
 fname_Int_D_pla_Lys = 'andes_coro_planet_img_angsep_wvl_LyotstopPSFnorm.fits'
 fpath_Int_D_pla_Lys = fdir_res / 'planet_images' / fname_Int_D_pla_Lys
 
+
 #%%
 """
 ### Save files
@@ -346,12 +402,25 @@ fits.writeto(fpath_Int_D_pla_Tel, Int_D_pla_Tel_t, overwrite=True)
 # Planet image with normlisation wrt Lyot Stop
 fits.writeto(fpath_Int_D_pla_Lys, Int_D_pla_Lys_t, overwrite=True)
 
+for n, k in enumerate(hdr_keys):
+    
+    fits.setval(fpath_Int_D_pla_Tel,k,value=hdr_keys[k][0],
+                comment=hdr_keys[k][1])
+    fits.setval(fpath_Int_D_pla_Lys,k,value=hdr_keys[k][0],
+                comment=hdr_keys[k][1])
+
+
+
 #%%
 """
 ### Eta_S and Eta_P computation
 """
+
 # photometric aperture circular or ring radius in lam/D
-photaper_rad = 1.0
+
+photaper_rad = ( spxl / 2. ) / lamD2mas # 1.0
+
+photaper_diam = np.rint(photaper_rad*1000.)/1000.
 
 val = 0
 
@@ -359,8 +428,13 @@ val = 0
 xxi,yyi  = np.meshgrid(np.arange(nImg2dbis)-nImg2dbis//2+val, np.arange(nImg2dbis)-nImg2dbis//2+val)
 
 eta_P = np.zeros((nwv, nsep))
+eta_P_Lys = np.zeros((nwv, nsep))
+eta_P_Tot = np.zeros((nwv, nsep))
 eta_P0 = np.zeros((nwv))
+eta_P0_Lys = np.zeros((nwv))
+
 eta_P_norm = np.zeros((nwv, nsep))
+eta_P_norm_Lys = np.zeros((nwv, nsep))
 
 print('eta_P computation')
 t0 = time.time()
@@ -378,14 +452,54 @@ for iwv in range(nwv):
         circ_aper[ind_P] = 1.
         sum_circ_aper[isep] = np.sum(circ_aper)
         eta_P[iwv, isep] = np.sum(circ_aper*Int_D_pla_Tel_t[iwv, isep])/np.sum(circ_aper)
+        eta_P_Lys[iwv, isep] = np.sum(circ_aper*Int_D_pla_Lys_t[iwv, isep])/np.sum(circ_aper)
+        
 
         if isep == 0:
             eta_P0[iwv] = np.sum(circ_aper*Int_D_Tel_t[iwv])/np.sum(circ_aper)
+            eta_P0_Lys[iwv] = np.sum(circ_aper*Int_D_Lys_t[iwv])/np.sum(circ_aper)
         circ_aper[ind_P] = 0.
+        
     eta_P_norm[iwv] = eta_P[iwv]/eta_P0[iwv]
+    eta_P_norm_Lys[iwv] = eta_P_Lys[iwv]/eta_P0_Lys[iwv]
+    eta_P_Tot = eta_P * 1. # / EE_Tel
 
 t1 = time.time()
 print('computation time: {0}s'.format(t1-t0))
+
+#%%
+"""
+### Save planet throughput vs angular separation for different wavelengths
+"""
+fname_eta_p = 'andes_coro_planet_throughput.fits'
+fpath_eta_p = fdir_res / 'planet_images' / fname_eta_p
+
+fname_eta_p_norm = 'andes_coro_normalized_planet_througput.fits'
+fpath_eta_p_norm = fdir_res / 'planet_images' / fname_eta_p_norm
+
+fits.writeto(fpath_eta_p, eta_P, overwrite=True)
+fits.writeto(fpath_eta_p_norm, eta_P_norm, overwrite=True)
+
+
+fname_eta_p_Lys = 'andes_coro_planet_throughput_vs_LS.fits'
+fpath_eta_p_Lys = fdir_res / 'planet_images' / fname_eta_p_Lys
+
+fname_eta_p_norm_Lys = 'andes_coro_normalized_planet_througput_vs_LS.fits'
+fpath_eta_p_norm_Lys = fdir_res / 'planet_images' / fname_eta_p_norm_Lys
+
+fits.writeto(fpath_eta_p_Lys, eta_P_Lys, overwrite=True)
+fits.writeto(fpath_eta_p_norm_Lys, eta_P_norm_Lys, overwrite=True)
+
+# fname_eta_p_tot = 'andes_coro_planet_throughput_tot.fits'
+# fpath_eta_p_tot = fdir_res / 'planet_images' / fname_eta_p_tot
+
+
+for n, k in enumerate(hdr_keys):
+    
+    fits.setval(fpath_eta_p,k,value=hdr_keys[k][0], comment=hdr_keys[k][1])
+    fits.setval(fpath_eta_p_norm,k,value=hdr_keys[k][0], comment=hdr_keys[k][1])
+    fits.setval(fpath_eta_p_Lys,k,value=hdr_keys[k][0], comment=hdr_keys[k][1])
+    fits.setval(fpath_eta_p_norm_Lys,k,value=hdr_keys[k][0], comment=hdr_keys[k][1])
 
 
 #%%
@@ -417,52 +531,54 @@ fpath_images = fdir_plt / fname_images
 vmin0 = -5
 vmax0 = 0
 
-fig = plt.figure(1, figsize=(12,6))
-plt.clf()
+# fig = plt.figure(1, figsize=(12,6))
+# plt.clf()
 
-grid = AxesGrid(fig, 111,
-                nrows_ncols=(2, 2),
-                axes_pad=0.3,
-                cbar_mode='single',
-                cbar_location='right',
-                cbar_pad=0.2
-                )
+# grid = AxesGrid(fig, 111,
+#                 nrows_ncols=(2, 2),
+#                 axes_pad=0.3,
+#                 cbar_mode='single',
+#                 cbar_location='right',
+#                 cbar_pad=0.2
+#                 )
 
-# Perfect PSF
-im = grid[0].imshow(np.log10(Int_D_Lys_t[iwv0]), vmin=vmin0, vmax=vmax0, cmap='inferno')
-grid[0].set_title('perfect PSF')
-
-# Perfect coronagraphic image
-im = grid[1].imshow(np.log10(Int_D_t[iwv0]), vmin=vmin0, vmax=vmax0, cmap='inferno')
-grid[1].set_title('Perfect coro. image')
-
-# Perfect PSF
-# im = grid[2].imshow(np.log10(Int_DD0_t[0]), vmin=vmin0, vmax=vmax0, cmap='inferno')
+# # Perfect PSF
+# im = grid[0].imshow(np.log10(Int_D_Lys_t[iwv0]), vmin=vmin0, vmax=vmax0, cmap='inferno')
 # grid[0].set_title('perfect PSF')
 
-# Perfect coronagraphic image
-im = grid[3].imshow(np.log10(Int_D_pla_Lys_t[iwv0,isep0]), vmin=vmin0, vmax=vmax0, cmap='inferno')
-grid[1].set_title('Shifted coro. image')
+# # Perfect coronagraphic image
+# im = grid[1].imshow(np.log10(Int_D_t[iwv0]), vmin=vmin0, vmax=vmax0, cmap='inferno')
+# grid[1].set_title('Perfect coro. image')
 
-# colorbar
-cbar = grid[0].cax.colorbar(im)
-cbar = grid.cbar_axes[0].colorbar(im)
-cbar.ax.get_yaxis().labelpad = 15
-cbar.ax.set_ylabel('Intensity in log scale', rotation=270)
+# # Perfect PSF
+# # im = grid[2].imshow(np.log10(Int_DD0_t[0]), vmin=vmin0, vmax=vmax0, cmap='inferno')
+# # grid[0].set_title('perfect PSF')
 
-plt.tight_layout()
-if do_sav_plt:
-    plt.savefig(fpath_images)
+# # Perfect coronagraphic image
+# im = grid[3].imshow(np.log10(Int_D_pla_Lys_t[iwv0,isep0]), vmin=vmin0, vmax=vmax0, cmap='inferno')
+# grid[1].set_title('Shifted coro. image')
 
-plt.show()
+# # colorbar
+# cbar = grid[0].cax.colorbar(im)
+# cbar = grid.cbar_axes[0].colorbar(im)
+# cbar.ax.get_yaxis().labelpad = 15
+# cbar.ax.set_ylabel('Intensity in log scale', rotation=270)
+
+# plt.tight_layout()
+# if do_sav_plt:
+#     plt.savefig(fpath_images)
+
+# plt.show()
 
 #%%
 """
 ### Eta_p plot from the focal plane
 """
 
-fname_eta_p_abso_finite_pdf = f'eta_p_photaper_diam_{2*photaper_rad}lamD.pdf'
-fname_eta_p_abso_finite_png = f'eta_p_photaper_diam_{2*photaper_rad}lamD.png'
+# fname_eta_p_abso_finite_pdf = f'eta_p_photaper_diam_{2*photaper_rad}lamD.pdf'
+# fname_eta_p_abso_finite_png = f'eta_p_photaper_diam_{2*photaper_rad}lamD.png'
+fname_eta_p_abso_finite_pdf = f'eta_p_photaper_diam_{2.*photaper_diam}lamD.pdf'
+fname_eta_p_abso_finite_png = f'eta_p_photaper_diam_{2.*photaper_diam}lamD.png'
 fpath_eta_p_abso_finite_pdf = fdir_plt / fname_eta_p_abso_finite_pdf
 fpath_eta_p_abso_finite_png = fdir_plt / fname_eta_p_abso_finite_png
 
@@ -479,16 +595,88 @@ plt.ylabel(r'Planet throughput $\eta_P$')
 plt.xlim(-1, 66)
 plt.ylim(-0.02, 1.02)
 #plt.ylim(-3, 0.5)
-plt.title(f'{2*photaper_rad}$\lambda$/D-diameter photometric aperture')
+# plt.title(f'{2*photaper_rad}$\lambda$/D-diameter photometric aperture')
+plt.title(f'{2.*photaper_diam}$\lambda$/D-diameter photometric aperture')
 
 plt.fill_between(sep_mas_arr, y1, y2, where=(sep_mas_arr <= y2), color='grey', alpha=0.3)
 plt.grid()
-plt.legend(loc=4, fontsize=14)
+# plt.legend(loc=4, fontsize=14)
+plt.legend(loc=4, fontsize=7, ncols=2)
 plt.tight_layout()
 if do_sav_plt is True:
     plt.savefig(fpath_eta_p_abso_finite_pdf, transparent=True)
     plt.savefig(fpath_eta_p_abso_finite_png, transparent=True)
-    
+
+
+#%%
+"""
+### Eta_p vs Lyot Stop plot from the focal plane
+"""
+
+# fname_eta_p_abso_finite_pdf = f'eta_p_photaper_diam_{2*photaper_rad}lamD.pdf'
+# fname_eta_p_abso_finite_png = f'eta_p_photaper_diam_{2*photaper_rad}lamD.png'
+fname_eta_p_abso_finite_pdf = f'eta_p_photaper_diam_{2.*photaper_diam}lamD_vs_LS.pdf'
+fname_eta_p_abso_finite_png = f'eta_p_photaper_diam_{2.*photaper_diam}lamD_vs_LS.png'
+fpath_eta_p_abso_finite_pdf = fdir_plt / fname_eta_p_abso_finite_pdf
+fpath_eta_p_abso_finite_png = fdir_plt / fname_eta_p_abso_finite_png
+
+sep_lim = 55
+
+plt.figure(41, (8, 4.5))
+plt.clf()
+for iwv in range(nwv):
+    plt.plot(sep_mas_arr[sep_mas_arr < sep_lim], eta_P_norm_Lys[iwv, sep_mas_arr < sep_lim], label=f'$\lambda$={int(np.round(wv_t[iwv]*1e9)):4d}nm', color=colors[iwv])
+#    plt.axvline(x=IWA_mas_t[iwv], ymin=0, ymax =1, linewidth=1, linestyle='--', color=colors[iwv])
+#    plt.axhline(y=0.5, xmin=0, xmax = np.max(sep_mas_arr), linewidth=1, color='k', linestyle='--')
+plt.xlabel('Angular separation in mas')
+plt.ylabel(r'Planet throughput $\eta_P$')
+plt.xlim(-1, 66)
+plt.ylim(-0.02, 1.02)
+#plt.ylim(-3, 0.5)
+# plt.title(f'{2*photaper_rad}$\lambda$/D-diameter photometric aperture')
+plt.title(f'{2.*photaper_diam}$\lambda$/D-diameter photometric aperture')
+
+plt.fill_between(sep_mas_arr, y1, y2, where=(sep_mas_arr <= y2), color='grey', alpha=0.3)
+plt.grid()
+# plt.legend(loc=4, fontsize=14)
+plt.legend(loc=4, fontsize=7, ncols=2)
+plt.tight_layout()
+if do_sav_plt is True:
+    plt.savefig(fpath_eta_p_abso_finite_pdf, transparent=True)
+    plt.savefig(fpath_eta_p_abso_finite_png, transparent=True)
+
+
+fname_eta_p_tot_pdf = f'eta_p_tot_photaper_diam_{2.*photaper_diam}lamD_.pdf'
+fname_eta_p_tot_png = f'eta_p_tot_photaper_diam_{2.*photaper_diam}lamD_.png'
+fpath_eta_p_tot_pdf = fdir_plt / fname_eta_p_tot_pdf
+fpath_eta_p_tot_png = fdir_plt / fname_eta_p_tot_png
+
+sep_lim = 55
+        
+plt.figure(43, (8, 4.5))
+plt.clf()
+for iwv in range(nwv):
+    plt.plot(sep_mas_arr[sep_mas_arr < sep_lim], eta_P[iwv, sep_mas_arr < sep_lim], label=f'$\lambda$={int(np.round(wv_t[iwv]*1e9)):4d}nm', color=colors[iwv])
+#    plt.axvline(x=IWA_mas_t[iwv], ymin=0, ymax =1, linewidth=1, linestyle='--', color=colors[iwv])
+#    plt.axhline(y=0.5, xmin=0, xmax = np.max(sep_mas_arr), linewidth=1, color='k', linestyle='--')
+plt.xlabel('Angular separation in mas')
+plt.ylabel(r'Planet throughput $\eta_P$')
+plt.xlim(-1, 66)
+plt.ylim(0.45, 0.5)
+#plt.ylim(-3, 0.5)
+# plt.title(f'{2*photaper_rad}$\lambda$/D-diameter photometric aperture')
+plt.title(f'{2.*photaper_diam}$\lambda$/D-diameter photometric aperture')
+
+plt.fill_between(sep_mas_arr, y1, y2, where=(sep_mas_arr <= y2), color='grey', alpha=0.3)
+plt.grid()
+# plt.legend(loc=4, fontsize=14)
+# plt.legend(loc=1, fontsize=7, ncols=2)
+
+if do_sav_plt is True:
+    plt.savefig(fpath_eta_p_tot_pdf, transparent=True)
+    plt.savefig(fpath_eta_p_tot_png, transparent=True)
+
+
 #%%
 """
 ### polynomial fit
@@ -560,7 +748,8 @@ plt.text(IWA3_mas_t[nwv//2]+0.2, 0.025, 'IWA')
 
 plt.fill_between(sep_mas_arr, y1, y2, where=(sep_mas_arr <= y2), color='grey', alpha=0.3)
 plt.grid()
-plt.legend(loc=4, fontsize=14)
+# plt.legend(loc=4, fontsize=14)
+plt.legend(loc=4, fontsize=7, ncols=2)
 plt.tight_layout()
 if do_sav_plt is True:
     plt.savefig(fpath_eta_p_norm_pdf, transparent=True)
@@ -595,7 +784,8 @@ plt.text(IWA3_mas_t[nwv//2]+0.2, 0.025, 'IWA')
 
 plt.fill_between(sep_mas_arr, y1, y2, where=(sep_mas_arr <= y2), color='grey', alpha=0.3)
 plt.grid()
-plt.legend(loc=4, fontsize=14)
+# plt.legend(loc=4, fontsize=14)
+plt.legend(loc=4, fontsize=7, ncols=2)
 plt.tight_layout()
 if do_sav_plt is True:
     plt.savefig(fpath_eta_p_abso_pdf, transparent=True)
@@ -604,7 +794,7 @@ if do_sav_plt is True:
 #%%
 iwv0 = 3
 
-
+fig = plt.figure(2, figsize=(6,5))
 for isep in range(nsep):
     
         fname_movie_frame = f'frame_{isep:04d}.png'
@@ -620,7 +810,7 @@ for isep in range(nsep):
         vmin0 = -5
         vmax0 = 0
         
-        fig = plt.figure(2, figsize=(6,5))
+        # fig = plt.figure(2, figsize=(6,5))
         plt.clf()
         
         grid = AxesGrid(fig, 111,
