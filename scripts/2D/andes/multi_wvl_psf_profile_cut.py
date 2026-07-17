@@ -23,6 +23,7 @@ plt.rcParams.update({'font.size': 14})  #  mdiaye 15!
 
 avoid_k = True
 
+cp = False # over plot psf if True
 
 #%%
 """
@@ -48,7 +49,7 @@ if user == 'Alain':
     
 # elif user == 'toto':
 
-was_donow = '20260224120818'
+was_donow = '20251001085445'
 
 fdir_res = fdir_res / was_donow
 fdir_plt = fdir_plt / was_donow
@@ -129,16 +130,18 @@ fdir_plt = fdir_plt / was_donow
 #           root+'20250707_114321.0',
 #           'perfect')
 root = 'OPDs_PASSATA/OPD/WS/1kHzVarWS/'
-opds_dir=(root+'1',
-          root+'2',
-          root+'3',
-          root+'4',
-          root+'5',
-          root+'6',
-          root+'7',
-          root+'8',
-          root+'9',
-          root+'10','perfect')
+# opds_dir=(root+'1', 'perfect')
+
+opds_dir=(root+'1-10',)
+          # root+'2',
+          # root+'3',
+          # root+'4',
+          # root+'5',
+          # root+'6',
+          # root+'7',
+          # root+'8',
+          # root+'9',
+          # root+'10','perfect')
 
 
 #%%
@@ -394,9 +397,11 @@ for dir_nb in range(len(opds_dir)):
             # for i in range(0,nL,2):
             # for i in range(6):
 
-                # AO corrected psf 
-                # plt.plot(aS, Int_D0_psf_prf[iD[i],1,:], color=colors[iD[i]], alpha=0.5,
-                #           ls='--')
+                if cp:
+                    
+                    # AO corrected psf 
+                    plt.plot(aS, Int_D0_psf_prf[iD[i],1,:],
+                             color=colors[iD[i]], alpha=0.5, ls='--')
                 
                 # AO corrected coronagraphic psf 
                 plt.plot(aS, Int_D_psf_prf[iD[i],1,:],
@@ -412,6 +417,11 @@ for dir_nb in range(len(opds_dir)):
                               alpha=0.3)
             
             fname_contrast_profile = ('intensities_profiles_' + base_cro)
+            
+            if cp:
+                fname_contrast_profile = ('intensities_profiles_c+p_' +
+                                          base_cro)
+            
             fpath_contrast_profile_svg = (fdir_plt / opd_set /
                                           (fname_contrast_profile +'_'+lmn+'_'+lmx+ '.svg'))
             fpath_contrast_profile_pdf = (fdir_plt / opd_set /
