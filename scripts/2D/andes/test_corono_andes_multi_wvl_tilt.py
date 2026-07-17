@@ -51,7 +51,7 @@ nFPM = 100
 # f_o_v = 58.393
 
 # Image size
-nImg = 400  #*1.6 #  #  even/pair!
+nImg = 400 # 4096 # 400
 
 # angular separation of interest in mas
 as_oi = 20.
@@ -63,7 +63,7 @@ nOPD = 4000
 lamC = 1600e-9  #  some reference wvl unique value
 
 # yjhk  2025-05 -->
-lam_min = 950e-9  #  min value in range
+lam_min = 950e-9 # 950e-9  #  min value in range
 lam_itv = 18  #◘ 30 if + K band
 lam_stp = 50e-9
 
@@ -106,20 +106,20 @@ obst = 0.35 # diameter of the central obscuration in fraction of the pupil size
 mB = 3.9    # FPM size in lam/D in the focal plane B
 
 # dispersion mas/m
-disp = 5e6  #  e.g 8e7 ou 80e6 = 80 mas / 1e-6 m
+disp = 0  #  e.g 8e7 ou 80e6 = 80 mas / 1e-6 m
 # psf to fpm decentering in mas then for legacy in radians
-fpm_dec_mas = 2
+fpm_dec_mas = 0
 fpm_dec = fpm_dec_mas * rad2mas
 # lyot stop angular position error in degres
-ls_ape = 1
+ls_ape = 0
 # lyot stop vertical - elevation - offset error in pixels
 ls_voe = 0
 # lyot stop horizontal - azimut - offset error in pixels
-ls_hoe = 4
+ls_hoe = 0
 # ncpa phase screens
-ncpa_rms = 30  #  nm
+ncpa_rms = 0  #  nm
 # defocus at fpm in nm RMS for reference wvl
-fpm_dfe_elt = 30
+fpm_dfe_elt = 0
 # fpm_dfe = 0 if fpm_dfe_elt = 0., computed dynamicaly otherwise
 fpm_dfe = fpm_dfe_elt * -1.
 
@@ -271,6 +271,8 @@ if ls_voe != 0 or ls_hoe != 0:
 #           root+'20250707_114321.0')
 
 root = 'OPDs_PASSATA/OPD/WS/1kHzVarWS/'
+# opds_dir=(root+'1',)
+
 opds_dir=(root+'1',
           root+'2',
           root+'3',
@@ -330,6 +332,7 @@ for dir_nb in range(len(opds_dir)):
     # pour jeu fichier fits unique, e.g: OPDs_PASSATA/OPD/WS/ASI_*
     if nof < 2:
         start = int((OPD_arr.shape)[3]/5)
+        # start = 4990
         print("skip:", start)
         OPD_arr = OPD_arr[0,:,:,start:]
         OPD_arr = np.transpose(OPD_arr,(2,0,1))
@@ -693,6 +696,7 @@ for dir_nb in range(len(opds_dir)):
     plt.tight_layout()
     plt.xlabel('Angular separation [mas]')#[$\lambda$/D]')
     plt.ylabel('intensity (log)')
+    # plt.xscale('log')
     plt.yscale('log')
     plt.grid(True)
     
@@ -701,7 +705,8 @@ for dir_nb in range(len(opds_dir)):
         # AO corrected coronagraphic image
         plt.plot(Int_D_prf_avg[i,0,:], Int_D_prf_avg[i,1,:],
                 label=str(int(lam_lst[i]*1e9+.1))+'nm', color=colors[i])
-        
+        # plt.plot(Int_D_prf_avg[i,0,:], Int_D0_prf_avg[i,1,:],
+        #          color=colors[i], alpha=0.5, ls='--')
     # Focal plane mask boundary
     x = np.arange(0.0, mB/2, 0.01)
     plt.axvline(as_oi, color='k', ls='--')
@@ -709,8 +714,11 @@ for dir_nb in range(len(opds_dir)):
     # Focal plane mask grey area
     plt.fill_between(x *lamCD2mas, 0, mB/2/ 38.54*lamC/rad2mas, color='gray',
                      alpha=0.3)
+    
     plt.xlim(-0.05,np.max(rad_D_prf_avg_mas)+0.05)
     plt.ylim(1e-5, 2e0)  #  (2e-5, 2e0)
+    # plt.xlim(1.,1000.)
+    # plt.ylim(1e-6, 2e0)
 
     plt.savefig(fpath_prf_pdf)
         
