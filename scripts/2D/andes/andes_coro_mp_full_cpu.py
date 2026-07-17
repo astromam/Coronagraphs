@@ -14,7 +14,7 @@ from scipy import ndimage
 from astropy.io import fits
 
 import os
-import sys
+# import sys
 from pathlib import Path
 from datetime import datetime
 
@@ -139,15 +139,16 @@ if __name__ == "__main__":
     """
 
     nFPM = 100  # Sampling of the coronagraph focal plane mask
-    nImg = 400  # last focal plane image size
+    #nImg = 400  # last focal plane image size
+    nImg = 400
     nOPD = 4000  # # of AO corrected phase residuals screens
     lam_ref = 1600e-9  # reference wvl
-    lam_min = 950e-9  # minimal value of wvl
+    lam_min = 950e-9 # 950e-9  # minimal value of wvl
     lam_itv = 18  # # of intervals
     lam_stp = 50e-9  # interval step
     D = 38.54  #  main pupil diameter/ elt pupil diameter
-    pscale = 0.3  # image plate scale in last focal plane
-
+    # pscale = 0.3  # image plate scale in last focal plane
+    pscale = 0.3
     # diam = 0.89 obs = 0.35, mB = 3.9 2025 with 'ELT_pupil_400.fits' YJH
     # diam = 0.90 obs = 0.37, mB = 4.0 2024 with 'ELT_pupil_400.fits' YJH @ 25 mas / 75% thr
     # diam = 0.96 obs = 0.30, mB = 4.5 2024 with 'ELT_pupil_400.fits' K
@@ -170,46 +171,48 @@ if __name__ == "__main__":
     # unscaled unmasked ncpa file twice the size of the pupil size / nPup
     ncpa_fnm = ('ncpa_unscaled_x2_ELT_pupil_400.fits')
     dir_root = 'OPDs_PASSATA/OPD/WS/1kHzVarWS/'  # root of OA phase screens set
+    # dir_root = 'OPDs_PASSATA/OPD/WS/500HzVarWS/'  # root of OA phase screens set
+
+    # av = sys.argv
+    # print('\n', av)
+    # if len(av) > 1: input_parameters = av[1]  # PYTHONPATH update?
     
-    av = sys.argv
-    print('\n', av)
-    if len(av) > 1: input_parameters = av[1]  # PYTHONPATH update?
-    
-    try:
+    # try:
         
-        import input_parameters as ip
-        if hasattr(ip, 'nFPM'): nFPM = ip.nFPM
-        if hasattr(ip, 'nImg'): nImg = ip.nImg
-        if hasattr(ip, 'nOPD'): nOPD = ip.nOPD
-        if hasattr(ip, 'lam_ref'): lam_ref = ip.lam_ref
-        if hasattr(ip, 'lam_min'):  lam_min = ip.lam_min
-        if hasattr(ip, 'lam_itv'):  lam_itv = ip.lam_itv
-        if hasattr(ip, 'lam_stp'):  lam_stp = ip.lam_stp
-        if hasattr(ip, 'D'):    D = ip.D
-        if hasattr(ip, 'pscale'):   pscale = ip.pscale
-        if hasattr(ip, 'diam'): diam = ip.diam
-        if hasattr(ip, 'obst'): obst = ip.obst
-        if hasattr(ip, 'mB'):   mB = ip.mB
-        if hasattr(ip, 'disp'): disp = ip.disp
-        if hasattr(ip, 'fpm_dec_mas'):  fpm_dec_mas = ip.fpm_dec_mas
-        if hasattr(ip, 'ls_ape'):   ls_ape = ip.ls_ape
-        if hasattr(ip, 'ls_voe'):   ls_voe = ip.ls_voe
-        if hasattr(ip, 'ls_hoe'):   ls_hoe = ip.ls_hoe
-        if hasattr(ip, 'ncpa_rms'): ncpa_rms = ip.ncpa_rms
-        if hasattr(ip, 'fpm_dfe_elt'):  fpm_dfe_elt = ip.fpm_dfe_elt
-        if hasattr(ip, 'user'):user = ip.user
-        if hasattr(ip, 'usr_base'): usr_base = ip.usr_base
-        if hasattr(ip, 'fnm_eltp'): fnm_eltp = ip.fnm_eltp
-        if hasattr(ip, 'ncpa_fnm'): ncpa_fnm = ip.ncpa_fnm
-        if hasattr(ip, 'dir_root'): dir_root = ip.dir_root
+    #     import input_parameters as ip
+    #     if hasattr(ip, 'nFPM'): nFPM = ip.nFPM
+    #     if hasattr(ip, 'nImg'): nImg = ip.nImg
+    #     if hasattr(ip, 'nOPD'): nOPD = ip.nOPD
+    #     if hasattr(ip, 'lam_ref'): lam_ref = ip.lam_ref
+    #     if hasattr(ip, 'lam_min'):  lam_min = ip.lam_min
+    #     if hasattr(ip, 'lam_itv'):  lam_itv = ip.lam_itv
+    #     if hasattr(ip, 'lam_stp'):  lam_stp = ip.lam_stp
+    #     if hasattr(ip, 'D'):    D = ip.D
+    #     if hasattr(ip, 'pscale'):   pscale = ip.pscale
+    #     if hasattr(ip, 'diam'): diam = ip.diam
+    #     if hasattr(ip, 'obst'): obst = ip.obst
+    #     if hasattr(ip, 'mB'):   mB = ip.mB
+    #     if hasattr(ip, 'disp'): disp = ip.disp
+    #     if hasattr(ip, 'fpm_dec_mas'):  fpm_dec_mas = ip.fpm_dec_mas
+    #     if hasattr(ip, 'ls_ape'):   ls_ape = ip.ls_ape
+    #     if hasattr(ip, 'ls_voe'):   ls_voe = ip.ls_voe
+    #     if hasattr(ip, 'ls_hoe'):   ls_hoe = ip.ls_hoe
+    #     if hasattr(ip, 'ncpa_rms'): ncpa_rms = ip.ncpa_rms
+    #     if hasattr(ip, 'fpm_dfe_elt'):  fpm_dfe_elt = ip.fpm_dfe_elt
+    #     if hasattr(ip, 'user'):user = ip.user
+    #     if hasattr(ip, 'usr_base'): usr_base = ip.usr_base
+    #     if hasattr(ip, 'fnm_eltp'): fnm_eltp = ip.fnm_eltp
+    #     if hasattr(ip, 'ncpa_fnm'): ncpa_fnm = ip.ncpa_fnm
+    #     if hasattr(ip, 'dir_root'): dir_root = ip.dir_root
 
         
-    except ModuleNotFoundError:
+    # except ModuleNotFoundError:
         
-        print('use defaults parameters')
+    #     print('use defaults parameters')
     
      
     lam_lst = np.arange(lam_min,lam_min+(lam_itv+0.5)*lam_stp,lam_stp)
+
     nL = len(lam_lst)
 
     # conversions
@@ -246,9 +249,7 @@ if __name__ == "__main__":
         fdir_dat = Path(usr_base+"/data/").resolve()
         fdir_res   = Path(usr_base+"/results/").resolve()
         fdir_plt   = Path(usr_base+"/plots/").resolve()
-    
-    #  elif user == 'toto':
-    
+       
     # Directory for the pupils
     fdir_pupil = fdir_dat / 'Pupil'
     
@@ -351,16 +352,18 @@ if __name__ == "__main__":
     """
     ### working directory of the OPD files
     """
-    #%%
-    opds_dir=(dir_root+'1',  # )
-              dir_root+'2', dir_root+'3', dir_root+'4', dir_root+'5',
-              dir_root+'6', dir_root+'7', dir_root+'8', dir_root+'9',
-              dir_root+'10')
-
-    for dir_nb in range(len(opds_dir)):
     
-        new_spider_flare = fdir_dat / opds_dir[dir_nb]
-        fdir_opd   = new_spider_flare
+    # opds_dir=(dir_root+'1',  # )
+    #           dir_root+'2', dir_root+'3', dir_root+'4', dir_root+'5',
+    #           dir_root+'6', dir_root+'7', dir_root+'8', dir_root+'9',
+    #           dir_root+'10')
+    opds_dir = os.listdir(usr_base / fdir_dat / dir_root)
+    # print(opds_dir)
+    
+    # for d_nb in range(len(opds_dir)):
+    for d_nb, opd_set in enumerate(opds_dir):
+
+        fdir_opd = usr_base / fdir_dat /  dir_root / opds_dir[d_nb]
         
         opd_set = os.path.basename(fdir_opd).split('.')[0]
         
@@ -413,27 +416,27 @@ if __name__ == "__main__":
         
         if ncpa_rms != 0:
             
-            # fnm = ('ncpa_ELT_pupil_400_30nm_4096screens.fits')
-            # ncpa_1 = fits.getdata(fdir_dat/fnm)             
-            rnd=np.random.randn(nOPD)
-            rnd /= 2.
-            xi=np.round(rnd*hlf/np.max([-np.min(rnd),np.max(rnd)])).astype(int)
+            fnm = ('ncpa_ELT_pupil_400_30nm_4096screens.fits')
+            ncpa_1 = fits.getdata(fdir_dat/fnm)             
+            # rnd=np.random.randn(nOPD)
+            # rnd /= 2.
+            # xi=np.round(rnd*hlf/np.max([-np.min(rnd),np.max(rnd)])).astype(int)
             
-            rnd=np.random.randn(nOPD)
-            rnd /= 2.
-            yi=np.round(rnd*hlf/np.max([-np.min(rnd),np.max(rnd)])).astype(int)
+            # rnd=np.random.randn(nOPD)
+            # rnd /= 2.
+            # yi=np.round(rnd*hlf/np.max([-np.min(rnd),np.max(rnd)])).astype(int)
     
             for n in range(nOPD):
                 
-                # OPD_arr[n,:,:] += ncpa_1[n,:,:] * Pupil.copy()
-                temp = ((ncpa_1[hlf+xi[n]:hlf+N+xi[n],
-                                hlf+yi[n]:hlf+N+yi[n]]).copy() * Pupil.copy())
+                OPD_arr[n,:,:] += ncpa_1[n,:,:] * Pupil.copy()
+                # temp = ((ncpa_1[hlf+xi[n]:hlf+N+xi[n],
+                #                 hlf+yi[n]:hlf+N+yi[n]]).copy() * Pupil.copy())
                 
-                temp -= np.mean(temp[ipup])
-                temp /= np.std(temp[ipup])
-                temp *= float(ncpa_rms) * 1e-9
-                OPD_arr[n,:,:] += temp.copy() * Pupil.copy()
-                temp *= 0.
+                # temp -= np.mean(temp[ipup])
+                # temp /= np.std(temp[ipup])
+                # temp *= float(ncpa_rms) * 1e-9
+                # OPD_arr[n,:,:] += temp.copy() * Pupil.copy()
+                # temp *= 0.
     
         mp.set_start_method("spawn", force=True)
     
