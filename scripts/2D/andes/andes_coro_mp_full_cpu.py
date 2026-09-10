@@ -157,13 +157,13 @@ if __name__ == "__main__":
     obst = 0.35  # Lyot fractional inner/obscuration diameter
     mB = 3.9        # Lyot focal plane mask diameter in lam_ref/D
 
-    disp = 0  # dispersion mas/mu e.g 8e7 ou 80e6 = 80 mas / 1e-6 m
-    fpm_dec_mas = 0  # psf to fpm decentering in mas
-    ls_ape = 0  # lyot stop angular position error in degres
+    disp = 5e6  # dispersion mas/mu e.g 8e7 ou 80e6 = 80 mas / 1e-6 m
+    fpm_dec_mas = 2  # psf to fpm decentering in mas
+    ls_ape = 1  # lyot stop angular position error in degres
     ls_voe = 0  # lyot stop vertical - elevation - offset error in pixels
-    ls_hoe = 0  # lyot stop horizontal - elevation - offset error in pixels
-    ncpa_rms = 0  # scale of ncpa phase screens in nm RMS
-    fpm_dfe_elt = 0  # scale of defocus at fpm in nm RMS for reference wvl
+    ls_hoe = 4 # lyot stop horizontal - elevation - offset error in pixels
+    ncpa_rms = 30  # scale of ncpa phase screens in nm RMS
+    fpm_dfe_elt = 30  # scale of defocus at fpm in nm RMS for reference wvl
     
     user = 'Alain'
     usr_base = 'D:/Andes/Data_corono/'
@@ -212,6 +212,7 @@ if __name__ == "__main__":
     
      
     lam_lst = np.arange(lam_min,lam_min+(lam_itv+0.5)*lam_stp,lam_stp)
+    # lam_lst = [950e-9, 1200e-9, 1350e-9, 1600e-9, 1850e-9]
 
     nL = len(lam_lst)
 
@@ -284,7 +285,7 @@ if __name__ == "__main__":
     
     # 2D array pupil slope for tilt
     sf_x = np.broadcast_to(np.arange(-nPup//2,nPup//2,1),(nPup,nPup)) + 0.5
-    sf_y = np.transpose(sf_x.copy())
+    sf_y = np.transpose(sf_x.copy())[::-1,:]
     
     #2D array for distance to center pixel in pupil, in [0,1]
     kx = (np.arange(nPup)-nPup//2)/(nPup/2)
@@ -347,7 +348,7 @@ if __name__ == "__main__":
         
         LyotStop2d = np.roll(LyotStop2d,(ls_hoe,ls_voe),(1,0))
     
-        
+    
     #%%
     """
     ### working directory of the OPD files
