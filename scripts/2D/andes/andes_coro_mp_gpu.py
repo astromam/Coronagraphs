@@ -92,9 +92,6 @@ def compute_images_gpu_batch(c, elt_gpu, LyotStop2d_gpu, opds_gpu, mask2d_gpu,
     Process all OPDs in chunks to calculate the average intensity images.
     """
 
-    dev_id = c % cp.cuda.runtime.getDeviceCount()
-    cp.cuda.Device(dev_id).use()
-
     chnk_v = cp.ones(opds_gpu.shape[0])
     nL = lam_lst_gpu.shape[0]
     Int_D0 = cp.zeros((nL,nImg, nImg))
@@ -105,6 +102,8 @@ def compute_images_gpu_batch(c, elt_gpu, LyotStop2d_gpu, opds_gpu, mask2d_gpu,
     for ilam in range(nL):
         
         # Sélection GPU (si plusieurs GPU disponibles)M
+        dev_id = ilam % cp.cuda.runtime.getDeviceCount()
+        cp.cuda.Device(dev_id).use()
 
         lam = lam_lst_gpu[ilam]
         dLam = lam - lam_ref
@@ -376,7 +375,7 @@ if __name__ == "__main__":
     """
     #%%
     
-    dir_root = 'OPDs_PASSATA/OPD/WS/1kHzVarWS/'
+    # dir_root = 'OPDs_PASSATA/OPD/WS/1kHzVarWS/'
     # opds_dir=(root+'1',)
     opds_dir=(dir_root+'1', dir_root+'2', dir_root+'3', dir_root+'4',
               dir_root+'5', dir_root+'6', dir_root+'7', dir_root+'8',
@@ -434,27 +433,27 @@ if __name__ == "__main__":
         
         if ncpa_rms != 0:
              
-            # fnm = ('ncpa_ELT_pupil_400_30nm_4096screens.fits')
-            # ncpa_1 = fits.getdata(fdir_dat/fnm)
-            rnd=np.random.randn(nOPD)
-            rnd /= 2.
-            xi=np.round(rnd*hlf/np.max([-np.min(rnd),np.max(rnd)])).astype(int)
+            fnm = ('ncpa_ELT_pupil_400_30nm_4096screens.fits')
+            ncpa_1 = fits.getdata(fdir_dat/fnm)
+            # rnd=np.random.randn(nOPD)
+            # rnd /= 2.
+            # xi=np.round(rnd*hlf/np.max([-np.min(rnd),np.max(rnd)])).astype(int)
             
-            rnd=np.random.randn(nOPD)
-            rnd /= 2.
-            yi=np.round(rnd*hlf/np.max([-np.min(rnd),np.max(rnd)])).astype(int)
+            # rnd=np.random.randn(nOPD)
+            # rnd /= 2.
+            # yi=np.round(rnd*hlf/np.max([-np.min(rnd),np.max(rnd)])).astype(int)
     
             for n in range(nOPD):
                 
-                # OPD_arr[n,:,:] += ncpa_1[n,:,:] * Pupil.copy()
-                temp = ((ncpa_1[hlf+xi[n]:hlf+N+xi[n],
-                                hlf+yi[n]:hlf+N+yi[n]]).copy() * Pupil.copy())
+                OPD_arr[n,:,:] += ncpa_1[n,:,:] * Pupil.copy()
+                # temp = ((ncpa_1[hlf+xi[n]:hlf+N+xi[n],
+                #                 hlf+yi[n]:hlf+N+yi[n]]).copy() * Pupil.copy())
                 
-                temp -= np.mean(temp[ipup])
-                temp /= np.std(temp[ipup])
-                temp *= float(ncpa_rms) * 1e-9
-                OPD_arr[n,:,:] += temp.copy() * Pupil.copy()
-                temp *= 0.
+                # temp -= np.mean(temp[ipup])
+                # temp /= np.std(temp[ipup])
+                # temp *= float(ncpa_rms) * 1e-9
+                # OPD_arr[n,:,:] += temp.copy() * Pupil.copy()
+                # temp *= 0.
             
         nOPD = OPD_arr.shape[0]
         opd_arr_sz = OPD_arr.nbytes
