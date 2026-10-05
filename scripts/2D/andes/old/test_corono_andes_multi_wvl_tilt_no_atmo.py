@@ -225,8 +225,8 @@ for i in np.arange(nL):
     
 #%%    
     # computation of the averaged intensity profiles of the images  
-    Int_DD0_prf_avg[i,1,:], rad_DD0_prf_avg = pp.radial_profile(Int_DD0[i,:], ptype='mean')
-    Int_DD_prf_avg[i,1,:], rad_DD_prf_avg = pp.radial_profile(Int_DD[i,:], ptype='mean')
+    Int_DD0_prf_avg[i,1,:], rad_DD0_prf_avg = pp.psf_profile(Int_DD0[i,:], ptype='mean')
+    Int_DD_prf_avg[i,1,:], rad_DD_prf_avg = pp.psf_profile(Int_DD[i,:], ptype='mean')
        
     """
     ### Compute the radial intensity profiles of the images
