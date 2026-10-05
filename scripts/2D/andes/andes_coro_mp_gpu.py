@@ -74,7 +74,7 @@ import numpy as np
 from scipy import ndimage
 from astropy.io import fits
 from uniform_disk import uniform_disk
-from psf_profile import radial_profile
+from psf_profile import psf_profile
 
 import os
 from pathlib import Path
@@ -522,9 +522,9 @@ if __name__ == "__main__":
 
             # computation of the averaged intensity profiles of the images   
             Int_D0_prf_avg[ilam,1,:], rad_D0_prf_avg = (
-                radial_profile(Int_D0[ilam,:,:]))
+                psf_profile(Int_D0[ilam,:,:]))
             Int_D_prf_avg[ilam,1,:], rad_D_prf_avg = (
-                radial_profile(Int_D[ilam,:,:]))
+                psf_profile(Int_D[ilam,:,:]))
         
             # convert pixel scale into lam/D scale for the x-axis
             rad_D0_prf_avg_lamD = rad_D0_prf_avg * mD/nImg
