@@ -386,8 +386,8 @@ for i in np.arange(nL):
                 Int_DD *= norm_peakDD0 #norm_peakDD0
     
                 # computation of the averaged intensity profiles of the images
-                Int_DD_prf_avg, rad_DD_prf_avg = pp.radial_profile(Int_DD, ptype='mean')
-                Int_DD0_prf_avg,rad_DD0_prf_avg = pp.radial_profile(Int_DD0,ptype='mean')
+                Int_DD_prf_avg, rad_DD_prf_avg = pp.psf_profile(Int_DD, ptype='mean')
+                Int_DD0_prf_avg,rad_DD0_prf_avg = pp.psf_profile(Int_DD0,ptype='mean')
     
                 ### Save images
                 results_w_coro_no_turb[0,dL,ob,s,:] = rad_DD_prf_avg

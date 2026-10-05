@@ -64,7 +64,7 @@ lamC = 1600e-9  #  some reference wvl unique value
 
 # yjhk  2025-05 -->
 lam_min = 950e-9 # 950e-9  #  min value in range
-lam_itv = 18  #◘ 30 if + K band
+lam_itv = 18  # 30 if + K band
 lam_stp = 50e-9
 
 lam_lst = np.arange(lam_min,lam_min+(lam_itv+0.5)*lam_stp,lam_stp)
@@ -96,6 +96,11 @@ mD_ref = fov_rdn / ( lamC / D )
 """
 # Focal plane mask
 mask2d = uniform_disk(nFPM, nFPM/2.)
+
+# fits.writeto('d:\\Andes\\Data_corono\\results\\fpm.fits', mask2d)
+
+# stop
+
 # diam = 0.89 obs = 0.35, mB = 3.9 2025 with 'ELT_pupil_400.fits' YJH
 # diam = 0.90 obs = 0.37, mB = 4.0 2024 with 'ELT_pupil_400.fits' YJH @ 25 mas / 75% thr
 # diam = 0.96 obs = 0.30, mB = 4.5 2024 with 'ELT_pupil_400.fits' K
@@ -106,20 +111,20 @@ obst = 0.35 # diameter of the central obscuration in fraction of the pupil size
 mB = 3.9    # FPM size in lam/D in the focal plane B
 
 # dispersion mas/m
-disp = 0  #  e.g 8e7 ou 80e6 = 80 mas / 1e-6 m
+disp = 5e6 # 0  #  e.g 8e7 ou 80e6 = 80 mas / 1e-6 m
 # psf to fpm decentering in mas then for legacy in radians
-fpm_dec_mas = 0
+fpm_dec_mas = 2 # 0
 fpm_dec = fpm_dec_mas * rad2mas
 # lyot stop angular position error in degres
-ls_ape = 0
+ls_ape = 1 # 0
 # lyot stop vertical - elevation - offset error in pixels
 ls_voe = 0
 # lyot stop horizontal - azimut - offset error in pixels
-ls_hoe = 0
+ls_hoe = 4 # 0
 # ncpa phase screens
-ncpa_rms = 0  #  nm
+ncpa_rms = 30  #  nm
 # defocus at fpm in nm RMS for reference wvl
-fpm_dfe_elt = 0
+fpm_dfe_elt = 30
 # fpm_dfe = 0 if fpm_dfe_elt = 0., computed dynamicaly otherwise
 fpm_dfe = fpm_dfe_elt * -1.
 
@@ -252,7 +257,10 @@ if ls_voe != 0 or ls_hoe != 0:
     
     LyotStop2d = np.roll(LyotStop2d,(ls_hoe,ls_voe),(1,0))
 
-    
+# fits.writeto('d:\\Andes\\Data_corono\\data\\Pupil\\LS89pctObs35pctApe1Hoe4.fits',
+#            LyotStop2d)
+# stop
+
 #%%
 """
 ### working directory of the OPD files
@@ -348,27 +356,27 @@ for dir_nb in range(len(opds_dir)):
     
     if ncpa_rms != 0:
          
-        # fnm = ('ncpa_ELT_pupil_400_30nm_4096screens.fits')
-        # ncpa_1 = fits.getdata(fdir_dat/fnm)        
-        rnd=np.random.randn(nOPD)
-        rnd /= 2.
-        xi=np.round(rnd*hlf/np.max([-np.min(rnd),np.max(rnd)])).astype(int)
+        fnm = ('ncpa_ELT_pupil_400_30nm_4096screens.fits')
+        ncpa_1 = fits.getdata(fdir_dat/fnm)        
+        # rnd=np.random.randn(nOPD)
+        # rnd /= 2.
+        # xi=np.round(rnd*hlf/np.max([-np.min(rnd),np.max(rnd)])).astype(int)
         
-        rnd=np.random.randn(nOPD)
-        rnd /= 2.
-        yi=np.round(rnd*hlf/np.max([-np.min(rnd),np.max(rnd)])).astype(int)
+        # rnd=np.random.randn(nOPD)
+        # rnd /= 2.
+        # yi=np.round(rnd*hlf/np.max([-np.min(rnd),np.max(rnd)])).astype(int)
 
         for n in range(nOPD):
             
-            temp = ((ncpa_1[hlf+xi[n]:hlf+N+xi[n],hlf+yi[n]:hlf+N+yi[n]]).copy() *
-                    Pupil.copy())
+            # temp = ((ncpa_1[hlf+xi[n]:hlf+N+xi[n],hlf+yi[n]:hlf+N+yi[n]]).copy() *
+            #         Pupil.copy())
             
-            temp -= np.mean(temp[ipup])
-            temp /= np.std(temp[ipup])
-            temp *= float(ncpa_rms) * 1e-9
-            OPD_arr[n,:,:] += temp.copy() * Pupil.copy()
-            temp *= 0.
-            # OPD_arr[n,:,:] += ncpa_1[n,:,:] * Pupil.copy()
+            # temp -= np.mean(temp[ipup])
+            # temp /= np.std(temp[ipup])
+            # temp *= float(ncpa_rms) * 1e-9
+            # OPD_arr[n,:,:] += temp.copy() * Pupil.copy()
+            # temp *= 0.
+            OPD_arr[n,:,:] += ncpa_1[n,:,:] * Pupil.copy()
 
     
         #%%
@@ -426,7 +434,7 @@ for dir_nb in range(len(opds_dir)):
         
         # # pupil plane C after Lyot stop
         Fld_LL = Fld_CC * LyotStop2d
-        
+        # stop
         # image plane D 
         Fld_DD = sft.sft(Fld_LL, nImg, mD*diam)
         
@@ -439,8 +447,8 @@ for dir_nb in range(len(opds_dir)):
         
     #%%    
         # computation of the averaged intensity profiles of the images  
-        Int_DD0_prf_avg, rad_DD0_prf_avg = pp.radial_profile(Int_DD0[i,:], ptype='mean')
-        Int_DD_prf_avg, rad_DD_prf_avg = pp.radial_profile(Int_DD[i,:], ptype='mean')
+        Int_DD0_prf_avg, rad_DD0_prf_avg = pp.psf_profile(Int_DD0[i,:], ptype='mean')
+        Int_DD_prf_avg, rad_DD_prf_avg = pp.psf_profile(Int_DD[i,:], ptype='mean')
         
         if simu_elt:
             Fld_elt = sft.sft(Pupil*1., nImg, mD*diam)
@@ -461,7 +469,6 @@ for dir_nb in range(len(opds_dir)):
             Fld_A0 = (Pupil 
                       * np.exp(1j*2*np.pi *
                                (OPD_arr[iOPD] +
-                                # ncpa_d[iOPD] +
                                 tilt * D * diam * sf_y / nPup +
                                 fpm_dec * D * diam * sf_y / nPup +
                                 dfc)/lam)
@@ -497,7 +504,6 @@ for dir_nb in range(len(opds_dir)):
             Fld_A0 = (Pupil 
                       * np.exp(1j*2*np.pi * 
                                (OPD_arr[iOPD] +
-                                # ncpa_d[iOPD] +
                                 tilt * D * diam * sf_y / nPup +
                                 fpm_dec * D * diam * sf_y / nPup +
                                 dfc)/lam))
@@ -532,8 +538,8 @@ for dir_nb in range(len(opds_dir)):
         ### Compute the radial intensity profiles of the images
         """
         # computation of the averaged intensity profiles of the images   
-        Int_D0_prf_avg[i,1,:], rad_D0_prf_avg = pp.radial_profile(Int_D0[i,:], ptype='mean')
-        Int_D_prf_avg[i,1,:], rad_D_prf_avg = pp.radial_profile(Int_D[i,:], ptype='mean')
+        Int_D0_prf_avg[i,1,:], rad_D0_prf_avg = pp.psf_profile(Int_D0[i,:], ptype='mean')
+        Int_D_prf_avg[i,1,:], rad_D_prf_avg = pp.psf_profile(Int_D[i,:], ptype='mean')
 
         # convert pixel scale into lam/D scale for the x-axis
         rad_D0_prf_avg_lamD = rad_D0_prf_avg * mD/nImg
