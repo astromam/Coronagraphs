@@ -56,7 +56,7 @@ if __name__ == '__main__':
         mD = mD_ref * lam_ref / lam_lst[i]
         lamD2mas = (lam_lst[i] / D) * mas2rad
 
-        Int_prf_avg[i,1,:], rad_D_prf_avg = pp.radial_profile(data[i,:])
+        Int_prf_avg[i,1,:], rad_D_prf_avg = pp.psf_profile(data[i,:])
     
         # convert pixel scale into lam/D scale for the x-axis
         rad_D_prf_avg_lamD = rad_D_prf_avg * mD/nImg
