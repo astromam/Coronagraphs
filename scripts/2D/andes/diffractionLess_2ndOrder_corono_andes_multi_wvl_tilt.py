@@ -596,8 +596,8 @@ for dir_nb in range(len(opds_dir)):
         ### Compute the radial intensity profiles of the images
         """
         # computation of the averaged intensity profiles of the images   
-        Int_D0_prf_avg[i,1,:], rad_D0_prf_avg = pp.radial_profile(Int_D0[i,:], ptype='mean')
-        Int_D_prf_avg[i,1,:], rad_D_prf_avg = pp.radial_profile(Int_D[i,:], ptype='mean')
+        Int_D0_prf_avg[i,1,:], rad_D0_prf_avg = pp.psf_profile(Int_D0[i,:], ptype='mean')
+        Int_D_prf_avg[i,1,:], rad_D_prf_avg = pp.psf_profile(Int_D[i,:], ptype='mean')
         
         # convert pixel scale into lam/D scale for the x-axis
         rad_D0_prf_avg_lamD = rad_D0_prf_avg * mD/nImg
