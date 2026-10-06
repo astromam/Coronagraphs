@@ -5,15 +5,15 @@ from multiprocessing import shared_memory
 from multiprocessing import cpu_count
 
 import os 
-# import sys
 from pathlib import Path
 from datetime import datetime
 
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import hcipy as hci
 from astropy.io import fits
-from psf_profile import radial_profile
+from psf_profile import psf_profile
+
 
 rad2mas = np.pi/(180.*3600.*1000.)
 mas2rad = 1./rad2mas
@@ -86,11 +86,11 @@ def compute_one_lambda_shared_full(args):
     ### Compute the radial intensity profiles of the images
     """
     # computation of the averaged intensity profiles of the images
-    prf, r = radial_profile(Int_D0.reshape((nImg,nImg)))
+    prf, r = psf_profile(Int_D0.reshape((nImg,nImg)))
     Int_D0_prf[0,:] = r * pscale
     Int_D0_prf[1,:] = prf
 
-    prf, r = radial_profile(Int_D.reshape((nImg,nImg)))
+    prf, r = psf_profile(Int_D.reshape((nImg,nImg)))
     Int_D_prf[0,:] = r * pscale
     Int_D_prf[1,:] = prf
 
@@ -128,7 +128,7 @@ if __name__ == '__main__':
     lyot_diameter = D * diam
 
     disp = 5e6  # dispersion mas/mu e.g 8e7 ou 80e6 = 80 mas / 1e-6 m
-    fpm_dec_mas = 2  # psf to fpm decentering in mas
+    fpm_dec_mas = 2 # psf to fpm decentering in mas
     ls_ape = 1  # lyot stop angular position error in degres
     ls_voe = 0  # lyot stop vertical - elevation - offset error in pixels
     ls_hoe = 4 # lyot stop horizontal - elevation - offset error in pixels
@@ -141,49 +141,6 @@ if __name__ == '__main__':
     # unscaled unmasked ncpa file twice the size of the pupil size / nPup
     ncpa_fnm = ('ncpa_unscaled_x2_ELT_pupil_400.fits')
     dir_root = 'OPDs_PASSATA/OPD/WS/1kHzVarWS/'  # root of OA phase screens set
-    
-
-    #%%
-    '''
-    load input parameters as module
-    '''
-
-    # av = sys.argv
-    # print('\n', av)
-    # if len(av) > 1: input_parameters = av[1]  # PYTHONPATH update?
-    
-    # try:
-        
-    #     import input_parameters as ip
-    #     if hasattr(ip, 'nFPM'): nFPM = ip.nFPM
-    #     if hasattr(ip, 'nImg'): nImg = ip.nImg
-    #     if hasattr(ip, 'nOPD'): nOPD = ip.nOPD
-    #     if hasattr(ip, 'lam_ref'): lam_ref = ip.lam_ref
-    #     if hasattr(ip, 'lam_min'):  lam_min = ip.lam_min
-    #     if hasattr(ip, 'lam_itv'):  lam_itv = ip.lam_itv
-    #     if hasattr(ip, 'lam_stp'):  lam_stp = ip.lam_stp
-    #     if hasattr(ip, 'D'):    D = ip.D
-    #     if hasattr(ip, 'pscale'):   pscale = ip.pscale
-    #     if hasattr(ip, 'diam'): diam = ip.diam
-    #     if hasattr(ip, 'obst'): obst = ip.obst
-    #     if hasattr(ip, 'mB'):   mB = ip.mB
-    #     if hasattr(ip, 'disp'): disp = ip.disp
-    #     if hasattr(ip, 'fpm_dec_mas'):  fpm_dec_mas = ip.fpm_dec_mas
-    #     if hasattr(ip, 'ls_ape'):   ls_ape = ip.ls_ape
-    #     if hasattr(ip, 'ls_voe'):   ls_voe = ip.ls_voe
-    #     if hasattr(ip, 'ls_hoe'):   ls_hoe = ip.ls_hoe
-    #     if hasattr(ip, 'ncpa_rms'): ncpa_rms = ip.ncpa_rms
-    #     if hasattr(ip, 'fpm_dfe_elt'):  fpm_dfe_elt = ip.fpm_dfe_elt
-    #     if hasattr(ip, 'user'):user = ip.user
-    #     if hasattr(ip, 'usr_base'): usr_base = ip.usr_base
-    #     if hasattr(ip, 'fnm_eltp'): fnm_eltp = ip.fnm_eltp
-    #     if hasattr(ip, 'ncpa_fnm'): ncpa_fnm = ip.ncpa_fnm
-    #     if hasattr(ip, 'dir_root'): dir_root = ip.dir_root
-
-        
-    # except ModuleNotFoundError:
-        
-    #     print('use defaults parameters')
     
     
     #%%
@@ -250,71 +207,44 @@ if __name__ == '__main__':
     fdir_pupil = fdir_dat / 'Pupil'
     pupil = hci.util.read_fits(fdir_pupil / fnm_eltp, extension=1)
     nPup = pupil.shape[0] # supersede input parameter
-    ipup = np.nonzero(pupil)
 
     pupil_grid = hci.make_pupil_grid(nPup, diameter=D)
 
     # ELT pupil as a Field
-    telescope_pupil =  hci.field.NewStyleField(pupil.ravel() , pupil_grid)
-    ippr = np.nonzero(telescope_pupil)
-    # 
-    ipnz = np.nonzero(hci.make_circular_aperture(D)(pupil_grid))
-
-    wft = hci.Wavefront(telescope_pupil, lam_lst[0])
-
-    hci.imshow_field(telescope_pupil, cmap='gray')
-    plt.colorbar()
-    plt.xlabel('x [m]')
-    plt.ylabel('y [m]')
-    plt.show()
+    telescope_pupil = hci.Field(pupil.ravel(),pupil_grid)
+    ipup = np.nonzero(telescope_pupil)
     
-    # # Lyot stop
-    # # LS as for ELT, equal spider arm width for each six arms
-    # # lyot_stop_generator_tmp = hci.make_obstructed_circular_aperture(
-    # #     lyot_diameter, obst/diam, num_spiders=6, spider_width=0.4)
-    # lyot_stop_generator = hci.make_obstructed_circular_aperture(
-    #     lyot_diameter, obst/diam, num_spiders=6, spider_width=0.2)
-    # print(type(lyot_stop_generator))
-    # stop
-    
-    # # lyot_stop_generator_tmp *= pupil
-    # # rotation of LS to align to ELT pupil + angular position error
-    # lyot_stop_generator_rot = hci.aperture.make_rotated_aperture(
-    #     lyot_stop_generator_tmp, np.pi/2. + ls_ape_rad)
-        
-    # # lyot_stop_generator_rot = hci.aperture.make_rotated_aperture(
-    # #     lyot_stop_generator_tmp, -ls_ape_rad)
+    # wft = hci.Wavefront(telescope_pupil, lam_lst[0])
 
-    # # LS horizontal an vertical shifts for alignement error 
-        
-    # lyot_stop_generator = hci.aperture.make_shifted_aperture(
-    #     lyot_stop_generator_rot, [ls_hoe * D / nImg, ls_voe * D / nImg])
+    # hci.imshow_field(telescope_pupil, cmap='gray')
+    # plt.colorbar()
+    # plt.xlabel('x [m]')
+    # plt.ylabel('y [m]')
+    # plt.show()
     
-    # # Lyot stop as a Field
-    # lyot_stop = lyot_stop_generator(pupil_grid)
+    # Lyot stop
+    scl = D / nPup # nImg
 
-
-    # Lyot stops from files, created with uniform_disk routine
-
-    # LS =  hci.util.read_fits('d:\\Andes\\Data_corono\\results\\20260907161056\\LS.fits')
-    # LS =  hci.util.read_fits('d:\\Andes\\Data_corono\\results\\20260907161056\\LS_rot+shift.fits')
-    LS =  hci.util.read_fits('d:\\Andes\\Data_corono\\data\\Pupil\\LS89pctObs35pctApe1Hoe4.fits')
+    lyot_stop = hci.make_shifted_aperture(
+        hci.make_rotated_aperture(
+            hci.make_obstructed_circular_aperture(
+                D * diam, obst/diam, num_spiders=6, spider_width=0.01),
+            np.pi/2. - ls_ape_rad), [ls_hoe * scl, ls_voe * scl])(pupil_grid)
     
-    lyot_stop =  hci.field.NewStyleField(LS.ravel() , pupil_grid)
+    t_p = hci.make_shifted_aperture(
+        hci.make_rotated_aperture(
+            hci.make_linear_interpolator(telescope_pupil,fill_value=0),
+            - ls_ape_rad), [ls_hoe * scl, ls_voe * scl])(pupil_grid)
+    
+    lyot_stop *= t_p
+    
+    # hci.imshow_field( lyot_stop, cmap='gray')
+    # plt.colorbar()
+    # plt.xlabel('x [m]')
+    # plt.ylabel('y [m]')
+    # plt.show()
+    
 
-    hci.imshow_field(lyot_stop, cmap='gray')
-    plt.colorbar()
-    plt.xlabel('x [m]')
-    plt.ylabel('y [m]')
-    plt.show()
-    
-    hci.imshow_field(telescope_pupil.copy() * lyot_stop.copy(), cmap='gray')
-    plt.colorbar()
-    plt.xlabel('x [m]')
-    plt.ylabel('y [m]')
-    plt.show()
-    
-    # stop
     #%%
     '''
     zernikes modes for input pupil: defocus and y tilt
@@ -335,13 +265,10 @@ if __name__ == '__main__':
             pupil.ravel() / nPup )
 
     # for defocus on fpm as pupil error
-    zern_bas[3][:] -= np.mean(zern_bas[3][ippr])
-    zern_bas[3][:] /= np.std(zern_bas[3][ippr])
+    zern_bas[3][:] -= np.mean(zern_bas[3][ipup])
+    zern_bas[3][:] /= np.std(zern_bas[3][ipup])
 
     dfoc = (zern_bas[3] * fpm_dfe_elt * 1e-9) * pupil.ravel()
-
-    fpm_dfe = fpm_dfe_elt * np.array(np.std(zern_bas[3][ipnz]))
-    # stop
     
     
     #%%
@@ -362,13 +289,8 @@ if __name__ == '__main__':
                                    focal_length=focal_length,
                                    reference_wavelength=lam_ref)
     
-    # fpm = 1 - hci.make_circular_aperture(
-    #     mB * lam_ref * focal_length / D)(fpm_grid)
-    
-    # fpm from file, created with uniform_disk routine
-    fpm_legacy = hci.util.read_fits('d:\\Andes\\Data_corono\\results\\fpm.fits')
-    
-    fpm = 1 - hci.field.NewStyleField(fpm_legacy.ravel() , fpm_grid)
+    fpm = 1 - hci.make_circular_aperture(
+        mB * lam_ref * focal_length / D)(fpm_grid)
 
 
     #%%
@@ -378,7 +300,7 @@ if __name__ == '__main__':
     
     propagator = hci.FraunhoferPropagator(pupil_grid, focal_grid,
                                    focal_length=focal_length)
-    toto = propagator(wft)
+    # toto = propagator(wft)
     # stop
     coro = hci.LyotCoronagraph(pupil_grid,
                                focal_plane_mask=fpm,
@@ -557,7 +479,6 @@ if __name__ == '__main__':
                     'LSVE':(ls_voe,'lyot stop vertical offset error in pixels'),
                     'LSHE':(ls_hoe,'lyot stop horizontal offset error in pixels'),
                     'ELT_DFOC':(fpm_dfe_elt,'elt pupil defocus in nm RMS at LMBD'),
-                    'DIAM_DFC':(fpm_dfe,'pup. circumcirc. defocus nm RMS at LMBD'),
                     'EPUP_FNM':(fnm_eltp,'ELT pupil filename'),
                     'DATE_NOW':(donow,'date of now: script execution date'),
                     'DIR_ROOT':(dir_root,'root of OA residuals data'),
