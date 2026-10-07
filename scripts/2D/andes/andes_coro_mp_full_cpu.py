@@ -20,7 +20,7 @@ from datetime import datetime
 
 from slow_fourier_transform import sft, isft
 from uniform_disk import uniform_disk
-from psf_profile import radial_profile
+from psf_profile import psf_profile
 
 #fontsize to 15 for all plots
 plt.rcParams.update({'font.size': 14})  #♦  mdiaye 15!
@@ -110,8 +110,8 @@ def compute_one_lambda_shared_full(args):
     ### Compute the radial intensity profiles of the images
     """
     # computation of the averaged intensity profiles of the images   
-    Int_D0_prf[1,:], rad_D0_prf_avg = radial_profile(Int_D0[:,:])
-    Int_D_prf[1,:], rad_D_prf_avg = radial_profile(Int_D[:,:])
+    Int_D0_prf[1,:], rad_D0_prf_avg = psf_profile(Int_D0[:,:])
+    Int_D_prf[1,:], rad_D_prf_avg = psf_profile(Int_D[:,:])
 
     # convert pixel scale into lam/D scale for the x-axis
     rad_D0_prf_avg_lamD = rad_D0_prf_avg * mD/nImg
@@ -158,7 +158,7 @@ if __name__ == "__main__":
     mB = 3.9        # Lyot focal plane mask diameter in lam_ref/D
 
     disp = 5e6  # dispersion mas/mu e.g 8e7 ou 80e6 = 80 mas / 1e-6 m
-    fpm_dec_mas = 2  # psf to fpm decentering in mas
+    fpm_dec_mas = 2 # psf to fpm decentering in mas
     ls_ape = 1  # lyot stop angular position error in degres
     ls_voe = 0  # lyot stop vertical - elevation - offset error in pixels
     ls_hoe = 4 # lyot stop horizontal - elevation - offset error in pixels
@@ -171,45 +171,7 @@ if __name__ == "__main__":
     # unscaled unmasked ncpa file twice the size of the pupil size / nPup
     ncpa_fnm = ('ncpa_unscaled_x2_ELT_pupil_400.fits')
     dir_root = 'OPDs_PASSATA/OPD/WS/1kHzVarWS/'  # root of OA phase screens set
-    # dir_root = 'OPDs_PASSATA/OPD/WS/500HzVarWS/'  # root of OA phase screens set
-
-    # av = sys.argv
-    # print('\n', av)
-    # if len(av) > 1: input_parameters = av[1]  # PYTHONPATH update?
-    
-    # try:
-        
-    #     import input_parameters as ip
-    #     if hasattr(ip, 'nFPM'): nFPM = ip.nFPM
-    #     if hasattr(ip, 'nImg'): nImg = ip.nImg
-    #     if hasattr(ip, 'nOPD'): nOPD = ip.nOPD
-    #     if hasattr(ip, 'lam_ref'): lam_ref = ip.lam_ref
-    #     if hasattr(ip, 'lam_min'):  lam_min = ip.lam_min
-    #     if hasattr(ip, 'lam_itv'):  lam_itv = ip.lam_itv
-    #     if hasattr(ip, 'lam_stp'):  lam_stp = ip.lam_stp
-    #     if hasattr(ip, 'D'):    D = ip.D
-    #     if hasattr(ip, 'pscale'):   pscale = ip.pscale
-    #     if hasattr(ip, 'diam'): diam = ip.diam
-    #     if hasattr(ip, 'obst'): obst = ip.obst
-    #     if hasattr(ip, 'mB'):   mB = ip.mB
-    #     if hasattr(ip, 'disp'): disp = ip.disp
-    #     if hasattr(ip, 'fpm_dec_mas'):  fpm_dec_mas = ip.fpm_dec_mas
-    #     if hasattr(ip, 'ls_ape'):   ls_ape = ip.ls_ape
-    #     if hasattr(ip, 'ls_voe'):   ls_voe = ip.ls_voe
-    #     if hasattr(ip, 'ls_hoe'):   ls_hoe = ip.ls_hoe
-    #     if hasattr(ip, 'ncpa_rms'): ncpa_rms = ip.ncpa_rms
-    #     if hasattr(ip, 'fpm_dfe_elt'):  fpm_dfe_elt = ip.fpm_dfe_elt
-    #     if hasattr(ip, 'user'):user = ip.user
-    #     if hasattr(ip, 'usr_base'): usr_base = ip.usr_base
-    #     if hasattr(ip, 'fnm_eltp'): fnm_eltp = ip.fnm_eltp
-    #     if hasattr(ip, 'ncpa_fnm'): ncpa_fnm = ip.ncpa_fnm
-    #     if hasattr(ip, 'dir_root'): dir_root = ip.dir_root
-
-        
-    # except ModuleNotFoundError:
-        
-    #     print('use defaults parameters')
-    
+       
      
     lam_lst = np.arange(lam_min,lam_min+(lam_itv+0.5)*lam_stp,lam_stp)
     # lam_lst = [950e-9, 1200e-9, 1350e-9, 1600e-9, 1850e-9]
@@ -283,16 +245,23 @@ if __name__ == "__main__":
     nPup = Pupil.shape[0]
     ipup = np.nonzero(Pupil)
     
-    # 2D array pupil slope for tilt
-    sf_x = np.broadcast_to(np.arange(-nPup//2,nPup//2,1),(nPup,nPup)) + 0.5
-    sf_y = np.transpose(sf_x.copy())[::-1,:]
+    # 2D array pupil slope for tilt, even pupil
+    # sf_x = np.broadcast_to(np.arange(-nPup//2,nPup//2,1),(nPup,nPup)) + 0.5
+    sf_x = np.broadcast_to(np.arange(nPup) - nPup//2 + (nPup%2 == 0) * 0.5,
+                           (nPup,nPup))
+    sf_y = np.transpose(sf_x.copy())
     
-    #2D array for distance to center pixel in pupil, in [0,1]
+    #2D array for distance to center pixel in circular pupil, in [0,1]
     kx = (np.arange(nPup)-nPup//2)/(nPup/2)
     ky = (np.arange(nPup)-nPup//2)/(nPup/2)
     kx2, ky2 = np.meshgrid(kx, ky)
     rho = np.sqrt(kx2**2 + ky2**2)
-    
+
+    # for testing central symmetry with even array
+    # kx = (np.arange(nPup) - nPup//2 + (nPup%2 == 0) * 0.5) / float(nPup//2)
+    # kx2, ky2 = np.meshgrid(kx, kx)
+    # rho = np.sqrt(kx2**2 + ky2**2)
+
     if ncpa_rms != 0:
         
         ncpa_1 = fits.getdata(fdir_dat/ncpa_fnm)
@@ -495,6 +464,7 @@ if __name__ == "__main__":
             Int_D_prf_avg[i,:,:] = Int_D_prf
             Int_DD0[i,:,:] = Int_DD0_i
             Int_DD[i,:,:] = Int_DD_i
+            
 
         # filename for the direct and coronagraphic images and profiles
         fname_Int_D0 = 'ao_corr_psf_'+donow+'.fits'
