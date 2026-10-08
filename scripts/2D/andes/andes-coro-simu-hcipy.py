@@ -12,7 +12,6 @@ import numpy as np
 # import matplotlib.pyplot as plt
 import hcipy as hci
 from astropy.io import fits
-from psf_profile import psf_profile
 
 
 rad2mas = np.pi/(180.*3600.*1000.)
@@ -23,9 +22,9 @@ os.environ["OMP_NUM_THREADS"] = "1"
 def compute_one_lambda_shared_full(args):
 
     (i, lam, ytlt, dfoc, propagator, coro,
-     telescope_pupil, lyot_stop, pupil_grid, 
+     telescope_pupil, lyot_stop, pupil_grid, focal_grid,
      shm_opd_name, shape_opd, dtype_opd,
-     nImg, pscale) = args
+     nImg, pscale, px2binSz) = args
      
     # # --- reconnect shared arrays ---
     shm_opd = shared_memory.SharedMemory(name=shm_opd_name)
@@ -86,13 +85,13 @@ def compute_one_lambda_shared_full(args):
     ### Compute the radial intensity profiles of the images
     """
     # computation of the averaged intensity profiles of the images
-    prf, r = psf_profile(Int_D0.reshape((nImg,nImg)))
-    Int_D0_prf[0,:] = r * pscale
-    Int_D0_prf[1,:] = prf
+    prf = hci.radial_profile(hci.Field(Int_D0, focal_grid), bin_size=px2binSz)
+    Int_D0_prf[0,:] = (prf[0][0:nImg//2] / px2binSz - 0.5) * pscale
+    Int_D0_prf[1,:] = prf[1][0:nImg//2]
 
-    prf, r = psf_profile(Int_D.reshape((nImg,nImg)))
-    Int_D_prf[0,:] = r * pscale
-    Int_D_prf[1,:] = prf
+    prf = hci.radial_profile(hci.Field(Int_D, focal_grid), bin_size=px2binSz)
+    Int_D_prf[0,:] = (prf[0][0:nImg//2] / px2binSz - 0.5) * pscale
+    Int_D_prf[1,:] = prf[1][0:nImg//2]
 
     shm_opd.close()
     shm_opd.unlink()
@@ -166,6 +165,9 @@ if __name__ == '__main__':
 
     # units conversion from meters to mas, * diam to satisfy fov_mas...
     meters2mas = focal_length * diam * rad2mas
+    
+    # pixel to size of one bin
+    px2binSz = pscale * rad2mas * focal_length * diam
     
     # fov in mas
     fov_mas = nImg * pscale
@@ -318,7 +320,6 @@ if __name__ == '__main__':
         ncpa = hci.util.read_fits(fdir_dat / 
                                   ('ncpa_ELT_pupil_400_30nm_4096screens.fits'))
 
-# 'ncpa_unscaled_x2_ELT_pupil_400.fits'
 
     #%%
     '''
@@ -402,9 +403,9 @@ if __name__ == '__main__':
     
         args_list = [
             (i, lam_lst[i], ytlt[i,:], dfoc, propagator, coro,
-             telescope_pupil, lyot_stop, pupil_grid, 
+             telescope_pupil, lyot_stop, pupil_grid, focal_grid,
              shm_opd.name, OPD_arr.shape, OPD_arr.dtype,
-             nImg, pscale)
+             nImg, pscale, px2binSz)
             for i in range(nL)
         ]
 
