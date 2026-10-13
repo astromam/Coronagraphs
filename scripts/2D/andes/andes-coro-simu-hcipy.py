@@ -85,6 +85,8 @@ def compute_one_lambda_shared_full(args):
     ### Compute the radial intensity profiles of the images
     """
     # computation of the averaged intensity profiles of the images
+    # to make writing mas scale in intensity profile file consistent with
+    # legacy numpy scrits, substract .5 times pscale
     prf = hci.radial_profile(hci.Field(Int_D0, focal_grid), bin_size=px2binSz)
     Int_D0_prf[0,:] = (prf[0][0:nImg//2] / px2binSz - 0.5) * pscale
     Int_D0_prf[1,:] = prf[1][0:nImg//2]
@@ -173,8 +175,6 @@ if __name__ == '__main__':
     fov_mas = nImg * pscale
     # field of view in radians
     fov_rdn = fov_mas * rad2mas
-    # in multiple of reference lambda (lam_ref) over D
-    # mD_ref = fov_rdn / ( lam_ref / D )
 
     # psf to fpm decentering in radians
     fpm_dec = fpm_dec_mas * rad2mas
@@ -215,6 +215,8 @@ if __name__ == '__main__':
     # ELT pupil as a Field
     telescope_pupil = hci.Field(pupil.ravel(),pupil_grid)
     ipup = np.nonzero(telescope_pupil)
+
+    # stop
     
     # wft = hci.Wavefront(telescope_pupil, lam_lst[0])
 
@@ -366,7 +368,7 @@ if __name__ == '__main__':
         os.makedirs(fdir_res / opd_set, exist_ok=True)
         os.makedirs(fdir_plt / opd_set, exist_ok=True)
      
-        opd_start = 1000
+        opd_start = 1000 # 4950 # 1000
         
         # Filename and path for the OPD maps
         flist_opd = []
