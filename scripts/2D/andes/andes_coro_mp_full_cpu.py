@@ -24,7 +24,11 @@ from psf_profile import psf_profile
 
 #fontsize to 15 for all plots
 plt.rcParams.update({'font.size': 14})  #♦  mdiaye 15!
-    
+
+# to recover mostly hcipy convention: CtrBtwnPix=True
+# to recover results of 10/2025 CtrBtwnPix=False 
+CtrBtwnPix=True
+
 os.environ["OMP_NUM_THREADS"] = "1"
 
 def compute_one_lambda_shared_full(args):
@@ -242,6 +246,7 @@ if __name__ == "__main__":
     fpath_elt = fdir_pupil / fnm_eltp
     # Read ELT pupil 
     Pupil = fits.getdata(fpath_elt,)
+
     nPup = Pupil.shape[0]
     ipup = np.nonzero(Pupil)
     
@@ -251,17 +256,21 @@ if __name__ == "__main__":
                            (nPup,nPup))
     sf_y = np.transpose(sf_x.copy())
     
-    #2D array for distance to center pixel in circular pupil, in [0,1]
-    kx = (np.arange(nPup)-nPup//2)/(nPup/2)
-    ky = (np.arange(nPup)-nPup//2)/(nPup/2)
+    #rho = 2D array for distance to center pixel in circular pupil, in [0,1]
+    if CtrBtwnPix==True:
+        
+        kx = (np.arange(nPup)-nPup//2 + (nPup%2 == 0) * 0.5)/(nPup/2)
+        ky = (np.arange(nPup)-nPup//2 + (nPup%2 == 0) * 0.5)/(nPup/2)
+    
+    else:
+        
+        kx = (np.arange(nPup)-nPup//2)/(nPup/2)
+        ky = (np.arange(nPup)-nPup//2)/(nPup/2)
+        
+    
     kx2, ky2 = np.meshgrid(kx, ky)
     rho = np.sqrt(kx2**2 + ky2**2)
-
-    # for testing central symmetry with even array
-    # kx = (np.arange(nPup) - nPup//2 + (nPup%2 == 0) * 0.5) / float(nPup//2)
-    # kx2, ky2 = np.meshgrid(kx, kx)
-    # rho = np.sqrt(kx2**2 + ky2**2)
-
+    
     if ncpa_rms != 0:
         
         ncpa_1 = fits.getdata(fdir_dat/ncpa_fnm)
@@ -303,8 +312,8 @@ if __name__ == "__main__":
     rotate then shift Lyot Stop and defocus
     '''
     # Lyot stop
-    LyotStop2d = Pupil*(uniform_disk(nPup, diam*nPup/2) -
-                        uniform_disk(nPup, obst*nPup/2))
+    LyotStop2d = Pupil*(uniform_disk(nPup, diam*nPup/2, CtrBtwnPix=CtrBtwnPix)-
+                        uniform_disk(nPup, obst*nPup/2, CtrBtwnPix=CtrBtwnPix))
     
     if ls_ape != 0:
         
@@ -323,7 +332,7 @@ if __name__ == "__main__":
     ### working directory of the OPD files
     """
     
-    # opds_dir=(dir_root+'1',  # )
+    # opds_dir=(dir_root+'1', )
     #           dir_root+'2', dir_root+'3', dir_root+'4', dir_root+'5',
     #           dir_root+'6', dir_root+'7', dir_root+'8', dir_root+'9',
     #           dir_root+'10')
@@ -374,11 +383,12 @@ if __name__ == "__main__":
         # pour jeu fichier fits unique, e.g: OPDs_PASSATA/OPD/WS/ASI_*
         if nof < 2:
             start = int((OPD_arr.shape)[3]/5)
+            # start = 4950
             # print("skip:", start)
             OPD_arr = OPD_arr[0,:,:,start:]
             OPD_arr = np.transpose(OPD_arr,(2,0,1))
             nOPD = OPD_arr.shape[0]
-            # print("phase screen array shape from single file: ", OPD_arr.shape)
+            print("phase screen array shape from single file: ", OPD_arr.shape)
         else:
             print("phase screen array shape from set of files: ",OPD_arr.shape)
            
@@ -532,7 +542,8 @@ if __name__ == "__main__":
         for fpath in fpath_psf_lst:
             for n, k in enumerate(hdr_keys):
                 fits.setval(fpath,k,value=hdr_keys[k][0],comment=hdr_keys[k][1])
-                    
+                
+    
     # datetime of script execution
     donow = datetime.now().strftime("%Y%m%d%H%M%S")  #  asp, datetime of now
     
