@@ -16,13 +16,13 @@ Created on Fri Mar 31 13:26:29 2023
 """
 import numpy as np
 from scipy import ndimage
-import pyzelda.utils.zernike as zernike
+# import pyzelda.utils.zernike as zernike
 
 # pythonpath to update possibly...
 import slow_fourier_transform as sft
 from uniform_disk import uniform_disk
-import profile as pp
-from draw_vanes import six_petals #, six_arms
+import psf_profile as pp
+# from draw_vanes import six_petals #, six_arms
 
 import matplotlib.pyplot as plt
 # from mpl_toolkits.axes_grid1 import AxesGrid
@@ -50,16 +50,16 @@ nFPM = 100
 nImg = 400  #*1.6 #  #  even/pair!
 
 # angular separation of interest in mas
-as_oi = 25.
+as_oi = 30. # 25.
 
 # # of OPD phase screens
 nOPD = 2000
 
 # wavelengths in m
 lamC = 1600e-9  #  some reference wvl unique value
-lam_min = 960e-9  #  min value in range
-lam_max = 2450e-9  #  max value in range  #  2450e-9 // 1800e-9
-lam_itv = 18  #  nb of intervals in range --> nb+1 wvl's !  #  18 // 10
+lam_min = 950e-9 # 960e-9  #  min value in range
+lam_max = 2500e-9 # 2450e-9  #  max value in range  #  2450e-9 // 1800e-9
+lam_itv = 31 # 18  #  nb of intervals in range --> nb+1 wvl's !  #  18 // 10
 lam_stp = np.floor(np.ceil((lam_max-lam_min)*1e9/lam_itv)/10)*1e-8  # wvl step
 lam_lst = np.arange(lam_min,lam_max,lam_stp) if lam_max != lam_min else [lamC]
 nL = len(lam_lst)
@@ -91,8 +91,8 @@ mD_ref = fov_rdn / ( lamC / D )
 """
 # Focal plane mask
 mask2d = uniform_disk(nFPM, nFPM/2.)
-diam = 0.90 # diameter of the pupil in fraction of the pupil size
-obst = 0.37 # diameter of the central obscuration in fraction of the pupil size
+diam = 0.96 # 0.90 # diameter of the pupil in fraction of the pupil size
+obst = 0.30 # 0.37 # diameter of the central obscuration in fraction of the pupil size
 # FPM size in lam/D in the focal plane B
 mB = 0. # 4.0
 
@@ -171,9 +171,9 @@ Pupil = np.where(Pupil==1,1.,0.)
 ipup = np.nonzero(Pupil)
 nb_pup = float(np.asarray(ipup).shape[1])
 
-petals = six_petals(nPup)
-pupil_cube = petals * Pupil[None,:,:] #* arms[None,:,:]
-i_p = {i:np.nonzero(pupil_cube[i,:]) for i in range(6)}
+# petals = six_petals(nPup)
+# pupil_cube = petals * Pupil[None,:,:] #* arms[None,:,:]
+# i_p = {i:np.nonzero(pupil_cube[i,:]) for i in range(6)}
 
 # 2D array pupil slope for tilt
 sf_x = np.broadcast_to(np.arange(-nPup//2,nPup//2,1),(nPup,nPup)) + 0.5
@@ -236,12 +236,12 @@ end = (nDim+nPup)//2
 """
 
 Zern_arr0 = np.zeros((nZern, nDim, nDim))
-for i in range(nZern):
-    Zern_arr0[i] = zernike.zernike1(i+2, npix=nDim)
-    Zern_arr0[i, np.isnan(Zern_arr0[i])] = 0.
-    Zern_arr = np.zeros((nZern, nPup, nPup))
+# for i in range(nZern):
+    # Zern_arr0[i] = zernike.zernike1(i+2, npix=nDim)
+    # Zern_arr0[i, np.isnan(Zern_arr0[i])] = 0.
+    # Zern_arr = np.zeros((nZern, nPup, nPup))
 # crop the pupil to have array size equal to the pupil diameter
-Zern_arr = Zern_arr0[:, ini:end, ini:end]
+# Zern_arr = Zern_arr0[:, ini:end, ini:end]
 
 
 #%%
@@ -254,8 +254,8 @@ LyotStop2d = Pupil*(uniform_disk(nPup, diam*nPup/2) -
                     uniform_disk(nPup, obst*nPup/2))
 
 i_ls = np.nonzero(Pupil * LyotStop2d)
-lyot_cube = petals * (Pupil * LyotStop2d)[None,:,:] #* arms[None,:,:]
-i_l = {i:np.nonzero(lyot_cube[i,:]) for i in range(6)}
+# lyot_cube = petals * (Pupil * LyotStop2d)[None,:,:] #* arms[None,:,:]
+# i_l = {i:np.nonzero(lyot_cube[i,:]) for i in range(6)}
 
 if ls_ape != 0:
     
@@ -274,8 +274,12 @@ if ls_voe != 0 or ls_hoe != 0:
 ### working directory of the OPD files
 """
 
-opds_dir=('OPDs_PASSATA/OPD/WS/ASI',)
-
+# opds_dir=('OPDs_PASSATA/OPD/WS/ASI',)
+dir_root=('OPDs_PASSATA/OPD/WS/1kHzVarWS/')
+opds_dir=(dir_root+'1',  # )
+          dir_root+'2', dir_root+'3', dir_root+'4', dir_root+'5',
+          dir_root+'6', dir_root+'7', dir_root+'8', dir_root+'9',
+          dir_root+'10')
 
 #%%
 for dir_nb in range(len(opds_dir)):
@@ -315,9 +319,9 @@ for dir_nb in range(len(opds_dir)):
     # Read OPD maps for the nOPD files
     OPD_arr = np.asarray([fits.getdata(fpath_opd[i]) for i in range(nOPD)])
 
-    # pour jeu fichier fits unique: opds_dir=('OPDs_PASSATA/OPD/WS/ASI',)
-    # OPD_arr = OPD_arr[0,:,:,500:]
-    # OPD_arr = np.transpose(OPD_arr,(2,0,1))
+    # pour jeu de fichiers fits unique: opds_dir=('OPDs_PASSATA/OPD/WS/ASI',)
+    OPD_arr = OPD_arr[0,:,:,1000:]
+    OPD_arr = np.transpose(OPD_arr,(2,0,1))
     nOPD = OPD_arr.shape[0]
     
     t1 = time.time()
@@ -450,21 +454,21 @@ for dir_nb in range(len(opds_dir)):
                 # else:
                 #     opd_tmp[i_l[petal]] -= 1e-8
                     
-            aa[iOPD] = (np.sum(opd_tmp*Zern_arr[0]) /
-                        np.sum(Zern_arr[0]*Zern_arr[0] * LyotStop2d * Pupil))
-            bb[iOPD] = (np.sum(opd_tmp*Zern_arr[1]) /
-                        np.sum(Zern_arr[1]*Zern_arr[1] * LyotStop2d * Pupil))
+            # aa[iOPD] = (np.sum(opd_tmp*Zern_arr[0]) /
+            #             np.sum(Zern_arr[0]*Zern_arr[0] * LyotStop2d * Pupil))
+            # bb[iOPD] = (np.sum(opd_tmp*Zern_arr[1]) /
+            #             np.sum(Zern_arr[1]*Zern_arr[1] * LyotStop2d * Pupil))
             
-            opd_tmp -= (aa[iOPD] *
-                        Zern_arr[0] / np.sum(Zern_arr[0]*Zern_arr[0]) +
-                        bb[iOPD] *
-                        Zern_arr[1] / np.sum(Zern_arr[1]*Zern_arr[1]))
+            # opd_tmp -= (aa[iOPD] *
+            #             Zern_arr[0] / np.sum(Zern_arr[0]*Zern_arr[0]) +
+            #             bb[iOPD] *
+            #             Zern_arr[1] / np.sum(Zern_arr[1]*Zern_arr[1]))
 
             # opd_tmp = petal_cube[iOPD,:,:] * LyotStop2d * Pupil 
                         
-            opd_tot = (ncpa_d[iOPD] + dfc + opd_tmp +
-                       tilt * D * sf_y / nPup + fpm_dec * D * sf_y / nPup)
-            
+            # opd_tot = (ncpa_d[iOPD] + dfc + opd_tmp +
+            #            tilt * D * sf_y / nPup + fpm_dec * D * sf_y / nPup)
+            opd_tot = opd_tmp
             # opd_tot -= np.mean(opd_tot[ipup])
             opd_tot -= np.mean(opd_tot[i_ls])
             
@@ -541,14 +545,15 @@ for dir_nb in range(len(opds_dir)):
                 # else:
                 #     opd_tmp[i_l[petal]] -= 1e-8
 
-            opd_tmp -= (aa[iOPD] *
-                        Zern_arr[0] / np.sum(Zern_arr[0]*Zern_arr[0]) +
-                        bb[iOPD] *
-                        Zern_arr[1] / np.sum(Zern_arr[1]*Zern_arr[1]))
+            # opd_tmp -= (aa[iOPD] *
+            #             Zern_arr[0] / np.sum(Zern_arr[0]*Zern_arr[0]) +
+            #             bb[iOPD] *
+            #             Zern_arr[1] / np.sum(Zern_arr[1]*Zern_arr[1]))
             
-            opd_tot = (ncpa_d[iOPD] + dfc + opd_tmp +
-                       tilt * D * sf_y / nPup + fpm_dec * D * sf_y / nPup)
-            
+            # opd_tot = (ncpa_d[iOPD] + dfc + opd_tmp +
+            #            tilt * D * sf_y / nPup + fpm_dec * D * sf_y / nPup)
+            opd_tot = opd_tmp
+
             opd_tot -= np.mean(opd_tot[i_ls])
             # opd_tot -= np.mean(opd_tot[ipup])
             
