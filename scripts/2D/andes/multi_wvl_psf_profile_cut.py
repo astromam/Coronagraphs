@@ -21,7 +21,7 @@ from pathlib import Path
 #fontsize to 15 for all plots
 plt.rcParams.update({'font.size': 14})  #  mdiaye 15!
 
-avoid_k = True
+avoid_k = False
 
 cp = False # over plot psf if True
 
@@ -34,8 +34,8 @@ rad2mas = np.pi/(180.*3600*1000)
 mas2rad = 1/rad2mas
 
 # angular separation and ring width of interest in mas
-as_oi = 20.
-rW_mas = 7.
+as_oi = 30.
+rW_mas = 10.
 
 
 #%%
@@ -49,10 +49,16 @@ if user == 'Alain':
     
 # elif user == 'toto':
 
-was_donow = '20251001085445'
+was_donow = '20261103213901'
 
 fdir_res = fdir_res / was_donow
 fdir_plt = fdir_plt / was_donow
+
+# "mixed errors"
+# 20261005164656 20261006135619 numpy legacy implementation like 20260909171142
+# 20261006094240 hcipy
+
+# 20260909171142 mixed errors case with 30nm RMS NCPA reference file
 
 # new ref 1 kHz 01/10/2025
 # 0.89 0.35 3.9 20251001085445 ruane2018 YJH
@@ -132,16 +138,16 @@ fdir_plt = fdir_plt / was_donow
 root = 'OPDs_PASSATA/OPD/WS/1kHzVarWS/'
 # opds_dir=(root+'1', 'perfect')
 
-opds_dir=(root+'1-10',)
-          # root+'2',
-          # root+'3',
-          # root+'4',
-          # root+'5',
-          # root+'6',
-          # root+'7',
-          # root+'8',
-          # root+'9',
-          # root+'10','perfect')
+opds_dir=(root+'1',
+          root+'2',
+          root+'3',
+          root+'4',
+          root+'5',
+          root+'6',
+          root+'7',
+          root+'8',
+          root+'9',
+          root+'10','perfect')
 
 
 #%%
@@ -176,8 +182,8 @@ for dir_nb in range(len(opds_dir)):
             file_psf = [x for x in file_lst if 'wonoise_psf_' in x]
             file_cro = [x for x in file_lst if 'wonoise_coro_psf_' in x]
                
-        print("psf :", file_psf)
-        print("psf coro :", file_cro)
+        # print("psf :", file_psf)
+        # print("psf coro :", file_cro)
       
         file_psf = file_psf[np.argmin(
             (lambda x:[len(i) for i in x])(file_psf))]
@@ -186,6 +192,9 @@ for dir_nb in range(len(opds_dir)):
 
         base_psf = os.path.basename(file_psf).split('.')[0]
         base_cro = os.path.basename(file_cro).split('.')[0]
+            
+        print('file_psf:', file_psf)
+        print('file_cro:', file_cro)
         
         Int_D0_psf_avg = fits.getdata(fdir_res / opd_set / file_psf)
         Int_D_psf_avg  = fits.getdata(fdir_res / opd_set / file_cro)
@@ -197,20 +206,38 @@ for dir_nb in range(len(opds_dir)):
         lam_itv = head_psf['LITV']
         lam_lst = np.arange(lam_min,lam_min+(lam_itv)*lam_stp+1e-9,lam_stp)
         if avoid_k:
+            
             lam_lst = lam_lst[np.where(lam_lst < 1860e-9)]
-        lmx = str(int(np.rint(lam_lst[-1]*1e9)))
-        lmn = str(int(np.rint(lam_lst[0]*1e9)))
+            
+            
         nL = len(lam_lst)
-
+    
+        # beware: following assumes lam_lst is 950 to 2500nm step 50 nm...
         if np.median(lam_lst) > 1e-6:
             wvl = 'YJH'
+            iD = [0,nL//4+1,nL//2-1,nL*3//4-1,nL-1]
+            if lam_lst[-1] > 1861e-9:
+                wvl = 'K'
+                iD = [ 21, 24, 26, 28, 31]
         else:
+            # legacy...
             wvl = 'RIZ'
+        
+        print(wvl)
+        
+        lmx = str(int(np.rint(lam_lst[-1]*1e9)))
+        lmn = str(int(np.rint(lam_lst[0]*1e9)))
+        # nL = len(lam_lst)
+
+        # if np.median(lam_lst) > 1e-6:
+        #     wvl = 'YJH'
+        # else:
+        #     wvl = 'RIZ'
         
         nImg = head_psf['NIMG']
         pscale = head_psf['PSCL']
         D = head_psf['DIAM']
-        mB = head_psf['SFPM'] # - 0.5
+        # mB = head_psf['SFPM'] # - 0.5
         lam_c = head_psf['LMBD']
         lamCD2mas = (lam_c / D) * mas2rad
 
@@ -256,11 +283,11 @@ for dir_nb in range(len(opds_dir)):
                 Int_D_prf_max[i,p] = np.max(Int_D_psf_avg[i,:,:][ring_val])
                 
 
-        fname_psf_contrast = ('contrast_profile_L0toD_' + opd_set + '_' +
+        fname_psf_contrast = ('contrast_profile_' + opd_set + '_' +
                               base_psf +'_'+
                               str(int(as_oi))+'mas_'+str(int(rW_mas))+'mas_'+
                               lmn+'_'+lmx+ 'nm.fits')
-        fname_cro_contrast = ('contrast_profile_L0toD_' + opd_set + '_' +
+        fname_cro_contrast = ('contrast_profile_' + opd_set + '_' +
                               base_cro +'_'+
                               str(int(as_oi))+'mas_'+str(int(rW_mas))+'mas_'+
                               lmn+'_'+lmx+ 'nm.fits')
@@ -378,7 +405,7 @@ for dir_nb in range(len(opds_dir)):
 
         #%%
         # index of wvl to display
-        iD = [0,nL//4-1,nL//2-1,nL*3//4-1,nL-1]
+        # iD = [0,nL//4-1,nL//2-1,nL*3//4-1,nL-1]
 
         if opd_set != 'perfect':
             
@@ -409,25 +436,32 @@ for dir_nb in range(len(opds_dir)):
                           color=colors[iD[i]])
                 
             # Focal plane mask boundary
-            x = np.arange(0.0, mB/2, 0.01)
+            # x = np.arange(0.0, mB/2, 0.01)
             plt.axvline(as_oi, color='k', ls='--')
             plt.legend(fontsize='xx-small', ncols=6)
             # Focal plane mask grey area
-            plt.fill_between(x *lamCD2mas, 0, mB/2/ 38.54*lam_c/rad2mas, color='gray',
-                              alpha=0.3)
+            # plt.fill_between(x *lamCD2mas, 0, mB/2/ 38.54*lam_c/rad2mas, 
+            #                  color='gray', alpha=0.3)
             
-            fname_contrast_profile = ('intensities_profiles_' + base_cro)
-            
+            # fname_contrast_profile = ('intensities_profiles_' + base_cro)
+            fname_contrast_profile = ('intensities_profiles_' + opd_set + '_' +
+                                      base_psf + '_' + str(int(as_oi))+'mas_' +
+                                      str(int(rW_mas)) + 'mas_' + wvl)
             if cp:
-                fname_contrast_profile = ('intensities_profiles_c+p_' +
-                                          base_cro)
+                # fname_contrast_profile = ('intensities_profiles_c+p_' +
+                #                           base_cro)
+                fname_contrast_profile = ('intensities_profiles_c+p' +
+                                          opd_set + '_' + base_psf + '_' +
+                                          str(int(as_oi))+'mas_' +
+                                          str(int(rW_mas)) + 'mas_' + wvl)
             
             fpath_contrast_profile_svg = (fdir_plt / opd_set /
-                                          (fname_contrast_profile +'_'+lmn+'_'+lmx+ '.svg'))
+                                          (fname_contrast_profile + '.svg'))
             fpath_contrast_profile_pdf = (fdir_plt / opd_set /
-                                          (fname_contrast_profile +'_'+lmn+'_'+lmx+ '.pdf'))
+                                          (fname_contrast_profile + '.pdf'))
             plt.savefig(fpath_contrast_profile_svg)
-            plt.savefig(fpath_contrast_profile_pdf, bbox_inches='tight', pad_inches=0.1)
+            plt.savefig(fpath_contrast_profile_pdf, bbox_inches='tight',
+                        pad_inches=0.1)
             plt.show()
     
     
