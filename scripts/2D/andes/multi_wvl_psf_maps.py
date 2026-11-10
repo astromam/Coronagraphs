@@ -29,15 +29,16 @@ plt.rcParams.update({'font.size': 14})  #  mdiaye 15!
 ### scaling
 """
 
-lam_c = 1.6e-6  #  "central" reference lambda, "of interest", in meters
+# lam_c = 1.6e-6  #  "central" reference lambda, "of interest", in meters
 
-# conversion lradian to mas
+# conversion radian to mas
 rad2mas = np.pi/(180.*3600*1000)
 mas2rad = 1./rad2mas
 
 # angular separation of interest in mas
-as_oi = 20.
+as_oi = 30.
 
+avoid_k = False
 
 #%%
 """
@@ -50,12 +51,23 @@ if user == 'Alain':
     fdir_plt   = Path('D:/Andes/Data_corono/plots/').resolve()   #  plots
 
 # elif user == 'toto':
-
-was_donow = '20260403141537'
+    
+was_donow = '20261103111243'
+ # 20261103213901 20261103111243
 fdir_res = fdir_res / was_donow
 fdir_plt = fdir_plt / was_donow
 
+# 20261014144456 hcipy 0.89/0.35/3.9 with JQM + no erros up to 2450 nm
+# 20261015153025 hcipy 0.96/0.30/4.0 with JQM + no erros up to 2450 nm
 
+# "mixed errors"
+# 20261013134122 numpy legacy with defocus & Lyot stop center brtween 4 pixels
+# 20261005164656 20261006135619 numpy legacy implementation like 20260909171142
+# 20261006094240 20261013113657 hcipy
+# 20261014104030 hcipy: pupil grid such as coords extrema difference equal to D
+
+# 20260909171142 mixed errors case with 30nm RMS NCPA reference file
+ 
 # new ref 1 kHz 01/10/2025
 # 0.89 0.35 3.9 20251001085445 ruane2018 YJH
 # 20251106160002
@@ -127,17 +139,11 @@ fdir_plt = fdir_plt / was_donow
 #           root+'20250704_141253.0',
 #           root+'20250707_114321.0')
 root = 'OPDs_PASSATA/OPD/WS/1kHzVarWS/'
-opds_dir=(root+'1',)
-# opds_dir=(root+'1',
-#           root+'2',
-#           root+'3',
-#           root+'4',
-#           root+'5',
-#           root+'6',
-#           root+'7',
-#           root+'8',
-#           root+'9',
-#           root+'10')
+opds_dir=(root+'perfect',)
+# opds_dir=(root+'1-10',)
+opds_dir=(root+'perfect', root+'1',
+          root+'2', root+'3', root+'4', root+'5', root+'6',
+          root+'7', root+'8', root+'9', root+'10')
 
 
 #%%
@@ -171,14 +177,17 @@ for dir_nb in range(len(opds_dir)):
         file_psf = [x for x in file_lst if 'wonoise_psf_' in x]
         file_cro = [x for x in file_lst if 'wonoise_coro_psf_' in x]
     
-    print("psf :", file_psf)
-    print("psf coro :", file_cro)
+    # print("psf :", file_psf)
+    # print("psf coro :", file_cro)
 
     file_psf = file_psf[np.argmin(
         (lambda x:[len(i) for i in x])(file_psf))]
     file_cro = file_cro[np.argmin(
         (lambda x:[len(i) for i in x])(file_cro))]
 
+    print('file_psf:', file_psf)
+    print('file_cro:', file_cro)
+    
     base_psf = os.path.basename(file_psf).split('.')[0]
     base_cro = os.path.basename(file_cro).split('.')[0]
     
@@ -191,20 +200,32 @@ for dir_nb in range(len(opds_dir)):
     lam_stp = head_psf['LSTP']
     lam_itv = head_psf['LITV']
     lam_lst = np.arange(lam_min,lam_min+(lam_itv)*lam_stp+1e-9,lam_stp)
-    lam_lst = lam_lst[np.where(lam_lst < 1860e-9)]
-    
+
+    if avoid_k:
+        
+        lam_lst = lam_lst[np.where(lam_lst < 1860e-9)]
+
+    nL = len(lam_lst)
+
+    # beware: following assumes lam_lst is 950 to 2500nm step 50 nm...
     if np.median(lam_lst) > 1e-6:
         wvl = 'YJH'
+        iD = [0,nL//4+1,nL//2-1,nL*3//4-1,nL-1]
+        if lam_lst[-1] > 1861e-9:
+            wvl = 'K'
+            iD = [ 21, 24, 26, 28, 31]
     else:
+        # legacy...
         wvl = 'RIZ'
     
-    nL = len(lam_lst)
+    print(wvl)
+    
     
     nImg = head_psf['NIMG']
     pscale = head_psf['PSCL']
     D = head_psf['DIAM']
     mB = head_psf['SFPM']
-    # lam_c = head_psf['LMBD']
+    lam_c = head_psf['LMBD']
     hlf_fov = nImg * pscale / 2.
 
     # if lambda of interest / D
@@ -227,10 +248,7 @@ for dir_nb in range(len(opds_dir)):
 
     # filepath for the direct and coronagraphic images
     fpath_images_pdf = fdir_plt / opd_set / fname_images_pdf
-    # fpath_images_png = fdir_plt / opd_set / fname_images_png
-
-    # index of wvl to display
-    iD = [0,nL//4+1,nL//2-1,nL*3//4-1,nL-1]
+    fpath_images_png = fdir_plt / opd_set / fname_images_png
     
     # boundaries for the images in log scale
     vmin0 = -5
@@ -252,8 +270,8 @@ for dir_nb in range(len(opds_dir)):
     
     for i in range(5):
         
-        print('position maxi in flattened psf array: ',
-              np.argmax(Int_D0[iD[i],:]))
+        # print('position maxi in flattened psf array: ',
+        #       np.argmax(Int_D0[iD[i],:]))
         im = grid[i].imshow(
             np.log10(Int_D0[iD[i],:]),vmin=vmin0,vmax=vmax0,cmap='inferno',
             extent=(-aS[-1],aS[-1],-aS[-1],aS[-1]))
@@ -268,8 +286,8 @@ for dir_nb in range(len(opds_dir)):
                     color='w',ls=':',hatch='xxx',fill=False,alpha=0.7))
         grid[i+5].set_xlabel("sep. [mas]")
         grid[i+5].set_ylabel("sep. [mas]")
-        # grid[i+5].add_patch(
-        #     Ellipse( (0,0), as_oi*2, as_oi*2,color='w',ls=':',lw=2,fill=False))
+        grid[i+5].add_patch(
+            Ellipse( (0,0), as_oi*2, as_oi*2,color='w',ls=':',lw=2,fill=False))
         
     # colorbar
     cbar = grid[0].cax.colorbar(im)
@@ -277,9 +295,8 @@ for dir_nb in range(len(opds_dir)):
     cbar.ax.get_yaxis().labelpad = 15
     cbar.ax.set_ylabel('Intensity in log scale', rotation=270)
     
-    # plt.savefig(fpath_images_svg)
     plt.savefig(fpath_images_pdf, bbox_inches='tight', pad_inches=0.1)
-    # plt.savefig(fpath_images_png)
+    plt.savefig(fpath_images_png)
 
     plt.show()
     plt.close()
