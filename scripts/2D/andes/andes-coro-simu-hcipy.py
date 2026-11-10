@@ -21,7 +21,7 @@ os.environ["OMP_NUM_THREADS"] = "1"
 
 def compute_one_lambda_shared_full(args):
 
-    (i, lam, ytlt, dfoc, propagator, coro,
+    (i, lam, ytlt, dfoc, f_prop, l_coro,
      telescope_pupil, lyot_stop, pupil_grid, focal_grid,
      shm_opd_name, shape_opd, dtype_opd,
      nImg, pscale, px2binSz) = args
@@ -42,7 +42,7 @@ def compute_one_lambda_shared_full(args):
     # # PERFECT PSF: elt + Lyot stop propagation, no FPM
     Fld_AA0 = telescope_pupil * lyot_stop
     wf00 = hci.Wavefront(Fld_AA0, lam)
-    Fld_DD0 = propagator.forward(wf00)
+    Fld_DD0 = f_prop.forward(wf00)
     Int_DD0 = Fld_DD0.intensity
     norm_peakDD0 = 1./Int_DD0.max()
     Int_DD0 *= norm_peakDD0
@@ -50,8 +50,8 @@ def compute_one_lambda_shared_full(args):
     # with Lyot FPM: "Lyot propagation with small FPM: soummer 2007 a&a"
     Fld_AA = telescope_pupil
     wf11 = hci.Wavefront(Fld_AA, lam)
-    Fld_LL = coro.forward(wf11)
-    Fld_DD = propagator.forward(Fld_LL)
+    Fld_LL = l_coro.forward(wf11)
+    Fld_DD = f_prop.forward(Fld_LL)
     Int_DD = Fld_DD.intensity
     Int_DD *= norm_peakDD0
     
@@ -64,14 +64,14 @@ def compute_one_lambda_shared_full(args):
 
         Fld_A0 = (telescope_pupil * lyot_stop * phase)
         wf0 = hci.Wavefront(Fld_A0, lam)
-        Fld_D0 = propagator.forward(wf0)
+        Fld_D0 = f_prop.forward(wf0)
         Int_D0 += Fld_D0.intensity
 
         # CORO
         Fld_A = (telescope_pupil * phase)
         wf1 = hci.Wavefront(Fld_A, lam)
-        Fld_L = coro.forward(wf1)
-        Fld_D = propagator.forward(Fld_L)
+        Fld_L = l_coro.forward(wf1)
+        Fld_D = f_prop.forward(Fld_L)
         Int_D += Fld_D.intensity
     
     Int_D0 /= float(n_opd)
@@ -114,27 +114,27 @@ if __name__ == '__main__':
     nFPM = 100  # Sampling of the coronagraph focal plane mask
     nImg = 400  # last focal plane image size
     nOPD = 4000  # # of AO corrected phase residuals screens
-    lam_ref = 1600e-9  # reference wvl
+    lam_ref = 2200e-9 # 1600e-9  # reference wvl
     lam_min = 950e-9  # minimal value of wvl
-    lam_itv = 18  # # of intervals
+    lam_itv = 31 #a 18  # # of intervals
     lam_stp = 50e-9  # interval step
     pscale = 0.3  # image plate scale in last focal plane
 
     # nominal (=inner/inscribed?) 38.542/ hcipy outer/circumscribed 39.14634
     # D = 39.14634 # in m, __use hcipy outer value__
     D = 38.54  #  main pupil diameter/ elt pupil diameter
-    diam = 0.89  # Lyot fractional outer diameter
-    obst = 0.35  # Lyot fractional inner/obscuration diameter
-    mB = 3.9        # Lyot focal plane mask diameter in lam_ref/D
+    diam = 0.91 # 0.89  # Lyot fractional outer diameter
+    obst = 0.30 # 0.35  # Lyot fractional inner/obscuration diameter
+    mB = 3.9 # Lyot focal plane mask diameter in lam_ref/D
     lyot_diameter = D * diam
 
-    disp = 5e6  # dispersion mas/mu e.g 8e7 ou 80e6 = 80 mas / 1e-6 m
-    fpm_dec_mas = 2 # psf to fpm decentering in mas
-    ls_ape = 1  # lyot stop angular position error in degres
+    disp = 0 # 5e6  # dispersion mas/mu e.g 8e7 ou 80e6 = 80 mas / 1e-6 m
+    fpm_dec_mas = 0 # 2 # psf to fpm decentering in mas
+    ls_ape = 0 # 1  # lyot stop angular position error in degres
     ls_voe = 0  # lyot stop vertical - elevation - offset error in pixels
-    ls_hoe = 4 # lyot stop horizontal - elevation - offset error in pixels
-    ncpa_rms = 30  # scale of ncpa phase screens in nm RMS
-    fpm_dfe_elt = 30  # scale of defocus at fpm in nm RMS for reference wvl
+    ls_hoe = 0 # 4 # lyot stop horizontal - elevation - offset error in pixels
+    ncpa_rms = 0 # 30  # scale of ncpa phase screens in nm RMS
+    fpm_dfe_elt = 0 # 30  # scale of defocus at fpm in nm RMS for reference wvl
     
     user = 'Alain'
     usr_base = 'D:/Andes/Data_corono/'
@@ -248,7 +248,7 @@ if __name__ == '__main__':
     # plt.ylabel('y [m]')
     # plt.show()
     
-
+    # stop
     #%%
     '''
     zernikes modes for input pupil: defocus and y tilt
@@ -256,7 +256,7 @@ if __name__ == '__main__':
 
     # ansi=False --> Noll but i is Noll - 1 
     # python index: 1 is x tilt, 2 is y tilt, 3 is focus, 4 y astig... 
-    zern_bas = hci.mode_basis.make_zernike_basis(4, D, pupil_grid, ansi=False,
+    zern_bas = hci.mode_basis.make_zernike_basis(4, D*(nPup+1.)/nPup, pupil_grid, ansi=False,
                                                  radial_cutoff=False,
                                                  use_cache=True, cache=None)
     # stop
@@ -302,11 +302,11 @@ if __name__ == '__main__':
     propagators
     '''
     
-    propagator = hci.FraunhoferPropagator(pupil_grid, focal_grid,
+    f_prop = hci.FraunhoferPropagator(pupil_grid, focal_grid,
                                    focal_length=focal_length)
-    # toto = propagator(wft)
+    # toto = f_prop(wft)
     # stop
-    coro = hci.LyotCoronagraph(pupil_grid,
+    l_coro = hci.LyotCoronagraph(pupil_grid,
                                focal_plane_mask=fpm,
                                focal_plane_mask_grid=fpm_grid,
                                lyot_stop=lyot_stop,
@@ -404,7 +404,7 @@ if __name__ == '__main__':
 
     
         args_list = [
-            (i, lam_lst[i], ytlt[i,:], dfoc, propagator, coro,
+            (i, lam_lst[i], ytlt[i,:], dfoc, f_prop, l_coro,
              telescope_pupil, lyot_stop, pupil_grid, focal_grid,
              shm_opd.name, OPD_arr.shape, OPD_arr.dtype,
              nImg, pscale, px2binSz)
