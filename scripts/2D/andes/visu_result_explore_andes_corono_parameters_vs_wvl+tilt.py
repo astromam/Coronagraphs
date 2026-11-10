@@ -15,8 +15,8 @@ Created on Fri Mar 31 13:26:29 2023
 ### Initialization
 """
 import numpy as np
-# import slow_fourier_transform as sft
-# from uniform_disk import uniform_disk
+# import slow_fourier_transform as sft    # 1rst run: uncomment this line and 
+# from uniform_disk import uniform_disk   # this line, and 212 to 233
 from astropy.io import fits
 
 import os
@@ -36,15 +36,15 @@ input parameters:
     directory with files: was_donow value
     band choice within definded wvls
 """
-
-was_donow = '20250924113208'
+# 1rst run, comment lines 122 & 123, see imports above too 
+was_donow = '20261020164158'
 
 # spaxel (mas) directory
 #  7.0 20250924113208
-# 10.0 20250924113340
+# 10.0 20250924113340 YJHK@1600nm, 20261020164158 YJHK@2200nm
 # 16.0 20250925152805
 
-band='full_YJH'
+band='full_K'
 wvls = {'J':[1.15e-06, 1.20e-06, 1.25e-06, 1.30e-06, 1.35e-06],
          
          'H':[1.40e-06, 1.45e-06, 1.50e-06, 1.55e-06, 1.60e-06,
@@ -156,24 +156,41 @@ lam_lst = np.round(np.arange(lam_min,lam_min+lam_itv*lam_stp+1e-9,lam_stp),8)
 # lam_lst = np.array([1.55e-06, 1.60e-06, 1.65e-06]) # debug
 nL = len(lam_lst)
 
+
 mB_min = hdr['SFPM_MIN']
 mB_itv = hdr['SFPM_ITV']
 mB_stp = hdr['SFPM_STP']
 mB_lst = np.round(np.arange(mB_min,mB_min+mB_stp*(mB_itv+0.5),mB_stp),3)
+
+mB_lo = 3.
+mB_hi = 4.
+mB_i = np.intersect1d(np.where(mB_lst >= mB_lo), np.where(mB_lst <= mB_hi))
+# mB_lst = mB_lst[mB_i]
 
 obs_min = hdr['OBST_MIN']
 obs_itv = hdr['OBST_ITV']
 obs_stp = hdr['OBST_STP']
 obs_lst = np.round(np.arange(obs_min,obs_min+obs_stp*(obs_itv+0.5),obs_stp),3)
 
+obs_lo = 0.3
+obs_hi = 0.4
+obs_i = np.intersect1d(np.where(obs_lst >= obs_lo), np.where(obs_lst <= obs_hi))
+obs_lst = obs_lst[obs_i]
+
+
 dL_min = hdr['DLYO_MIN']
 dL_itv = hdr['DLYO_ITV']
 dL_stp = hdr['DLYO_STP']
 dL_lst = np.round(np.arange(dL_min,dL_min+dL_stp*(dL_itv+.5),dL_stp),3)
 
+dL_hi= 0.96
+dL_lo = 0.86
+dL_i = np.intersect1d(np.where(dL_lst <= dL_hi), np.where(dL_lst >= dL_lo))
+# dL_lst = dL_lst[dL_i]
+
 ap_mas = hdr['D_SPAXEL']
-as_oi  = hdr['SPXL_ROI']
-# as_oi = 25 # 25 as up to 05/2025
+# as_oi  = hdr['SPXL_ROI']
+as_oi = 30 # 25 as up to 05/2025 // beware plots!!!!
 ap_min = hdr['SPXL_MIN']
 ap_itv = hdr['SPXl_ITV']
 ap_stp = hdr['SPXL_STP']
@@ -181,7 +198,7 @@ ap_lst = np.arange(ap_min,ap_min+ap_stp*ap_itv+1,ap_stp)
 nA = len(ap_lst)
 ap_area = np.pi * (ap_mas/2.)**2.
 
-
+# stop
 #%%
 """
 areas of interest: aperture encircled energy and ring encircled energy
@@ -209,7 +226,9 @@ data scaling
 eta_data = sim_data.copy()
 star_int = sim_data[0,:].copy()
 
-
+# MANDATORY: 1rst run up to line 233
+# uncomment this bloc to create lyot_max_intensity_vs_params.fits
+# uncomment sft and uniform_disk import, and fits.getdata at line 121 & 122
 # lyot_max_psf_data = lyot_int_data.copy() * 0.
 
 
@@ -230,6 +249,7 @@ star_int = sim_data[0,:].copy()
 #                 sft.sft(Pupil * LyotStop2d, nImg, mD*diam))**2.)
 # fits.writeto(fdir_res / ('lyot_max_intensity_vs_params.fits'), 
 #              np.array(lyot_max_psf_data),overwrite=True)
+# stop
 
 for i in range(nA):
 
@@ -256,17 +276,23 @@ i_wvl = np.where(np.array([ np.abs(lam_lst[:,None] -
 '''
 data to compute metrics at angular separation of interest
 '''
+thr_coro_data = thr_coro_data[:,obs_i,:]
+
 star_int_oi = star_int[:,:,:,:,i_wvl].copy()
+star_int_oi = star_int_oi[:,:,obs_i,:,:]
 star_int_oi = star_int_oi[np.where(ap_lst == as_oi)[0],:,:,:,:][0,:]
 
 eta_pla_abs = eta_data[1,:][:,:,:,:,i_wvl].copy()
+eta_pla_abs = eta_pla_abs[:,:,obs_i,:,:]
 eta_pla_abs = eta_pla_abs[np.where(ap_lst == as_oi)[0],:,:,:,:][0,:]
 
 eta_sta_abs = eta_data[0,:][:,:,:,:,i_wvl].copy()
+eta_sta_abs = eta_sta_abs[:,:,obs_i,:,:]
 eta_sta_abs = eta_sta_abs[np.where(ap_lst == as_oi)[0],:,:,:,:][0,:]
 
 eta_tel_norm = (eta_tel_data.copy() / eelt_int_data.copy())
 eta_tel_norm = eta_tel_norm[:,:,i_wvl]
+eta_tel_norm = eta_tel_norm[:,obs_i,:]
 
 
 #%%
@@ -291,8 +317,12 @@ m_snr = (np.mean(eta_sta_abs,axis=3)/
          np.mean((eta_pla_abs)**2.,axis=3))
 
 m_join_metric = m_sta_int_leg * m_snr
+# stop
 
-i_ref = (np.int64(10), np.int64(7), np.int64(10))
+# "magic tuple" in 2025 study tu start with 2024 study output
+# i_ref = (np.int64(10), np.int64(7), np.int64(10))
+
+i_ref = np.where(m_join_metric==np.max(m_join_metric))
 rc_ref = m_con_raw[i_ref[0],i_ref[1],i_ref[2]]
 lc_ref = m_sta_int_leg[i_ref[0],i_ref[1],i_ref[2]]
 eta_pla_abs_ref =m_eta_pla_abs[i_ref[0],i_ref[1],i_ref[2]]
@@ -314,7 +344,7 @@ print('\n', dL_lst[i_ref[0]], '\t',
       np.round(snr_ref,5), '\n')
 
 wc_ref = 0.
-thr_ref = 0.75
+thr_ref = 0.75 # aka educated guess or retex
 thr = 0.
 once = True
 
