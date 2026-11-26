@@ -14,17 +14,17 @@ Created on Fri Mar 31 13:26:29 2023
 """
 ### Initialization
 """
-import numpy as np
 # import slow_fourier_transform as sft    # 1rst run: uncomment this line and 
 # from uniform_disk import uniform_disk   # this line, and 212 to 233
 from astropy.io import fits
+import numpy as np
 
 import os
 from pathlib import Path
 import matplotlib.pyplot as plt
 plt.close()
-plt.rcParams.update({'font.size': 12})  #♦  mdiaye 15!
-# plt.rcParams.update({'figure.titlesize': 12})  #♦  mdiaye 15!
+plt.rcParams.update({'font.size': 12})  #  mdiaye 15!
+# plt.rcParams.update({'figure.titlesize': 12})  #  mdiaye 15!
 
 # conversion lradian to mas
 rad2mas = np.pi/(180.*3600*1000)
@@ -35,16 +35,23 @@ mas2rad = 1/rad2mas
 input parameters:
     directory with files: was_donow value
     band choice within definded wvls
+    angular separation of interest if different from the one that is 
+    in the fits header
 """
 # 1rst run, comment lines 122 & 123, see imports above too 
-was_donow = '20261020164158'
+was_donow = '20261125164204'
 
 # spaxel (mas) directory
-#  7.0 20250924113208
-# 10.0 20250924113340 YJHK@1600nm, 20261020164158 YJHK@2200nm
+#  7.0 20250924113208 YJH@1600nm 
+#  7.0 20261125115726 YJH@1600nm HCIPY 20261125164204
+# 10.0 20250924113340 YJHK@1600nm, 20261020164158 YJHK@2200nm 
+# 10.0 20261124120037 YJHK@2200nm HCIPY
 # 16.0 20250925152805
 
-band='full_K'
+# if 0 as_oi is read in fits header
+as_oi = 0. # 25 as up to 05/2025 // beware plots!!!!
+
+band='full_YJH'
 wvls = {'J':[1.15e-06, 1.20e-06, 1.25e-06, 1.30e-06, 1.35e-06],
          
          'H':[1.40e-06, 1.45e-06, 1.50e-06, 1.55e-06, 1.60e-06,
@@ -106,20 +113,22 @@ if user == 'Alain':
 file_lst = os.listdir(fdir_res)
 file_res = [x for x in file_lst if 'results_vs_params_' in x]
 file_coro_thr = [x for x in file_lst if 'Parameters_coro_thr_' in x]
-file_plnt_thr = [x for x in file_lst if 'Parameters_planet_thr_' in x]
+# file_plnt_thr = [x for x in file_lst if 'Parameters_planet_thr_' in x]
 file_eelt_int = [x for x in file_lst if 'eelt_intensities_vs_params_' in x]
 file_lyot_int = [x for x in file_lst if 'lyot_intensities_vs_params_' in x]
 file_eta_tel = [x for x in file_lst if 'eta_tel_vs_params_' in x]
 
 sim_data = fits.getdata(fdir_res/file_res[0])
 thr_coro_data = fits.getdata(fdir_res/file_coro_thr[0])
-thr_plnt_data = fits.getdata(fdir_res/file_plnt_thr[0])
+# thr_plnt_data = fits.getdata(fdir_res/file_plnt_thr[0])
 eelt_int_data = fits.getdata(fdir_res/file_eelt_int[0])
 lyot_int_data = fits.getdata(fdir_res/file_lyot_int[0])
 eta_tel_data  = fits.getdata(fdir_res/file_eta_tel[0])
 
 file_lyot_max = [x for x in file_lst if 'lyot_max_intensity_vs_params' in x]
 lyot_max_psf_data = fits.getdata(fdir_res/file_lyot_max[0])
+
+# stop
 
 
 #%%
@@ -165,7 +174,6 @@ mB_lst = np.round(np.arange(mB_min,mB_min+mB_stp*(mB_itv+0.5),mB_stp),3)
 mB_lo = 3.
 mB_hi = 4.
 mB_i = np.intersect1d(np.where(mB_lst >= mB_lo), np.where(mB_lst <= mB_hi))
-# mB_lst = mB_lst[mB_i]
 
 obs_min = hdr['OBST_MIN']
 obs_itv = hdr['OBST_ITV']
@@ -175,7 +183,6 @@ obs_lst = np.round(np.arange(obs_min,obs_min+obs_stp*(obs_itv+0.5),obs_stp),3)
 obs_lo = 0.3
 obs_hi = 0.4
 obs_i = np.intersect1d(np.where(obs_lst >= obs_lo), np.where(obs_lst <= obs_hi))
-obs_lst = obs_lst[obs_i]
 
 
 dL_min = hdr['DLYO_MIN']
@@ -186,11 +193,8 @@ dL_lst = np.round(np.arange(dL_min,dL_min+dL_stp*(dL_itv+.5),dL_stp),3)
 dL_hi= 0.96
 dL_lo = 0.86
 dL_i = np.intersect1d(np.where(dL_lst <= dL_hi), np.where(dL_lst >= dL_lo))
-# dL_lst = dL_lst[dL_i]
 
 ap_mas = hdr['D_SPAXEL']
-# as_oi  = hdr['SPXL_ROI']
-as_oi = 30 # 25 as up to 05/2025 // beware plots!!!!
 ap_min = hdr['SPXL_MIN']
 ap_itv = hdr['SPXl_ITV']
 ap_stp = hdr['SPXL_STP']
@@ -198,7 +202,13 @@ ap_lst = np.arange(ap_min,ap_min+ap_stp*ap_itv+1,ap_stp)
 nA = len(ap_lst)
 ap_area = np.pi * (ap_mas/2.)**2.
 
+if as_oi==0:
+    as_oi  = hdr['SPXL_ROI']
+
+print("angular separation of interest (SPXL_ROI): ", as_oi)
 # stop
+
+
 #%%
 """
 areas of interest: aperture encircled energy and ring encircled energy
@@ -273,32 +283,52 @@ i_wvl = np.where(np.array([ np.abs(lam_lst[:,None] -
 
 
 #%%
+"""
+ added unoptimized code :
+ parameters range of interest to select
+ when they are too large in the input files
+ don't use on already matching range arrays to avoid side effects...
+"""
+
+# obs_lst = obs_lst[obs_i]
+# dL_lst = dL_lst[dL_i]
+# mB_lst = mB_lst[mB_i]
+
+# adapt the code below!
+
+
+#%%
 '''
 data to compute metrics at angular separation of interest
 '''
-thr_coro_data = thr_coro_data[:,obs_i,:]
+# thr_coro_data = thr_coro_data[:,obs_i,:]
+# thr_coro_data = thr_coro_data[dL_i,:,:]
 
 star_int_oi = star_int[:,:,:,:,i_wvl].copy()
-star_int_oi = star_int_oi[:,:,obs_i,:,:]
+# star_int_oi = star_int_oi[:,:,obs_i,:,:]
+# star_int_oi = star_int_oi[:,dL_i,:,:,:]
 star_int_oi = star_int_oi[np.where(ap_lst == as_oi)[0],:,:,:,:][0,:]
 
 eta_pla_abs = eta_data[1,:][:,:,:,:,i_wvl].copy()
-eta_pla_abs = eta_pla_abs[:,:,obs_i,:,:]
+# eta_pla_abs = eta_pla_abs[:,:,obs_i,:,:]
+# eta_pla_abs = eta_pla_abs[:,dL_i,:,:,:]
 eta_pla_abs = eta_pla_abs[np.where(ap_lst == as_oi)[0],:,:,:,:][0,:]
 
 eta_sta_abs = eta_data[0,:][:,:,:,:,i_wvl].copy()
-eta_sta_abs = eta_sta_abs[:,:,obs_i,:,:]
+# eta_sta_abs = eta_sta_abs[:,:,obs_i,:,:]
+# eta_sta_abs = eta_sta_abs[:,dL_i,:,:,:]
 eta_sta_abs = eta_sta_abs[np.where(ap_lst == as_oi)[0],:,:,:,:][0,:]
 
 eta_tel_norm = (eta_tel_data.copy() / eelt_int_data.copy())
 eta_tel_norm = eta_tel_norm[:,:,i_wvl]
-eta_tel_norm = eta_tel_norm[:,obs_i,:]
+# eta_tel_norm = eta_tel_norm[:,obs_i,:]
+# eta_tel_norm = eta_tel_norm[dL_i,:,:]
 
 
 #%%
 
-print('\n', "band: ", band, ", spaxel size: ",ap_mas, '\t', 
-      ", angular separation: ", as_oi, '\t', ", working directory: ", was_donow)
+print('\n', "band: ", band, ", spaxel size: ",ap_mas, 
+      ", angular separation: ", as_oi, ", working directory: ", was_donow)
 
 # legacy contrast evaluation method
 m_sta_int_leg = np.mean(star_int_oi, axis=3)
@@ -333,7 +363,7 @@ print('\n', "OD", '\t', "ID", '\t', "FPM", '\t', "LS thr", '\t',
       "s/p", '\t', "<s>/max(LS)", '\t',
       "eta p", '\t', "p/tel", '\t', "<s>/max(LS)*s/p**2", "s/p**2")
 
-print('\n', dL_lst[i_ref[0]], '\t', 
+print('\n',"starting point is max of joint metric",'\n', dL_lst[i_ref[0]], '\t', 
       obs_lst[i_ref[1]], '\t', 
       mB_lst[i_ref[2]],'\t',
       np.round(thr_coro_data[i_ref[0],i_ref[1],0],3), '\t',
@@ -344,7 +374,7 @@ print('\n', dL_lst[i_ref[0]], '\t',
       np.round(snr_ref,5), '\n')
 
 wc_ref = 0.
-thr_ref = 0.75 # aka educated guess or retex
+thr_ref = 0.75 # 75% aka educated guess or retex
 thr = 0.
 once = True
 
@@ -362,11 +392,6 @@ while True:
 
     if np.mean(w_c) == 1:
         break
-
-    # obsolete, "in memoriam"
-    # iko = thr_coro_data[:,:,0] <= thr
-    # for i in range(len(mB_lst)):
-    #     w_c[:,:,i][iko] = 1.
 
     i_min = np.unravel_index(np.argmin(w_c), w_c.shape)
     # i_min = np.unravel_index(np.argmax(w_c), w_c.shape) # maximize!
@@ -389,21 +414,26 @@ while True:
         # and m_sta_int_leg[i_min[0],i_min[1],i_min[2]] <= lc_ref
         # and mB_lst[i_min[2]] <= 4. and thr >= thr_ref):
             
-        print(dL_lst[i_min[0]], '\t',
-              obs_lst[i_min[1]], '\t',
-              mB_lst[i_min[2]], '\t',
-              np.round(thr,3), '\t',
-              np.round(m_con_raw[i_min[0],i_min[1],i_min[2]],5), '\t',
-              np.round(m_sta_int_leg[i_min[0],i_min[1],i_min[2]],5), '\t',
-              np.round(m_eta_pla_abs[i_min[0],i_min[1],i_min[2]],5), '\t',
-              np.round(m_eta_pla_rel[i_min[0],i_min[1],i_min[2]],5), '\t',
-              np.round(m_join_metric[i_min[0],i_min[1],i_min[2]]*1e6,5), '\t',
-              np.round(m_snr[i_min[0],i_min[1],i_min[2]],5), '\t')
+        if thr >= thr_ref:
+            
+            print(dL_lst[i_min[0]], '\t',
+                  obs_lst[i_min[1]], '\t',
+                  mB_lst[i_min[2]], '\t',
+                  np.round(thr,3), '\t',
+                  np.round(m_con_raw[i_min[0],i_min[1],i_min[2]],5), '\t',
+                  np.round(m_sta_int_leg[i_min[0],i_min[1],i_min[2]],5), '\t',
+                  np.round(m_eta_pla_abs[i_min[0],i_min[1],i_min[2]],5), '\t',
+                  np.round(m_eta_pla_rel[i_min[0],i_min[1],i_min[2]],5), '\t',
+                  np.round(m_join_metric[i_min[0],i_min[1],i_min[2]]*1e6,5), '\t',
+                  np.round(m_snr[i_min[0],i_min[1],i_min[2]],5), '\t')
 
         if once:
             
             best = i_min
-            print(best)
+            best_thr = thr.copy()
+            print('\n', "\"best\": ", dL_lst[i_min[0]], '\t', obs_lst[i_min[1]], '\t', 
+                  mB_lst[i_min[2]], ", thr of best: ", np.round(best_thr,3))
+
             once = False
             # break
             
@@ -412,9 +442,9 @@ while True:
 # 0.9/0.37/4.0 <--> (10,7,10) pour étude 2025/092
 # i_min = (np.int64(10), np.int64(7), np.int64(10))
 i_min = best
-print('\n', dL_lst[i_min[0]], '\t', 
-      obs_lst[i_min[1]], '\t', 
-      mB_lst[i_min[2]])    
+print('\n', "imin: ", dL_lst[i_min[0]], '\t', obs_lst[i_min[1]], '\t', 
+      mB_lst[i_min[2]])
+
 # cd_min = np.log10(np.min(m_sta_int_leg[i_min[0],i_min[1],i_min[2]]))
 # cd_max = np.log10(np.max(m_sta_int_leg[i_min[0],i_min[1],i_min[2]]))
 mB_min = mB_lst[0]
