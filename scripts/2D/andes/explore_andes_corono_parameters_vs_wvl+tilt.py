@@ -25,7 +25,7 @@ from datetime import datetime
 # import matplotlib.pyplot as plt
 
 donow = datetime.now().strftime("%Y%m%d%H%M%S")
-
+print(donow)
 
 #%%
 """
@@ -64,15 +64,15 @@ nPup = Pupil.shape[0] # 400
 nImg = 400
 
 # wavelength in m
-lamC = 1600e-9  #  some wvl unique value, reference wvl
+lamC = 2200e-9 # 1600e-9  #  some wvl unique value, reference wvl
 
 # wvl = 'RIZYJHK'
 # lam_min = 600e-9  #  min value in range
 # lam_itv = 38  #
  
-wvl = 'YJH'
+wvl = 'YJHK'
 lam_min = 950e-9  #  min value in range
-lam_itv = 30  #  
+lam_itv = 31  #  
 lam_stp = 50e-9 # np.median(np.diff(lam_lst))
 lam_lst = np.arange(lam_min,lam_min+lam_itv*lam_stp+1e-9,lam_stp)
 # lam_lst = np.array([1.55e-06, 1.60e-06, 1.65e-06]) # debug
@@ -81,12 +81,12 @@ nL = len(lam_lst)
 #       "\n", "wvls: ", lam_lst)
 
 # spaxel diameter as an aperture and in field locations
-as_oi = 20 # main angular separation of interest ('asoi'), 20 mas as of 05/2025
+as_oi = 30 # main angular separation of interest ('asoi'), 20 mas as of 05/2025
 
-ap_mas = 16.  # spaxel of 7 mas (05/2025->) / 10. -> 03/2025
+ap_mas = 10.  # spaxel of 7 mas (05/2025->) / 10. -> 03/2025
 ap_min = 15
 ap_stp = 1
-ap_itv = 20
+ap_itv = 24
 ap_lst = np.arange(ap_min,ap_min+ap_stp*ap_itv+0.5,ap_stp)
 nA = len(ap_lst)
 
@@ -107,20 +107,23 @@ Lyot coronagraph configuration
 """
 ### All Lyot coro parameters to test
 dL_min = 0.8
-dL_itv = 16
+dL_itv = 19
 dL_stp = 0.01
 dL_lst = np.arange(dL_min,dL_min+dL_stp*(dL_itv+0.5),dL_stp)
 nO = len(dL_lst)
-obs_min = 0.30
-obs_itv = 15
+
+obs_min = 0.25
+obs_itv = 19
 obs_stp = 0.01
 obs_lst = np.arange(obs_min,obs_min+obs_stp*(obs_itv+0.5),obs_stp)
 nI = len(obs_lst)
-mB_min = 3.
-mB_itv = 14
+
+mB_min = 2.
+mB_itv = 19
 mB_stp = 0.1
 mB_lst = np.arange(mB_min,mB_min+mB_stp*(mB_itv+0.5),mB_stp)
 nB = len(mB_lst)
+
 # stackoveflow...
 a_ = np.linspace(-(np.floor(nImg-1)/2), np.floor(nImg-1)/2, nImg)
 b_ = a_.copy()
@@ -172,7 +175,7 @@ for i in np.arange(nL):
     lam = lam_lst[i]
 
     # conversion lam/D to mas
-    lamD2mas = (lam/D)*mas2rad
+    # lamD2mas = (lam/D)*mas2rad
     
     # FoV in lam/D in the final image plane D
     mD = mD_ref * lamC / lam # 05/2025 ->
@@ -218,14 +221,14 @@ for i in np.arange(nL):
                     coro_thr[Ld,ob,i] = ee_c/ee_a
 
                     # energy/throughput at fourier plane in fov and spaxel
-                    Int_elt = sft.sft(Fld_AA0, nImg, mD)
-                    no_coro_norm = np.sum(np.abs(Int_elt)**2.)
+                    Fld_elt = sft.sft(Fld_AA0, nImg, mD)
+                    no_coro_norm = np.sum(np.abs(Fld_elt)**2.)
 
-                    lyot_int[Ld,ob,i] = np.sum(np.abs(Int_DD0)**2.)
+                    lyot_int[Ld,ob,i] = np.sum(np.abs(Fld_DD0)**2.)
                     eelt_int[Ld,ob,i] = no_coro_norm
-                    eta_tel[Ld,ob,i] = np.sum(np.abs(Int_elt[aee[0]])**2.)
-                    planet_thr[Ld,ob,i] = (np.sum(np.abs(Int_DD0[aee[0]])**2.)/
-                                           np.sum(np.abs(Int_elt[aee[0]])**2.))
+                    eta_tel[Ld,ob,i] = np.sum(np.abs(Fld_elt[aee[0]])**2.)
+                    planet_thr[Ld,ob,i] = (np.sum(np.abs(Fld_DD0[aee[0]])**2.)/
+                                           np.sum(np.abs(Fld_elt[aee[0]])**2.))
                     
                 # continue
                 # Normalized intensity to Lyot psf
@@ -305,8 +308,9 @@ for i in np.arange(nL):
 
 #%%
 wvl_as_spxl = (wvl+'_angSep'+
-               str(int(as_oi))+'mas_spxl'+
-               str(int(ap_mas))+'mas.fits')
+               str(int(as_oi))+'mas_spxl_'+
+               str(int(ap_mas))+'mas_as_'+
+               str(int(lamC*1e9))+'nm.fits')
 fpath_psf_lst=(
     fdir_res / ('intensities_vs_params_'+wvl_as_spxl),
     fdir_res / ('results_vs_params_'+wvl_as_spxl),
