@@ -42,11 +42,7 @@ input parameters:
 was_donow = '20261125212116'
 
 # spaxel (mas) directory
-#  7.0 20250924113208 YJH@1600nm 
-#  7.0 20261125115726 YJH@1600nm HCIPY 20261125164204
-# 10.0 20250924113340 YJHK@1600nm, 20261020164158 YJHK@2200nm 
-# 10.0 20261124120037 YJHK@2200nm HCIPY
-# 16.0 20250925152805
+# 10.0 20261125212116 YJHK@2200nm HCIPY
 
 # if 0 as_oi is read in fits header
 as_oi = 0. # 25 as up to 05/2025 // beware plots!!!!
@@ -172,7 +168,7 @@ ch_stp = hdr['VTXC_STP']
 ch_lst = np.round(np.arange(ch_min,ch_min+ch_stp*(ch_itv+0.5),ch_stp),3)
 
 ch_lo = 3.
-ch_hi = 4.
+ch_hi = 7.
 ch_i = np.intersect1d(np.where(ch_lst >= ch_lo), np.where(ch_lst <= ch_hi))
 
 obs_min = hdr['OBST_MIN']
@@ -292,7 +288,7 @@ i_wvl = np.where(np.array([ np.abs(lam_lst[:,None] -
 
 obs_lst = obs_lst[obs_i]
 dL_lst = dL_lst[dL_i]
-# ch_lst = ch_lst[ch_i]
+ch_lst = ch_lst[ch_i]
 
 # adapt the code below!
 
@@ -301,28 +297,33 @@ dL_lst = dL_lst[dL_i]
 '''
 data to compute metrics at angular separation of interest
 '''
-thr_coro_data = thr_coro_data[:,obs_i,:]
 thr_coro_data = thr_coro_data[dL_i,:,:]
+thr_coro_data = thr_coro_data[:,obs_i,:]
+thr_coro_data = thr_coro_data[:,:,ch_i]
 
 star_int_oi = star_int[:,:,:,:,i_wvl].copy()
-star_int_oi = star_int_oi[:,:,obs_i,:,:]
 star_int_oi = star_int_oi[:,dL_i,:,:,:]
+star_int_oi = star_int_oi[:,:,obs_i,:,:]
+star_int_oi = star_int_oi[:,:,:,ch_i,:]
 star_int_oi = star_int_oi[np.where(ap_lst == as_oi)[0],:,:,:,:][0,:]
 
 eta_pla_abs = eta_data[1,:][:,:,:,:,i_wvl].copy()
-eta_pla_abs = eta_pla_abs[:,:,obs_i,:,:]
 eta_pla_abs = eta_pla_abs[:,dL_i,:,:,:]
+eta_pla_abs = eta_pla_abs[:,:,obs_i,:,:]
+eta_pla_abs = eta_pla_abs[:,:,:,ch_i,:]
 eta_pla_abs = eta_pla_abs[np.where(ap_lst == as_oi)[0],:,:,:,:][0,:]
 
 eta_sta_abs = eta_data[0,:][:,:,:,:,i_wvl].copy()
-eta_sta_abs = eta_sta_abs[:,:,obs_i,:,:]
 eta_sta_abs = eta_sta_abs[:,dL_i,:,:,:]
+eta_sta_abs = eta_sta_abs[:,:,obs_i,:,:]
+eta_sta_abs = eta_sta_abs[:,:,:,ch_i,:]
 eta_sta_abs = eta_sta_abs[np.where(ap_lst == as_oi)[0],:,:,:,:][0,:]
 
 eta_tel_norm = (eta_tel_data.copy() / eelt_int_data.copy())
 eta_tel_norm = eta_tel_norm[:,:,i_wvl]
-eta_tel_norm = eta_tel_norm[:,obs_i,:]
 eta_tel_norm = eta_tel_norm[dL_i,:,:]
+eta_tel_norm = eta_tel_norm[:,obs_i,:]
+eta_tel_norm = eta_tel_norm[:,:,ch_i]
 
 
 #%%
@@ -399,20 +400,8 @@ while True:
     thr = thr_coro_data[i_min[0],i_min[1],0]
     wc_ref = w_c[i_min[0],i_min[1],i_min[2]]
     
-    # if (m_con_raw[i_min[0],i_min[1],i_min[2]] <=rc_ref
-    #     and ch_lst[i_min[2]] <= 4.  and thr >= thr_ref):
     if (m_join_metric[i_min[0],i_min[1],i_min[2]] <= lc_ref*snr_ref
         and m_sta_int_leg[i_min[0],i_min[1],i_min[2]] <= lc_ref):
-        # and ch_lst[i_min[2]] <= 4.): 
-        # and thr >= thr_ref):
-    # if (m_sta_int_leg[i_min[0],i_min[1],i_min[2]] <= lc_ref
-    #     and m_con_raw[i_min[0],i_min[1],i_min[2]] <=rc_ref
-    #     and m_snr[i_min[0],i_min[1],i_min[2]] <=snr_ref
-    #     and ch_lst[i_min[2]] <= 4. and thr >= thr_ref):
-    # if (m_snr[i_min[0],i_min[1],i_min[2]] <=snr_ref 
-        # and m_con_raw[i_min[0],i_min[1],i_min[2]] <=rc_ref
-        # and m_sta_int_leg[i_min[0],i_min[1],i_min[2]] <= lc_ref
-        # and ch_lst[i_min[2]] <= 4. and thr >= thr_ref):
             
         if thr >= thr_ref:
             
@@ -439,8 +428,9 @@ while True:
             
 
 #%%
-# 0.9/0.37/4.0 <--> (10,7,10) pour étude 2025/092
-# i_min = (np.int64(10), np.int64(7), np.int64(10))
+"""
+"""
+
 i_min = best
 print('\n', "imin: ", dL_lst[i_min[0]], '\t', obs_lst[i_min[1]], '\t', 
       ch_lst[i_min[2]])
