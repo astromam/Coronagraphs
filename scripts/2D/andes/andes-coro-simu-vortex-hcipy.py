@@ -51,6 +51,7 @@ def compute_one_lambda_shared_full(args):
     Fld_AA = telescope_pupil
     wf11 = hci.Wavefront(Fld_AA, lam)
     Fld_LL = vcoro.forward(wf11)
+    Int_LL = Fld_LL.intensity
     Fld_DD = fprop.forward(lyot_apod(Fld_LL))
     Int_DD = Fld_DD.intensity
     Int_DD *= norm_peakDD0
@@ -101,7 +102,8 @@ def compute_one_lambda_shared_full(args):
     return (i,
             Int_D0.reshape((nImg,nImg)), Int_D.reshape((nImg,nImg)),
             Int_D0_prf, Int_D_prf,
-            Int_DD0.reshape((nImg,nImg)), Int_DD.reshape((nImg,nImg)))
+            Int_DD0.reshape((nImg,nImg)), Int_DD.reshape((nImg,nImg)),
+            Int_LL.reshape((nImg,nImg)))
 
 
 if __name__ == '__main__':
@@ -123,11 +125,11 @@ if __name__ == '__main__':
     # nominal (=inner/inscribed?) 38.542/ hcipy outer/circumscribed 39.14634
     # D = 39.14634 # in m, __use hcipy outer value__
     D = 38.54  #  main pupil diameter/ elt pupil diameter
-    diam = 0.91 # 0.89  # Lyot fractional outer diameter
+    diam = 0.96 # 0.89  # Lyot fractional outer diameter
     obst = 0.30 # 0.35  # Lyot fractional inner/obscuration diameter
     # mB = 3.9 # Lyot focal plane mask diameter in lam_ref/D
     lyot_diameter = D * diam
-    charge = 4
+    charge = 6
 
     disp = 0 # 5e6  # dispersion mas/mu e.g 8e7 ou 80e6 = 80 mas / 1e-6 m
     fpm_dec_mas = 0 # 2 # psf to fpm decentering in mas
@@ -164,7 +166,7 @@ if __name__ == '__main__':
 
     px2resEl = nImg / (fov * 2.) # pixels witdh, lambda of reference / lyot_diameter
     
-    focal_length = px2resEl * lyot_diameter * 1e-6 / lam_ref # 684.022 # m, nominal?
+    focal_length = px2resEl * lyot_diameter * 1e-6 / lam_ref 
 
     # units conversion from meters to mas, * diam to satisfy fov_mas...
     meters2mas = focal_length * diam * rad2mas
@@ -341,6 +343,7 @@ if __name__ == '__main__':
     
     Int_DD0 = np.zeros([nL, nImg, nImg])
     Int_DD = np.zeros([nL, nImg, nImg])
+    Int_LL = np.zeros([nL, nImg, nImg])
     Int_D0 = np.zeros([nL, nImg, nImg])
     Int_D = np.zeros([nL, nImg, nImg])
 
@@ -413,9 +416,10 @@ if __name__ == '__main__':
 
         with mp.Pool(processes=nproc) as pool:
             
-            results = pool.map(compute_one_lambda_shared_full, args_list)
+            results = pool.map(compute_one_lambda_shared_full, args_list, None)
 
-        for i, Int_D0_i, Int_D_i, Int_D0_prf, Int_D_prf, Int_DD0_i, Int_DD_i in results:
+        for (i, Int_D0_i, Int_D_i, Int_D0_prf, Int_D_prf, Int_DD0_i, Int_DD_i,
+             Int_LL_i) in results:
             
             Int_D0[i,:,:] = Int_D0_i
             Int_D[i,:,:]  = Int_D_i
@@ -423,7 +427,8 @@ if __name__ == '__main__':
             Int_D_prf_avg[i,:,:] = Int_D_prf
             Int_DD0[i,:,:] = Int_DD0_i
             Int_DD[i,:,:] = Int_DD_i
-            
+            Int_LL[i,:,:] = Int_LL_i
+
 
         # filename for the direct and coronagraphic images and profiles
         fname_Int_D0 = 'ao_corr_psf_'+donow+'.fits'
@@ -450,6 +455,8 @@ if __name__ == '__main__':
             fname_Int_DD = 'wonoise_coro_psf_'+donow+'.fits'
             fpath_Int_DD0 = fdir_prfct/ fname_Int_DD0
             fpath_Int_DD  = fdir_prfct / fname_Int_DD
+            fname_Int_LL = 'wonoise_vrtx_prop_'+donow+'.fits'
+            fpath_Int_LL  = fdir_prfct / fname_Int_LL
     
             if not os.path.isfile(fpath_Int_DD0):
                 fits.writeto(fpath_Int_DD0, Int_DD0, overwrite=True)
@@ -458,6 +465,11 @@ if __name__ == '__main__':
             if not os.path.isfile(fpath_Int_DD):
                 fits.writeto(fpath_Int_DD, Int_DD, overwrite=True)
                 fpath_psf_lst += (fpath_Int_DD,)
+            
+            if not os.path.isfile(fpath_Int_LL):
+                fits.writeto(fpath_Int_LL, Int_LL, overwrite=True)
+                fpath_psf_lst += (fpath_Int_LL,)
+
         
         hdr_keys = {'NPUP':(nPup,'pupil size'),
                     'NFPM':(nFPM,'FP coro. sampling'),
